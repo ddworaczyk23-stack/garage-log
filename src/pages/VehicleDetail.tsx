@@ -10,6 +10,7 @@ import { EventListItem } from '../components/EventListItem'
 import { OdometerListItem } from '../components/OdometerListItem'
 import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
+import { Loading } from '../components/ui'
 import type { VehicleDocument } from '../types'
 
 interface Props {
@@ -61,7 +62,7 @@ export function VehicleDetail({ id }: Props) {
     [id, events?.map((e) => e.id).join(',')],
   )
 
-  if (vehicle === undefined) return <p class="muted pad">Loading…</p>
+  if (vehicle === undefined) return <Loading />
   if (vehicle === null) {
     return (
       <section class="page">
@@ -148,7 +149,7 @@ export function VehicleDetail({ id }: Props) {
         </p>
 
         {!reminders ? (
-          <p class="muted small">Loading…</p>
+          <Loading />
         ) : (
           <ul class="schedule-list">
             {reminders.map((r) => (
@@ -173,7 +174,7 @@ export function VehicleDetail({ id }: Props) {
       <section class="card">
         <h3 class="card-title">Maintenance history ({maintenanceEvents.length})</h3>
         {!events ? (
-          <p class="muted small">Loading…</p>
+          <Loading />
         ) : maintenanceEvents.length === 0 ? (
           <p class="muted small">Nothing logged yet — tap "+ Service" above.</p>
         ) : (
@@ -188,7 +189,7 @@ export function VehicleDetail({ id }: Props) {
       <section class="card">
         <h3 class="card-title">Repair history ({repairEvents.length})</h3>
         {!events ? (
-          <p class="muted small">Loading…</p>
+          <Loading />
         ) : repairEvents.length === 0 ? (
           <p class="muted small">Nothing logged yet — tap "+ Repair" above.</p>
         ) : (
@@ -203,7 +204,7 @@ export function VehicleDetail({ id }: Props) {
       <section class="card">
         <h3 class="card-title">Odometer history ({odometerReadings?.length ?? 0})</h3>
         {!odometerReadings ? (
-          <p class="muted small">Loading…</p>
+          <Loading />
         ) : odometerReadings.length === 0 ? (
           <p class="muted small">No readings logged yet — tap "+ Odometer" above.</p>
         ) : (
@@ -228,7 +229,7 @@ export function VehicleDetail({ id }: Props) {
           Files attached to a logged service or repair. Tag, preview, reassign, or
           remove them in the documents browser.
         </p>
-        {!documents ? <p class="muted small">Loading…</p> : <DocumentGrid documents={documents} />}
+        {!documents ? <Loading /> : <DocumentGrid documents={documents} />}
       </section>
     </section>
   )

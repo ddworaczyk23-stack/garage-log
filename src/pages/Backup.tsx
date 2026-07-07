@@ -8,6 +8,7 @@ import {
   serializeBackupToJson,
 } from '../db/backup'
 import { backupFilename, summarizeBackup, validateBackup, type BackupFile } from '../domain/backup'
+import { ConfirmButton } from '../components/ui'
 
 type Notice = { kind: 'success' | 'error'; text: string } | null
 
@@ -103,7 +104,12 @@ export function Backup() {
           {exporting ? 'Preparing…' : 'Download backup'}
         </button>
         {exportNotice && (
-          <p class={`notice notice-${exportNotice.kind}`}>{exportNotice.text}</p>
+          <p
+            class={`notice notice-${exportNotice.kind}`}
+            role={exportNotice.kind === 'error' ? 'alert' : 'status'}
+          >
+            {exportNotice.text}
+          </p>
         )}
       </section>
 
@@ -119,7 +125,7 @@ export function Backup() {
           <input type="file" accept="application/json,.json" onChange={onFile} disabled={restoring} />
         </label>
 
-        {restoreError && <p class="notice notice-error">{restoreError}</p>}
+        {restoreError && <p class="notice notice-error" role="alert">{restoreError}</p>}
 
         {pending && (
           <div class="restore-preview">
@@ -136,9 +142,13 @@ export function Backup() {
               ))}
             </ul>
             <div class="form-actions">
-              <button class="btn btn-danger" onClick={onConfirmRestore} disabled={restoring}>
-                {restoring ? 'Restoring…' : 'Replace all data & restore'}
-              </button>
+              <ConfirmButton
+                class="btn btn-danger"
+                label="Replace all data & restore"
+                confirmLabel={restoring ? 'Restoring…' : 'Yes, replace everything'}
+                busyLabel="Restoring…"
+                onConfirm={onConfirmRestore}
+              />
               <button class="btn-link" type="button" onClick={() => setPending(null)} disabled={restoring}>
                 Cancel
               </button>
@@ -147,9 +157,20 @@ export function Backup() {
         )}
 
         {restoreNotice && (
-          <p class={`notice notice-${restoreNotice.kind}`}>{restoreNotice.text}</p>
+          <p
+            class={`notice notice-${restoreNotice.kind}`}
+            role={restoreNotice.kind === 'error' ? 'alert' : 'status'}
+          >
+            {restoreNotice.text}
+          </p>
         )}
       </section>
+
+      <p class="page-footer-link">
+        <a class="btn-link" href="#/debug">
+          Developer &amp; debug tools →
+        </a>
+      </p>
     </section>
   )
 }

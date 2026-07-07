@@ -9,6 +9,7 @@ import {
 import { formatBytes } from '../domain/documents'
 import { CATEGORY_LABELS, type VehicleDocument } from '../types'
 import type { DocumentIndexEntry } from '../domain/documents'
+import { ConfirmButton } from './ui'
 
 interface Props {
   entry: DocumentIndexEntry
@@ -63,9 +64,15 @@ export function DocumentPreviewModal({ entry, onClose }: Props) {
 
   return (
     <div class="modal-backdrop" onClick={onClose}>
-      <div class="modal-panel" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true">
+      <div
+        class="modal-panel"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="doc-modal-title"
+      >
         <div class="modal-head">
-          <h3 class="modal-title" title={doc.filename}>
+          <h3 id="doc-modal-title" class="modal-title" title={doc.filename}>
             {doc.filename}
           </h3>
           <button type="button" class="modal-close" aria-label="Close" onClick={onClose}>
@@ -146,9 +153,13 @@ export function DocumentPreviewModal({ entry, onClose }: Props) {
           </select>
         </label>
 
-        <button type="button" class="btn-link danger" onClick={remove}>
-          Remove document
-        </button>
+        <ConfirmButton
+          class="btn-link danger"
+          label="Remove document"
+          confirmLabel="Yes, remove this document"
+          busyLabel="Removing…"
+          onConfirm={remove}
+        />
         <p class="muted small">Removing deletes the file only — the service/repair entry stays.</p>
       </div>
     </div>

@@ -985,3 +985,123 @@ iframe.preview-media {
   border-bottom: 1px solid var(--border);
   padding-bottom: 4px;
 }
+.page-footer-link {
+  text-align: center;
+  margin: 8px 0 0;
+}
+
+/* ---------- Milestone 9 polish: loading / empty / confirm / CTA ---------- */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-muted);
+  padding: 24px 0;
+  font-size: 0.9rem;
+}
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2s;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  padding: 28px 16px;
+  color: var(--text-muted);
+}
+.empty-icon {
+  font-size: 2rem;
+  opacity: 0.85;
+}
+.empty-title {
+  margin: 4px 0 0;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Inline two-step confirmation (ConfirmButton). */
+.confirm-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Per-thumbnail delete confirmation (DocumentGrid). */
+.doc-confirm {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  gap: 4px;
+}
+.doc-confirm-yes,
+.doc-confirm-no {
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 3px 6px;
+  line-height: 1;
+}
+.doc-confirm-yes {
+  background: var(--danger);
+  color: #fff;
+}
+.doc-confirm-no {
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+}
+
+/* Dashboard "ready to export" call-to-action. */
+.export-cta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  text-decoration: none;
+  color: inherit;
+}
+.export-cta:active {
+  transform: scale(0.99);
+}
+.export-cta-main {
+  min-width: 0;
+}
+.export-cta-main .card-title {
+  margin-bottom: 4px;
+}
+.export-cta-cue {
+  font-size: 1.7rem;
+  flex-shrink: 0;
+}
+
+/* Stronger emphasis for the most urgent status pill. */
+.status-overdue {
+  background: color-mix(in srgb, var(--danger) 55%, transparent);
+  color: #fee2e2;
+}
+.badge-overdue {
+  background: color-mix(in srgb, var(--danger) 45%, transparent);
+  color: #fee2e2;
+}

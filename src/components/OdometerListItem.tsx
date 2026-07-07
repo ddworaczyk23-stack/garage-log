@@ -1,6 +1,8 @@
 import { useState } from 'preact/hooks'
 import { deleteOdometerReading } from '../db/events'
+import { formatMiles, formatShortDate } from '../domain/format'
 import { OdometerForm } from './OdometerForm'
+import { ConfirmButton } from './ui'
 import type { OdometerReading } from '../types'
 
 interface Props {
@@ -10,11 +12,6 @@ interface Props {
 
 export function OdometerListItem({ vehicleId, reading }: Props) {
   const [editing, setEditing] = useState(false)
-
-  async function handleDelete() {
-    if (!confirm('Delete this odometer reading?')) return
-    await deleteOdometerReading(reading.id)
-  }
 
   if (editing) {
     return (
@@ -30,18 +27,20 @@ export function OdometerListItem({ vehicleId, reading }: Props) {
   return (
     <li class="list-row">
       <span class="list-row-main">
-        <span class="list-row-title">{reading.miles.toLocaleString()} mi</span>
+        <span class="list-row-title">{formatMiles(reading.miles)}</span>
         <span class="muted small">
-          {reading.date} · {reading.source === 'quick-log' ? 'manual reading' : 'from service log'}
+          {formatShortDate(reading.date)} · {reading.source === 'quick-log' ? 'manual reading' : 'from service log'}
         </span>
       </span>
       <span class="row-actions">
-        <button class="btn-link" onClick={() => setEditing(true)}>
+        <button type="button" class="btn-link" onClick={() => setEditing(true)}>
           Edit
         </button>
-        <button class="btn-link btn-link-danger" onClick={handleDelete}>
-          Delete
-        </button>
+        <ConfirmButton
+          label="Delete"
+          confirmLabel="Delete?"
+          onConfirm={() => deleteOdometerReading(reading.id)}
+        />
       </span>
     </li>
   )

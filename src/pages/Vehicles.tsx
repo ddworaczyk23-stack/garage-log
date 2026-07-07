@@ -2,6 +2,7 @@ import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
 import { STATUS_LABELS } from '../types'
+import { Loading } from '../components/ui'
 
 async function loadVehiclesWithStatus() {
   const vehicles = await db.vehicles.orderBy('name').toArray()
@@ -18,7 +19,7 @@ async function loadVehiclesWithStatus() {
 export function Vehicles() {
   const rows = useQuery(loadVehiclesWithStatus)
 
-  if (!rows) return <p class="muted pad">Loading…</p>
+  if (!rows) return <Loading />
 
   return (
     <section class="page">

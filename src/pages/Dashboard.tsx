@@ -1,6 +1,8 @@
 import { useQuery } from '../db/useQuery'
 import { getGarageSummary, type AttentionItem, type VehicleSummary } from '../db/summary'
 import { STATUS_LABELS } from '../types'
+import { formatMiles, formatMoney, formatShortDate } from '../domain/format'
+import { Loading } from '../components/ui'
 import type { ComputedReminder } from '../domain/reminderEngine'
 
 // Home dashboard: a cross-vehicle "what needs attention first" feed, the two
@@ -10,7 +12,9 @@ import type { ComputedReminder } from '../domain/reminderEngine'
 export function Dashboard() {
   const summary = useQuery(getGarageSummary)
 
-  if (!summary) return <p class="muted pad">Loading…</p>
+  if (!summary) return <Loading />
+
+  const documentCount = summary.vehicles.reduce((n, s) => n + s.documentCount, 0)
 
   return (
     <section class="page">
@@ -35,6 +39,19 @@ export function Dashboard() {
       ))}
 
       <ComparisonCard vehicles={summary.vehicles} year={summary.year} />
+
+      <a class="card export-cta" href="#/backup">
+        <div class="export-cta-main">
+          <h3 class="card-title">Back up your garage</h3>
+          <p class="muted small">
+            {summary.vehicles.length} vehicles · {documentCount} documents, stored only
+            on this device. Export a copy before clearing browser data or switching phones.
+          </p>
+        </div>
+        <span class="export-cta-cue" aria-hidden="true">
+          💾
+        </span>
+      </a>
     </section>
   )
 }
@@ -101,13 +118,13 @@ function VehicleSummaryCard({ summary: s, rank }: { summary: VehicleSummary; ran
           <dt>Mileage</dt>
           <dd class={s.mileage?.stale ? 'text-stale' : ''}>
             {s.mileage
-              ? `${s.mileage.miles.toLocaleString()} mi${s.mileage.stale ? ' · stale' : ''}`
+              ? `${formatMiles(s.mileage.miles)}${s.mileage.stale ? ' · stale' : ''}`
               : 'Not logged'}
           </dd>
         </div>
         <div>
           <dt>Last activity</dt>
-          <dd class="muted">{s.lastActivityDate ?? '—'}</dd>
+          <dd class="muted">{formatShortDate(s.lastActivityDate)}</dd>
         </div>
       </dl>
 
@@ -115,12 +132,12 @@ function VehicleSummaryCard({ summary: s, rank }: { summary: VehicleSummary; ran
         <div class="recent-block">
           {s.recentServices.length > 0 && (
             <p class="muted small">
-              🔧 {s.recentServices.map((e) => `${e.title} (${e.date})`).join(', ')}
+              🔧 {s.recentServices.map((e) => `${e.title} (${formatShortDate(e.date)})`).join(', ')}
             </p>
           )}
           {s.recentRepairs.length > 0 && (
             <p class="muted small">
-              🛠️ {s.recentRepairs.map((e) => `${e.title} (${e.date})`).join(', ')}
+              🛠️ {s.recentRepairs.map((e) => `${e.title} (${formatShortDate(e.date)})`).join(', ')}
             </p>
           )}
         </div>
@@ -146,9 +163,9 @@ function ComparisonCard({ vehicles, year }: { vehicles: VehicleSummary[]; year: 
   const rows: { label: string; value: (s: VehicleSummary) => string }[] = [
     {
       label: `Miles driven (${year})`,
-      value: (s) => (s.milesThisYear != null ? s.milesThisYear.toLocaleString() : '—'),
+      value: (s) => (s.milesThisYear != null ? formatMiles(s.milesThisYear) : '—'),
     },
-    { label: `Spent this year`, value: (s) => (s.spendThisYear > 0 ? `$${s.spendThisYear.toFixed(2)}` : '—') },
+    { label: `Spent this year`, value: (s) => (s.spendThisYear > 0 ? formatMoney(s.spendThisYear) : '—') },
     { label: 'Overdue items', value: (s) => String(s.counts.overdue) },
     { label: 'Completed items', value: (s) => String(s.counts.completed) },
     { label: 'Documents', value: (s) => String(s.documentCount) },

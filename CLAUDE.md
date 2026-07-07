@@ -306,9 +306,49 @@ secure context and won't offer install. Publish the `dist/` folder.
     survived with `documentIds` emptied**); `#/documents/<id>` pre-filtered the
     vehicle; dashboard Documents row counted the glovebox doc. tsc + build clean,
     78/78 tests, no console errors.
-- Next: M8 backup/export + storage durability (`navigator.storage.persist`
-  already called at boot in `main.tsx`, but no export/import yet) → M9 cost/resale
-  summary (per-category breakdown; `getYearSpend`/comparison only total).
+- **M8 — backup/export & restore: DONE.** Single versioned, portable JSON backup
+  of the whole garage. PURE `domain/backup.ts`: `BACKUP_FORMAT`/`CURRENT_BACKUP_VERSION`,
+  `BackupFile`/`BackupData`/`SerializedDocument` types, `validateBackup(raw,
+  appSchemaVersion)` → typed ok/error result (never throws; checks format magic,
+  future format version, future DB schema, every table present as an array, each
+  document row has a base64 blob), `summarizeBackup`, `backupFilename(date)`.
+  IMPURE `db/backup.ts`: `exportGarage()` reads all 6 tables and base64-encodes
+  document blobs (chunked btoa; records sorted by id so re-export is byte-identical
+  = deterministic), `serializeBackupToJson`, `importGarage(backup)` = REPLACE
+  (not merge) — clears + bulkPuts all 6 tables inside ONE Dexie transaction so a
+  failed restore rolls back and can't corrupt relationships; records keep their
+  ids so event.documentIds ↔ doc.id, doc.linkedTo, and `${vehicleId}:${category}`
+  rule ids all survive. `downloadBackup`/`readBackupFile` for browser file I/O.
+  Templates are NOT exported (code-derived; seedIfEmpty forward-fills new template
+  rules on next boot). New `pages/Backup.tsx` (export button + file-pick → validate
+  → preview counts → explicit confirm → replace) + route `#/backup`. 13 tests in
+  `tests/backup.test.ts` (serialization, validation error cases, empty-DB restore,
+  relationship + blob-byte round-trip, full-replace). Reminder math/CRUD/docs/
+  ranking untouched.
+- **M9 — final polish, hardening & UX cleanup: DONE.** No logic changes — all
+  reminder/ranking/CRUD/doc/backup behavior preserved. Additions: (1) PURE
+  `formatShortDate`/`formatMiles`/`formatMoney` in `domain/format.ts` (TZ-safe
+  manual date parse, "—" for null), applied across dashboard, history rows,
+  odometer rows, and document context (10 tests in `tests/format.test.ts`).
+  (2) New `components/ui.tsx`: `Loading` (spinner + `role=status`), `EmptyState`,
+  and `ConfirmButton` (inline two-step destructive confirm) — the latter replaces
+  the old `window.confirm` in event/odometer delete and adds confirmation to the
+  document-remove (preview modal) and restore actions; `DocumentGrid`'s glovebox
+  ✕ got a bespoke two-tap confirm overlay. (3) Dashboard "Back up your garage"
+  CTA card (answers "what's ready to export", links to `#/backup`, shows vehicle/
+  doc counts). (4) Nav decluttered to 4 tabs (Home/Vehicles/Docs/Backup) —
+  **Debug moved OFF the primary nav** to a "Developer & debug tools →" link at the
+  bottom of the Backup page (still routable at `#/debug`); added `aria-current` to
+  the active tab. (5) Form validation: removed native `required` from the odometer
+  inputs so a styled `role=alert` message ("Enter the odometer reading…") shows
+  instead of the inconsistent native bubble; also guards negatives. (6) A11y:
+  modal `aria-labelledby`, `aria-live` notices, reduced-motion spinner. (7) CSS:
+  stronger overdue pill/badge emphasis, spinner/empty/confirm/CTA styles. 101/101
+  tests pass, tsc + build clean. Verified live: validation message, formatted
+  "Jul 7, 2026 · 55,000 mi" history row, two-step delete (armed→confirm→gone),
+  export success notice, 4-tab nav w/ relocated Debug link, mobile empty state.
+- Next (not yet built): a cost/resale summary milestone (per-category spend
+  breakdown; today `getYearSpend`/the comparison table only total). Nothing else
+  is committed as required.
 
-Do NOT implement later-milestone features (backup/export, cost breakdown) until
-that milestone.
+Do NOT implement later-milestone features (cost/resale breakdown) until asked.

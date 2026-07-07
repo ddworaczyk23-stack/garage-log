@@ -13,6 +13,7 @@ interface Props {
 // this needs since blobs themselves live in IndexedDB, not here.
 export function DocumentGrid({ documents, onRemove }: Props) {
   const [urls, setUrls] = useState<Record<string, string>>({});
+  const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   useEffect(() => {
     const next: Record<string, string> = {}
@@ -49,17 +50,41 @@ export function DocumentGrid({ documents, onRemove }: Props) {
                 {doc.optimized ? ' · optimized' : ''}
               </span>
             </a>
-            {onRemove && (
-              <button
-                type="button"
-                class="doc-remove-btn"
-                title="Delete document"
-                aria-label={`Delete ${doc.filename}`}
-                onClick={() => onRemove(doc.id)}
-              >
-                ✕
-              </button>
-            )}
+            {onRemove &&
+              (confirmingId === doc.id ? (
+                <span class="doc-confirm" role="group" aria-label={`Delete ${doc.filename}?`}>
+                  <button
+                    type="button"
+                    class="doc-confirm-yes"
+                    title="Confirm delete"
+                    onClick={() => {
+                      setConfirmingId(null)
+                      onRemove(doc.id)
+                    }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    class="doc-confirm-no"
+                    title="Cancel"
+                    aria-label="Cancel delete"
+                    onClick={() => setConfirmingId(null)}
+                  >
+                    ✕
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  class="doc-remove-btn"
+                  title="Delete document"
+                  aria-label={`Delete ${doc.filename}`}
+                  onClick={() => setConfirmingId(doc.id)}
+                >
+                  ✕
+                </button>
+              ))}
           </div>
         )
       })}

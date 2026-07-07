@@ -11,6 +11,7 @@ import {
   type DocumentIndexEntry,
 } from '../domain/documents'
 import { DocumentPreviewModal } from '../components/DocumentPreviewModal'
+import { EmptyState, Loading } from '../components/ui'
 
 interface Props {
   /** Optional deep-link filter (e.g. from a vehicle page). */
@@ -110,9 +111,17 @@ export function Documents({ initialVehicleId }: Props) {
       </div>
 
       {!entries ? (
-        <p class="muted small pad">Loading…</p>
+        <Loading />
       ) : results.length === 0 ? (
-        <p class="muted small pad">No documents match these filters.</p>
+        <EmptyState
+          icon="📄"
+          title={total === 0 ? 'No documents yet' : 'No documents match these filters'}
+          hint={
+            total === 0
+              ? 'Attach receipts or photos when you log a service, or add vehicle papers to the Glovebox.'
+              : 'Try clearing the search or a filter above.'
+          }
+        />
       ) : (
         <ul class="doc-result-list">
           {results.map((e) => (

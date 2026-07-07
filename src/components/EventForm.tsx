@@ -63,13 +63,19 @@ export function EventForm({ vehicleId, kind, existing, existingDocs = [], onDone
 
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [removedDocIds, setRemovedDocIds] = useState<string[]>([])
+  const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
   const remainingDocs = existingDocs.filter((d) => !removedDocIds.includes(d.id))
 
   async function submit(e: Event) {
     e.preventDefault()
-    if (!odometerMiles.trim() || saving) return
+    if (saving) return
+    if (!odometerMiles.trim() || Number(odometerMiles) < 0) {
+      setError('Enter the odometer reading (miles) for this entry.')
+      return
+    }
+    setError('')
     setSaving(true)
 
     const base = {
@@ -128,7 +134,6 @@ export function EventForm({ vehicleId, kind, existing, existingDocs = [], onDone
           <input
             type="number"
             inputMode="numeric"
-            required
             value={odometerMiles}
             onInput={(e) => setOdometerMiles((e.target as HTMLInputElement).value)}
           />
@@ -351,6 +356,7 @@ export function EventForm({ vehicleId, kind, existing, existingDocs = [], onDone
         </div>
       )}
 
+      {error && <p class="notice notice-error" role="alert">{error}</p>}
       <div class="form-actions">
         <button class="btn" type="submit" disabled={saving}>
           {saving ? 'Saving…' : existing ? 'Save changes' : 'Log entry'}

@@ -11,6 +11,7 @@ import {
   type DocumentIndexEntry,
   type DocSource,
 } from '../domain/documents'
+import { formatShortDate } from '../domain/format'
 import { CATEGORY_LABELS, type MaintenanceEvent, type VehicleDocument } from '../types'
 
 // The single write path for attachments (Milestone 7). Both the event forms and
@@ -178,7 +179,7 @@ export async function buildDocumentIndex(): Promise<DocumentIndexEntry[]> {
       vehicleName: vehicleName.get(event.vehicleId) ?? 'Unknown vehicle',
       source: event.kind as DocSource, // 'maintenance' | 'repair'
       eventId: event.id,
-      context: `${event.title || CATEGORY_LABELS[event.category]} · ${event.date}`,
+      context: `${event.title || CATEGORY_LABELS[event.category]} · ${formatShortDate(event.date)}`,
       date: event.date,
       fileType: fileTypeOf(doc.mimeType),
     })

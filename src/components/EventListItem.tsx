@@ -1,7 +1,9 @@
 import { useState } from 'preact/hooks'
 import { useQuery } from '../db/useQuery'
 import { deleteEvent } from '../db/events'
+import { formatMiles, formatMoney, formatShortDate } from '../domain/format'
 import { EventForm, loadEventDocs } from './EventForm'
+import { ConfirmButton } from './ui'
 import type { MaintenanceEvent } from '../types'
 
 interface Props {
@@ -16,11 +18,6 @@ interface Props {
 export function EventListItem({ vehicleId, event }: Props) {
   const [editing, setEditing] = useState(false)
   const docs = useQuery(() => (editing ? loadEventDocs(event) : Promise.resolve([])), [editing, event.id])
-
-  async function handleDelete() {
-    if (!confirm(`Delete this ${event.kind} entry? This cannot be undone.`)) return
-    await deleteEvent(event.id)
-  }
 
   if (editing) {
     return (
@@ -40,19 +37,21 @@ export function EventListItem({ vehicleId, event }: Props) {
       <span class="list-row-main">
         <span class="list-row-title">{event.title}</span>
         <span class="muted small">
-          {event.date} · {event.odometerMiles.toLocaleString()} mi
-          {event.cost ? ` · $${event.cost.toFixed(2)}` : ''}
-          {event.documentIds.length ? ` · 📎${event.documentIds.length}` : ''}
+          {formatShortDate(event.date)} · {formatMiles(event.odometerMiles)}
+          {event.cost ? ` · ${formatMoney(event.cost)}` : ''}
+          {event.documentIds.length ? ` · 📎 ${event.documentIds.length}` : ''}
         </span>
         {event.notes && <span class="muted small">{event.notes}</span>}
       </span>
       <span class="row-actions">
-        <button class="btn-link" onClick={() => setEditing(true)}>
+        <button type="button" class="btn-link" onClick={() => setEditing(true)}>
           Edit
         </button>
-        <button class="btn-link btn-link-danger" onClick={handleDelete}>
-          Delete
-        </button>
+        <ConfirmButton
+          label="Delete"
+          confirmLabel="Delete?"
+          onConfirm={() => deleteEvent(event.id)}
+        />
       </span>
     </li>
   )
