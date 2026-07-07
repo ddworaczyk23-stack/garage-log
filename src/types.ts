@@ -1,0 +1,229 @@
+// Shared data model for Garage Log.
+//
+// Milestone 1 only stores Vehicles. The other interfaces + tables are defined
+// now so the Dexie schema is stable and later milestones (events, reminders,
+// documents, backup) can start writing without a schema migration.
+
+export interface Vehicle {
+  id: string
+  name: string // short label, e.g. "F-150 STX"
+  year: number
+  make: string
+  model: string
+  trim: string
+  engine: string
+  drivetrain: string
+  vin?: string
+  photoId?: string // -> VehicleDocument.id (set in a later milestone)
+  createdAt: string // ISO timestamp
+}
+
+export interface OdometerReading {
+  id: string
+  vehicleId: string
+  date: string // ISO date
+  miles: number
+  source: 'quick-log' | 'event'
+}
+
+// 'maintenance' = routine scheduled service (ties into the reminders engine via
+// category); 'repair' = unscheduled fix. Both share one table/type — same
+// history list, same document attachments, same category-matching for the
+// reminder rules — only the form fields shown to the user differ by kind.
+export type EventKind = 'maintenance' | 'repair'
+
+export type PerformedBy = 'dealer' | 'independent-shop' | 'diy' | 'other'
+
+export const PERFORMED_BY_LABELS: Record<PerformedBy, string> = {
+  dealer: 'Dealer',
+  'independent-shop': 'Independent shop',
+  diy: 'DIY',
+  other: 'Other',
+}
+
+export interface MaintenanceEvent {
+  id: string
+  vehicleId: string
+  kind: EventKind
+  date: string // ISO date
+  odometerMiles: number
+  category: MaintenanceCategory // controlled vocabulary, shared with ReminderRule.category
+  title: string
+  cost: number
+  vendor?: string
+  notes?: string
+  documentIds: string[] // -> VehicleDocument.id[]
+
+  // Maintenance-specific (optional; populated by the service form).
+  servicePerformed?: string
+  parts?: string
+  fluids?: string
+  performedBy?: PerformedBy
+
+  // Repair-specific (optional; populated by the repair form). `parts` above is
+  // shared between both forms.
+  symptom?: string
+  diagnosis?: string
+  fix?: string
+  labor?: string
+}
+
+export interface VehicleDocument {
+  id: string
+  blob: Blob // stored natively in IndexedDB, no base64 at rest
+  mimeType: string
+  filename: string
+  sizeBytes: number // size of the stored blob (post-compression when optimized)
+  createdAt: string
+  linkedTo: { type: 'event' | 'vehicle'; id: string }
+  // Set when the upload was re-encoded/downscaled to save space (Milestone 7).
+  // `sizeBytes` is then the compressed size and `originalSizeBytes` the pre-
+  // compression size, so the UI can show how much was saved.
+  optimized?: boolean
+  originalSizeBytes?: number
+  // Free-form organizational labels (Milestone 7). Lowercased, deduped. Optional
+  // and non-indexed — searched/filtered in memory by the documents browser.
+  tags?: string[]
+}
+
+// A mileage/time interval. Either bound may be null; whichever threshold is
+// reached first makes an item due. `conditionBased` marks items with no fixed
+// interval (e.g. wheel alignment) — inspect/replace by condition instead.
+export interface Interval {
+  miles: number | null
+  months: number | null
+  conditionBased?: boolean
+}
+
+// A per-vehicle instance of a maintenance item. Seeded from the static schedule
+// template (see db/scheduleTemplates.ts) but holds all the MUTABLE per-vehicle
+// state: an optional custom interval override, the last-done point, and any
+// manual status override/notes. The template (factory + mechanic-consensus
+// intervals) stays untouched in code, so both references are always recoverable.
+//
+// Effective interval = custom override ?? mechanic-consensus ?? factory
+// (computed by resolveInterval() in domain/reminderStatus.ts).
+export interface ReminderRule {
+  id: string // `${vehicleId}:${category}` — stable across re-seed/import
+  vehicleId: string
+  category: MaintenanceCategory // matches MaintenanceEvent.category for auto-linking
+  label: string
+  // The user's custom interval override ("customOverrideInterval"). Both null =
+  // no override; effective interval then falls back to consensus, then factory.
+  // The template's factory & consensus values are never overwritten.
+  customIntervalMiles: number | null
+  customIntervalMonths: number | null
+  // Last time this item was performed. Populated from service history / the
+  // "already-replaced" override; drives the future due-date calculation.
+  lastDoneDate: string | null
+  lastDoneMiles: number | null
+  // Manual status override + free-text note (see RuleOverride). null = none.
+  override: RuleOverride | null
+  notes: string | null
+  source: 'manufacturer-default' | 'user-added'
+}
+
+// Manual overrides a user can place on a rule. These are inputs the reminder
+// engine (Milestone 4) will read; they are NOT the computed status.
+//   already-replaced        -> counts as done (usually with a date/mileage)
+//   dealer-performed / diy   -> informational tag on how it's serviced
+//   inspect-next-oil-change  -> surface as a "check" item at next oil change
+//   replace-at-next-interval -> user intends to replace at the next due point
+//   not-needed               -> not applicable to this vehicle (status: N/A)
+export type OverrideKind =
+  | 'already-replaced'
+  | 'dealer-performed'
+  | 'diy'
+  | 'inspect-next-oil-change'
+  | 'replace-at-next-interval'
+  | 'not-needed'
+
+export interface RuleOverride {
+  kind: OverrideKind
+  note: string | null
+  // Optional "when last done" for already-replaced (feeds lastDone*).
+  atDate: string | null
+  atMiles: number | null
+}
+
+export const OVERRIDE_LABELS: Record<OverrideKind, string> = {
+  'already-replaced': 'Already replaced',
+  'dealer-performed': 'Dealer performed',
+  diy: 'DIY',
+  'inspect-next-oil-change': 'Inspect at next oil change',
+  'replace-at-next-interval': 'Replace at next interval',
+  'not-needed': 'Not needed for this vehicle',
+}
+
+// The five display states the reminder engine (Milestone 4) will compute per
+// rule by comparing lastDone* + interval + override against the current date and
+// odometer. Defined here now so the UI and engine share one vocabulary; nothing
+// computes these yet.
+export type MaintenanceStatus =
+  | 'completed' // done within its interval (already completed)
+  | 'watch-next' // approaching due within the lead window
+  | 'due-next' // at/near due now
+  | 'overdue' // past due
+  | 'not-applicable' // override: not-needed
+
+export const STATUS_LABELS: Record<MaintenanceStatus, string> = {
+  completed: 'Completed',
+  'watch-next': 'Watch next',
+  'due-next': 'Due next',
+  overdue: 'Overdue',
+  'not-applicable': 'Not applicable',
+}
+
+// Simple key/value bag for app-level state (last backup date, schema version, etc.)
+export interface AppMetaRecord {
+  key: string
+  value: unknown
+}
+
+// Controlled maintenance-category vocabulary shared by MaintenanceEvent.category
+// and ReminderRule.category. Logging an event with one of these categories will
+// (in a later milestone) auto-update the matching rule's "last done" fields.
+// `other` is the free-text escape hatch. Kept as plain strings so the DB fields
+// stay `string` and unknown legacy values never break.
+export const MAINTENANCE_CATEGORIES = [
+  'oil-change',
+  'tire-rotation',
+  'engine-air-filter',
+  'cabin-air-filter',
+  'brake-fluid',
+  'brake-inspection',
+  'coolant',
+  'transmission-fluid',
+  'cvt-fluid',
+  'spark-plugs',
+  'transfer-case-fluid',
+  'differential-fluid',
+  'battery-check',
+  'wiper-blades',
+  'wheel-alignment',
+  'multi-point-inspection',
+  'other',
+] as const
+
+export type MaintenanceCategory = (typeof MAINTENANCE_CATEGORIES)[number]
+
+// Human-friendly labels for each category (used in dropdowns and lists).
+export const CATEGORY_LABELS: Record<MaintenanceCategory, string> = {
+  'oil-change': 'Engine oil & filter',
+  'tire-rotation': 'Tire rotation',
+  'engine-air-filter': 'Engine air filter',
+  'cabin-air-filter': 'Cabin air filter',
+  'brake-fluid': 'Brake fluid',
+  'brake-inspection': 'Brake inspection',
+  coolant: 'Engine coolant',
+  'transmission-fluid': 'Transmission fluid',
+  'cvt-fluid': 'CVT fluid',
+  'spark-plugs': 'Spark plugs',
+  'transfer-case-fluid': 'Transfer case fluid',
+  'differential-fluid': 'Differential / axle fluid',
+  'battery-check': 'Battery & charging check',
+  'wiper-blades': 'Wiper blades',
+  'wheel-alignment': 'Wheel alignment',
+  'multi-point-inspection': 'Multi-point inspection',
+  other: 'Other',
+}
