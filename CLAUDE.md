@@ -347,6 +347,33 @@ secure context and won't offer install. Publish the `dist/` folder.
   tests pass, tsc + build clean. Verified live: validation message, formatted
   "Jul 7, 2026 · 55,000 mi" history row, two-step delete (armed→confirm→gone),
   export success notice, 4-tab nav w/ relocated Debug link, mobile empty state.
+- **M10 — Apple-like light design system: DONE.** Audit-then-implement pass; NO
+  logic changes (reminders/ranking/CRUD/docs/backup untouched, 101/101 tests).
+  `styles/app.css` fully rewritten around design tokens but **every selector
+  kept**, so markup churn was minimal. Theme: single LIGHT theme (`--bg #f2f2f7`
+  iOS systemGray6 canvas, white cards, hairline `rgba(60,60,67,.14)` borders,
+  soft shadows, Apple-blue `#0071e3` accent, `color-scheme: light`); status
+  colors rebuilt as tint-bg + dark readable text (`--c-overdue/-due/-watch/-ok/
+  -stale/-cost` pairs). Structure: `.app-main` max-width 700px centered (desktop
+  readability), frosted header + bottom nav (`backdrop-filter: blur(20px)
+  saturate(180%)` over translucent white), modal = bottom sheet on phones but
+  CENTERED dialog ≥640px, global input/select/file styling (previously only
+  `.event-form`/`.admin-form` inputs were themed — Documents filters/Backup file
+  picker were unstyled UA defaults), hover elevation on link-cards + global
+  `:focus-visible` outline, `.btn.quick-add-btn` restyled as tinted secondary
+  (CSS-only, markup unchanged), vehicle/doc glyphs sit in tinted rounded squares.
+  TSX edits: `Nav.tsx` emoji → inline monochrome stroke SVGs (Home/Vehicles/Docs/
+  Backup); `app.tsx` dropped the 🔧 header emoji (plain wordmark); Dashboard
+  recent-block 🔧/🛠️ → "Service ·"/"Repairs ·" text labels (`.recent-kind`) and
+  export-CTA 💾 → chevron; `Debug.tsx` reset now uses ConfirmButton (last
+  remaining `window.confirm` removed); TemplateAdmin/ReminderDebug now use the
+  shared `<Loading />`. `index.html` theme-color `#f2f2f7` + iOS status bar
+  `default`; manifest theme/background colors updated in `vite.config.ts`.
+  Verified live: dashboard/vehicle/documents/backup on desktop + 375px mobile,
+  modal centered-vs-sheet behavior, styled filters (42px controls), no console
+  errors. Dark mode intentionally removed in favor of the single light theme
+  (design direction); could return later via `prefers-color-scheme` overrides on
+  the tokens.
 - Next (not yet built): a cost/resale summary milestone (per-category spend
   breakdown; today `getYearSpend`/the comparison table only total). Nothing else
   is committed as required.

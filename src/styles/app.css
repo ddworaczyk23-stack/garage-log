@@ -1,21 +1,51 @@
+/* Garage Log design system (Milestone 10 aesthetic pass).
+ *
+ * Single light theme, Apple-inspired: calm gray canvas, white cards with
+ * hairline borders + soft shadows, one blue accent, status colors reserved
+ * for meaning. All class names predate this pass — only the presentation
+ * changed, so markup and behavior are untouched. */
+
 :root {
-  /* Palette */
-  --bg: #0f172a; /* slate-900 */
-  --bg-elevated: #1e293b; /* slate-800 */
-  --bg-card: #1e293b;
-  --border: #334155; /* slate-700 */
-  --text: #f1f5f9; /* slate-100 */
-  --text-muted: #94a3b8; /* slate-400 */
-  --accent: #2563eb; /* blue-600 */
+  /* Palette — iOS system-inspired */
+  --bg: #f2f2f7; /* systemGray6 canvas */
+  --bg-elevated: #ffffff;
+  --bg-card: #ffffff;
+  --bg-inset: #f2f2f7; /* inset wells inside white cards */
+  --border: rgba(60, 60, 67, 0.14); /* hairline */
+  --text: #1d1d1f;
+  --text-muted: #6e6e73;
+  --accent: #0071e3; /* Apple blue */
+  --accent-tint: rgba(0, 113, 227, 0.09);
   --accent-text: #ffffff;
-  --danger: #dc2626; /* red-600 */
+  --danger: #d70015;
+  --danger-tint: rgba(215, 0, 21, 0.08);
+
+  /* Status hues (background tint + readable dark text) */
+  --c-overdue: #c0122f;
+  --c-overdue-bg: rgba(215, 0, 21, 0.1);
+  --c-due: #b25000;
+  --c-due-bg: rgba(255, 149, 0, 0.15);
+  --c-watch: #8a6d00;
+  --c-watch-bg: rgba(255, 204, 0, 0.2);
+  --c-ok: #1d7a3d;
+  --c-ok-bg: rgba(52, 199, 89, 0.14);
+  --c-stale: #4644b8;
+  --c-stale-bg: rgba(88, 86, 214, 0.11);
+  --c-cost: #8a3fb3;
+  --c-cost-bg: rgba(175, 82, 222, 0.11);
+
+  /* Elevation */
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-raised: 0 4px 14px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.2);
 
   /* Metrics */
-  --radius: 14px;
+  --radius: 16px; /* cards */
+  --radius-control: 10px; /* inputs, small buttons */
   --gap: 16px;
   --nav-height: 60px;
 
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -30,10 +60,18 @@ body {
 
 body {
   font-family:
-    system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui,
+    'Segoe UI Variable', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Consistent, visible keyboard focus everywhere. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ---------- App shell ---------- */
@@ -47,10 +85,13 @@ body {
 .app-header {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
   padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
-  background: var(--bg);
-  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, #ffffff 78%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 0.5px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -61,22 +102,28 @@ body {
 }
 
 .app-title {
-  font-size: 1.15rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
 .app-main {
   flex: 1;
-  padding: 16px;
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 20px 16px;
   /* leave room for the fixed bottom nav + iOS home indicator */
-  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 24px);
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 28px);
 }
 
 /* ---------- Typography helpers ---------- */
 .page-title {
-  font-size: 1.4rem;
-  margin: 4px 0 6px;
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  margin: 2px 0 4px;
 }
 .muted {
   color: var(--text-muted);
@@ -91,13 +138,16 @@ body {
 /* ---------- Cards ---------- */
 .card {
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
   padding: 16px;
   margin-bottom: var(--gap);
 }
 .card-title {
-  font-size: 1rem;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: -0.012em;
   margin: 0 0 8px;
 }
 
@@ -122,11 +172,24 @@ body {
   margin-bottom: 14px;
 }
 
+/* Vehicle glyphs sit in a tinted rounded square so they read as deliberate
+ * iconography rather than loose emoji. */
 .vehicle-emoji {
-  font-size: 1.8rem;
+  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-inset);
+  border-radius: 12px;
+  flex-shrink: 0;
 }
 .vehicle-emoji.lg {
-  font-size: 2.4rem;
+  font-size: 1.9rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
 }
 
 .stat-row {
@@ -136,8 +199,8 @@ body {
 }
 .stat {
   flex: 1;
-  background: var(--bg);
-  border-radius: 10px;
+  background: var(--bg-inset);
+  border-radius: var(--radius-control);
   padding: 10px 12px;
 }
 .stat dt {
@@ -157,7 +220,7 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .attention-item {
   display: flex;
@@ -167,12 +230,13 @@ body {
 .attention-main {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 .attention-title {
   font-weight: 600;
   font-size: 0.92rem;
+  letter-spacing: -0.008em;
 }
 
 .badge-row {
@@ -183,52 +247,56 @@ body {
 }
 .badge {
   display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 3px 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 9px;
   border-radius: 999px;
   white-space: nowrap;
 }
 .badge-overdue {
-  background: color-mix(in srgb, var(--danger) 30%, transparent);
-  color: #fca5a5;
+  background: var(--c-overdue-bg);
+  color: var(--c-overdue);
 }
 .badge-due {
-  background: color-mix(in srgb, #f59e0b 25%, transparent);
-  color: #fbbf24;
+  background: var(--c-due-bg);
+  color: var(--c-due);
 }
 .badge-watch {
-  background: color-mix(in srgb, #eab308 20%, transparent);
-  color: #fde68a;
+  background: var(--c-watch-bg);
+  color: var(--c-watch);
 }
 .badge-stale {
-  background: color-mix(in srgb, #6366f1 25%, transparent);
-  color: #c7d2fe;
+  background: var(--c-stale-bg);
+  color: var(--c-stale);
 }
 .badge-cost {
-  background: color-mix(in srgb, #8b5cf6 22%, transparent);
-  color: #ddd6fe;
+  background: var(--c-cost-bg);
+  color: var(--c-cost);
 }
 .badge-ok {
-  background: color-mix(in srgb, #22c55e 20%, transparent);
-  color: #86efac;
+  background: var(--c-ok-bg);
+  color: var(--c-ok);
 }
 
 .vehicle-summary {
   display: block;
   text-decoration: none;
   color: inherit;
+  transition: box-shadow 0.16s ease, transform 0.16s ease;
+}
+.vehicle-summary:hover {
+  box-shadow: var(--shadow-raised);
 }
 .vehicle-summary:active {
   transform: scale(0.99);
 }
 .rank-chip {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-muted);
-  background: var(--bg);
+  background: var(--bg-inset);
   border-radius: 8px;
-  padding: 4px 7px;
+  padding: 4px 8px;
 }
 .summary-priority {
   margin-bottom: 8px;
@@ -242,21 +310,22 @@ body {
 .reminder-line-main {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 .reminder-line-title {
   font-weight: 600;
   font-size: 0.9rem;
+  letter-spacing: -0.008em;
 }
 .mini-list {
   list-style: none;
   margin: 0 0 10px;
-  padding: 8px 0 0;
-  border-top: 1px solid var(--border);
+  padding: 10px 0 0;
+  border-top: 0.5px solid var(--border);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 .summary-facts {
   display: grid;
@@ -264,10 +333,10 @@ body {
   gap: 10px;
   margin: 0 0 10px;
   padding: 10px 0 0;
-  border-top: 1px solid var(--border);
+  border-top: 0.5px solid var(--border);
 }
 .summary-facts dt {
-  font-size: 0.7rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
 }
 .summary-facts dd {
@@ -276,12 +345,16 @@ body {
   font-size: 0.9rem;
 }
 .text-stale {
-  color: #fbbf24;
+  color: var(--c-due);
 }
 .recent-block {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
+}
+.recent-kind {
+  font-weight: 600;
+  color: var(--text);
 }
 
 .compare-table {
@@ -292,9 +365,12 @@ body {
 .compare-table th,
 .compare-table td {
   text-align: right;
-  padding: 8px 6px;
-  border-bottom: 1px solid var(--border);
+  padding: 9px 6px;
+  border-bottom: 0.5px solid var(--border);
   font-size: 0.88rem;
+}
+.compare-table tbody tr:last-child td {
+  border-bottom: none;
 }
 .compare-table th:first-child,
 .compare-table td:first-child {
@@ -302,10 +378,11 @@ body {
 }
 .compare-table thead th {
   color: var(--text);
-  font-weight: 700;
+  font-weight: 600;
 }
 .compare-table td {
   font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Lists ---------- */
@@ -322,22 +399,34 @@ body {
   align-items: center;
   gap: 12px;
   background: var(--bg-card);
-  border: 1px solid var(--border);
+  border: 0.5px solid var(--border);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
   padding: 14px 16px;
   text-decoration: none;
   color: inherit;
+}
+a.list-row {
+  transition: box-shadow 0.16s ease, transform 0.16s ease;
+}
+a.list-row:hover {
+  box-shadow: var(--shadow-raised);
+}
+a.list-row:active {
+  transform: scale(0.99);
 }
 .list-row-main {
   display: flex;
   flex-direction: column;
   flex: 1;
+  min-width: 0;
 }
 .list-row-title {
   font-weight: 600;
+  letter-spacing: -0.008em;
 }
 .chevron {
-  color: var(--text-muted);
+  color: rgba(60, 60, 67, 0.3);
   font-size: 1.4rem;
 }
 
@@ -346,11 +435,12 @@ body {
 }
 .row-actions {
   display: flex;
-  gap: 12px;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
 }
 .btn-link-danger {
-  color: #fca5a5;
+  color: var(--danger);
 }
 
 /* ---------- Quick add + event/odometer forms ---------- */
@@ -359,36 +449,59 @@ body {
   gap: 8px;
   margin: 4px 0 var(--gap);
 }
-.quick-add-btn {
+/* Quick-add buttons are secondary actions: tinted, not filled, so the page
+ * has one clear visual hierarchy instead of three shouting primaries. */
+.btn.quick-add-btn {
   flex: 1;
-  padding: 10px 8px;
-  font-size: 0.85rem;
+  background: var(--accent-tint);
+  color: var(--accent);
+  padding: 11px 8px;
+  font-size: 0.88rem;
   text-align: center;
+}
+.btn.quick-add-btn:hover {
+  background: rgba(0, 113, 227, 0.14);
 }
 .event-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 .event-form .admin-field {
-  gap: 4px;
+  gap: 5px;
 }
-.event-form select,
-.event-form input[type='text'],
-.event-form input[type='number'],
-.event-form input[type='date'] {
-  background: var(--bg);
+
+/* Form controls — styled globally so the Documents filters, Backup file
+ * picker, and debug selects match the event forms (previously only inputs
+ * inside .event-form/.admin-form were themed). */
+select,
+textarea,
+input[type='text'],
+input[type='search'],
+input[type='number'],
+input[type='date'],
+input[type='file'] {
+  background: var(--bg-inset);
   color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px 10px;
-  font-size: 0.9rem;
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 10px 12px;
+  font-size: 0.92rem;
   font-family: inherit;
   width: 100%;
 }
-.event-form input[type='file'] {
+select:focus,
+textarea:focus,
+input:focus {
+  border-color: var(--accent);
+}
+input[type='file'] {
   font-size: 0.82rem;
 }
+input::placeholder {
+  color: rgba(60, 60, 67, 0.45);
+}
+
 .form-actions {
   display: flex;
   align-items: center;
@@ -396,7 +509,7 @@ body {
   margin-top: 4px;
 }
 .override-section {
-  border-top: 1px solid var(--border);
+  border-top: 0.5px solid var(--border);
   padding-top: 8px;
 }
 .doc-remove-list {
@@ -417,7 +530,7 @@ body {
 /* ---------- Document grid ---------- */
 .doc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
   gap: 10px;
 }
 .doc-thumb {
@@ -427,20 +540,24 @@ body {
   gap: 4px;
   text-decoration: none;
   color: inherit;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--bg-inset);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
   padding: 8px;
   overflow: hidden;
+  transition: box-shadow 0.16s ease;
+}
+.doc-thumb:hover {
+  box-shadow: var(--shadow-card);
 }
 .doc-thumb img {
   width: 100%;
   height: 64px;
   object-fit: cover;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .doc-thumb-icon {
-  font-size: 2rem;
+  font-size: 1.8rem;
   height: 64px;
   display: flex;
   align-items: center;
@@ -474,7 +591,7 @@ body {
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.5);
   color: #fff;
   font-size: 0.72rem;
   line-height: 1;
@@ -484,13 +601,14 @@ body {
   justify-content: center;
 }
 .doc-remove-btn:hover {
-  background: var(--danger, #c0392b);
+  background: var(--danger);
 }
 
 /* ---------- Detail view ---------- */
 .back-link {
   display: inline-block;
-  color: var(--text-muted);
+  color: var(--accent);
+  font-weight: 500;
   text-decoration: none;
   margin-bottom: 8px;
 }
@@ -528,8 +646,8 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 0;
-  border-top: 1px solid var(--border);
+  padding: 11px 0;
+  border-top: 0.5px solid var(--border);
 }
 .schedule-row:first-child {
   border-top: none;
@@ -541,6 +659,7 @@ body {
 }
 .schedule-label {
   font-weight: 600;
+  letter-spacing: -0.008em;
 }
 .schedule-status {
   flex-shrink: 0;
@@ -549,32 +668,32 @@ body {
 
 .status-pill {
   flex-shrink: 0;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.7rem;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.03em;
   padding: 4px 9px;
   border-radius: 999px;
   white-space: nowrap;
 }
 .status-overdue {
-  background: color-mix(in srgb, var(--danger) 30%, transparent);
-  color: #fca5a5;
+  background: var(--c-overdue-bg);
+  color: var(--c-overdue);
 }
 .status-due-next {
-  background: color-mix(in srgb, #f59e0b 25%, transparent);
-  color: #fbbf24;
+  background: var(--c-due-bg);
+  color: var(--c-due);
 }
 .status-watch-next {
-  background: color-mix(in srgb, #eab308 20%, transparent);
-  color: #fde68a;
+  background: var(--c-watch-bg);
+  color: var(--c-watch);
 }
 .status-completed {
-  background: color-mix(in srgb, #22c55e 20%, transparent);
-  color: #86efac;
+  background: var(--c-ok-bg);
+  color: var(--c-ok);
 }
 .status-not-applicable {
-  background: var(--bg);
+  background: var(--bg-inset);
   color: var(--text-muted);
 }
 
@@ -621,18 +740,28 @@ body {
   background: none;
   color: var(--accent);
   border: none;
-  padding: 4px 0;
+  /* Comfortable tap target without visually inflating the link. */
+  padding: 8px 4px;
+  margin: -4px 0;
   font-size: 0.85rem;
   font-weight: 600;
   text-align: left;
   cursor: pointer;
   align-self: flex-start;
+  border-radius: 6px;
+}
+.btn-link:hover {
+  background: var(--accent-tint);
+}
+.btn-link-danger:hover,
+.btn-link.danger:hover {
+  background: var(--danger-tint);
 }
 .admin-form {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border-top: 1px solid var(--border);
+  border-top: 0.5px solid var(--border);
   padding-top: 10px;
 }
 .admin-when {
@@ -644,16 +773,6 @@ body {
   flex-direction: column;
   gap: 3px;
   flex: 1;
-}
-.admin-form select,
-.admin-form input {
-  background: var(--bg);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 9px 10px;
-  font-size: 0.9rem;
-  font-family: inherit;
 }
 .admin-form .btn {
   align-self: flex-start;
@@ -672,7 +791,7 @@ body {
 .debug-table td {
   text-align: left;
   padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
 }
 .debug-table th {
   color: var(--text-muted);
@@ -691,7 +810,7 @@ body {
 .kv > div {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
   padding-bottom: 6px;
 }
 .kv dt {
@@ -709,24 +828,34 @@ body {
   background: var(--accent);
   color: var(--accent-text);
   border: none;
-  border-radius: 10px;
-  padding: 12px 16px;
+  border-radius: var(--radius-control);
+  padding: 12px 18px;
   font-size: 0.95rem;
   font-weight: 600;
+  letter-spacing: -0.008em;
   text-decoration: none;
   cursor: pointer;
+  transition: background 0.12s ease, filter 0.12s ease;
+}
+.btn:hover {
+  background: #0077ed;
 }
 .btn:active {
   filter: brightness(0.92);
 }
-.btn-danger {
+.btn[disabled] {
+  opacity: 0.55;
+  cursor: default;
+}
+.btn-danger,
+.btn.btn-danger:hover {
   background: var(--danger);
 }
 .card.danger {
-  border-color: color-mix(in srgb, var(--danger) 50%, var(--border));
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
 }
 code {
-  background: var(--bg);
+  background: var(--bg-inset);
   padding: 1px 5px;
   border-radius: 5px;
   font-size: 0.85em;
@@ -741,26 +870,35 @@ code {
   height: calc(var(--nav-height) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
-  background: var(--bg-elevated);
-  border-top: 1px solid var(--border);
+  justify-content: center;
+  background: color-mix(in srgb, #ffffff 80%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-top: 0.5px solid var(--border);
   z-index: 20;
 }
 .nav-item {
-  flex: 1;
+  flex: 0 1 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: 3px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
+  font-weight: 500;
 }
 .nav-item.is-active {
-  color: var(--text);
+  color: var(--accent);
 }
 .nav-icon {
-  font-size: 1.2rem;
+  display: flex;
+}
+.nav-icon svg {
+  width: 23px;
+  height: 23px;
+  display: block;
 }
 
 /* ---------- Documents browser (Milestone 7) ---------- */
@@ -802,17 +940,32 @@ code {
   gap: 12px;
   text-align: left;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+  border: 0.5px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--shadow-card);
   padding: 12px;
   cursor: pointer;
   color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  transition: box-shadow 0.16s ease, transform 0.16s ease;
+}
+.doc-result:hover {
+  box-shadow: var(--shadow-raised);
 }
 .doc-result:active {
-  filter: brightness(1.1);
+  transform: scale(0.99);
 }
+/* File-type glyph in a tinted squircle so rows scan as a tidy icon column. */
 .doc-result-icon {
-  font-size: 1.6rem;
+  font-size: 1.15rem;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-inset);
+  border-radius: 10px;
   flex-shrink: 0;
 }
 .doc-result-main {
@@ -824,6 +977,7 @@ code {
 }
 .doc-result-name {
   font-weight: 600;
+  letter-spacing: -0.008em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -838,11 +992,12 @@ code {
   margin-top: 2px;
 }
 .doc-tag {
-  font-size: 0.66rem;
-  padding: 1px 7px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 2px 8px;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 22%, transparent);
-  color: var(--text);
+  background: var(--accent-tint);
+  color: var(--accent);
 }
 
 /* ---------- Document preview modal ---------- */
@@ -850,7 +1005,7 @@ code {
   position: fixed;
   inset: 0;
   z-index: 40;
-  background: rgba(0, 0, 0, 0.65);
+  background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -861,12 +1016,24 @@ code {
   max-height: 92vh;
   overflow-y: auto;
   background: var(--bg-card);
-  border: 1px solid var(--border);
-  border-radius: 16px 16px 0 0;
+  border: 0.5px solid var(--border);
+  border-radius: 18px 18px 0 0;
+  box-shadow: var(--shadow-modal);
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+/* Bottom sheet on phones; centered dialog on laptop-size viewports. */
+@media (min-width: 640px) {
+  .modal-backdrop {
+    align-items: center;
+    padding: 32px 24px;
+  }
+  .modal-panel {
+    border-radius: 18px;
+    max-height: 86vh;
+  }
 }
 .modal-head {
   display: flex;
@@ -876,25 +1043,37 @@ code {
 }
 .modal-title {
   font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 .modal-close {
-  background: none;
+  background: var(--bg-inset);
   border: none;
   color: var(--text-muted);
-  font-size: 1.1rem;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  font-size: 0.85rem;
   cursor: pointer;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.modal-close:hover {
+  background: rgba(60, 60, 67, 0.14);
+  color: var(--text);
 }
 .modal-preview {
   display: flex;
   justify-content: center;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 10px;
+  background: var(--bg-inset);
+  border: 0.5px solid var(--border);
+  border-radius: 12px;
   overflow: hidden;
 }
 .preview-media {
@@ -950,23 +1129,25 @@ iframe.preview-media {
 .notice {
   margin: 4px 0 0;
   padding: 10px 12px;
-  border-radius: 10px;
+  border-radius: var(--radius-control);
   font-size: 0.85rem;
-  border: 1px solid var(--border);
+  border: 0.5px solid var(--border);
 }
 .notice-success {
-  background: color-mix(in srgb, #16a34a 18%, transparent);
-  border-color: color-mix(in srgb, #16a34a 45%, var(--border));
+  background: var(--c-ok-bg);
+  border-color: rgba(52, 199, 89, 0.35);
+  color: var(--c-ok);
 }
 .notice-error {
-  background: color-mix(in srgb, var(--danger) 16%, transparent);
-  border-color: color-mix(in srgb, var(--danger) 45%, var(--border));
+  background: var(--danger-tint);
+  border-color: rgba(215, 0, 21, 0.3);
+  color: var(--c-overdue);
 }
 .restore-preview {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  border-top: 1px solid var(--border);
+  border-top: 0.5px solid var(--border);
   padding-top: 10px;
 }
 .restore-summary {
@@ -982,15 +1163,18 @@ iframe.preview-media {
   align-items: baseline;
   justify-content: space-between;
   gap: 12px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
   padding-bottom: 4px;
+}
+.restore-summary li:last-child {
+  border-bottom: none;
 }
 .page-footer-link {
   text-align: center;
   margin: 8px 0 0;
 }
 
-/* ---------- Milestone 9 polish: loading / empty / confirm / CTA ---------- */
+/* ---------- Loading / empty / confirm / CTA (Milestone 9) ---------- */
 .loading {
   display: flex;
   align-items: center;
@@ -1003,7 +1187,7 @@ iframe.preview-media {
 .spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid var(--border);
+  border: 2px solid rgba(60, 60, 67, 0.18);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -1018,6 +1202,13 @@ iframe.preview-media {
   .spinner {
     animation-duration: 2s;
   }
+  .vehicle-summary,
+  a.list-row,
+  .doc-result,
+  .doc-thumb,
+  .btn {
+    transition: none;
+  }
 }
 
 .empty-state {
@@ -1026,16 +1217,24 @@ iframe.preview-media {
   align-items: center;
   text-align: center;
   gap: 4px;
-  padding: 28px 16px;
+  padding: 32px 16px;
   color: var(--text-muted);
 }
 .empty-icon {
-  font-size: 2rem;
-  opacity: 0.85;
+  font-size: 1.6rem;
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-inset);
+  border-radius: 14px;
+  margin-bottom: 4px;
 }
 .empty-title {
   margin: 4px 0 0;
   font-weight: 600;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
 
@@ -1043,7 +1242,7 @@ iframe.preview-media {
 .confirm-inline {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 /* Per-thumbnail delete confirmation (DocumentGrid). */
@@ -1061,7 +1260,7 @@ iframe.preview-media {
   cursor: pointer;
   font-size: 0.66rem;
   font-weight: 700;
-  padding: 3px 6px;
+  padding: 4px 7px;
   line-height: 1;
 }
 .doc-confirm-yes {
@@ -1069,7 +1268,7 @@ iframe.preview-media {
   color: #fff;
 }
 .doc-confirm-no {
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.55);
   color: #fff;
 }
 
@@ -1081,6 +1280,10 @@ iframe.preview-media {
   gap: 14px;
   text-decoration: none;
   color: inherit;
+  transition: box-shadow 0.16s ease, transform 0.16s ease;
+}
+.export-cta:hover {
+  box-shadow: var(--shadow-raised);
 }
 .export-cta:active {
   transform: scale(0.99);
@@ -1092,16 +1295,7 @@ iframe.preview-media {
   margin-bottom: 4px;
 }
 .export-cta-cue {
-  font-size: 1.7rem;
+  font-size: 1.3rem;
+  color: rgba(60, 60, 67, 0.3);
   flex-shrink: 0;
-}
-
-/* Stronger emphasis for the most urgent status pill. */
-.status-overdue {
-  background: color-mix(in srgb, var(--danger) 55%, transparent);
-  color: #fee2e2;
-}
-.badge-overdue {
-  background: color-mix(in srgb, var(--danger) 45%, transparent);
-  color: #fee2e2;
 }

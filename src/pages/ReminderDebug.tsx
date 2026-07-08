@@ -4,6 +4,7 @@ import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
 import { STATUS_LABELS } from '../types'
+import { Loading } from '../components/ui'
 
 async function loadReminders(vehicleId: string) {
   const [reminders, mileage] = await Promise.all([
@@ -27,7 +28,7 @@ export function ReminderDebug() {
     [activeVehicleId],
   )
 
-  if (!vehicles) return <p class="muted pad">Loading…</p>
+  if (!vehicles) return <Loading />
 
   return (
     <section class="page">

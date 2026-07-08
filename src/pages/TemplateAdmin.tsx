@@ -5,6 +5,7 @@ import { getTemplateEntry } from '../db/scheduleTemplates'
 import { resolveLastDone, resolveInterval, isNotApplicable } from '../domain/reminderStatus'
 import { formatInterval } from '../domain/format'
 import { OVERRIDE_LABELS } from '../types'
+import { Loading } from '../components/ui'
 import type { ReminderRule, OverrideKind } from '../types'
 
 const OVERRIDE_KINDS = Object.keys(OVERRIDE_LABELS) as OverrideKind[]
@@ -18,7 +19,7 @@ export function TemplateAdmin() {
   const vehicles = useQuery(() => db.vehicles.orderBy('name').toArray())
   const rules = useQuery(() => db.reminderRules.toArray())
 
-  if (!vehicles || !rules) return <p class="muted pad">Loading…</p>
+  if (!vehicles || !rules) return <Loading />
 
   return (
     <section class="page">

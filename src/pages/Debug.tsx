@@ -1,6 +1,7 @@
 import { db } from '../db/db'
 import { seedIfEmpty } from '../db/seed'
 import { useQuery } from '../db/useQuery'
+import { ConfirmButton } from '../components/ui'
 
 // Developer view to confirm IndexedDB is wired up and reading/writing.
 // Not part of the real product UI — kept behind the #/debug route.
@@ -22,7 +23,6 @@ export function Debug() {
   }
 
   async function resetDatabase() {
-    if (!confirm('Delete all local data and re-seed the two vehicles?')) return
     await db.delete()
     await db.open()
     await seedIfEmpty()
@@ -86,9 +86,14 @@ export function Debug() {
 
       <div class="card danger">
         <h3 class="card-title">Reset</h3>
-        <button class="btn btn-danger" onClick={resetDatabase}>
-          Delete database &amp; re-seed
-        </button>
+        <p class="muted small">Deletes every record on this device and re-seeds the two vehicles.</p>
+        <ConfirmButton
+          class="btn btn-danger"
+          label="Delete database & re-seed"
+          confirmLabel="Yes, erase everything"
+          busyLabel="Erasing…"
+          onConfirm={resetDatabase}
+        />
       </div>
     </section>
   )

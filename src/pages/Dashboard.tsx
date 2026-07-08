@@ -49,7 +49,7 @@ export function Dashboard() {
           </p>
         </div>
         <span class="export-cta-cue" aria-hidden="true">
-          💾
+          ›
         </span>
       </a>
     </section>
@@ -132,12 +132,14 @@ function VehicleSummaryCard({ summary: s, rank }: { summary: VehicleSummary; ran
         <div class="recent-block">
           {s.recentServices.length > 0 && (
             <p class="muted small">
-              🔧 {s.recentServices.map((e) => `${e.title} (${formatShortDate(e.date)})`).join(', ')}
+              <span class="recent-kind">Service</span> ·{' '}
+              {s.recentServices.map((e) => `${e.title} (${formatShortDate(e.date)})`).join(', ')}
             </p>
           )}
           {s.recentRepairs.length > 0 && (
             <p class="muted small">
-              🛠️ {s.recentRepairs.map((e) => `${e.title} (${formatShortDate(e.date)})`).join(', ')}
+              <span class="recent-kind">Repairs</span> ·{' '}
+              {s.recentRepairs.map((e) => `${e.title} (${formatShortDate(e.date)})`).join(', ')}
             </p>
           )}
         </div>
