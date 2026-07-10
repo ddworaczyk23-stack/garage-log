@@ -1299,3 +1299,95 @@ iframe.preview-media {
   color: rgba(60, 60, 67, 0.3);
   flex-shrink: 0;
 }
+
+/* ---------- Costs (Milestone 11) ---------- */
+.cost-grand {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.022em;
+  margin: 0 0 6px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* iOS-style segmented control for the All-time / year toggle. */
+.seg {
+  display: flex;
+  gap: 2px;
+  background: var(--bg-inset);
+  border-radius: var(--radius-control);
+  padding: 2px;
+  margin-bottom: var(--gap);
+}
+.seg-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 7px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.seg-btn.is-active {
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: var(--shadow-card);
+}
+
+.cost-stats {
+  margin-bottom: 10px;
+}
+.cost-stats:last-of-type {
+  margin-bottom: 4px;
+}
+.cost-stats .stat dd {
+  font-size: 1.05rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cost-cat-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 12px 0 0;
+  border-top: 0.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cost-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cost-row-label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: -0.008em;
+}
+.cost-row-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+.cost-bar {
+  height: 7px;
+  background: var(--bg-inset);
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 5px 0 3px;
+}
+.cost-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+.cost-row-meta {
+  display: block;
+}
+.cost-note,
+.cost-empty {
+  margin: 12px 0 0;
+}

@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Vehicles } from './pages/Vehicles'
 import { VehicleDetail } from './pages/VehicleDetail'
 import { Documents } from './pages/Documents'
+import { Costs } from './pages/Costs'
 import { Backup } from './pages/Backup'
 import { Debug } from './pages/Debug'
 import { TemplateAdmin } from './pages/TemplateAdmin'
@@ -19,6 +20,7 @@ import { ReminderDebug } from './pages/ReminderDebug'
 //   #/vehicle/<id>          -> Vehicle detail
 //   #/documents             -> Cross-vehicle document browser
 //   #/documents/<vehicleId> -> …pre-filtered to one vehicle
+//   #/costs                 -> Cost summary (per-category spend)
 //   #/backup                -> Backup & restore
 //   #/debug                 -> IndexedDB debug view
 function useHashRoute(): string {
@@ -41,6 +43,7 @@ export function App() {
   else if (route === '/documents') page = <Documents />
   else if (route.startsWith('/documents/'))
     page = <Documents initialVehicleId={route.slice('/documents/'.length)} />
+  else if (route === '/costs') page = <Costs />
   else if (route === '/backup') page = <Backup />
   else if (route === '/debug') page = <Debug />
   else if (route === '/template') page = <TemplateAdmin />

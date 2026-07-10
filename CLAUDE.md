@@ -400,8 +400,32 @@ secure context and won't offer install. Publish the `dist/` folder.
   101/101 tests, tsc + build clean; verified live on desktop AND 375px mobile
   (dashboard, vehicle detail, documents, doc modal both variants, backup) — no
   console errors. There is NO dark mode by design (single light theme).
-- Next (not yet built): a cost/resale summary milestone (per-category spend
-  breakdown; today `getYearSpend`/the comparison table only total). Nothing else
-  is committed as required.
+- **M11 — cost/resale summary: DONE.** Read-only analytics over the `cost`/
+  `kind`/`category`/`date` fields already on events — NO change to reminder math,
+  templates, CRUD, docs, backup, or ranking. New PURE `domain/cost.ts`:
+  `buildCostBreakdown(events)` → `{total, maintenanceTotal, repairTotal,
+  eventCount, paidEventCount, byCategory (spend-sorted, share%, only >0),
+  firstDate, lastDate}`; `filterByYear(events, year|null)`; `costPerMile(total,
+  milesTracked)` (null-safe). 9 tests in `tests/cost.test.ts`. `db/summary.ts`
+  gained `getGarageCostSummary()` → `{year, grandTotal, vehicles:
+  VehicleCostSummary[]}` where each has `allTime`/`thisYear` breakdowns +
+  `costPerMile` (all-time total ÷ miles since the earliest logged odometer point
+  across events+readings; null when no positive span). Also added `spendAllTime`
+  to `VehicleSummary` (a summary field only — does NOT feed `compareVehicleUrgency`)
+  for the dashboard card. New `pages/Costs.tsx` at route `#/costs`: "Total
+  invested" grand total, an iOS-style All-time / <year> segmented toggle
+  (`.seg`), per-vehicle metric tiles (total, cost/mile, maintenance, repairs) and
+  per-category horizontal bars (`.cost-bar`, width = share). Reached via a new
+  dashboard CTA card (mirrors the export CTA; shows all-time grand total) — NOT a
+  nav tab, so the 4-tab bar stays uncluttered. cost/mile is always lifetime; the
+  toggle only switches the tiles+bars. "Resale" is framed as documented-history
+  copy, no valuation model. 110/110 tests, tsc + build clean; verified live
+  (desktop + 375px mobile) with 7 seeded costed events: grand $875.50, correct
+  category bars/shares, maintenance-vs-repair split, cost/mile ($0.07 F-150 over
+  8,500 mi; $0.24 Rogue), and the year toggle correctly dropping a 2025 event —
+  no console errors.
+- Next (not yet built): nothing specified. The product is feature-complete
+  through the cost summary; the natural remaining track is deployment (GitHub
+  remote + Pages so it's installable on the phone), not a new feature.
 
-Do NOT implement later-milestone features (cost/resale breakdown) until asked.
+Do NOT invent new feature milestones unless asked.

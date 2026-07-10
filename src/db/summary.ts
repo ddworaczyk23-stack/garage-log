@@ -11,6 +11,7 @@ import {
   type ReminderCounts,
   type VehicleUrgency,
 } from '../domain/vehicleRanking'
+import { buildCostBreakdown, costPerMile, filterByYear, type CostBreakdown } from '../domain/cost'
 import type { MaintenanceEvent, Vehicle } from '../types'
 
 /** Full computed+ranked reminders list for a vehicle — shared by every page
@@ -62,6 +63,7 @@ export interface VehicleSummary {
   mileage: { miles: number; asOfDate: string; stale: boolean } | null
   milesThisYear: number | null
   spendThisYear: number
+  spendAllTime: number
   documentCount: number
   lastActivityDate: string | null
 }
@@ -169,7 +171,8 @@ async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): 
     recentHighCostRepair: recentHighCostRepair && recentHighCostRepair.cost >= HIGH_COST_REPAIR ? recentHighCostRepair : null,
     mileage: mileageEst ? { miles: mileageEst.miles, asOfDate: mileageEst.asOfDate, stale: odometerStale } : null,
     milesThisYear: milesThisYear(points, year),
-    spendThisYear: events.filter((e) => e.date.startsWith(String(year))).reduce((s, e) => s + (e.cost || 0), 0),
+    spendThisYear: events.filter((e) => e.date.startsWith(`${year}-`)).reduce((s, e) => s + (e.cost || 0), 0),
+    spendAllTime: events.reduce((s, e) => s + (e.cost || 0), 0),
     documentCount: events.reduce((n, e) => n + e.documentIds.length, 0) + gloveboxDocCount,
     lastActivityDate,
   }
@@ -259,4 +262,65 @@ export async function getGarageSummary(): Promise<GarageSummary> {
   )
 
   return { year, vehicles: summaries, attention: buildAttentionFeed(summaries) }
+}
+
+// --- Cost summary (Milestone 11) -------------------------------------------
+
+export interface VehicleCostSummary {
+  vehicle: Vehicle
+  allTime: CostBreakdown
+  thisYear: CostBreakdown
+  currentMiles: number | null
+  /** Miles driven since the earliest logged odometer point (event or reading);
+   * null when there isn't a positive span to divide by. */
+  milesTracked: number | null
+  /** All-time spend per mile over `milesTracked`; null when unknown. */
+  costPerMile: number | null
+}
+
+export interface GarageCostSummary {
+  year: number
+  vehicles: VehicleCostSummary[]
+  /** All-time spend across every vehicle. */
+  grandTotal: number
+}
+
+async function buildVehicleCostSummary(vehicle: Vehicle, year: number): Promise<VehicleCostSummary> {
+  const [events, readings, mileageEst] = await Promise.all([
+    db.events.where('vehicleId').equals(vehicle.id).toArray(),
+    db.odometerReadings.where('vehicleId').equals(vehicle.id).toArray(),
+    getCurrentMileageEstimate(vehicle.id),
+  ])
+
+  const allTime = buildCostBreakdown(events)
+  const thisYear = buildCostBreakdown(filterByYear(events, year))
+
+  const currentMiles = mileageEst?.miles ?? null
+  const odoPoints = [...events.map((e) => e.odometerMiles), ...readings.map((r) => r.miles)].filter(
+    (m): m is number => typeof m === 'number' && !Number.isNaN(m),
+  )
+  const baselineMiles = odoPoints.length ? Math.min(...odoPoints) : null
+  const milesTracked =
+    currentMiles != null && baselineMiles != null && currentMiles > baselineMiles
+      ? currentMiles - baselineMiles
+      : null
+
+  return {
+    vehicle,
+    allTime,
+    thisYear,
+    currentMiles,
+    milesTracked,
+    costPerMile: costPerMile(allTime.total, milesTracked),
+  }
+}
+
+/** Cross-vehicle cost summary for the Costs page. Reads events + odometer inside
+ * the caller's liveQuery, so it recomputes reactively when anything is logged. */
+export async function getGarageCostSummary(): Promise<GarageCostSummary> {
+  const year = new Date().getFullYear()
+  const vehicles = await db.vehicles.orderBy('name').toArray()
+  const summaries = await Promise.all(vehicles.map((v) => buildVehicleCostSummary(v, year)))
+  const grandTotal = summaries.reduce((sum, v) => sum + v.allTime.total, 0)
+  return { year, vehicles: summaries, grandTotal }
 }

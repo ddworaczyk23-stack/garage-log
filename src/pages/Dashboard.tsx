@@ -15,6 +15,7 @@ export function Dashboard() {
   if (!summary) return <Loading />
 
   const documentCount = summary.vehicles.reduce((n, s) => n + s.documentCount, 0)
+  const spendAllTime = summary.vehicles.reduce((n, s) => n + s.spendAllTime, 0)
 
   return (
     <section class="page">
@@ -39,6 +40,20 @@ export function Dashboard() {
       ))}
 
       <ComparisonCard vehicles={summary.vehicles} year={summary.year} />
+
+      <a class="card export-cta" href="#/costs">
+        <div class="export-cta-main">
+          <h3 class="card-title">Cost summary</h3>
+          <p class="muted small">
+            {spendAllTime > 0
+              ? `${formatMoney(spendAllTime)} logged across both vehicles — see where it goes by category.`
+              : 'See where your money goes, broken down by category, once you log service costs.'}
+          </p>
+        </div>
+        <span class="export-cta-cue" aria-hidden="true">
+          ›
+        </span>
+      </a>
 
       <a class="card export-cta" href="#/backup">
         <div class="export-cta-main">
