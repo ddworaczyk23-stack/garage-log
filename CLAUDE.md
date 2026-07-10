@@ -374,6 +374,32 @@ secure context and won't offer install. Publish the `dist/` folder.
   errors. Dark mode intentionally removed in favor of the single light theme
   (design direction); could return later via `prefers-color-scheme` overrides on
   the tokens.
+- **M10 — Apple-like light design system: DONE** (audit-then-implement pass;
+  commit `97bcb8d`). ZERO logic changes. `styles/app.css` fully rewritten around
+  design tokens but every selector preserved: single LIGHT theme (canvas
+  `#f2f2f7` iOS systemGray6, white cards, 0.5px hairline borders
+  `rgba(60,60,67,.14)`, soft shadows, accent `#0071e3`, `color-scheme: light`).
+  Status colors are tokenized tint-bg + dark readable text (`--c-overdue/-due/
+  -watch/-ok/-stale/-cost`). Layout: `.app-main` max-width 700px centered
+  (desktop readability); frosted (backdrop-blur) header + bottom tab bar; doc
+  preview modal is a bottom sheet <640px and a CENTERED dialog ≥640px. Form
+  controls styled GLOBALLY (select/input/textarea) so Documents filters, Backup
+  file picker, and debug selects match the forms — previously only
+  `.event-form`/`.admin-form` inputs were themed. Hover elevation on link-cards
+  (`a.list-row`, `.vehicle-summary`, `.doc-result`, `.export-cta`), global
+  `:focus-visible` ring, `.btn[disabled]` style, quick-add buttons restyled as
+  tinted secondary (CSS-only via `.btn.quick-add-btn`). Nav emoji → monochrome
+  stroke SVG icons (in `Nav.tsx`, inherit currentColor, active tab = accent);
+  header wrench emoji removed; Dashboard recent-rows use text labels
+  (`.recent-kind`) instead of 🔧/🛠️; export CTA cue is a chevron. Vehicle emoji
+  (🛻/🚙) and doc-type glyphs KEPT but sit in tinted rounded squares
+  (`.vehicle-emoji`, `.doc-result-icon`, `.empty-icon`). Debug reset's last
+  `window.confirm` → `ConfirmButton`; TemplateAdmin + ReminderDebug use shared
+  `<Loading/>`. PWA chrome matches: `index.html` theme-color `#f2f2f7` +
+  status-bar `default`, manifest theme/background `#f2f2f7` in `vite.config.ts`.
+  101/101 tests, tsc + build clean; verified live on desktop AND 375px mobile
+  (dashboard, vehicle detail, documents, doc modal both variants, backup) — no
+  console errors. There is NO dark mode by design (single light theme).
 - Next (not yet built): a cost/resale summary milestone (per-category spend
   breakdown; today `getYearSpend`/the comparison table only total). Nothing else
   is committed as required.
