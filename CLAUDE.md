@@ -424,8 +424,31 @@ secure context and won't offer install. Publish the `dist/` folder.
   category bars/shares, maintenance-vs-repair split, cost/mile ($0.07 F-150 over
   8,500 mi; $0.24 Rogue), and the year toggle correctly dropping a 2025 event —
   no console errors.
-- Next (not yet built): nothing specified. The product is feature-complete
-  through the cost summary; the natural remaining track is deployment (GitHub
-  remote + Pages so it's installable on the phone), not a new feature.
+- **M12 — olive brand identity: DONE.** Re-skin only (CSS tokens + one header
+  span + PWA chrome); NO logic, layout, or component-structure changes. The M10
+  cool iOS palette was replaced with a warm "workshop paper" theme carrying an
+  olive-green brand signature — the app should feel like a refined utility
+  product, not a generic SaaS dashboard. New `:root` tokens in `styles/app.css`:
+  canvas `--bg:#f3efe4` (warm cream paper), surfaces `--bg-card:#fffdf7` (warm
+  white), wells `--bg-inset:#ece5d5`, ink `--text:#2a271f`, muted `#736b5b`,
+  warm hairline `rgba(74,60,30,.15)`, warm-tinted shadows, and the signature
+  `--accent:#5e6b34` (olive) + `--accent-hover:#515c2b`. Because M10 made the
+  CSS fully token-driven, olive cascades automatically to buttons, links, active
+  nav, focus ring, cost bars, tags, and the segmented control. Status hues were
+  re-cast as earthy tints so meaning still reads: overdue=brick, due=ochre,
+  watch=mustard, ok=leaf `#4a7340` (kept distinct from the olive accent),
+  stale=taupe, cost=clay. Two hardcoded blue literals (`.btn:hover`, quick-add
+  hover) and all cool-gray `rgba(60,60,67,…)` literals (chevron, placeholder,
+  spinner, modal-close, export cue, notice borders) were warmed. Brand mark: the
+  header is now an olive stamped emblem (`.app-mark`, a rounded olive square with
+  an inset notch) + an uppercase letter-spaced "GARAGE LOG" wordmark (`.app-title`
+  restyled; one `<span class="app-mark">` added in `app.tsx`). PWA chrome updated
+  to `#f3efe4` (`index.html` theme-color, `vite.config.ts` manifest theme/
+  background). Still a single LIGHT theme, no dark mode. tsc + build clean (tests
+  unaffected — pure re-skin); verified live desktop + 375px mobile: warm canvas,
+  olive emblem/wordmark/buttons/bars/nav, earthy pills — no console errors.
+- Next (not yet built): nothing specified. The product is feature-complete;
+  the natural remaining track is deployment (GitHub remote + Pages so it's
+  installable on the phone), not a new feature.
 
 Do NOT invent new feature milestones unless asked.

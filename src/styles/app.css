@@ -6,38 +6,42 @@
  * changed, so markup and behavior are untouched. */
 
 :root {
-  /* Palette — iOS system-inspired */
-  --bg: #f2f2f7; /* systemGray6 canvas */
-  --bg-elevated: #ffffff;
-  --bg-card: #ffffff;
-  --bg-inset: #f2f2f7; /* inset wells inside white cards */
-  --border: rgba(60, 60, 67, 0.14); /* hairline */
-  --text: #1d1d1f;
-  --text-muted: #6e6e73;
-  --accent: #0071e3; /* Apple blue */
-  --accent-tint: rgba(0, 113, 227, 0.09);
-  --accent-text: #ffffff;
-  --danger: #d70015;
-  --danger-tint: rgba(215, 0, 21, 0.08);
+  /* Palette — warm "workshop paper" with an olive-green brand signature.
+   * Canvas is a warm cream, surfaces a soft warm white, ink a warm near-black,
+   * and every interactive accent is olive. Status hues are earthy (brick, ochre,
+   * mustard, leaf, taupe, clay) so meaning still reads without feeling clinical. */
+  --bg: #f3efe4; /* warm paper canvas */
+  --bg-elevated: #fffdf7;
+  --bg-card: #fffdf7; /* soft warm white */
+  --bg-inset: #ece5d5; /* cream wells inside cards */
+  --border: rgba(74, 60, 30, 0.15); /* warm hairline */
+  --text: #2a271f; /* warm ink */
+  --text-muted: #736b5b; /* warm taupe */
+  --accent: #5e6b34; /* olive — the brand signature */
+  --accent-hover: #515c2b;
+  --accent-tint: rgba(94, 107, 52, 0.12);
+  --accent-text: #fbfaf3;
+  --danger: #a83326; /* warm brick red */
+  --danger-tint: rgba(168, 51, 38, 0.09);
 
-  /* Status hues (background tint + readable dark text) */
-  --c-overdue: #c0122f;
-  --c-overdue-bg: rgba(215, 0, 21, 0.1);
-  --c-due: #b25000;
-  --c-due-bg: rgba(255, 149, 0, 0.15);
-  --c-watch: #8a6d00;
-  --c-watch-bg: rgba(255, 204, 0, 0.2);
-  --c-ok: #1d7a3d;
-  --c-ok-bg: rgba(52, 199, 89, 0.14);
-  --c-stale: #4644b8;
-  --c-stale-bg: rgba(88, 86, 214, 0.11);
-  --c-cost: #8a3fb3;
-  --c-cost-bg: rgba(175, 82, 222, 0.11);
+  /* Status hues (warm tint background + readable earthy text) */
+  --c-overdue: #a3311f;
+  --c-overdue-bg: rgba(168, 51, 38, 0.12);
+  --c-due: #99610f;
+  --c-due-bg: rgba(200, 140, 30, 0.16);
+  --c-watch: #7f6712;
+  --c-watch-bg: rgba(190, 160, 40, 0.18);
+  --c-ok: #4a7340; /* leaf green — distinct from the olive accent */
+  --c-ok-bg: rgba(74, 115, 64, 0.15);
+  --c-stale: #6f6553; /* neutral taupe */
+  --c-stale-bg: rgba(111, 101, 83, 0.14);
+  --c-cost: #9c5b34; /* clay */
+  --c-cost-bg: rgba(156, 91, 52, 0.13);
 
-  /* Elevation */
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-raised: 0 4px 14px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.05);
-  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.2);
+  /* Elevation — warm-tinted, soft */
+  --shadow-card: 0 1px 3px rgba(60, 48, 22, 0.07), 0 1px 2px rgba(60, 48, 22, 0.05);
+  --shadow-raised: 0 6px 18px rgba(60, 48, 22, 0.1), 0 2px 5px rgba(60, 48, 22, 0.06);
+  --shadow-modal: 0 24px 60px rgba(40, 32, 14, 0.22);
 
   /* Metrics */
   --radius: 16px; /* cards */
@@ -86,25 +90,40 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 9px;
   padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
-  background: color-mix(in srgb, #ffffff 78%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  background: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
   border-bottom: 0.5px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 10;
 }
 
-.app-logo {
-  font-size: 1.25rem;
+/* Stamped olive emblem — a small brand mark beside the wordmark. */
+.app-mark {
+  width: 19px;
+  height: 19px;
+  border-radius: 5px;
+  background: var(--accent);
+  position: relative;
+  flex-shrink: 0;
+}
+.app-mark::after {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
 }
 
 .app-title {
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text);
   margin: 0;
 }
 
@@ -426,7 +445,7 @@ a.list-row:active {
   letter-spacing: -0.008em;
 }
 .chevron {
-  color: rgba(60, 60, 67, 0.3);
+  color: rgba(74, 60, 30, 0.32);
   font-size: 1.4rem;
 }
 
@@ -460,7 +479,7 @@ a.list-row:active {
   text-align: center;
 }
 .btn.quick-add-btn:hover {
-  background: rgba(0, 113, 227, 0.14);
+  background: rgba(94, 107, 52, 0.18);
 }
 .event-form {
   display: flex;
@@ -499,7 +518,7 @@ input[type='file'] {
   font-size: 0.82rem;
 }
 input::placeholder {
-  color: rgba(60, 60, 67, 0.45);
+  color: rgba(74, 60, 30, 0.4);
 }
 
 .form-actions {
@@ -838,7 +857,7 @@ input::placeholder {
   transition: background 0.12s ease, filter 0.12s ease;
 }
 .btn:hover {
-  background: #0077ed;
+  background: var(--accent-hover);
 }
 .btn:active {
   filter: brightness(0.92);
@@ -871,9 +890,9 @@ code {
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
   justify-content: center;
-  background: color-mix(in srgb, #ffffff 80%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  background: color-mix(in srgb, var(--bg-elevated) 84%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
   border-top: 0.5px solid var(--border);
   z-index: 20;
 }
@@ -1065,7 +1084,7 @@ code {
   justify-content: center;
 }
 .modal-close:hover {
-  background: rgba(60, 60, 67, 0.14);
+  background: rgba(74, 60, 30, 0.13);
   color: var(--text);
 }
 .modal-preview {
@@ -1135,12 +1154,12 @@ iframe.preview-media {
 }
 .notice-success {
   background: var(--c-ok-bg);
-  border-color: rgba(52, 199, 89, 0.35);
+  border-color: rgba(74, 115, 64, 0.35);
   color: var(--c-ok);
 }
 .notice-error {
   background: var(--danger-tint);
-  border-color: rgba(215, 0, 21, 0.3);
+  border-color: rgba(168, 51, 38, 0.3);
   color: var(--c-overdue);
 }
 .restore-preview {
@@ -1187,7 +1206,7 @@ iframe.preview-media {
 .spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(60, 60, 67, 0.18);
+  border: 2px solid rgba(74, 60, 30, 0.18);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -1296,7 +1315,7 @@ iframe.preview-media {
 }
 .export-cta-cue {
   font-size: 1.3rem;
-  color: rgba(60, 60, 67, 0.3);
+  color: rgba(74, 60, 30, 0.32);
   flex-shrink: 0;
 }
 

@@ -53,6 +53,7 @@ export function App() {
   return (
     <div class="app-shell">
       <header class="app-header">
+        <span class="app-mark" aria-hidden="true" />
         <h1 class="app-title">Garage Log</h1>
       </header>
       <main class="app-main">{page}</main>
