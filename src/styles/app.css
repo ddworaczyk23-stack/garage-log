@@ -709,10 +709,19 @@ input::placeholder {
   gap: 4px;
   flex-shrink: 0;
 }
+/* "Log service" reads as a tappable olive box, not a text link. */
 .btn-link.schedule-log {
-  padding: 2px 6px;
+  background: var(--accent-tint);
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  border-radius: 8px;
+  padding: 5px 11px;
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+.btn-link.schedule-log:hover {
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
 }
 
 .status-pill {
@@ -1445,4 +1454,105 @@ iframe.preview-media {
 .cost-note,
 .cost-empty {
   margin: 12px 0 0;
+}
+
+/* ---------- Import service history ---------- */
+.import-textarea {
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+  line-height: 1.5;
+}
+.import-list {
+  list-style: none;
+  margin: 12px 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.import-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 0.5px solid var(--border);
+}
+.import-row:first-child {
+  border-top: none;
+}
+.import-row.is-blocked {
+  opacity: 0.55;
+}
+.import-row input[type='checkbox'] {
+  width: auto;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+.import-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+.import-row-service {
+  font-weight: 600;
+  font-size: 0.9rem;
+  letter-spacing: -0.008em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.import-row-cat {
+  width: auto;
+  max-width: 46%;
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  padding: 7px 8px;
+}
+
+/* Carfax "how to" guide (collapsible). */
+.guide-toggle {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.92rem;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+}
+.guide-chevron {
+  font-size: 0.75rem;
+}
+.guide-body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.guide-h {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 8px 0 2px;
+}
+.guide-steps {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+.guide-steps code {
+  font-size: 0.85em;
 }

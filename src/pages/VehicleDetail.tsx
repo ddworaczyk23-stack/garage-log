@@ -186,7 +186,12 @@ export function VehicleDetail({ id }: Props) {
       </div>
 
       <section class="card">
-        <h3 class="card-title">Maintenance schedule</h3>
+        <div class="card-title-row">
+          <h3 class="card-title">Maintenance schedule</h3>
+          <a class="btn-link" href={`#/import/${id}`}>
+            Import history →
+          </a>
+        </div>
         <p class="muted small">
           Personalized from mechanic-consensus intervals + this vehicle's logged
           history. Ranked most urgent first.
