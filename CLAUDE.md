@@ -495,7 +495,7 @@ secure context and won't offer install. Publish the `dist/` folder.
   catches it and shows a recoverable "Something went wrong" card with a
   retry button instead of a silent hang. New unit tests for
   `localDateISO`/`parseNumberInput` (`tests/format.test.ts`) and the
-  month-end `addMonths` clamp (`tests/reminderEngine.test.ts`) — 116/116
+  month-end `addMonths` clamp (`tests/reminderEngine.test.ts`) — 120/120
   tests pass, tsc + build clean. Verified live (Playwright against the dev
   server): odometer form's default date matches today, empty-field
   validation still fires, and a valid submit closes the form cleanly with no
@@ -556,7 +556,7 @@ secure context and won't offer install. Publish the `dist/` folder.
     rejections; a simulated liveQuery failure now renders the ErrorBoundary
     card (previously: stuck spinner). Getting the ErrorBoundary check to pass
     required discovering and fixing a Preact/React difference along the way —
-    see item (5)'s implementation note above. 116/116 tests pass (unchanged
+    see item (5)'s implementation note above. 120/120 tests pass (unchanged
     from the first pass — this half was UI/glue-code error handling, nothing
     newly pure to unit-test), tsc + build clean.
 - Next (not yet built): a **Carfax / service-history importer** (bulk-baseline
