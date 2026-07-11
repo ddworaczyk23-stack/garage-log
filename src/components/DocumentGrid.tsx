@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import { formatBytes } from '../domain/documents'
 import type { VehicleDocument } from '../types'
 
@@ -12,18 +12,33 @@ interface Props {
 // are created per-document and revoked on unmount/change — the only cleanup
 // this needs since blobs themselves live in IndexedDB, not here.
 export function DocumentGrid({ documents, onRemove }: Props) {
-  const [urls, setUrls] = useState<Record<string, string>>({});
+  const [urls, setUrls] = useState<Record<string, string>>({})
   const [confirmingId, setConfirmingId] = useState<string | null>(null)
 
   useEffect(() => {
-    const next: Record<string, string> = {}
-    for (const doc of documents) next[doc.id] = URL.createObjectURL(doc.blob)
-    setUrls(next)
+    // Diff by document id so an add/remove elsewhere in the list only
+    // creates/revokes the URLs that actually changed, rather than churning
+    // (and re-flickering) every thumbnail on any single addition/removal.
+    setUrls((prev) => {
+      const next: Record<string, string> = {}
+      for (const doc of documents) next[doc.id] = prev[doc.id] ?? URL.createObjectURL(doc.blob)
+      for (const [id, url] of Object.entries(prev)) {
+        if (!(id in next)) URL.revokeObjectURL(url)
+      }
+      return next
+    })
+  }, [documents])
+
+  // Revoke whatever's left only on final unmount (the effect above already
+  // handles revocation as documents come and go); a ref keeps the cleanup
+  // closure from seeing a stale `urls` snapshot from an earlier render.
+  const urlsRef = useRef(urls)
+  urlsRef.current = urls
+  useEffect(() => {
     return () => {
-      Object.values(next).forEach((u) => URL.revokeObjectURL(u))
+      Object.values(urlsRef.current).forEach((u) => URL.revokeObjectURL(u))
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [documents.map((d) => d.id).join(',')])
+  }, [])
 
   if (!documents.length) {
     return <p class="muted small">No documents attached yet.</p>

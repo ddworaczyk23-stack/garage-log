@@ -1294,6 +1294,12 @@ iframe.preview-media {
   gap: 8px;
 }
 
+/* ConfirmButton's failure message — block so it drops to its own line even
+   when the button sits inside an inline-flowing parent (e.g. row-actions). */
+.confirm-error {
+  display: block;
+}
+
 /* Per-thumbnail delete confirmation (DocumentGrid). */
 .doc-confirm {
   position: absolute;
