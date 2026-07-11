@@ -3,7 +3,7 @@ import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getTemplateEntry } from '../db/scheduleTemplates'
 import { resolveLastDone, resolveInterval, isNotApplicable } from '../domain/reminderStatus'
-import { formatInterval } from '../domain/format'
+import { formatInterval, parseNumberInput } from '../domain/format'
 import { OVERRIDE_LABELS } from '../types'
 import { Loading } from '../components/ui'
 import type { ReminderRule, OverrideKind } from '../types'
@@ -65,6 +65,7 @@ function RuleRow({ rule }: { rule: ReminderRule }) {
   const [customMiles, setCustomMiles] = useState(rule.customIntervalMiles?.toString() ?? '')
   const [customMonths, setCustomMonths] = useState(rule.customIntervalMonths?.toString() ?? '')
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState('')
 
   const lastDone = resolveLastDone(rule)
   const effective = resolveInterval(rule)
@@ -86,32 +87,44 @@ function RuleRow({ rule }: { rule: ReminderRule }) {
   const effectiveText = formatInterval(effective.miles, effective.months, effective.conditionBased)
 
   async function save() {
+    setError('')
     const override =
       kind === ''
         ? null
         : {
             kind,
             note: note.trim() || null,
-            atMiles: atMiles.trim() ? Number(atMiles) : null,
+            atMiles: parseNumberInput(atMiles),
             atDate: atDate || null,
           }
-    await db.reminderRules.update(rule.id, {
-      override,
-      notes: note.trim() || null,
-      customIntervalMiles: customMiles.trim() ? Number(customMiles) : null,
-      customIntervalMonths: customMonths.trim() ? Number(customMonths) : null,
-    })
-    setSaved(true)
-    setTimeout(() => setSaved(false), 1500)
+    try {
+      await db.reminderRules.update(rule.id, {
+        override,
+        notes: note.trim() || null,
+        customIntervalMiles: parseNumberInput(customMiles),
+        customIntervalMonths: parseNumberInput(customMonths),
+      })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 1500)
+    } catch (err) {
+      console.error('[TemplateAdmin]', err)
+      setError('Something went wrong saving this rule. Please try again.')
+    }
   }
 
   async function clearCustomInterval() {
-    setCustomMiles('')
-    setCustomMonths('')
-    await db.reminderRules.update(rule.id, {
-      customIntervalMiles: null,
-      customIntervalMonths: null,
-    })
+    setError('')
+    try {
+      await db.reminderRules.update(rule.id, {
+        customIntervalMiles: null,
+        customIntervalMonths: null,
+      })
+      setCustomMiles('')
+      setCustomMonths('')
+    } catch (err) {
+      console.error('[TemplateAdmin]', err)
+      setError('Something went wrong clearing the custom interval. Please try again.')
+    }
   }
 
   return (
@@ -225,6 +238,11 @@ function RuleRow({ rule }: { rule: ReminderRule }) {
           />
         </label>
 
+        {error && (
+          <p class="notice notice-error" role="alert">
+            {error}
+          </p>
+        )}
         <button class="btn" onClick={save}>
           {saved ? 'Saved ✓' : 'Save'}
         </button>

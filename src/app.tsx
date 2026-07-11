@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
 import { Nav } from './components/Nav'
+import { ErrorBoundary } from './components/ui'
 import { Dashboard } from './pages/Dashboard'
 import { Vehicles } from './pages/Vehicles'
 import { VehicleDetail } from './pages/VehicleDetail'
@@ -56,7 +57,9 @@ export function App() {
         <span class="app-mark" aria-hidden="true" />
         <h1 class="app-title">Garage Log</h1>
       </header>
-      <main class="app-main">{page}</main>
+      <main class="app-main">
+        <ErrorBoundary key={route}>{page}</ErrorBoundary>
+      </main>
       <Nav route={route} />
     </div>
   )

@@ -11,6 +11,15 @@ export function useQuery<T>(
   deps: unknown[] = [],
 ): T | undefined {
   const [value, setValue] = useState<T>()
+  // A liveQuery failure is stored here and re-thrown below, DURING render —
+  // not from inside the setter call itself. Unlike React, Preact's useState
+  // setter evaluates a function-updater synchronously at call time rather
+  // than deferring it to the render phase, so a "throwing updater" (the
+  // usual React trick for surfacing async errors to an error boundary) would
+  // throw from inside the Dexie observable callback instead, outside any
+  // render/commit try/catch — it needs to be a plain value, thrown here.
+  const [queryError, setQueryError] = useState<unknown>(null)
+  if (queryError) throw queryError
 
   useEffect(() => {
     // Reset to "loading" on every dep change (e.g. switching vehicles) so the
@@ -19,10 +28,16 @@ export function useQuery<T>(
     setValue(undefined)
     const sub = liveQuery(querier).subscribe({
       next: (v) => setValue(v),
-      error: (err) => console.error('[useQuery]', err),
+      error: (err) => {
+        console.error('[useQuery]', err)
+        setQueryError(err)
+      },
     })
     return () => sub.unsubscribe()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Deliberately NOT `querier` — it's a fresh closure every render, so
+    // depending on it would resubscribe every render. `deps` is the caller's
+    // explicit contract for when to resubscribe (no exhaustive-deps linter
+    // is configured in this project to flag the mismatch).
   }, deps)
 
   return value

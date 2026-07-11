@@ -90,6 +90,14 @@ describe('computeReminder — date-only rules', () => {
     expect(r.status).toBe('overdue')
     expect(r.daysRemaining).toBeLessThan(0)
   })
+
+  it('clamps a month-end anchor into the target month instead of overflowing', () => {
+    // 2026-01-31 + 1mo: naive Date#setMonth rolls into March (Feb only has
+    // 28 days in 2026), silently shifting the due date two days later.
+    const rule = makeRule({ customIntervalMiles: null, customIntervalMonths: 1, lastDoneDate: '2026-01-31' })
+    const r = computeReminder(rule, inputsAt('2026-02-01', null, null))
+    expect(r.dueAtDate).toBe('2026-02-28')
+  })
 })
 
 describe('computeReminder — combined (hybrid) rules', () => {

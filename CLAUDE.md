@@ -20,6 +20,7 @@ npm run build     # production bundle -> dist/
 npm run preview   # serve the built dist/ locally
 npm test          # vitest run — tests/reminderEngine.test.ts (pure engine) +
                   # tests/events.test.ts (DB-layer CRUD/resync, via fake-indexeddb)
+npm run typecheck # tsc --noEmit — same check `npm run build` does, without emitting
 ```
 
 ## Verifying changes
@@ -465,6 +466,99 @@ secure context and won't offer install. Publish the `dist/` folder.
   Sorting/ranking tiebreaks still key off `name`; backup carries nickname
   automatically. Debug/TemplateAdmin/ReminderDebug stay on canonical `name`.
   4 tests (`tests/vehicle.test.ts`), 114 total; verified live.
+- **M13 — correctness bugfix pass: DONE.** Audit-then-fix pass on a fresh
+  branch with nothing to resume; no new features. Fixed: (1) `todayISO()`
+  (`EventForm`/`OdometerForm`) and the reminder engine's `toDateOnly()` used
+  `new Date().toISOString().slice(0,10)`, which reads the UTC calendar date —
+  wrong "today" default (and stale-odometer math) in the evening for any US
+  timezone. New shared `domain/format.ts` → `localDateISO(d)` builds the
+  string from local `getFullYear/getMonth/getDate()` instead; both call sites
+  switched over. (2) `reminderEngine.ts`'s `addMonths()` used raw
+  `Date#setMonth()`, which overflows into the following month for day
+  29-31 anchors on a shorter target month (e.g. `2026-01-31` + 1mo landed on
+  `2026-03-03` instead of `2026-02-28`) — now clamps into the target month's
+  last day. (3) Odometer/event/custom-interval number inputs validated with
+  `Number(x) < 0`, so non-numeric junk parsed to `NaN`, passed validation
+  (`NaN < 0` is `false`), and got persisted — `NaN` then fails every
+  downstream reminder-engine comparison and silently reports `completed`
+  instead of overdue. New `domain/format.ts` → `parseNumberInput(raw)`
+  (blank/non-numeric → `null`, never `NaN`) now backs `OdometerForm`,
+  `EventForm` (odometer, cost, custom interval mi/mo), and `TemplateAdmin`
+  (custom interval mi/mo, override `atMiles`). (4) `EventForm`/`OdometerForm`
+  submit had no try/catch, so a failed Dexie write left the button stuck on
+  "Saving…" forever with no feedback — both now catch, show a `notice-error`,
+  and always reset `saving` in a `finally`. (5) `useQuery`'s liveQuery
+  `error` callback only `console.error`d and left the page on its loading
+  spinner forever — it now stores the error in state and throws it DURING
+  render, where a new `components/ui.tsx` → `ErrorBoundary` (wrapping the
+  routed page in `app.tsx`, keyed by route so navigating away clears it)
+  catches it and shows a recoverable "Something went wrong" card with a
+  retry button instead of a silent hang. New unit tests for
+  `localDateISO`/`parseNumberInput` (`tests/format.test.ts`) and the
+  month-end `addMonths` clamp (`tests/reminderEngine.test.ts`) — 120/120
+  tests pass, tsc + build clean. Verified live (Playwright against the dev
+  server): odometer form's default date matches today, empty-field
+  validation still fires, and a valid submit closes the form cleanly with no
+  "Saving…" hang. The UTC-vs-local date bug itself can't be demonstrated live
+  in this container (its TZ is UTC), so it's covered by a unit test
+  constructing an explicit late-evening `Date` instead. Reminder math changes
+  are two narrow correctness fixes (date formatting + month-end clamping),
+  not new engine behavior; ranking/CRUD/docs/backup/cost untouched.
+  - **Second pass: the rest of the same audit's findings.** (6) `ConfirmButton`
+    (`components/ui.tsx`) awaited `onConfirm()` with no `catch` — a rejected
+    confirm action (delete/restore/reassign) became an unhandled rejection
+    with no visible feedback, silently disarming as if it had succeeded. Now
+    catches, shows a `.confirm-error` notice (new CSS: `display: block` so it
+    drops to its own line even inside an inline `row-actions` parent), and
+    only disarms on success so the user can retry. (7) `TemplateAdmin`'s
+    `save`/`clearCustomInterval` had no error handling — now catch and show a
+    `notice-error`; `clearCustomInterval` also fixed to only clear its local
+    input state after the write succeeds (previously cleared optimistically
+    even if the DB write failed, desyncing the form from the DB). (8)
+    `VehicleDocuments`' multi-file Glovebox upload attached files with one
+    `try/finally` around the whole loop — one bad file aborted every file
+    after it. Now attaches each file in its own `try/catch`, so the rest of
+    the selection still saves, with a summary error naming only the files
+    that failed. (9) No error handling around DB boot (`main.tsx`) — if
+    `seedIfEmpty()`/Dexie-open rejects (Safari private browsing, storage
+    quota, some iOS versions), `render()` never ran and the page stayed
+    permanently blank. Now catches and renders a static fallback message
+    (reusing the existing `.empty-state` classes) instead. (10)
+    `pages/Documents.tsx`'s vehicle/source/file-type filter `<select>`s (and
+    the search `<input>`) had no accessible name, unlike every other form
+    control in the app — added `aria-label`s. (11) `DocumentGrid`'s
+    object-URL effect keyed off `documents.map(d=>d.id).join(',')`, so
+    adding/removing any one document revoked and recreated thumbnail URLs for
+    *every* document, not just the changed one — rewritten to diff by id
+    (create only for new ids, revoke only for dropped ids; a ref-backed
+    unmount-only effect handles final cleanup), which also made the old
+    `eslint-disable-next-line react-hooks/exhaustive-deps` on that effect
+    unnecessary (deps is now the actual `documents` prop). (12) Removed the
+    other dead `eslint-disable` comment in `useQuery.ts` (no ESLint is
+    installed in this project — ever) in favor of a plain comment explaining
+    why `deps` intentionally excludes `querier`. (13) Added an `npm run
+    typecheck` script (`tsc --noEmit`) — the workflow already gated milestones
+    on it, but running it required knowing the bare `npx tsc --noEmit`
+    invocation. (14) `icon-512.png` and `icon-maskable-512.png` were
+    byte-identical, so the "maskable" variant had no safe-zone padding and
+    would get cropped by Android's adaptive-icon masks. Regenerated
+    `icon-maskable-512.png` by scaling the existing artwork to 60% and
+    centering it on a full-bleed background of the same blue, so the mark
+    survives a worst-case full-circle mask — verified by compositing it
+    through a simulated circular mask and inspecting the result; same source
+    art, no brand redesign. While regenerating this surfaced that the app
+    icon itself is still the generic placeholder "GL" mark from scaffolding,
+    never updated for the M12 olive rebrand — that's a separate, pre-existing
+    inconsistency, not fixed here (out of scope: a design decision, not a
+    bug). Verified live via Playwright against the dev server for all of the
+    above: Documents filter `aria-label`s present; a simulated Dexie write
+    failure surfaces `ConfirmButton`'s new error notice with zero unhandled
+    rejections; a simulated liveQuery failure now renders the ErrorBoundary
+    card (previously: stuck spinner). Getting the ErrorBoundary check to pass
+    required discovering and fixing a Preact/React difference along the way —
+    see item (5)'s implementation note above. 120/120 tests pass (unchanged
+    from the first pass — this half was UI/glue-code error handling, nothing
+    newly pure to unit-test), tsc + build clean.
 - Next (not yet built): a **Carfax / service-history importer** (bulk-baseline
   entry, possibly paste-fed) — waiting on the user's data format. No Carfax
   consumer API exists, so it reads exported/copied text, not a live connection.

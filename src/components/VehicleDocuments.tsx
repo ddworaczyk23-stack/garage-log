@@ -14,17 +14,29 @@ interface Props {
 export function VehicleDocuments({ vehicleId }: Props) {
   const documents = useQuery(() => getVehicleLevelDocuments(vehicleId), [vehicleId])
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   async function onFiles(e: Event) {
     const input = e.target as HTMLInputElement
     const files = Array.from(input.files ?? [])
     if (!files.length) return
     setBusy(true)
-    try {
-      for (const file of files) await attachVehicleDocument(vehicleId, file)
-    } finally {
-      setBusy(false)
-      input.value = '' // allow re-selecting the same file
+    setError('')
+    // Attach each file independently so one failure (e.g. a corrupt image)
+    // can't abort the rest of a multi-file selection.
+    const failed: string[] = []
+    for (const file of files) {
+      try {
+        await attachVehicleDocument(vehicleId, file)
+      } catch (err) {
+        console.error('[VehicleDocuments]', err)
+        failed.push(file.name)
+      }
+    }
+    setBusy(false)
+    input.value = '' // allow re-selecting the same file
+    if (failed.length) {
+      setError(`Couldn't save: ${failed.join(', ')}. Please try again.`)
     }
   }
 
@@ -47,6 +59,11 @@ export function VehicleDocuments({ vehicleId }: Props) {
         />
       </label>
       {busy && <p class="muted small">Saving…</p>}
+      {error && (
+        <p class="notice notice-error" role="alert">
+          {error}
+        </p>
+      )}
 
       {documents === undefined ? (
         <p class="muted small">Loading…</p>

@@ -1,5 +1,5 @@
+import { Component, type ComponentChildren } from 'preact'
 import { useState } from 'preact/hooks'
-import type { ComponentChildren } from 'preact'
 
 // Small shared presentational primitives introduced in Milestone 9 so loading,
 // empty, and destructive-action UI look and behave the same everywhere. No data
@@ -64,36 +64,90 @@ export function ConfirmButton({
 }) {
   const [armed, setArmed] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
 
   if (!armed) {
     return (
-      <button type="button" class={className} onClick={() => setArmed(true)}>
+      <button
+        type="button"
+        class={className}
+        onClick={() => {
+          setArmed(true)
+          setError('')
+        }}
+      >
         {label}
       </button>
     )
   }
 
   return (
-    <span class="confirm-inline">
-      <button
-        type="button"
-        class={className}
-        disabled={busy}
-        onClick={async () => {
-          setBusy(true)
-          try {
-            await onConfirm()
-          } finally {
-            setBusy(false)
-            setArmed(false)
-          }
-        }}
-      >
-        {busy ? busyLabel : confirmLabel}
-      </button>
-      <button type="button" class="btn-link" disabled={busy} onClick={() => setArmed(false)}>
-        Cancel
-      </button>
-    </span>
+    <>
+      <span class="confirm-inline">
+        <button
+          type="button"
+          class={className}
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true)
+            setError('')
+            try {
+              await onConfirm()
+              setArmed(false)
+            } catch (err) {
+              console.error('[ConfirmButton]', err)
+              setError('Something went wrong. Please try again.')
+            } finally {
+              setBusy(false)
+            }
+          }}
+        >
+          {busy ? busyLabel : confirmLabel}
+        </button>
+        <button type="button" class="btn-link" disabled={busy} onClick={() => setArmed(false)}>
+          Cancel
+        </button>
+      </span>
+      {error && (
+        <span class="notice notice-error confirm-error" role="alert">
+          {error}
+        </span>
+      )}
+    </>
   )
+}
+
+/**
+ * Catches render/query errors anywhere below it (in particular a failed
+ * `useQuery` liveQuery — see db/useQuery.ts) and shows a recoverable error
+ * card instead of leaving the page stuck on a spinner or a blank crash.
+ */
+export class ErrorBoundary extends Component<{ children: ComponentChildren }, { error: unknown }> {
+  state = { error: null as unknown }
+
+  static getDerivedStateFromError(error: unknown) {
+    return { error }
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error('[ErrorBoundary]', error)
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div class="empty-state">
+          <span class="empty-icon" aria-hidden="true">
+            ⚠️
+          </span>
+          <p class="empty-title">Something went wrong</p>
+          <p class="muted small">This screen hit an unexpected error and couldn't load.</p>
+          <button class="btn" type="button" onClick={() => this.setState({ error: null })}>
+            Try again
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
