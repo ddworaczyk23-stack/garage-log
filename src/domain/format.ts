@@ -30,6 +30,32 @@ export function formatMoney(n: number | null | undefined): string {
 }
 
 /**
+ * A Date's calendar date as "YYYY-MM-DD" using LOCAL time components — not
+ * `toISOString()`, which is UTC and can land on the wrong calendar day
+ * whenever the local zone isn't UTC (e.g. an evening entry in any US zone
+ * reads as "tomorrow" in UTC).
+ */
+export function localDateISO(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+/**
+ * Parses a numeric form field: blank -> null, non-numeric -> null (never
+ * NaN), otherwise the number. Used everywhere a text/number input feeds an
+ * optional numeric DB field, so a stray non-numeric value can't silently
+ * persist as NaN (which then fails every downstream comparison).
+ */
+export function parseNumberInput(raw: string): number | null {
+  const trimmed = raw.trim()
+  if (!trimmed) return null
+  const n = Number(trimmed)
+  return Number.isNaN(n) ? null : n
+}
+
+/**
  * Turn an interval into text:
  *   (10000, 12) -> "Every 10,000 mi or 1 yr"
  *   (5000, null) -> "Every 5,000 mi"

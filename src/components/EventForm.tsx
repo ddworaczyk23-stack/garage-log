@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { recordCompletedEvent, updateEvent, type RuleOverrideInput } from '../db/events'
+import { localDateISO, parseNumberInput } from '../domain/format'
 import {
   CATEGORY_LABELS,
   MAINTENANCE_CATEGORIES,
@@ -27,7 +28,7 @@ interface Props {
   onCancel: () => void
 }
 
-const todayISO = () => new Date().toISOString().slice(0, 10)
+const todayISO = () => localDateISO(new Date())
 
 // One form, two modes (maintenance/repair) via `kind`, and two flows (add/edit)
 // via `existing`. Kept as a single component since the persistence path,
@@ -81,8 +82,17 @@ export function EventForm({
   async function submit(e: Event) {
     e.preventDefault()
     if (saving) return
-    if (!odometerMiles.trim() || Number(odometerMiles) < 0) {
+    const parsedOdometerMiles = parseNumberInput(odometerMiles)
+    if (parsedOdometerMiles == null || parsedOdometerMiles < 0) {
       setError('Enter the odometer reading (miles) for this entry.')
+      return
+    }
+    if (customMiles.trim() && parseNumberInput(customMiles) == null) {
+      setError('Custom interval (mi) must be a number.')
+      return
+    }
+    if (customMonths.trim() && parseNumberInput(customMonths) == null) {
+      setError('Custom interval (mo) must be a number.')
       return
     }
     setError('')
@@ -92,10 +102,10 @@ export function EventForm({
       vehicleId,
       kind,
       date,
-      odometerMiles: Number(odometerMiles),
+      odometerMiles: parsedOdometerMiles,
       category,
       title: title.trim() || (kind === 'maintenance' ? CATEGORY_LABELS[category] : symptom || 'Repair'),
-      cost: cost.trim() ? Number(cost) : 0,
+      cost: cost.trim() ? (parseNumberInput(cost) ?? 0) : 0,
       vendor: vendor.trim() || undefined,
       notes: notes.trim() || undefined,
       servicePerformed: kind === 'maintenance' ? servicePerformed.trim() || undefined : undefined,
@@ -113,19 +123,24 @@ export function EventForm({
         ? {
             overrideKind: overrideKind || null,
             overrideNote: overrideNote.trim() || null,
-            customIntervalMiles: customMiles.trim() ? Number(customMiles) : null,
-            customIntervalMonths: customMonths.trim() ? Number(customMonths) : null,
+            customIntervalMiles: parseNumberInput(customMiles),
+            customIntervalMonths: parseNumberInput(customMonths),
           }
         : undefined
 
-    if (existing) {
-      await updateEvent(existing.id, base, newFiles, removedDocIds, ruleOverride)
-    } else {
-      await recordCompletedEvent(base, newFiles, ruleOverride)
+    try {
+      if (existing) {
+        await updateEvent(existing.id, base, newFiles, removedDocIds, ruleOverride)
+      } else {
+        await recordCompletedEvent(base, newFiles, ruleOverride)
+      }
+      onDone()
+    } catch (err) {
+      console.error('[EventForm]', err)
+      setError('Something went wrong saving this entry. Please try again.')
+    } finally {
+      setSaving(false)
     }
-
-    setSaving(false)
-    onDone()
   }
 
   return (

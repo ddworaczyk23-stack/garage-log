@@ -465,6 +465,44 @@ secure context and won't offer install. Publish the `dist/` folder.
   Sorting/ranking tiebreaks still key off `name`; backup carries nickname
   automatically. Debug/TemplateAdmin/ReminderDebug stay on canonical `name`.
   4 tests (`tests/vehicle.test.ts`), 114 total; verified live.
+- **M13 — correctness bugfix pass: DONE.** Audit-then-fix pass on a fresh
+  branch with nothing to resume; no new features. Fixed: (1) `todayISO()`
+  (`EventForm`/`OdometerForm`) and the reminder engine's `toDateOnly()` used
+  `new Date().toISOString().slice(0,10)`, which reads the UTC calendar date —
+  wrong "today" default (and stale-odometer math) in the evening for any US
+  timezone. New shared `domain/format.ts` → `localDateISO(d)` builds the
+  string from local `getFullYear/getMonth/getDate()` instead; both call sites
+  switched over. (2) `reminderEngine.ts`'s `addMonths()` used raw
+  `Date#setMonth()`, which overflows into the following month for day
+  29-31 anchors on a shorter target month (e.g. `2026-01-31` + 1mo landed on
+  `2026-03-03` instead of `2026-02-28`) — now clamps into the target month's
+  last day. (3) Odometer/event/custom-interval number inputs validated with
+  `Number(x) < 0`, so non-numeric junk parsed to `NaN`, passed validation
+  (`NaN < 0` is `false`), and got persisted — `NaN` then fails every
+  downstream reminder-engine comparison and silently reports `completed`
+  instead of overdue. New `domain/format.ts` → `parseNumberInput(raw)`
+  (blank/non-numeric → `null`, never `NaN`) now backs `OdometerForm`,
+  `EventForm` (odometer, cost, custom interval mi/mo), and `TemplateAdmin`
+  (custom interval mi/mo, override `atMiles`). (4) `EventForm`/`OdometerForm`
+  submit had no try/catch, so a failed Dexie write left the button stuck on
+  "Saving…" forever with no feedback — both now catch, show a `notice-error`,
+  and always reset `saving` in a `finally`. (5) `useQuery`'s liveQuery
+  `error` callback only `console.error`d and left the page on its loading
+  spinner forever — it now re-throws the error into render (via a throwing
+  `useState` updater) where a new `components/ui.tsx` → `ErrorBoundary`
+  (wrapping the routed page in `app.tsx`, keyed by route so navigating away
+  clears it) catches it and shows a recoverable "Something went wrong" card
+  with a retry button instead of a silent hang. New unit tests for
+  `localDateISO`/`parseNumberInput` (`tests/format.test.ts`) and the
+  month-end `addMonths` clamp (`tests/reminderEngine.test.ts`) — 116/116
+  tests pass, tsc + build clean. Verified live (Playwright against the dev
+  server): odometer form's default date matches today, empty-field
+  validation still fires, and a valid submit closes the form cleanly with no
+  "Saving…" hang. The UTC-vs-local date bug itself can't be demonstrated live
+  in this container (its TZ is UTC), so it's covered by a unit test
+  constructing an explicit late-evening `Date` instead. Reminder math changes
+  are two narrow correctness fixes (date formatting + month-end clamping),
+  not new engine behavior; ranking/CRUD/docs/backup/cost untouched.
 - Next (not yet built): a **Carfax / service-history importer** (bulk-baseline
   entry, possibly paste-fed) — waiting on the user's data format. No Carfax
   consumer API exists, so it reads exported/copied text, not a live connection.

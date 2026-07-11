@@ -11,6 +11,12 @@ export function useQuery<T>(
   deps: unknown[] = [],
 ): T | undefined {
   const [value, setValue] = useState<T>()
+  // Unused value — only ever written via a throwing updater so a liveQuery
+  // failure re-throws during render, where the nearest <ErrorBoundary> (see
+  // app.tsx) can catch it. Without this, a query error left `value` stuck at
+  // `undefined` forever with only a console.error, so the page hung on its
+  // loading spinner with no visible failure.
+  const [, setQueryError] = useState<unknown>()
 
   useEffect(() => {
     // Reset to "loading" on every dep change (e.g. switching vehicles) so the
@@ -19,7 +25,12 @@ export function useQuery<T>(
     setValue(undefined)
     const sub = liveQuery(querier).subscribe({
       next: (v) => setValue(v),
-      error: (err) => console.error('[useQuery]', err),
+      error: (err) => {
+        console.error('[useQuery]', err)
+        setQueryError(() => {
+          throw err
+        })
+      },
     })
     return () => sub.unsubscribe()
     // eslint-disable-next-line react-hooks/exhaustive-deps

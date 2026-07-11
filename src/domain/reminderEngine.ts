@@ -5,6 +5,7 @@ import {
   isNotApplicable,
   type ResolvedInterval,
 } from './reminderStatus'
+import { localDateISO } from './format'
 
 // ---------------------------------------------------------------------------
 // Pure reminders engine: turns a ReminderRule (template-resolved interval +
@@ -65,17 +66,25 @@ export interface ComputedReminder {
 }
 
 function toDateOnly(d: Date): string {
-  return d.toISOString().slice(0, 10)
+  return localDateISO(d)
 }
 
 function parseDateOnly(iso: string): Date {
   return new Date(`${iso}T00:00:00`)
 }
 
+/**
+ * Adds `months` to an ISO date, clamping into the target month's last day
+ * instead of overflowing into the month after (native `setMonth` on day
+ * 29-31 rolls e.g. 2026-01-31 + 1mo into 2026-03-03, not Feb 28).
+ */
 function addMonths(iso: string, months: number): string {
   const d = parseDateOnly(iso)
-  d.setMonth(d.getMonth() + months)
-  return toDateOnly(d)
+  const day = d.getDate()
+  const target = new Date(d.getFullYear(), d.getMonth() + months, 1)
+  const lastDayOfTargetMonth = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate()
+  target.setDate(Math.min(day, lastDayOfTargetMonth))
+  return toDateOnly(target)
 }
 
 function daysBetween(a: Date, isoB: string): number {

@@ -3,7 +3,7 @@ import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getTemplateEntry } from '../db/scheduleTemplates'
 import { resolveLastDone, resolveInterval, isNotApplicable } from '../domain/reminderStatus'
-import { formatInterval } from '../domain/format'
+import { formatInterval, parseNumberInput } from '../domain/format'
 import { OVERRIDE_LABELS } from '../types'
 import { Loading } from '../components/ui'
 import type { ReminderRule, OverrideKind } from '../types'
@@ -92,14 +92,14 @@ function RuleRow({ rule }: { rule: ReminderRule }) {
         : {
             kind,
             note: note.trim() || null,
-            atMiles: atMiles.trim() ? Number(atMiles) : null,
+            atMiles: parseNumberInput(atMiles),
             atDate: atDate || null,
           }
     await db.reminderRules.update(rule.id, {
       override,
       notes: note.trim() || null,
-      customIntervalMiles: customMiles.trim() ? Number(customMiles) : null,
-      customIntervalMonths: customMonths.trim() ? Number(customMonths) : null,
+      customIntervalMiles: parseNumberInput(customMiles),
+      customIntervalMonths: parseNumberInput(customMonths),
     })
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)

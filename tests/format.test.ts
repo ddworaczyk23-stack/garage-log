@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { formatInterval, formatMiles, formatMoney, formatShortDate } from '../src/domain/format'
+import {
+  formatInterval,
+  formatMiles,
+  formatMoney,
+  formatShortDate,
+  localDateISO,
+  parseNumberInput,
+} from '../src/domain/format'
 
 describe('formatShortDate', () => {
   it('formats an ISO date as a readable label', () => {
@@ -58,5 +65,35 @@ describe('formatInterval (unchanged M2 helper — guarded against regressions)',
     expect(formatInterval(10000, 12)).toBe('Every 10,000 mi or 1 yr')
     expect(formatInterval(null, null, true)).toBe('Inspect / condition-based')
     expect(formatInterval(null, null)).toBe('As needed')
+  })
+})
+
+describe('localDateISO', () => {
+  it('formats using local calendar components, not UTC', () => {
+    // 11:30pm local — a naive toISOString() UTC read would land on the next
+    // day for any zone behind UTC (all US zones), which was the M13 bug.
+    const d = new Date(2026, 0, 15, 23, 30)
+    expect(localDateISO(d)).toBe('2026-01-15')
+  })
+
+  it('zero-pads single-digit months/days', () => {
+    expect(localDateISO(new Date(2026, 2, 5))).toBe('2026-03-05')
+  })
+})
+
+describe('parseNumberInput', () => {
+  it('parses a plain numeric string', () => {
+    expect(parseNumberInput('12000')).toBe(12000)
+    expect(parseNumberInput('  42  ')).toBe(42)
+  })
+
+  it('returns null for blank input', () => {
+    expect(parseNumberInput('')).toBeNull()
+    expect(parseNumberInput('   ')).toBeNull()
+  })
+
+  it('returns null (never NaN) for non-numeric input', () => {
+    expect(parseNumberInput('12k')).toBeNull()
+    expect(parseNumberInput('not-a-number')).toBeNull()
   })
 })

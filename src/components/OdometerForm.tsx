@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks'
 import { recordOdometerReading, updateOdometerReading } from '../db/events'
+import { localDateISO, parseNumberInput } from '../domain/format'
 import type { OdometerReading } from '../types'
 
 interface Props {
@@ -9,7 +10,7 @@ interface Props {
   onCancel: () => void
 }
 
-const todayISO = () => new Date().toISOString().slice(0, 10)
+const todayISO = () => localDateISO(new Date())
 
 export function OdometerForm({ vehicleId, existing, onDone, onCancel }: Props) {
   const [date, setDate] = useState(existing?.date ?? todayISO())
@@ -20,19 +21,26 @@ export function OdometerForm({ vehicleId, existing, onDone, onCancel }: Props) {
   async function submit(e: Event) {
     e.preventDefault()
     if (saving) return
-    if (!miles.trim() || Number(miles) < 0) {
+    const parsedMiles = parseNumberInput(miles)
+    if (parsedMiles == null || parsedMiles < 0) {
       setError('Enter the current odometer reading in miles.')
       return
     }
     setError('')
     setSaving(true)
-    if (existing) {
-      await updateOdometerReading(existing.id, { date, miles: Number(miles) })
-    } else {
-      await recordOdometerReading(vehicleId, Number(miles), date)
+    try {
+      if (existing) {
+        await updateOdometerReading(existing.id, { date, miles: parsedMiles })
+      } else {
+        await recordOdometerReading(vehicleId, parsedMiles, date)
+      }
+      onDone()
+    } catch (err) {
+      console.error('[OdometerForm]', err)
+      setError('Something went wrong saving this reading. Please try again.')
+    } finally {
+      setSaving(false)
     }
-    setSaving(false)
-    onDone()
   }
 
   return (
