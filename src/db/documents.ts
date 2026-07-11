@@ -12,6 +12,7 @@ import {
   type DocSource,
 } from '../domain/documents'
 import { formatShortDate } from '../domain/format'
+import { vehicleLabel } from '../domain/vehicle'
 import { CATEGORY_LABELS, type MaintenanceEvent, type VehicleDocument } from '../types'
 
 // The single write path for attachments (Milestone 7). Both the event forms and
@@ -152,7 +153,7 @@ export async function buildDocumentIndex(): Promise<DocumentIndexEntry[]> {
     db.vehicles.toArray(),
     db.events.toArray(),
   ])
-  const vehicleName = new Map(vehicles.map((v) => [v.id, v.name]))
+  const vehicleName = new Map(vehicles.map((v) => [v.id, vehicleLabel(v)]))
   const eventById = new Map(events.map((e) => [e.id, e]))
 
   const entries: DocumentIndexEntry[] = []

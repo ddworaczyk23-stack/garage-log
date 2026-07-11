@@ -12,6 +12,7 @@ import {
   type VehicleUrgency,
 } from '../domain/vehicleRanking'
 import { buildCostBreakdown, costPerMile, filterByYear, type CostBreakdown } from '../domain/cost'
+import { vehicleLabel } from '../domain/vehicle'
 import type { MaintenanceEvent, Vehicle } from '../types'
 
 /** Full computed+ranked reminders list for a vehicle — shared by every page
@@ -200,7 +201,7 @@ function buildAttentionFeed(summaries: VehicleSummary[]): AttentionItem[] {
         ordinal: 0,
         priority: 2,
         vehicleId: s.vehicle.id,
-        vehicleName: s.vehicle.name,
+        vehicleName: vehicleLabel(s.vehicle),
         tone: 'stale',
         title: 'Mileage estimate is stale',
         detail: s.mileage ? `last reading ${s.mileage.asOfDate}` : 'no odometer logged yet',
@@ -212,7 +213,7 @@ function buildAttentionFeed(summaries: VehicleSummary[]): AttentionItem[] {
         ordinal: 0,
         priority: 4,
         vehicleId: s.vehicle.id,
-        vehicleName: s.vehicle.name,
+        vehicleName: vehicleLabel(s.vehicle),
         tone: 'cost',
         title: rep.title,
         detail: `$${rep.cost.toFixed(2)} · ${rep.date}`,
@@ -242,7 +243,7 @@ function reminderItem(
     ordinal,
     priority,
     vehicleId: s.vehicle.id,
-    vehicleName: s.vehicle.name,
+    vehicleName: vehicleLabel(s.vehicle),
     tone,
     title: r.rule.label,
     detail: r.reason,

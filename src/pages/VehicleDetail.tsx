@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { formatInterval } from '../domain/format'
@@ -10,8 +10,10 @@ import { EventListItem } from '../components/EventListItem'
 import { OdometerListItem } from '../components/OdometerListItem'
 import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
+import { NicknameEditor } from '../components/NicknameEditor'
 import { Loading } from '../components/ui'
-import type { VehicleDocument } from '../types'
+import { vehicleLabel } from '../domain/vehicle'
+import type { MaintenanceCategory, VehicleDocument } from '../types'
 
 interface Props {
   id: string
@@ -34,6 +36,11 @@ type ActiveForm = 'service' | 'repair' | 'odometer' | null
 // the reminders engine itself is untouched here, only fed by what gets logged.
 export function VehicleDetail({ id }: Props) {
   const [activeForm, setActiveForm] = useState<ActiveForm>(null)
+  const [editingName, setEditingName] = useState(false)
+  // When a service form is opened from a schedule row, this pre-selects that
+  // item's category so logging its first service is one tap.
+  const [serviceCategory, setServiceCategory] = useState<MaintenanceCategory | undefined>(undefined)
+  const formRef = useRef<HTMLDivElement>(null)
 
   // `?? null` lets us tell "still loading" (undefined) apart from
   // "loaded, no such vehicle" (null) — get() alone returns undefined for both.
@@ -79,6 +86,26 @@ export function VehicleDetail({ id }: Props) {
 
   function closeForm() {
     setActiveForm(null)
+    setServiceCategory(undefined)
+  }
+
+  // Open a form, optionally with a pre-selected service category, and bring it
+  // into view — the form sits above the schedule, so a row tapped lower down
+  // would otherwise open off-screen.
+  function openForm(form: Exclude<ActiveForm, null>, category?: MaintenanceCategory) {
+    setServiceCategory(category)
+    setActiveForm(form)
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() =>
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+      ),
+    )
+  }
+
+  // Quick-add bar buttons toggle their form (and clear any preset category).
+  function toggleForm(form: Exclude<ActiveForm, null>) {
+    if (activeForm === form) closeForm()
+    else openForm(form)
   }
 
   return (
@@ -91,11 +118,20 @@ export function VehicleDetail({ id }: Props) {
         <span class="vehicle-emoji lg" aria-hidden="true">
           {vehicle.make === 'Ford' ? '🛻' : '🚙'}
         </span>
-        <div>
-          <h2 class="page-title">{vehicle.name}</h2>
-          <p class="muted">
-            {vehicle.year} {vehicle.make} {vehicle.model}
-          </p>
+        <div class="detail-head-main">
+          {editingName ? (
+            <NicknameEditor vehicle={vehicle} onDone={() => setEditingName(false)} />
+          ) : (
+            <>
+              <h2 class="page-title">{vehicleLabel(vehicle)}</h2>
+              <p class="muted">
+                {vehicle.year} {vehicle.make} {vehicle.model}
+              </p>
+              <button type="button" class="btn-link detail-rename" onClick={() => setEditingName(true)}>
+                {vehicle.nickname ? 'Edit nickname' : 'Add nickname'}
+              </button>
+            </>
+          )}
         </div>
       </div>
 
@@ -119,27 +155,35 @@ export function VehicleDetail({ id }: Props) {
       </dl>
 
       <div class="quick-add-bar">
-        <button class="btn quick-add-btn" onClick={() => setActiveForm(activeForm === 'service' ? null : 'service')}>
+        <button class="btn quick-add-btn" onClick={() => toggleForm('service')}>
           + Service
         </button>
-        <button class="btn quick-add-btn" onClick={() => setActiveForm(activeForm === 'repair' ? null : 'repair')}>
+        <button class="btn quick-add-btn" onClick={() => toggleForm('repair')}>
           + Repair
         </button>
-        <button
-          class="btn quick-add-btn"
-          onClick={() => setActiveForm(activeForm === 'odometer' ? null : 'odometer')}
-        >
+        <button class="btn quick-add-btn" onClick={() => toggleForm('odometer')}>
           + Odometer
         </button>
       </div>
 
-      {activeForm === 'service' && (
-        <EventForm vehicleId={id} kind="maintenance" onDone={closeForm} onCancel={closeForm} />
-      )}
-      {activeForm === 'repair' && (
-        <EventForm vehicleId={id} kind="repair" onDone={closeForm} onCancel={closeForm} />
-      )}
-      {activeForm === 'odometer' && <OdometerForm vehicleId={id} onDone={closeForm} onCancel={closeForm} />}
+      <div ref={formRef}>
+        {activeForm === 'service' && (
+          <EventForm
+            key={`service-${serviceCategory ?? 'generic'}`}
+            vehicleId={id}
+            kind="maintenance"
+            initialCategory={serviceCategory}
+            onDone={closeForm}
+            onCancel={closeForm}
+          />
+        )}
+        {activeForm === 'repair' && (
+          <EventForm vehicleId={id} kind="repair" onDone={closeForm} onCancel={closeForm} />
+        )}
+        {activeForm === 'odometer' && (
+          <OdometerForm vehicleId={id} onDone={closeForm} onCancel={closeForm} />
+        )}
+      </div>
 
       <section class="card">
         <h3 class="card-title">Maintenance schedule</h3>
@@ -164,7 +208,18 @@ export function VehicleDetail({ id }: Props) {
                     {r.odometerStale ? ' ⚠️' : ''}
                   </span>
                 </div>
-                <span class={`status-pill status-${r.status}`}>{STATUS_LABELS[r.status]}</span>
+                <div class="schedule-actions">
+                  <span class={`status-pill status-${r.status}`}>{STATUS_LABELS[r.status]}</span>
+                  {r.status !== 'not-applicable' && (
+                    <button
+                      type="button"
+                      class="btn-link schedule-log"
+                      onClick={() => openForm('service', r.rule.category)}
+                    >
+                      {r.rule.lastDoneDate ? 'Log service' : 'Log first service'}
+                    </button>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

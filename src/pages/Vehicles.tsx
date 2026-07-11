@@ -2,6 +2,7 @@ import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
 import { STATUS_LABELS } from '../types'
+import { vehicleLabel } from '../domain/vehicle'
 import { Loading } from '../components/ui'
 
 async function loadVehiclesWithStatus() {
@@ -33,7 +34,7 @@ export function Vehicles() {
                 {v.make === 'Ford' ? '🛻' : '🚙'}
               </span>
               <span class="list-row-main">
-                <span class="list-row-title">{v.name}</span>
+                <span class="list-row-title">{vehicleLabel(v)}</span>
                 <span class="muted small">
                   {v.year} {v.make} {v.model}
                 </span>

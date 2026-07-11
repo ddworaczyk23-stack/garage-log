@@ -447,8 +447,26 @@ secure context and won't offer install. Publish the `dist/` folder.
   background). Still a single LIGHT theme, no dark mode. tsc + build clean (tests
   unaffected — pure re-skin); verified live desktop + 375px mobile: warm canvas,
   olive emblem/wordmark/buttons/bars/nav, earthy pills — no console errors.
-- Next (not yet built): nothing specified. The product is feature-complete;
-  the natural remaining track is deployment (GitHub remote + Pages so it's
-  installable on the phone), not a new feature.
+- **Deployed:** live at https://ddworaczyk23-stack.github.io/garage-log/ via
+  `.github/workflows/deploy.yml` (GitHub Actions builds Vite + publishes `dist/`
+  on every push to `main`; Pages Source = "GitHub Actions"). **Pushing to main
+  auto-deploys — don't push unless asked.**
+- **Post-M12 features: DONE.** (a) **Inline "Log first service"** — each
+  Maintenance-schedule row on VehicleDetail (except not-applicable) has a
+  `.schedule-log` link that opens the service `EventForm` with that item's
+  category pre-selected (new `initialCategory` prop; form keyed on category) and
+  scrolls it into view. Label is "Log first service" until the rule has a
+  lastDone, then "Log service". Reuses the existing form + reminder engine (no
+  maintenance-math change). (b) **Vehicle nicknames** — optional
+  `Vehicle.nickname`; pure `domain/vehicle.ts` `vehicleLabel()` (nickname else
+  name) drives every user-facing label (Vehicles, VehicleDetail header via
+  `components/NicknameEditor.tsx`, Dashboard cards/attention/comparison, Costs,
+  Documents filter + index). `db/vehicles.ts setVehicleNickname` (blank clears).
+  Sorting/ranking tiebreaks still key off `name`; backup carries nickname
+  automatically. Debug/TemplateAdmin/ReminderDebug stay on canonical `name`.
+  4 tests (`tests/vehicle.test.ts`), 114 total; verified live.
+- Next (not yet built): a **Carfax / service-history importer** (bulk-baseline
+  entry, possibly paste-fed) — waiting on the user's data format. No Carfax
+  consumer API exists, so it reads exported/copied text, not a live connection.
 
 Do NOT invent new feature milestones unless asked.

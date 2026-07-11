@@ -6,7 +6,8 @@
 
 export interface Vehicle {
   id: string
-  name: string // short label, e.g. "F-150 STX"
+  name: string // short label, e.g. "F-150 STX" (the seeded identity)
+  nickname?: string // optional user label shown instead of `name` when set
   year: number
   make: string
   model: string

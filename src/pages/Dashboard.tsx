@@ -2,6 +2,7 @@ import { useQuery } from '../db/useQuery'
 import { getGarageSummary, type AttentionItem, type VehicleSummary } from '../db/summary'
 import { STATUS_LABELS } from '../types'
 import { formatMiles, formatMoney, formatShortDate } from '../domain/format'
+import { vehicleLabel } from '../domain/vehicle'
 import { Loading } from '../components/ui'
 import type { ComputedReminder } from '../domain/reminderEngine'
 
@@ -95,7 +96,7 @@ function VehicleSummaryCard({ summary: s, rank }: { summary: VehicleSummary; ran
           {v.make === 'Ford' ? '🛻' : '🚙'}
         </span>
         <div>
-          <h3 class="card-title">{v.name}</h3>
+          <h3 class="card-title">{vehicleLabel(v)}</h3>
           <p class="muted small">
             {v.year} {v.make} · {v.engine}
           </p>
@@ -196,7 +197,7 @@ function ComparisonCard({ vehicles, year }: { vehicles: VehicleSummary[]; year: 
           <tr>
             <th></th>
             {vehicles.map((s) => (
-              <th key={s.vehicle.id}>{s.vehicle.name}</th>
+              <th key={s.vehicle.id}>{vehicleLabel(s.vehicle)}</th>
             ))}
           </tr>
         </thead>

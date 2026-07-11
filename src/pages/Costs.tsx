@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { useQuery } from '../db/useQuery'
 import { getGarageCostSummary, type VehicleCostSummary } from '../db/summary'
 import { formatMiles, formatMoney } from '../domain/format'
+import { vehicleLabel } from '../domain/vehicle'
 import { EmptyState, Loading } from '../components/ui'
 import type { CategoryCost, CostBreakdown } from '../domain/cost'
 
@@ -80,7 +81,7 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
           {vehicle.make === 'Ford' ? '🛻' : '🚙'}
         </span>
         <div>
-          <h3 class="card-title">{vehicle.name}</h3>
+          <h3 class="card-title">{vehicleLabel(vehicle)}</h3>
           <p class="muted small">
             {vehicle.year} {vehicle.make} · {vehicle.model}
           </p>

@@ -20,6 +20,8 @@ interface Props {
   kind: 'maintenance' | 'repair'
   /** Present when editing; omitted when adding. */
   existing?: MaintenanceEvent
+  /** Pre-selects the category when adding (e.g. "Log" from a schedule row). */
+  initialCategory?: MaintenanceCategory
   existingDocs?: { id: string; filename: string }[]
   onDone: () => void
   onCancel: () => void
@@ -31,11 +33,19 @@ const todayISO = () => new Date().toISOString().slice(0, 10)
 // via `existing`. Kept as a single component since the persistence path,
 // attachment handling, and layout are identical — only the field subset and
 // the submit label change.
-export function EventForm({ vehicleId, kind, existing, existingDocs = [], onDone, onCancel }: Props) {
+export function EventForm({
+  vehicleId,
+  kind,
+  existing,
+  initialCategory,
+  existingDocs = [],
+  onDone,
+  onCancel,
+}: Props) {
   const [date, setDate] = useState(existing?.date ?? todayISO())
   const [odometerMiles, setOdometerMiles] = useState(existing?.odometerMiles?.toString() ?? '')
   const [category, setCategory] = useState<MaintenanceCategory>(
-    existing?.category ?? (kind === 'maintenance' ? 'oil-change' : 'other'),
+    existing?.category ?? initialCategory ?? (kind === 'maintenance' ? 'oil-change' : 'other'),
   )
   const [title, setTitle] = useState(existing?.title ?? '')
   const [cost, setCost] = useState(existing?.cost?.toString() ?? '')

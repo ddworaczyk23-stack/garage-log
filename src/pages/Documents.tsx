@@ -12,6 +12,7 @@ import {
 } from '../domain/documents'
 import { DocumentPreviewModal } from '../components/DocumentPreviewModal'
 import { EmptyState, Loading } from '../components/ui'
+import { vehicleLabel } from '../domain/vehicle'
 
 interface Props {
   /** Optional deep-link filter (e.g. from a vehicle page). */
@@ -87,7 +88,7 @@ export function Documents({ initialVehicleId }: Props) {
             <option value="">All vehicles</option>
             {(vehicles ?? []).map((v) => (
               <option key={v.id} value={v.id}>
-                {v.name}
+                {vehicleLabel(v)}
               </option>
             ))}
           </select>
