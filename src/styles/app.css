@@ -2355,7 +2355,7 @@ a.list-row:hover {
   transform: translateY(-1px);
 }
 
-/* the redesigned gauge (viewBox 100×56) scales by width */
+/* the banded gauge (viewBox 100×58) scales by width */
 .gauge {
   height: auto;
 }

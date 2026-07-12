@@ -192,7 +192,12 @@ export function VehicleDetail({ id }: Props) {
     },
     { overdue: 0, due: 0, ok: 0 },
   )
-  const focal = list.find((r) => reminderProgress(r).pct != null) ?? null
+  // getVehicleReminders() already returns the list ranked by urgency (overdue
+  // → due-next → watch-next → completed → not-applicable), so the top item is
+  // always the right one to feature — even before it has a numeric target
+  // (nothing logged yet), in which case Gauge/focalCopy render their "no data
+  // yet" state instead of the block disappearing entirely.
+  const focal = list[0] ?? null
   const stale = mileage
     ? (Date.now() - new Date(`${mileage.asOfDate}T00:00:00`).getTime()) / 86_400_000 > 45
     : false
