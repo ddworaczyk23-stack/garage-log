@@ -4,6 +4,7 @@ import { getVehicleReminders } from '../db/summary'
 import { STATUS_LABELS } from '../types'
 import { vehicleLabel } from '../domain/vehicle'
 import { Loading } from '../components/ui'
+import { Reveal } from '../components/motion/Reveal'
 
 async function loadVehiclesWithStatus() {
   const vehicles = await db.vehicles.orderBy('name').toArray()
@@ -31,29 +32,31 @@ export function Vehicles() {
         </a>
       </div>
 
-      <ul class="list">
-        {rows.map(({ vehicle: v, top }) => (
-          <li key={v.id}>
-            <a class="list-row" href={`#/vehicle/${v.id}`}>
-              <span class="vehicle-emoji" aria-hidden="true">
-                {v.make === 'Ford' ? '🛻' : '🚙'}
-              </span>
-              <span class="list-row-main">
-                <span class="list-row-title">{vehicleLabel(v)}</span>
-                <span class="muted small">
-                  {v.year} {v.make} {v.model}
+      <Reveal>
+        <ul class="list">
+          {rows.map(({ vehicle: v, top }) => (
+            <li key={v.id}>
+              <a class="list-row" href={`#/vehicle/${v.id}`}>
+                <span class="vehicle-emoji" aria-hidden="true">
+                  {v.make === 'Ford' ? '🛻' : '🚙'}
                 </span>
-              </span>
-              {top && (
-                <span class={`status-pill status-${top.status}`}>{STATUS_LABELS[top.status]}</span>
-              )}
-              <span class="chevron" aria-hidden="true">
-                ›
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
+                <span class="list-row-main">
+                  <span class="list-row-title">{vehicleLabel(v)}</span>
+                  <span class="muted small">
+                    {v.year} {v.make} {v.model}
+                  </span>
+                </span>
+                {top && (
+                  <span class={`status-pill status-${top.status}`}>{STATUS_LABELS[top.status]}</span>
+                )}
+                <span class="chevron" aria-hidden="true">
+                  ›
+                </span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </Reveal>
     </section>
   )
 }

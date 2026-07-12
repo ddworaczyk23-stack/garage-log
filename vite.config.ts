@@ -15,8 +15,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: 'Garage Log',
-        short_name: 'Garage Log',
+        name: 'The Glovebox',
+        short_name: 'The Glovebox',
         description: 'Local-first maintenance tracker for the household vehicles.',
         theme_color: '#f3efe4',
         background_color: '#f3efe4',

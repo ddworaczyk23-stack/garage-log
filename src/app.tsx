@@ -63,7 +63,7 @@ export function App() {
     <div class="app-shell">
       <header class="app-header">
         <span class="app-mark" aria-hidden="true" />
-        <h1 class="app-title">Garage Log</h1>
+        <h1 class="app-title">The Glovebox</h1>
       </header>
       <AccountBar />
       <main class="app-main">

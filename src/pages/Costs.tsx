@@ -4,6 +4,8 @@ import { getGarageCostSummary, type VehicleCostSummary } from '../db/summary'
 import { formatMiles, formatMoney } from '../domain/format'
 import { vehicleLabel } from '../domain/vehicle'
 import { EmptyState, Loading } from '../components/ui'
+import { Reveal } from '../components/motion/Reveal'
+import { useCountUp, useIntroGate, useReducedMotion } from '../motion/hooks'
 import type { CategoryCost, CostBreakdown } from '../domain/cost'
 
 type Range = 'all' | 'year'
@@ -14,8 +16,11 @@ type Range = 'all' | 'year'
 // This-year toggle switches which breakdown the tiles + bars show; cost-per-mile
 // is always lifetime.
 export function Costs() {
+  const reduced = useReducedMotion()
+  const intro = useIntroGate('gl_intro_costs') && !reduced
   const summary = useQuery(getGarageCostSummary)
   const [range, setRange] = useState<Range>('all')
+  const grandCounted = useCountUp(summary?.grandTotal ?? 0, { active: intro, reduced })
 
   if (!summary) return <Loading />
 
@@ -28,7 +33,7 @@ export function Costs() {
 
       <section class="card">
         <h3 class="card-title">Total invested</h3>
-        <p class="cost-grand">{formatMoney(summary.grandTotal)}</p>
+        <p class="cost-grand">{formatMoney(grandCounted)}</p>
         <p class="muted small">
           All maintenance and repairs logged across {summary.vehicles.length} vehicles. A
           documented service history like this also helps at resale time.
@@ -63,7 +68,11 @@ export function Costs() {
           hint="Add a cost when you log a service or repair and the breakdown will appear here."
         />
       ) : (
-        summary.vehicles.map((v) => <VehicleCostCard key={v.vehicle.id} summary={v} range={range} />)
+        summary.vehicles.map((v) => (
+          <Reveal key={v.vehicle.id}>
+            <VehicleCostCard summary={v} range={range} />
+          </Reveal>
+        ))
       )}
     </section>
   )
