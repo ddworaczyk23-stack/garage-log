@@ -1,4 +1,5 @@
 import { db } from './db'
+import { cloudConfigured } from './cloud'
 import type { Vehicle, ReminderRule } from '../types'
 import { CATEGORY_LABELS } from '../types'
 import { SCHEDULE_TEMPLATES } from './scheduleTemplates'
@@ -67,7 +68,20 @@ function rulesForVehicle(vehicleId: string, templateKey: string): ReminderRule[]
 // preserved, and new template items (e.g. wiper blades) show up on next boot
 // without a reset. Safe to call every boot.
 export async function seedIfEmpty(): Promise<void> {
-  if ((await db.vehicles.count()) === 0) {
+  // Only auto-create the two demo vehicles in a pure local-only build (no
+  // Dexie Cloud configured, e.g. `npm run dev` with no VITE_DEXIE_CLOUD_URL).
+  // Once cloud sync IS configured (the deployed app), every fresh empty local
+  // database — a brand new family member's own account, or the original
+  // owner's own second device before its first sync — would otherwise
+  // independently create its own random-id copy of "F-150 STX"/"Rogue SL".
+  // Those get claimed into whichever account logs in on that device (Dexie
+  // Cloud stamps owner/realmId onto pre-existing unowned rows on first sync),
+  // which either hands a brand-new user two vehicles they never added, or
+  // duplicates the pair once two independently-seeded devices sync under the
+  // same account (the bug that motivated this guard). So a cloud-configured
+  // build always starts genuinely empty — "Add Car" (db/vehicleOnboarding.ts)
+  // is the only way in.
+  if (!cloudConfigured && (await db.vehicles.count()) === 0) {
     const now = new Date().toISOString()
     const seeded = SEED_VEHICLES.map((v) => ({
       ...v,
