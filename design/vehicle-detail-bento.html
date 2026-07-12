@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F-150 STX · Garage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --canvas:#E7E9E0;      /* soft sage-gray backdrop so white cards pop (olive-family) */
+    --card:#FFFFFF;
+    --dark:#24241E;        /* warm charcoal hero */
+    --ink:#2C2C2C;
+    --muted:#6E6E66;
+    --hair:#E7E4DB;
+    --olive:#4E6050;
+    --olive-deep:#3A473C;
+    --sage-pop:#C4D4B0;    /* light olive block (the "green card") */
+    --sage-deep:#A9C08F;
+    --clay-pop:#E8C7AC;    /* light terracotta block (warm counterpoint to the ref's lavender) */
+    --clay-deep:#D9A67E;
+    --rust:#B04A32;
+    --amber:#A9741B;
+    --cream:#EDEAE1;       /* text on dark */
+
+    --serif:'Spectral',Georgia,serif;
+    --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+
+    --r-card:26px;
+    --r-block:18px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--canvas);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.45;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  a{color:inherit;text-decoration:none;}
+  :focus-visible{outline:2px solid var(--olive);outline-offset:3px;border-radius:6px;}
+
+  .wrap{max-width:940px;margin:0 auto;padding:20px 18px 60px;}
+
+  /* ---------- slim masthead ---------- */
+  .top{display:flex;align-items:center;gap:12px;margin-bottom:18px;}
+  .back{
+    font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--muted);padding:6px 0;
+  }
+  .back:hover{color:var(--olive);}
+  .top-name{
+    font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:-.01em;margin-left:auto;
+  }
+  .plate{
+    font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.14em;color:var(--cream);
+    background:var(--olive);padding:6px 11px;border-radius:8px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 -1.5px 0 rgba(0,0,0,.22);
+  }
+
+  /* ---------- bento grid ---------- */
+  .bento{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;}
+  .col{display:flex;flex-direction:column;gap:16px;}
+
+  .card{background:var(--card);border-radius:var(--r-card);padding:20px;
+    box-shadow:0 1px 2px rgba(50,46,34,.05),0 18px 34px -24px rgba(50,46,34,.28);}
+
+  .card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .card-title{font-family:var(--serif);font-weight:600;font-size:20px;line-height:1.1;letter-spacing:-.01em;margin:0;}
+  .card-sub{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:5px 0 0;}
+
+  /* ---------- icon chips ---------- */
+  .chip{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;flex-shrink:0;}
+  .chip svg{width:15px;height:15px;display:block;}
+  .chip-olive{background:var(--olive);color:var(--cream);}
+  .chip-sage{background:var(--sage-deep);color:var(--olive-deep);}
+  .chip-cream{background:var(--cream);color:var(--ink);}
+  .chip-dark{background:rgba(255,255,255,.12);color:var(--cream);}
+  .chip-sm{width:26px;height:26px;}
+  .chip-sm svg{width:12px;height:12px;}
+
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;
+    font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.06em;
+    padding:5px 10px;border-radius:999px;white-space:nowrap;
+  }
+  .pill svg{width:11px;height:11px;}
+  .pill-sage{background:var(--sage-pop);color:var(--olive-deep);}
+  .pill-cream{background:rgba(255,255,255,.14);color:var(--cream);}
+  .pill-ghost{background:var(--canvas);color:var(--muted);}
+  .pill-rust{background:rgba(176,74,50,.14);color:var(--rust);}
+
+  /* ---------- DARK HERO: odometer ---------- */
+  .hero{background:var(--dark);color:var(--cream);position:relative;overflow:hidden;padding:22px;}
+  .hero .card-title{color:var(--cream);}
+  .hero .card-sub{color:rgba(237,234,225,.55);}
+  .hero-seg{
+    font-family:var(--sans);font-weight:600;font-size:12px;color:var(--cream);
+    background:rgba(255,255,255,.10);border:none;border-radius:999px;padding:8px 12px;
+    display:inline-flex;align-items:center;gap:7px;cursor:pointer;
+  }
+  .hero-seg svg{width:11px;height:11px;}
+  .hero-body{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-top:26px;}
+  .hero-left{min-width:0;}
+  .odo-label{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(237,234,225,.6);}
+  .odo-num{font-family:var(--mono);font-weight:600;font-size:52px;letter-spacing:.02em;line-height:1;margin-top:12px;font-variant-numeric:tabular-nums;}
+  .odo-num .u{font-size:16px;letter-spacing:.14em;color:rgba(237,234,225,.55);margin-left:8px;}
+  /* two chunky month bars */
+  .bars{display:flex;gap:12px;flex-shrink:0;}
+  .bar-col{display:flex;flex-direction:column;align-items:center;gap:8px;}
+  .bar-cap{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:rgba(237,234,225,.6);}
+  .bar{width:58px;border-radius:14px;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(255,255,255,.06);}
+  .bar .seg-top{background:var(--sage-pop);}
+  .bar .seg-bot{background:var(--olive);}
+  .bar-val{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--cream);}
+  .hatch{background-image:repeating-linear-gradient(45deg,rgba(0,0,0,.16) 0 2px,transparent 2px 7px);}
+
+  /* ---------- GAUGE card: next service (with redline for overdue) ---------- */
+  .gauge-inner{background:var(--sage-pop);border-radius:var(--r-block);padding:18px;margin-top:16px;position:relative;}
+  .gauge-top{display:flex;align-items:center;justify-content:space-between;}
+  .gauge-wrap{display:flex;align-items:flex-end;gap:6px;margin-top:6px;}
+  .gauge-svg{width:150px;height:92px;flex-shrink:0;}
+  .gauge-read{margin-left:auto;text-align:right;}
+  .gauge-big{font-family:var(--sans);font-weight:700;font-size:30px;letter-spacing:-.02em;color:var(--rust);line-height:1;}
+  .gauge-cap{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:var(--olive-deep);margin-top:6px;}
+  .gauge-note{display:flex;align-items:center;gap:8px;margin-top:4px;}
+
+  /* ---------- RECENT service ---------- */
+  .avatars{display:flex;align-items:center;}
+  .av{width:30px;height:30px;border-radius:50%;border:2px solid var(--card);display:grid;place-items:center;font-size:13px;}
+  .av+.av{margin-left:-9px;}
+  .av-shop{background:var(--sage-pop);}
+  .av-diy{background:var(--clay-pop);}
+  .rec-row{
+    display:flex;align-items:center;gap:12px;
+    background:var(--canvas);border-radius:16px;padding:12px 14px;margin-top:14px;
+  }
+  .rec-row.plain{background:transparent;padding:10px 2px;border-top:1px solid var(--hair);border-radius:0;margin-top:0;}
+  .rec-main{min-width:0;flex:1;}
+  .rec-name{font-family:var(--serif);font-weight:500;font-size:16px;line-height:1.15;}
+  .rec-meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--muted);margin-top:2px;}
+  .rec-amt{font-family:var(--mono);font-weight:600;font-size:14px;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .dots{color:var(--muted);letter-spacing:2px;font-weight:700;}
+
+  /* ---------- SCHEDULE: timeline + embedded pops ---------- */
+  .fc{display:grid;grid-template-columns:1fr 0.92fr;gap:18px;margin-top:16px;}
+  @media(max-width:560px){.fc{grid-template-columns:1fr;}}
+
+  .timeline{list-style:none;margin:0;padding:0;position:relative;}
+  .timeline::before{content:"";position:absolute;left:5px;top:6px;bottom:14px;width:1.5px;background:var(--hair);}
+  .tl{position:relative;padding:0 0 20px 24px;}
+  .tl:last-child{padding-bottom:0;}
+  .tl::before{content:"";position:absolute;left:0;top:4px;width:11px;height:11px;border-radius:50%;background:var(--card);border:2px solid var(--sage-deep);}
+  .tl.is-over::before{background:var(--rust);border-color:var(--rust);}
+  .tl.is-next::before{background:var(--olive);border-color:var(--olive);box-shadow:0 0 0 4px rgba(78,96,80,.16);}
+  .tl-mile{font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.04em;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .tl-name{font-size:14px;font-weight:500;margin-top:1px;}
+  .tl-when{font-family:var(--mono);font-size:10.5px;letter-spacing:.04em;color:var(--muted);margin-top:2px;}
+  .tl-when.over{color:var(--rust);}
+
+  .fc-stack{display:flex;flex-direction:column;gap:14px;}
+  .pop{border-radius:var(--r-block);padding:15px 16px;position:relative;overflow:hidden;}
+  .pop-sage{background:var(--sage-pop);}
+  .pop-clay{background:var(--clay-pop);}
+  .pop-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;}
+  .pop-label{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--olive-deep);}
+  .pop-clay .pop-label{color:#7a4a2f;}
+  .pop-name{font-size:13px;font-weight:600;margin-top:3px;color:var(--ink);}
+  .pop-big{font-family:var(--sans);font-weight:700;font-size:26px;letter-spacing:-.02em;color:var(--ink);margin-top:8px;line-height:1;}
+  .pop-arrow{color:var(--olive-deep);}
+  .pop-clay .pop-arrow{color:#7a4a2f;}
+  /* mini progress bar */
+  .mini-bar{height:12px;border-radius:999px;background:rgba(255,255,255,.5);margin-top:12px;overflow:hidden;position:relative;}
+  .mini-fill{height:100%;background:var(--olive);border-radius:999px;position:relative;}
+  .mini-knob{position:absolute;right:-3px;top:50%;transform:translateY(-50%);width:12px;height:12px;border-radius:50%;background:var(--clay-deep);border:2px solid var(--sage-pop);}
+  .mini-cap{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--olive-deep);margin-top:7px;}
+  .pop-clay .mini-cap{color:#7a4a2f;}
+
+  @media(max-width:720px){
+    .bento{grid-template-columns:1fr;}
+    .odo-num{font-size:44px;}
+  }
+  @media(max-width:430px){
+    .hero-body{flex-direction:column;align-items:flex-start;gap:20px;}
+    .bars{align-self:stretch;}
+    .bar{flex:1;}
+  }
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <div class="top">
+      <a class="back" href="#">‹ Garage</a>
+      <span class="top-name">2020 Ford F-150</span>
+      <span class="plate">STX</span>
+    </div>
+
+    <div class="bento">
+      <!-- LEFT COLUMN -->
+      <div class="col">
+
+        <!-- DARK HERO: odometer -->
+        <section class="card hero">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Odometer</h2>
+              <p class="card-sub">Updated 3 days ago</p>
+            </div>
+            <button class="hero-seg">This year
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6"/></svg>
+            </button>
+          </div>
+          <div class="hero-body">
+            <div class="hero-left">
+              <div class="odo-label">Miles logged
+                <span class="chip chip-sage chip-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg></span>
+              </div>
+              <div class="odo-num">84,231<span class="u">MI</span></div>
+            </div>
+            <div class="bars">
+              <div class="bar-col">
+                <span class="bar-val">1,240</span>
+                <div class="bar" style="height:96px;">
+                  <div class="seg-top" style="height:34%;"></div>
+                  <div class="seg-bot" style="height:40%;"></div>
+                </div>
+                <span class="bar-cap">Jun</span>
+              </div>
+              <div class="bar-col">
+                <span class="bar-val">980</span>
+                <div class="bar hatch" style="height:96px;">
+                  <div class="seg-top" style="height:26%;"></div>
+                  <div class="seg-bot" style="height:34%;"></div>
+                </div>
+                <span class="bar-cap">Jul</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- GAUGE: next service (redline = overdue) -->
+        <section class="card">
+          <div class="card-head">
+            <div>
+              <h2 class="card-title">Next service</h2>
+              <p class="card-sub">Most urgent first</p>
+            </div>
+            <span class="chip chip-cream"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 1 1 8 8"/><path d="M12 8v4l3 2"/></svg></span>
+          </div>
+          <div class="gauge-inner">
+            <div class="gauge-top">
+              <span class="pill pill-rust">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
+                Overdue
+              </span>
+              <span class="chip chip-olive chip-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg></span>
+            </div>
+            <div class="gauge-wrap">
+              <svg class="gauge-svg" viewBox="0 0 150 92">
+                <defs>
+                  <pattern id="gh" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+                    <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(58,71,60,.5)" stroke-width="2"/>
+                  </pattern>
+                </defs>
+                <!-- track -->
+                <path d="M12 84 A63 63 0 0 1 138 84" fill="none" stroke="#24241E" stroke-width="15" stroke-linecap="round"/>
+                <!-- olive fill (~78%) -->
+                <path d="M12 84 A63 63 0 0 1 122 44" fill="none" stroke="#4E6050" stroke-width="15" stroke-linecap="round"/>
+                <!-- rust redline segment -->
+                <path d="M122 44 A63 63 0 0 1 138 84" fill="none" stroke="#B04A32" stroke-width="15" stroke-linecap="round"/>
+                <path d="M122 44 A63 63 0 0 1 138 84" fill="none" stroke="url(#gh)" stroke-width="15" stroke-linecap="round"/>
+                <!-- knob past the end -->
+                <circle cx="138" cy="84" r="8" fill="#24241E" stroke="#B04A32" stroke-width="3"/>
+              </svg>
+              <div class="gauge-read">
+                <div class="gauge-big">1,231 mi</div>
+                <div class="gauge-cap">past due</div>
+              </div>
+            </div>
+            <div class="gauge-note">
+              <span class="pill pill-sage">Engine oil &amp; filter</span>
+              <span style="font-family:var(--mono);font-size:11px;color:var(--olive-deep);">due at 83,000</span>
+            </div>
+          </div>
+        </section>
+
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="col">
+
+        <!-- RECENT service -->
+        <section class="card">
+          <div class="card-head">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="chip chip-dark" style="background:var(--dark);"><svg viewBox="0 0 24 24" fill="none" stroke="var(--cream)" stroke-width="2"><path d="M14 3l7 7-4 1-4 4-1 4-7-7 4-1 4-4z"/></svg></span>
+              <div>
+                <h2 class="card-title">Recent service</h2>
+                <p class="card-sub">Maintenance log · 4 entries</p>
+              </div>
+            </div>
+            <div class="avatars">
+              <span class="av av-shop">🔧</span>
+              <span class="av av-diy">🧰</span>
+            </div>
+          </div>
+          <div class="rec-row">
+            <span class="chip chip-sage chip-sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h4l2 6 4-14 2 8h6"/></svg></span>
+            <div class="rec-main">
+              <div class="rec-name">Engine oil &amp; filter</div>
+              <div class="rec-meta">Jan 14, 2026 · 78,000 mi · Shop</div>
+            </div>
+            <span class="rec-amt">$79.40</span>
+            <span class="dots">⋮</span>
+          </div>
+          <div class="rec-row plain">
+            <div class="rec-main">
+              <div class="rec-name">Tire rotation</div>
+              <div class="rec-meta">Jan 14, 2026 · 78,000 mi · Shop</div>
+            </div>
+            <span class="rec-amt">$25.00</span>
+          </div>
+          <div class="rec-row plain">
+            <div class="rec-main">
+              <div class="rec-name">Cabin air filter</div>
+              <div class="rec-meta">Aug 2, 2025 · 62,000 mi · DIY</div>
+            </div>
+            <span class="rec-amt">$18.75</span>
+          </div>
+        </section>
+
+        <!-- SCHEDULE forecast: timeline + pops -->
+        <section class="card">
+          <div class="card-head">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span class="chip chip-sage"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V5m0 14h16M8 15l3-4 3 3 4-6"/></svg></span>
+              <h2 class="card-title">Coming up</h2>
+            </div>
+            <a class="pill pill-ghost" href="#">Full schedule →</a>
+          </div>
+
+          <div class="fc">
+            <ul class="timeline">
+              <li class="tl is-over">
+                <div class="tl-mile">83,000</div>
+                <div class="tl-name">Engine oil &amp; filter</div>
+                <div class="tl-when over">1,231 mi overdue</div>
+              </li>
+              <li class="tl is-next">
+                <div class="tl-mile">84,600</div>
+                <div class="tl-name">Tire rotation</div>
+                <div class="tl-when">in 369 mi</div>
+              </li>
+              <li class="tl">
+                <div class="tl-mile">86,000</div>
+                <div class="tl-name">Brake inspection</div>
+                <div class="tl-when">in 1,769 mi</div>
+              </li>
+              <li class="tl">
+                <div class="tl-mile">87,000</div>
+                <div class="tl-name">Cabin air filter</div>
+                <div class="tl-when">in 2,769 mi</div>
+              </li>
+              <li class="tl">
+                <div class="tl-mile">90,000</div>
+                <div class="tl-name">Engine air filter</div>
+                <div class="tl-when">in 5,769 mi</div>
+              </li>
+            </ul>
+
+            <div class="fc-stack">
+              <div class="pop pop-sage">
+                <div class="pop-head">
+                  <div>
+                    <div class="pop-label">Next up</div>
+                    <div class="pop-name">Tire rotation</div>
+                  </div>
+                  <span class="pop-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg></span>
+                </div>
+                <div class="pop-big">369 mi</div>
+                <div class="mini-bar">
+                  <div class="mini-fill hatch" style="width:93%;"><span class="mini-knob"></span></div>
+                </div>
+                <div class="mini-cap">93% of 5,000-mi interval</div>
+              </div>
+
+              <div class="pop pop-clay">
+                <div class="pop-head">
+                  <div>
+                    <div class="pop-label">Priciest ahead</div>
+                    <div class="pop-name">Spark plugs</div>
+                  </div>
+                  <span class="pop-arrow"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg></span>
+                </div>
+                <div class="pop-big">~$240</div>
+                <svg width="100%" height="42" viewBox="0 0 150 42" preserveAspectRatio="none" style="margin-top:8px;overflow:visible;">
+                  <polyline points="4,36 30,30 56,32 82,20 108,22 140,6" fill="none" stroke="#B04A32" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="140" cy="6" r="4.5" fill="#B04A32" stroke="var(--clay-pop)" stroke-width="2.5"/>
+                </svg>
+                <div class="mini-cap">Due at ~120,000 mi</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>
