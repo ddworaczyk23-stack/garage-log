@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'preact/hooks'
 import { Nav } from './components/Nav'
+import { AccountBar } from './components/AccountBar'
 import { ErrorBoundary } from './components/ui'
 import { Dashboard } from './pages/Dashboard'
 import { Vehicles } from './pages/Vehicles'
+import { AddVehicle } from './pages/AddVehicle'
 import { VehicleDetail } from './pages/VehicleDetail'
 import { Documents } from './pages/Documents'
 import { Costs } from './pages/Costs'
@@ -19,6 +21,7 @@ import { ReminderDebug } from './pages/ReminderDebug'
 // survives the `base: './'` relative-path setup. Routes:
 //   #/                      -> Dashboard
 //   #/vehicles              -> Vehicle list
+//   #/add-vehicle           -> Add a new car (VIN or manual entry)
 //   #/vehicle/<id>          -> Vehicle detail
 //   #/documents             -> Cross-vehicle document browser
 //   #/documents/<vehicleId> -> …pre-filtered to one vehicle
@@ -41,6 +44,7 @@ export function App() {
 
   let page
   if (route === '/vehicles') page = <Vehicles />
+  else if (route === '/add-vehicle') page = <AddVehicle />
   else if (route.startsWith('/vehicle/'))
     page = <VehicleDetail id={route.slice('/vehicle/'.length)} />
   else if (route === '/documents') page = <Documents />
@@ -61,6 +65,7 @@ export function App() {
         <span class="app-mark" aria-hidden="true" />
         <h1 class="app-title">Garage Log</h1>
       </header>
+      <AccountBar />
       <main class="app-main">
         <ErrorBoundary key={route}>{page}</ErrorBoundary>
       </main>

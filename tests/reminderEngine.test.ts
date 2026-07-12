@@ -22,6 +22,7 @@ function makeRule(overrides: Partial<ReminderRule> = {}): ReminderRule {
   return {
     id: 'f150-2020:oil-change',
     vehicleId: 'f150-2020',
+    templateKey: 'f150-2020',
     category: 'oil-change',
     label: 'Engine oil & filter',
     customIntervalMiles: 5000,
@@ -157,6 +158,7 @@ describe('computeReminder — manual overrides', () => {
     const rule: ReminderRule = {
       id: 'rogue-2020:wheel-alignment',
       vehicleId: 'rogue-2020',
+      templateKey: 'rogue-2020',
       category: 'wheel-alignment',
       label: 'Wheel alignment',
       customIntervalMiles: null,

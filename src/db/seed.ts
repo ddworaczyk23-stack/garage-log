@@ -3,12 +3,15 @@ import type { Vehicle, ReminderRule } from '../types'
 import { CATEGORY_LABELS } from '../types'
 import { SCHEDULE_TEMPLATES } from './scheduleTemplates'
 
-// The two household vehicles. Stable string ids so re-imports/backups dedupe
-// cleanly later. Drivetrain/engine can be edited from the app in a later
+// The two household vehicles. `templateKey` is the fixed logical key into
+// SCHEDULE_TEMPLATES (db/scheduleTemplates.ts) — the vehicle *id* itself is a
+// fresh crypto.randomUUID() per install (see seedIfEmpty below), because Dexie
+// Cloud requires primary keys to be globally unique across every synced user,
+// and a hardcoded id would collide the moment two different users both seed
+// "F-150 STX". Drivetrain/engine can be edited from the app in a later
 // milestone.
-export const SEED_VEHICLES: Omit<Vehicle, 'createdAt'>[] = [
+export const SEED_VEHICLES: Omit<Vehicle, 'id' | 'createdAt'>[] = [
   {
-    id: 'f150-2020',
     name: 'F-150 STX',
     year: 2020,
     make: 'Ford',
@@ -18,7 +21,6 @@ export const SEED_VEHICLES: Omit<Vehicle, 'createdAt'>[] = [
     drivetrain: '4WD',
   },
   {
-    id: 'rogue-2020',
     name: 'Rogue SL',
     year: 2020,
     make: 'Nissan',
@@ -29,16 +31,23 @@ export const SEED_VEHICLES: Omit<Vehicle, 'createdAt'>[] = [
   },
 ]
 
+// Fixed logical template keys, matched to SEED_VEHICLES by array position.
+// Stable forever — SCHEDULE_TEMPLATES is keyed by these, not by any vehicle id.
+const SEED_TEMPLATE_KEYS = ['f150-2020', 'rogue-2020']
+
 // Build the initial ReminderRule set for one vehicle from its schedule template.
-// Rule id is `${vehicleId}:${category}` so it's stable across re-seeds/imports.
+// Rule id is `${vehicleId}:${category}` so it's stable across re-seeds/imports
+// and globally unique (vehicleId is). `templateKey` is what actually looks up
+// the template — see the ReminderRule.templateKey doc comment in types.ts.
 // Rules store NO interval of their own by default — the effective interval is
 // resolved from the template (consensus ?? factory) unless the user sets a
 // custom override. lastDone* start null (never serviced yet).
-function rulesForVehicle(vehicleId: string): ReminderRule[] {
-  const entries = SCHEDULE_TEMPLATES[vehicleId] ?? []
+function rulesForVehicle(vehicleId: string, templateKey: string): ReminderRule[] {
+  const entries = SCHEDULE_TEMPLATES[templateKey] ?? []
   return entries.map((e) => ({
     id: `${vehicleId}:${e.category}`,
     vehicleId,
+    templateKey,
     category: e.category,
     label: e.label ?? CATEGORY_LABELS[e.category],
     customIntervalMiles: null,
@@ -60,11 +69,37 @@ function rulesForVehicle(vehicleId: string): ReminderRule[] {
 export async function seedIfEmpty(): Promise<void> {
   if ((await db.vehicles.count()) === 0) {
     const now = new Date().toISOString()
-    await db.vehicles.bulkAdd(SEED_VEHICLES.map((v) => ({ ...v, createdAt: now })))
+    const seeded = SEED_VEHICLES.map((v) => ({
+      ...v,
+      id: `veh-${crypto.randomUUID()}`,
+      createdAt: now,
+    }))
+    await db.vehicles.bulkAdd(seeded)
+    const expected = seeded.flatMap((v, i) => rulesForVehicle(v.id, SEED_TEMPLATE_KEYS[i]))
+    await db.reminderRules.bulkAdd(expected)
+    return
   }
 
-  const expected = SEED_VEHICLES.flatMap((v) => rulesForVehicle(v.id))
-  const existingIds = new Set(await db.reminderRules.toCollection().primaryKeys())
+  // Backfill `templateKey` for any rule from before this field existed. Those
+  // rules can only be the original F-150/Rogue rows (only "Add Car" vehicles
+  // ever had no matching SCHEDULE_TEMPLATES entry, and they never got rules
+  // seeded for them at all) — for those, `templateKey` was always implicitly
+  // equal to `vehicleId`, since SCHEDULE_TEMPLATES used to be keyed by vehicleId.
+  await db.reminderRules
+    .filter((r) => !('templateKey' in r))
+    .modify((r) => {
+      ;(r as unknown as Record<string, unknown>).templateKey = r.vehicleId
+    })
+
+  // Reconcile against the current templates for every vehicle that has a
+  // templateKey (i.e. was seeded from a static schedule — "Add Car" vehicles
+  // have none and are intentionally skipped, see db/vehicleOnboarding.ts).
+  const existingRules = await db.reminderRules.toArray()
+  const templateKeyByVehicle = new Map(existingRules.map((r) => [r.vehicleId, r.templateKey]))
+  const expected = [...templateKeyByVehicle.entries()].flatMap(([vehicleId, templateKey]) =>
+    rulesForVehicle(vehicleId, templateKey),
+  )
+  const existingIds = new Set(existingRules.map((r) => r.id))
   const missing = expected.filter((r) => !existingIds.has(r.id))
   if (missing.length) await db.reminderRules.bulkAdd(missing)
 

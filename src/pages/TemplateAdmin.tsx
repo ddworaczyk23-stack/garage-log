@@ -57,7 +57,7 @@ export function TemplateAdmin() {
 }
 
 function RuleRow({ rule }: { rule: ReminderRule }) {
-  const tmpl = getTemplateEntry(rule.vehicleId, rule.category)
+  const tmpl = getTemplateEntry(rule.templateKey, rule.category)
   const [kind, setKind] = useState<OverrideKind | ''>(rule.override?.kind ?? '')
   const [note, setNote] = useState(rule.override?.note ?? rule.notes ?? '')
   const [atMiles, setAtMiles] = useState(rule.override?.atMiles?.toString() ?? '')

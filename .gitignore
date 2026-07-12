@@ -5,3 +5,8 @@ dev-dist
 *.local
 .DS_Store
 .vite
+
+# Dexie Cloud CLI output — dexie-cloud.key is a SECRET admin key, never commit.
+# dexie-cloud.json holds the (non-secret) dbUrl but is machine/CLI state.
+dexie-cloud.json
+dexie-cloud.key

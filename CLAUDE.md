@@ -2,7 +2,10 @@
 
 Local-first, installable **PWA** for tracking maintenance on the two household
 vehicles. Vite + TypeScript + Preact + Dexie.js (IndexedDB) + vite-plugin-pwa,
-plain CSS. No backend — all data lives in the browser (IndexedDB).
+plain CSS. Offline-first: all data lives in the browser (IndexedDB) and the app
+is fully usable with no account. Optional per-user private sync across a user's
+own devices is layered on via **Dexie Cloud** (no self-hosted backend) — see
+the "Dexie Cloud" migration entry at the end of the roadmap.
 
 Vehicles:
 - **2020 Ford F-150 STX** — 2.7L EcoBoost V6, **4WD**
@@ -40,14 +43,25 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
 
 - **`src/types.ts`** — the full data model (one shared `category` vocabulary ties
   `MaintenanceEvent` to `ReminderRule` for auto-personalization in later milestones).
-- **`src/db/db.ts`** — single Dexie database, schema **version 1**, six tables:
-  `vehicles, odometerReadings, events, documents, reminderRules, appMeta`. Index
-  strings list only indexed keys. **`orderBy(field)` requires `field` to be
-  indexed** — this bit us once (`vehicles: 'id, name'` exists so the lists can
-  sort by name). To change schema after real data exists on a device, add a new
-  `.version(n).stores({...})` block; never edit version 1.
+- **`src/db/db.ts`** — single Dexie database (with the `dexieCloud` addon
+  attached; see the Dexie Cloud roadmap entry), schema now at **version 2**,
+  eight tables: `vehicles, odometerReadings, events, documents, reminderRules,
+  appMeta, factoryMaintenanceData, consensusData`. Index strings list only
+  indexed keys. **`orderBy(field)` requires `field` to be indexed** — this bit
+  us once (`vehicles: 'id, name'` exists so the lists can sort by name). To
+  change schema after real data exists on a device, add a new
+  `.version(n).stores({...})` block; never edit an existing version. (Adding a
+  NON-indexed field, e.g. `ReminderRule.templateKey` or `VehicleDocument.tags`,
+  needs no version bump — seed.ts backfills those.)
+- **`src/db/cloud.ts`** — Dexie Cloud config + auth glue (see roadmap entry).
+  `db.cloud.configure()` runs only when `VITE_DEXIE_CLOUD_URL` is set;
+  `login()`/`logout()`/`useCloudUser()`. `appMeta`/`factoryMaintenanceData`/
+  `consensusData` are `unsyncedTables` (local-only).
 - **`src/db/seed.ts`** — seeds the two vehicles on a fresh DB only (`seedIfEmpty`).
-  Stable string ids (`f150-2020`, `rogue-2020`) so later backup import dedupes.
+  Vehicle ids are fresh `veh-<uuid>` (globally unique — required for Dexie Cloud
+  sync; the old hardcoded `f150-2020`/`rogue-2020` would collide across users).
+  The fixed schedule-template lookup key lives on `ReminderRule.templateKey`
+  instead (see roadmap). Backfills `templateKey` for pre-existing local rules.
 - **`src/db/useQuery.ts`** — reactive hook wrapping Dexie `liveQuery`; screens
   re-render automatically after writes. Return `undefined` = loading; have the
   querier return `null` for "loaded but not found" so the two are distinguishable.
@@ -559,8 +573,119 @@ secure context and won't offer install. Publish the `dist/` folder.
     see item (5)'s implementation note above. 120/120 tests pass (unchanged
     from the first pass — this half was UI/glue-code error handling, nothing
     newly pure to unit-test), tsc + build clean.
-- Next (not yet built): a **Carfax / service-history importer** (bulk-baseline
-  entry, possibly paste-fed) — waiting on the user's data format. No Carfax
-  consumer API exists, so it reads exported/copied text, not a live connection.
+- **Service-history importer: DONE.** Paste-fed bulk-baseline entry (e.g. a
+  Carfax Car Care history) — `domain/importHistory.ts` (pure paste parser +
+  keyword-based category matcher) + `db/importHistory.ts` (writes) +
+  `pages/ImportHistory.tsx` (route `#/import/<vehicleId>`, linked from Vehicle
+  Detail's "Maintenance schedule" card). No Carfax API involved — it reads
+  pasted/exported text, not a live connection.
+- **New-vehicle onboarding (VIN/manual entry + factory-maintenance/consensus
+  hydration): DONE.** "Add Car" (`#/add-vehicle`, linked from `Vehicles.tsx`)
+  creates the `Vehicle` record immediately from either a decoded VIN or manual
+  year/make/model/trim entry, then hydrates two read-only reference datasets in
+  the background. `domain/vehicleIdentity.ts` — pure `canonicalVehicleId()`
+  (deterministic key from year/make/model/trim) + `matchesExistingVehicle()`
+  (VIN match, else exact identity match — "Add Car" never creates a duplicate
+  for the same physical car) + `identityFromVehicle()`. `services/vinDecode.ts`
+  — REAL network call to NHTSA's free vPIC `decodevinvalues` endpoint (no key,
+  CORS-enabled); note its `Results` is a single flat object with named fields
+  (Make/Model/ModelYear/Trim/DisplacementL/...), not the `{Variable,Value}[]`
+  shape of vPIC's other `/decodevin/` endpoint — also best-effort prefills
+  engine/drivetrain, which stay user-editable. `services/maintenanceProvider.ts`
+  — adapter interface (`MaintenanceProvider`) + `mockMaintenanceProvider`, the
+  single active implementation; there is no free public API for factory
+  maintenance schedules or crowd-sourced common-issues data, so this returns
+  clearly-labeled sample data (`source: "Sample data (no live provider
+  connected)..."`) — swapping in a real provider later means implementing the
+  interface and changing one export, no DB/UI changes. `db/vehicleOnboarding.ts`
+  — `addVehicle()` (dedup-checked create) + `hydrateFactoryMaintenance()` /
+  `hydrateConsensusData()` / `hydrateVehicleExternalData()` (fetches both
+  independently via `Promise.allSettled` so one failing never blocks or rolls
+  back the other; writes a `'loading'` row immediately so the UI reacts via
+  liveQuery with no extra reactive plumbing; retries once before recording an
+  error; skips re-fetching when a canonical id already has a cached `'ok'`
+  result — so two vehicles resolving to the same year/make/model/trim reuse one
+  fetch). New `db.ts` **version 2**: `vehicles` gained a `vin` index, plus two
+  new tables `factoryMaintenanceData`/`consensusData` **keyed by
+  canonicalVehicleId (not vehicle id)** for that cross-vehicle cache reuse.
+  `Vehicle` gained optional `canonicalVehicleId`. UI: `pages/AddVehicle.tsx`
+  (VIN/manual toggle, duplicate-vehicle notice with a link instead of a silent
+  redirect) and two new read-only cards on `VehicleDetail.tsx` ("Factory
+  maintenance (reference)" / "Consensus & common issues") with loading/error/
+  retry states, source label, and last-updated timestamp — **only rendered for
+  vehicles with a `canonicalVehicleId`**, i.e. added via this flow; the two
+  hand-seeded vehicles are unaffected and show neither section. Deliberate
+  scope boundary: this data is explicitly **NOT** wired into `ReminderRule` or
+  the reminders engine (`scheduleTemplates.ts`/`reminderEngine.ts`), which stay
+  driven only by the curated templates + logged history as before — mixing
+  sample/mock data into the real overdue/watch-next tracking would be
+  misleading. 149/149 tests pass (17 new: `tests/vehicleIdentity.test.ts`,
+  `tests/vehicleOnboarding.test.ts`), tsc + build clean. Verified live: manual
+  entry and real VIN decode (`1HGCM82633A004352` → 2003 Honda Accord EX-V6,
+  engine prefilled "3.0L 6-cyl Gasoline") both created a vehicle and hydrated
+  both sections with correct source/timestamp; re-adding the same
+  year/make/model/trim showed the "already in your garage" notice and did NOT
+  create a duplicate (vehicle count stayed the same); F-150/Rogue detail pages
+  confirmed unchanged (no new sections, no console errors).
+- **Dexie Cloud private per-user sync: DONE.** Migrated from local-only to
+  optional per-user private sync (no household sharing, no self-hosted backend).
+  Login is OPTIONAL — the app stays fully offline/local with no account, exactly
+  as before; signing in adds sync on top. Auth is Dexie Cloud's built-in
+  passwordless email OTP.
+  - `db/db.ts` — adds the `dexieCloud` addon to the `Dexie` constructor. Existing
+    tables keep their plain-string primary keys (no `@id` rewrite). Dexie Cloud
+    auto-scopes every synced row to the current user's private realm
+    (`owner`/`realmId` default to the logged-in user), so NO query in the app
+    needed a manual "where owner = me" filter — per-user isolation is automatic.
+  - **Hard constraint that drove the schema churn:** Dexie Cloud primary keys
+    must be GLOBALLY unique strings (rows share one server-side table
+    partitioned by realm). Three things used deterministic, non-unique keys and
+    were handled:
+    1. Seed vehicle ids `f150-2020`/`rogue-2020` → now fresh
+       `veh-<crypto.randomUUID()>` per install (`db/seed.ts`). Decoupled from
+       the schedule-template lookup via a new **`ReminderRule.templateKey`**
+       field (`types.ts`) — `SCHEDULE_TEMPLATES`/`getTemplateEntry()` are now
+       keyed by `templateKey` (one of the fixed logical keys `'f150-2020'`/
+       `'rogue-2020'`, shared across all users who own that model), NOT by the
+       per-user-unique vehicle id. `resolveInterval()` (reminderStatus.ts) and
+       `TemplateAdmin.tsx` pass `rule.templateKey`. `seed.ts` backfills
+       `templateKey` (= old `vehicleId`) for any pre-existing local rule.
+    2. `appMeta`, `factoryMaintenanceData`, `consensusData` primary keys are
+       deterministic (literal key string / `canonicalVehicleId`) → kept
+       **local-only** via `unsyncedTables` (db/cloud.ts). None hold
+       user-entered data worth syncing (bookkeeping / refetchable sample data).
+  - `db/cloud.ts` — `db.cloud.configure()` runs ONLY when
+    `VITE_DEXIE_CLOUD_URL` is set (else the app is byte-for-byte the old
+    local-only app: no login UI, no network). `requireAuth: false` (optional
+    login). Exports `login()`/`logout()` and `useCloudUser()` (subscribes to
+    `db.cloud.currentUser`). NOTE: no app-level "claim my local data" migration
+    is needed — verified from the addon's source that its own sync engine
+    stamps owner/realmId on pre-existing unowned rows on first sync after login,
+    so a fresh install's seeded vehicles are preserved and become the new user's
+    private data automatically.
+  - `components/AccountBar.tsx` — slim strip under the header (in `app.tsx`):
+    signed-out "Sign in to sync", signed-in "Synced as <email>" + "Sign out".
+    Renders nothing when cloud isn't configured.
+  - `tryUseServiceWorker` left OFF (default) to avoid interaction with
+    vite-plugin-pwa's service worker; sync runs via the in-page WebSocket/HTTP
+    path.
+  - **Config / secrets:** `VITE_DEXIE_CLOUD_URL` in `.env.local` (gitignored via
+    `*.local`; template in `.env.example`). The CLI outputs `dexie-cloud.json`
+    + the SECRET `dexie-cloud.key` — both gitignored. Create the DB with
+    `npx dexie-cloud create` and whitelist origins with `npx dexie-cloud
+    whitelist <url>` (localhost:5173 + the Pages URL). The deploy workflow
+    (`.github/workflows/deploy.yml`) passes `VITE_DEXIE_CLOUD_URL` into
+    `npm run build` from a repo secret of the same name — **without that repo
+    secret set, the deployed Pages build has NO sync** (it builds fine, just
+    local-only), since `.env.local` is not committed.
+  - **Testing:** `vitest.config.ts` aliases `dexie-cloud-addon` to a no-op stub
+    (`tests/dexieCloudAddonStub.ts`) because the real addon assumes a
+    browser/service-worker environment and throws under plain Node the moment
+    it's attached — tests never configure cloud, and the Dexie schema/CRUD
+    behavior is identical with or without it. All rule fixtures gained a
+    `templateKey`. 149/149 tests pass, tsc + build clean.
+  - Verified live: fresh seed produces random vehicle ids + reminders resolve
+    via `templateKey`; the login dialog opens against the real DB; user signed
+    in and the seeded vehicles synced and were preserved as their private data.
 
 Do NOT invent new feature milestones unless asked.

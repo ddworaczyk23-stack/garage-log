@@ -30,6 +30,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+        env:
+          # Enables Dexie Cloud sync in the deployed build. Set a repo secret
+          # named VITE_DEXIE_CLOUD_URL (Settings → Secrets and variables →
+          # Actions) to your https://<db>.dexie.cloud URL, and whitelist the
+          # Pages origin: `npx dexie-cloud whitelist https://<user>.github.io`.
+          # If the secret is unset the build still succeeds — just local-only,
+          # no sync — since .env.local is not committed.
+          VITE_DEXIE_CLOUD_URL: ${{ secrets.VITE_DEXIE_CLOUD_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

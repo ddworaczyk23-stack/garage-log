@@ -15,8 +15,68 @@ export interface Vehicle {
   engine: string
   drivetrain: string
   vin?: string
+  // Stable key for this exact year/make/model/trim, shared by every vehicle
+  // record with the same identity -> lets fetched factory/consensus data be
+  // cached and reused instead of re-fetched per vehicle. See
+  // domain/vehicleIdentity.ts. Unset for the two hand-seeded vehicles.
+  canonicalVehicleId?: string
   photoId?: string // -> VehicleDocument.id (set in a later milestone)
   createdAt: string // ISO timestamp
+}
+
+// The resolved identity of a specific year/make/model/trim, either decoded
+// from a VIN (services/vinDecode.ts) or entered manually. `canonicalVehicleId`
+// is a deterministic key (domain/vehicleIdentity.ts) used to key the cached
+// external datasets below, independent of which physical vehicle/VIN it came
+// from.
+export interface VehicleIdentity {
+  vin?: string
+  year: number
+  make: string
+  model: string
+  trim: string
+  style?: string
+  canonicalVehicleId: string
+}
+
+// Settled fetch outcome for one external dataset. 'loading' is written to the
+// DB immediately (before the network call resolves) so the UI reacts without
+// any extra in-memory reactive plumbing on top of Dexie's liveQuery.
+export type ExternalDataStatus = 'loading' | 'ok' | 'error'
+
+export interface FactoryMaintenanceItem {
+  category: MaintenanceCategory
+  label: string
+  interval: Interval
+}
+
+// Cached per canonicalVehicleId (primary key) — NOT per vehicle row, so two
+// vehicles that resolve to the same identity reuse one fetch. This is
+// reference/sample data only; it is never wired into ReminderRule/the
+// reminders engine (see db/vehicleOnboarding.ts header).
+export interface FactoryMaintenanceData {
+  canonicalVehicleId: string
+  status: ExternalDataStatus
+  items: FactoryMaintenanceItem[]
+  source: string
+  fetchedAt: string | null // ISO timestamp of last successful fetch
+  error?: string
+}
+
+export interface ConsensusIssue {
+  title: string
+  description: string
+}
+
+// Cached per canonicalVehicleId, same reuse rationale as FactoryMaintenanceData.
+export interface ConsensusData {
+  canonicalVehicleId: string
+  status: ExternalDataStatus
+  summary: string
+  commonIssues: ConsensusIssue[]
+  source: string
+  fetchedAt: string | null
+  error?: string
 }
 
 export interface OdometerReading {
@@ -107,6 +167,12 @@ export interface Interval {
 export interface ReminderRule {
   id: string // `${vehicleId}:${category}` — stable across re-seed/import
   vehicleId: string
+  // Key into SCHEDULE_TEMPLATES/getTemplateEntry() (db/scheduleTemplates.ts).
+  // Decoupled from `vehicleId` because vehicle ids are per-user-unique
+  // (required for Dexie Cloud sync), while the schedule template a vehicle
+  // draws from is one of the fixed logical templates ('f150-2020',
+  // 'rogue-2020') shared across every user who owns that model.
+  templateKey: string
   category: MaintenanceCategory // matches MaintenanceEvent.category for auto-linking
   label: string
   // The user's custom interval override ("customOverrideInterval"). Both null =

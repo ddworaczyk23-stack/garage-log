@@ -33,7 +33,7 @@ export function resolveInterval(rule: ReminderRule): ResolvedInterval {
       source: 'custom',
     }
   }
-  const tmpl = getTemplateEntry(rule.vehicleId, rule.category)
+  const tmpl = getTemplateEntry(rule.templateKey, rule.category)
   const consensus = tmpl?.mechanicConsensusInterval
   if (consensus) {
     return {

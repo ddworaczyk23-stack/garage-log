@@ -33,7 +33,8 @@ export interface ScheduleTemplateEntry {
   note?: string
 }
 
-// Keyed by Vehicle.id (see seed.ts).
+// Keyed by the fixed logical template key (ReminderRule.templateKey, set in
+// seed.ts) — NOT by Vehicle.id, which is per-user-unique.
 export const SCHEDULE_TEMPLATES: Record<string, ScheduleTemplateEntry[]> = {
   // 2020 Ford F-150 STX, 2.7L EcoBoost V6, 4WD
   'f150-2020': [
@@ -217,14 +218,15 @@ export const SCHEDULE_TEMPLATES: Record<string, ScheduleTemplateEntry[]> = {
   ],
 }
 
-// Look up the pristine, factory + consensus template entry for a vehicle+
-// category. The template lives here in code and is NEVER mutated, so this always
-// returns the reference values even after the user sets a custom override or
-// logs completed services. Used by resolveInterval(), the admin view, and later
-// the reminder engine.
+// Look up the pristine, factory + consensus template entry for a
+// templateKey+category (ReminderRule.templateKey — one of the fixed logical
+// keys above, NOT the per-vehicle id). The template lives here in code and is
+// NEVER mutated, so this always returns the reference values even after the
+// user sets a custom override or logs completed services. Used by
+// resolveInterval(), the admin view, and later the reminder engine.
 export function getTemplateEntry(
-  vehicleId: string,
+  templateKey: string,
   category: MaintenanceCategory,
 ): ScheduleTemplateEntry | undefined {
-  return SCHEDULE_TEMPLATES[vehicleId]?.find((e) => e.category === category)
+  return SCHEDULE_TEMPLATES[templateKey]?.find((e) => e.category === category)
 }

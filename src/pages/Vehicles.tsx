@@ -24,7 +24,12 @@ export function Vehicles() {
 
   return (
     <section class="page">
-      <h2 class="page-title">Vehicles</h2>
+      <div class="card-title-row">
+        <h2 class="page-title">Vehicles</h2>
+        <a class="btn-link" href="#/add-vehicle">
+          + Add car
+        </a>
+      </div>
 
       <ul class="list">
         {rows.map(({ vehicle: v, top }) => (

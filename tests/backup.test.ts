@@ -52,6 +52,7 @@ const reading: OdometerReading = {
 const rule: ReminderRule = {
   id: 'veh-1:oil-change',
   vehicleId: 'veh-1',
+  templateKey: 'veh-1',
   category: 'oil-change',
   label: 'Engine oil & filter',
   customIntervalMiles: 5000,

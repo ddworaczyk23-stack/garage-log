@@ -17,6 +17,7 @@ function makeRule(overrides: Partial<ReminderRule> = {}): ReminderRule {
   return {
     id: `${VEHICLE_ID}:oil-change`,
     vehicleId: VEHICLE_ID,
+    templateKey: VEHICLE_ID,
     category: 'oil-change',
     label: 'Engine oil & filter',
     customIntervalMiles: 5000,

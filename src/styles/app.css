@@ -127,6 +127,28 @@ body {
   margin: 0;
 }
 
+/* ---------- Account / sync status strip (Dexie Cloud) ---------- */
+.account-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 16px;
+  max-width: 700px;
+  margin: 0 auto;
+  font-size: 0.75rem;
+  border-bottom: 0.5px solid var(--border);
+}
+.account-status {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.account-bar .btn-link {
+  flex-shrink: 0;
+}
+
 .app-main {
   flex: 1;
   width: 100%;
