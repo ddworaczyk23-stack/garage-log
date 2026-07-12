@@ -6,6 +6,7 @@ import { formatInterval, formatShortDate } from '../domain/format'
 import { getVehicleReminders } from '../db/summary'
 import { identityFromVehicle } from '../domain/vehicleIdentity'
 import { hydrateFactoryMaintenance, hydrateConsensusData } from '../db/vehicleOnboarding'
+import { deleteVehicle } from '../db/vehicles'
 import { STATUS_LABELS } from '../types'
 import { EventForm } from '../components/EventForm'
 import { OdometerForm } from '../components/OdometerForm'
@@ -14,7 +15,7 @@ import { OdometerListItem } from '../components/OdometerListItem'
 import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
-import { Loading, EmptyState } from '../components/ui'
+import { Loading, EmptyState, ConfirmButton } from '../components/ui'
 import { vehicleLabel } from '../domain/vehicle'
 import type { ConsensusData, FactoryMaintenanceData, MaintenanceCategory, VehicleDocument } from '../types'
 
@@ -355,6 +356,24 @@ export function VehicleDetail({ id }: Props) {
         </p>
         {!documents ? <Loading /> : <DocumentGrid documents={documents} />}
       </section>
+
+      <div class="card danger">
+        <h3 class="card-title">Delete vehicle</h3>
+        <p class="muted small">
+          Permanently deletes {vehicleLabel(vehicle)} and all of its logged service,
+          repair, odometer, and document history. This can't be undone.
+        </p>
+        <ConfirmButton
+          class="btn btn-danger"
+          label="Delete this vehicle"
+          confirmLabel="Yes, delete everything"
+          busyLabel="Deleting…"
+          onConfirm={async () => {
+            await deleteVehicle(id)
+            window.location.hash = '#/vehicles'
+          }}
+        />
+      </div>
     </section>
   )
 }
