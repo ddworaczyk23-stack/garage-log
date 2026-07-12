@@ -1,7 +1,10 @@
 import { db } from './db'
 import { matchesExistingVehicle } from '../domain/vehicleIdentity'
 import { activeMaintenanceProvider } from '../services/maintenanceProvider'
-import type { ConsensusData, FactoryMaintenanceData, Vehicle, VehicleIdentity } from '../types'
+import { activeCostProvider, SAMPLE_COST_CATEGORIES } from '../services/costProvider'
+import { practicalInterval } from '../domain/practicalTiming'
+import { estimateCostRange, deriveCostConfidence, DEFAULT_LABOR_RATE_PER_HOUR } from '../domain/costHeuristics'
+import type { ConsensusData, CostEstimateData, CostEstimateItem, FactoryMaintenanceData, Vehicle, VehicleIdentity } from '../types'
 
 // New-vehicle onboarding: create the Vehicle record immediately, then hydrate
 // two external, cache-by-canonicalVehicleId datasets (factory maintenance +
@@ -145,12 +148,77 @@ export async function hydrateConsensusData(identity: VehicleIdentity): Promise<v
 }
 
 /**
- * Fetches both external datasets for a vehicle's identity independently —
- * `Promise.allSettled` means one source failing never blocks or rolls back
- * the other. Call without awaiting from the UI so vehicle creation itself
+ * Fetches + stores cost/timing estimates for one canonical vehicle id.
+ * Combines the factory schedule (for the practical-timing heuristic input)
+ * with provider labor-hour/parts-range data, then applies the local rate math
+ * (domain/costHeuristics.ts) — same loading/cache/retry shape as the other
+ * two hydrate functions above. Deliberately NOT wired into ReminderRule/the
+ * reminders engine, same scope boundary as factory/consensus data.
+ */
+export async function hydrateCostEstimates(identity: VehicleIdentity): Promise<void> {
+  const key = identity.canonicalVehicleId
+  const cached = await db.costEstimateData.get(key)
+  if (cached?.status === 'ok') return
+
+  await db.costEstimateData.put({ canonicalVehicleId: key, status: 'loading', items: [], laborRateNote: '', source: '', fetchedAt: null })
+  try {
+    const [{ items: factoryItems }, { items: laborItems, source }] = await withRetry(() =>
+      Promise.all([
+        activeMaintenanceProvider.fetchFactoryMaintenance(identity),
+        activeCostProvider.fetchLaborEstimates(identity, SAMPLE_COST_CATEGORIES),
+      ]),
+    )
+    const factoryByCategory = new Map(factoryItems.map((i) => [i.category, i]))
+    const items: CostEstimateItem[] = laborItems.map((li) => {
+      const factory = factoryByCategory.get(li.category)
+      const { interval, note } = factory
+        ? practicalInterval(factory.interval, li.category)
+        : { interval: { miles: null, months: null }, note: 'No factory interval available for this item.' }
+      const { totalLow, totalHigh } = estimateCostRange(li.laborHours, li.partsCostLow, li.partsCostHigh)
+      return {
+        category: li.category,
+        label: li.label,
+        practicalInterval: interval,
+        timingNote: note,
+        laborHours: li.laborHours,
+        laborRatePerHour: DEFAULT_LABOR_RATE_PER_HOUR,
+        partsCostLow: li.partsCostLow,
+        partsCostHigh: li.partsCostHigh,
+        totalLow,
+        totalHigh,
+        // Sample provider only, for now — see deriveCostConfidence's doc comment.
+        confidence: deriveCostConfidence(false, false),
+      }
+    })
+    const row: CostEstimateData = {
+      canonicalVehicleId: key,
+      status: 'ok',
+      items,
+      laborRateNote: `Estimated at $${DEFAULT_LABOR_RATE_PER_HOUR}/hr (rough national average) plus a typical parts-cost range — actual local rates vary.`,
+      source,
+      fetchedAt: new Date().toISOString(),
+    }
+    await db.costEstimateData.put(row)
+  } catch (err) {
+    await db.costEstimateData.put({
+      canonicalVehicleId: key,
+      status: 'error',
+      items: [],
+      laborRateNote: '',
+      source: '',
+      fetchedAt: null,
+      error: err instanceof Error ? err.message : 'Could not fetch cost estimate data.',
+    })
+  }
+}
+
+/**
+ * Fetches all three external datasets for a vehicle's identity independently
+ * — `Promise.allSettled` means one source failing never blocks or rolls back
+ * the others. Call without awaiting from the UI so vehicle creation itself
  * stays instant; each dataset's own 'loading' row makes the in-progress state
  * visible via liveQuery regardless.
  */
 export async function hydrateVehicleExternalData(identity: VehicleIdentity): Promise<void> {
-  await Promise.allSettled([hydrateFactoryMaintenance(identity), hydrateConsensusData(identity)])
+  await Promise.allSettled([hydrateFactoryMaintenance(identity), hydrateConsensusData(identity), hydrateCostEstimates(identity)])
 }

@@ -18,7 +18,7 @@ if (databaseUrl) {
     // These three tables are local-only (see db/db.ts's constructor comment
     // for why: their primary keys are deterministic, not globally unique
     // across users, and none hold user-entered data worth syncing).
-    unsyncedTables: ['appMeta', 'factoryMaintenanceData', 'consensusData'],
+    unsyncedTables: ['appMeta', 'factoryMaintenanceData', 'consensusData', 'costEstimateData'],
   })
 }
 

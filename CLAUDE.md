@@ -138,6 +138,46 @@ No git repo or host configured yet. Target is GitHub Pages (HTTPS) so the app ca
 be installed to a phone home screen — a LAN dev URL (`http://<ip>:5173`) is not a
 secure context and won't offer install. Publish the `dist/` folder.
 
+## Dexie Cloud (sync) — operations runbook
+
+Optional per-user private sync (see the roadmap entry for the code). The app
+runs fully local without any of this; sync only activates when
+`VITE_DEXIE_CLOUD_URL` is present at build time.
+
+- **Database:** `https://zcrqdxpc7.dexie.cloud` (owner/admin = the email used
+  for `npx dexie-cloud create`). CLI files `dexie-cloud.json` (holds `dbUrl` —
+  non-secret) + `dexie-cloud.key` (SECRET admin key) live in the project root
+  and are gitignored — never commit `.key`; back it up in a password manager
+  and rotate via the CLI if it ever leaks.
+- **Local dev:** put `VITE_DEXIE_CLOUD_URL=https://zcrqdxpc7.dexie.cloud` in
+  `.env.local` (gitignored; template in `.env.example`). Without it, `npm run
+  dev`/`build` produce the byte-identical local-only bundle (Vite constant-folds
+  the missing var to `undefined`, so the whole AccountBar branch is tree-shaken
+  out — its absence in a built bundle means the URL wasn't set at build time).
+- **Deployed build:** the GitHub Actions workflow injects the URL into `npm run
+  build` from a **repository** secret (Settings → Secrets and variables →
+  Actions → *Repository secrets*) named `VITE_DEXIE_CLOUD_URL`. It must be a
+  *repository* secret, not an *environment* secret — the build job has no
+  `environment:` key and can't read environment-scoped secrets. If the secret
+  is missing/unsaved when a run executes, the deploy still succeeds but ships
+  local-only (this bit us: verify by checking the deployed JS bundle contains
+  `zcrqdxpc7` / the string `Sign in to sync`).
+- **Whitelist origins** (required for login to work from a given origin):
+  `npx.cmd dexie-cloud whitelist http://localhost:5173` and
+  `... whitelist https://ddworaczyk23-stack.github.io`.
+- **End-user management is NOT in the CLI** — use the web portal
+  **https://manager.dexie.cloud** (sign in with the admin email). There you see
+  each end-user's evaluation-vs-production status and **promote users to
+  production**. New users start as **evaluation** users whose sync stops after
+  ~30 ACTIVE sync-days (paused on inactive days); promoting them removes that
+  clock. The CLI's `authorize`/`clients` commands are for API *admins*, not
+  end-users.
+- **Free-tier limits:** 3 production users, 100 MB storage, 10 DBs, 10
+  simultaneous connections, 20 req/s. A household (2 users) fits comfortably.
+- **Windows note:** call the CLI as `npx.cmd dexie-cloud …` (the bare `npx`
+  hits PowerShell's script-execution-policy block); or `Set-ExecutionPolicy
+  -Scope Process -ExecutionPolicy Bypass` for the session.
+
 ## Build roadmap (milestone-based)
 
 - **M1 — scaffold: DONE.** Shell, nav, PWA install, Dexie schema, 2 seed
@@ -687,5 +727,58 @@ secure context and won't offer install. Publish the `dist/` folder.
   - Verified live: fresh seed produces random vehicle ids + reminders resolve
     via `templateKey`; the login dialog opens against the real DB; user signed
     in and the seeded vehicles synced and were preserved as their private data.
+- **Cost/timing estimate layer (onboarded vehicles): DONE.** Third external-data
+  card alongside factory maintenance + consensus, for the same onboarding flow
+  (`canonicalVehicleId` vehicles only). Keeps three data sources deliberately
+  separate per the data model: factory schedule (unchanged), practical-timing
+  heuristics (new), and cost estimates (new) — none feed `ReminderRule`/the
+  reminders engine, same scope boundary as the other two cards.
+  - `domain/practicalTiming.ts` — PURE `practicalInterval(factoryInterval,
+    category)`: a per-category heuristic multiplier table (oil-change,
+    tire-rotation, transmission-fluid, cvt-fluid, coolant, brake-fluid) that
+    shortens the factory interval the same way `scheduleTemplates.ts`'s
+    hand-curated `mechanicConsensusInterval` does for the two seeded vehicles,
+    but as a general formula so it applies to any onboarded vehicle. Categories
+    with no heuristic pass the factory interval through unchanged;
+    condition-based items pass through with an "inspect as needed" note.
+  - `domain/costHeuristics.ts` — PURE `estimateCostRange(laborHours,
+    partsCostLow, partsCostHigh, ratePerHour?)` (labor × rate + parts range,
+    `DEFAULT_LABOR_RATE_PER_HOUR = 130` as a rough national-average
+    placeholder) and `deriveCostConfidence()` (high only when both labor AND
+    parts came from real provider data — currently always `'low'`, since the
+    only wired-up provider is sample data).
+  - `services/costProvider.ts` — adapter (`CostProvider` interface +
+    `mockCostProvider`/`activeCostProvider`, same swap-point pattern as
+    `maintenanceProvider.ts`) supplying per-category labor hours + parts-cost
+    range as clearly-labeled sample data.
+  - `db/vehicleOnboarding.ts` — `hydrateCostEstimates(identity)` combines a
+    factory-schedule fetch (for the heuristic's interval input) with the cost
+    provider's labor/parts fetch, applies both pure layers, and caches the
+    result as `CostEstimateData` keyed by `canonicalVehicleId` (same
+    loading/ok/error/retry shape as the other two hydrate functions). Now runs
+    as a third parallel fetch inside `hydrateVehicleExternalData`.
+  - New `db.ts` **version 3**: `costEstimateData` table (keyed by
+    `canonicalVehicleId`); added to `unsyncedTables` in `db/cloud.ts` (local
+    cache only, same rationale as the other two external-data tables).
+  - `types.ts` — `CostEstimateItem`/`CostEstimateData` (practical interval +
+    timing note + labor hours/rate + parts range + total low/high + a
+    `low`/`medium`/`high` confidence label).
+  - UI: third `ExternalDataCard` on `VehicleDetail.tsx` ("Estimated costs
+    (reference)") reusing the existing loading/error/retry card shell and
+    `schedule-list`/`schedule-row` CSS classes — no new styles needed. Shows
+    per-item $low–$high, the heuristic-adjusted interval, confidence label,
+    the timing rationale, and a closing "Estimates only — not a quote." line.
+  - 11 new unit tests (`tests/practicalTiming.test.ts`,
+    `tests/costHeuristics.test.ts`) + 3 new hydration tests in
+    `tests/vehicleOnboarding.test.ts`, 175/175 total, tsc + build clean.
+    Verified live: manually added a 2019 Toyota Camry LE → all three cards
+    hydrated; oil-change factory 5,000 mi correctly heuristic-adjusted to
+    3,000 mi with a rationale note and a $105–$155 range at the $130/hr
+    default rate; categories with no heuristic (air filters, brake inspection)
+    correctly fell back to the factory interval with a "no category-specific
+    adjustment" note; all items labeled "low confidence" (sample provider
+    only, as expected); no console errors. The two hand-seeded vehicles have
+    no `canonicalVehicleId` and correctly show none of the three cards
+    (unchanged from before this work).
 
 Do NOT invent new feature milestones unless asked.

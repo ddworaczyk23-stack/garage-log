@@ -9,6 +9,7 @@ import type {
   AppMetaRecord,
   FactoryMaintenanceData,
   ConsensusData,
+  CostEstimateData,
 } from '../types'
 
 // Single IndexedDB database for the whole app.
@@ -28,6 +29,8 @@ export class GarageDB extends Dexie {
   // fetch instead of duplicating it. See db/vehicleOnboarding.ts.
   factoryMaintenanceData!: Table<FactoryMaintenanceData, string>
   consensusData!: Table<ConsensusData, string>
+  // Same canonicalVehicleId keying/reuse rationale as the two tables above.
+  costEstimateData!: Table<CostEstimateData, string>
 
   constructor() {
     super('garage-log', { addons: [dexieCloud] })
@@ -54,14 +57,21 @@ export class GarageDB extends Dexie {
     // doesn't need its own .version() block; db/seed.ts backfills it for any
     // pre-existing local row.
 
+    // Cost/timing-estimate cache table for the onboarding hydration flow
+    // (db/vehicleOnboarding.ts's hydrateCostEstimates) — same reuse rationale
+    // as factoryMaintenanceData/consensusData above.
+    this.version(3).stores({
+      costEstimateData: 'canonicalVehicleId',
+    })
+
     // Dexie Cloud: every table above still works with its existing plain
     // string primary keys (no '@id' rewrite needed — see db/cloud.ts for why
     // seed.ts now generates random ids instead of the old hardcoded
     // 'f150-2020'/'rogue-2020', which Dexie Cloud requires to be globally
-    // unique). `appMeta`/`factoryMaintenanceData`/`consensusData` are kept
-    // local-only (unsyncedTables in db/cloud.ts) since their primary keys are
-    // deterministic, not globally unique, and none of them hold user-entered
-    // data worth syncing.
+    // unique). `appMeta`/`factoryMaintenanceData`/`consensusData`/
+    // `costEstimateData` are kept local-only (unsyncedTables in db/cloud.ts)
+    // since their primary keys are deterministic, not globally unique, and
+    // none of them hold user-entered data worth syncing.
   }
 }
 
