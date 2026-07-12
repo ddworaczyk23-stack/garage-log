@@ -1,6 +1,7 @@
 import { render } from 'preact'
 import { App } from './app'
 import { seedIfEmpty } from './db/seed'
+import './styles/fonts'
 import './styles/app.css'
 
 async function boot() {

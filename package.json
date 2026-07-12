@@ -12,6 +12,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@fontsource/ibm-plex-mono": "^5.2.7",
+    "@fontsource/ibm-plex-sans": "^5.2.8",
+    "@fontsource/spectral": "^5.2.8",
     "dexie": "^4.0.8",
     "dexie-cloud-addon": "^4.0.8",
     "preact": "^10.22.0"

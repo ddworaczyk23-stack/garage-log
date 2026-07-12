@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>F-150 STX · Service Record</title>
+<!-- Blend: v1 editorial ledger (Spectral / IBM Plex Mono / IBM Plex Sans, warm paper, olive)
+     + the fintech data instruments (threshold gauge + bullet-chart tracks + "% of interval"
+     readouts), recolored into the light palette. Charts follow the ui-ux-pro-max chart-DB spec
+     (gauge = perf-vs-target: threshold zones + target marker + numeric %; bullets = compact
+     perf-vs-target for 3+ KPIs). Automotive rigor (machined mono spec-labels) from bmw-m/ferrari. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --paper:#F6F5F2;
+    --paper-2:#EFEDE7;
+    --card:#FFFFFF;
+    --ink:#2C2C2C;
+    --ink-2:#6A6A63;
+    --ink-3:#9A988E;
+    --line:#E4E1D8;
+    --line-strong:#D4D0C4;
+    --olive:#4E6050;
+    --olive-deep:#38463B;
+    --olive-tint:#EDF0EA;
+    /* status = green→amber→red threshold system, earthy cut */
+    --rust:#B04A32;   --rust-tint:#F6E9E3;   /* overdue */
+    --amber:#A9741B;  --amber-tint:#F5ECD9;  /* due / soon */
+    --sage:#5E7050;   --sage-tint:#EBEFE7;   /* healthy / on track */
+
+    --serif:'Spectral',Georgia,'Times New Roman',serif;
+    --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+
+    --radius:14px;
+    --radius-sm:9px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--paper);color:var(--ink);
+    font-family:var(--sans);font-size:15px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(78,96,80,.035), transparent 42%),
+      radial-gradient(circle at 84% 78%, rgba(78,96,80,.03), transparent 46%);
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none;}
+  :focus-visible{outline:2px solid var(--olive);outline-offset:3px;border-radius:4px;}
+  .wrap{max-width:680px;margin:0 auto;padding:22px 20px 72px;}
+
+  /* ---------- shared mono labels ---------- */
+  .eyebrow{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--olive);}
+  .kicker{font-family:var(--mono);font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* ---------- masthead ---------- */
+  .back{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-2);padding:6px 0;margin-bottom:18px;}
+  .back:hover{color:var(--olive);}
+  .masthead{margin-bottom:20px;}
+  .masthead .eyebrow{display:block;margin-bottom:9px;}
+  .title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+  .veh-year{font-family:var(--mono);font-size:13px;font-weight:500;letter-spacing:.1em;color:var(--ink-2);display:block;margin-bottom:2px;}
+  .veh-name{font-family:var(--serif);font-weight:600;font-size:39px;line-height:1.02;letter-spacing:-.015em;margin:0;}
+  .plate{flex-shrink:0;margin-top:6px;font-family:var(--mono);font-weight:600;font-size:13px;letter-spacing:.14em;color:#F3F1EA;background:var(--olive);padding:7px 12px;border-radius:7px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18), inset 0 -1.5px 0 rgba(0,0,0,.22);}
+  .veh-spec{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--ink-2);margin:13px 0 0;}
+  .rule-double{height:0;border:0;margin:17px 0 0;border-top:1.5px solid var(--ink);position:relative;}
+  .rule-double::after{content:"";position:absolute;left:0;right:0;top:3px;border-top:.5px solid var(--line-strong);}
+
+  /* ---------- cards ---------- */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 1px 2px rgba(52,48,36,.05), 0 6px 16px -12px rgba(52,48,36,.18);padding:18px;margin-bottom:14px;}
+  .card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:4px;}
+  .card-title{font-family:var(--serif);font-weight:600;font-size:20px;letter-spacing:-.01em;margin:0;}
+  .card-sub{color:var(--ink-2);font-size:13px;margin:4px 0 0;}
+  .textlink{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--olive);font-weight:500;white-space:nowrap;}
+  .textlink:hover{color:var(--olive-deep);text-decoration:underline;text-underline-offset:3px;}
+
+  /* ---------- collapsible sections ---------- */
+  .fold{margin:0;}
+  .fold-head{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:4px 0;min-height:44px;}
+  .fold-head::-webkit-details-marker{display:none;}
+  .fold-head:focus-visible{outline:2px solid var(--olive);outline-offset:5px;border-radius:6px;}
+  .fold-titles{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;min-width:0;}
+  .fold-titles-col{display:flex;flex-direction:column;gap:10px;min-width:0;}
+  .fold-titles-col .summary-tally{margin-top:0;}
+  .fold-count{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);}
+  .chev{flex-shrink:0;color:var(--ink-2);display:grid;place-items:center;width:30px;height:30px;border-radius:8px;transition:transform .2s ease, background .12s ease, color .12s ease;}
+  .chev svg{width:17px;height:17px;display:block;}
+  .fold[open] .chev{transform:rotate(180deg);}
+  .fold-head:hover .chev{background:var(--paper-2);color:var(--olive);}
+  .fold-body{padding-top:13px;}
+  details.fold:not([open]) .fold-body{display:none;}  /* explicit collapse — robust across UA details rendering */
+  /* cover/spec fold sits under the odometer instrument, separated by a hairline */
+  .cover .fold{margin-top:15px;border-top:1px solid var(--line);}
+  .cover .fold .spec-table{margin-top:0;}
+  .body-actions{display:flex;justify-content:flex-end;margin-bottom:8px;}
+
+  /* ---------- cover plate: odometer instrument + spec table ---------- */
+  .cover .instrument{background:var(--olive-deep);border-radius:var(--radius-sm);padding:15px 17px 14px;color:#EEF0EA;position:relative;overflow:hidden;}
+  .instrument .kicker{color:rgba(238,240,234,.6);}
+  .instr-top{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;}
+  .odo{font-family:var(--mono);font-weight:600;font-size:36px;letter-spacing:.10em;margin:5px 0 0;line-height:1;display:flex;align-items:baseline;gap:10px;font-variant-numeric:tabular-nums;}
+  .odo .unit{font-size:13px;letter-spacing:.18em;color:rgba(238,240,234,.62);font-weight:500;}
+  .odo-foot{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:rgba(238,240,234,.62);margin:9px 0 0;display:flex;align-items:center;gap:8px;}
+  .live-dot{width:6px;height:6px;border-radius:50%;background:#8FB37A;box-shadow:0 0 0 3px rgba(143,179,122,.22);}
+  /* year-to-date delta chip + tiny month bars, right side of instrument */
+  .instr-side{text-align:right;flex-shrink:0;}
+  .ytd{font-family:var(--mono);font-size:11px;letter-spacing:.04em;color:#CFE0BE;display:inline-flex;align-items:center;gap:5px;justify-content:flex-end;}
+  .ytd svg{width:11px;height:11px;}
+  .ytd-cap{font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:rgba(238,240,234,.5);margin-top:2px;}
+  .mbars{display:flex;align-items:flex-end;gap:6px;height:38px;margin-top:9px;justify-content:flex-end;}
+  .mbar{width:16px;border-radius:4px 4px 2px 2px;background:linear-gradient(180deg,#8FB37A,rgba(143,179,122,.35));}
+  .mbar.dim{background:rgba(238,240,234,.16);}
+
+  .spec-table{margin:16px 0 0;}
+  .spec-row{display:flex;align-items:baseline;gap:8px;padding:9px 0;border-top:.5px solid var(--line);}
+  .spec-row:first-child{border-top:0;}
+  .spec-k{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2);white-space:nowrap;}
+  .spec-lead{flex:1;border-bottom:1.5px dotted var(--line-strong);transform:translateY(-3px);min-width:14px;}
+  .spec-v{font-family:var(--mono);font-size:13px;color:var(--ink);white-space:nowrap;font-weight:500;}
+  .spec-v.dim{color:var(--ink-3);font-weight:400;}
+
+  /* ---------- action bar ---------- */
+  .actions{display:flex;gap:9px;margin:2px 0 20px;}
+  .btn{font-family:var(--sans);font-weight:600;font-size:14px;border-radius:10px;padding:12px 14px;cursor:pointer;border:1px solid transparent;flex:1;text-align:center;display:inline-flex;align-items:center;justify-content:center;gap:7px;transition:transform .08s ease, background .12s ease, border-color .12s ease;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{background:var(--olive);color:#F4F2EB;box-shadow:inset 0 -2px 0 rgba(0,0,0,.16);}
+  .btn-primary:hover{background:var(--olive-deep);}
+  .btn-ghost{background:var(--card);color:var(--ink);border-color:var(--line-strong);flex:0 0 auto;padding:12px 15px;}
+  .btn-ghost:hover{border-color:var(--olive);color:var(--olive-deep);}
+
+  /* ---------- FOCAL GAUGE: most-urgent instrument (fintech graft, light) ---------- */
+  .focus{background:var(--paper-2);border:1px solid var(--line);border-radius:var(--radius-sm);padding:15px 16px;margin:12px 0 4px;display:flex;align-items:center;gap:16px;}
+  .focus-gauge{width:132px;height:80px;flex-shrink:0;}
+  .focus-read{min-width:0;flex:1;}
+  .focus-eye{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--rust);display:flex;align-items:center;gap:6px;}
+  .focus-eye .dot{width:7px;height:7px;border-radius:50%;background:var(--rust);box-shadow:0 0 0 3px var(--rust-tint);}
+  .focus-svc{font-family:var(--serif);font-weight:600;font-size:19px;letter-spacing:-.01em;margin:5px 0 0;line-height:1.1;}
+  .focus-big{font-family:var(--mono);font-weight:600;font-size:15px;color:var(--rust);margin-top:7px;font-variant-numeric:tabular-nums;}
+  .focus-big b{font-weight:600;}
+  .focus-meta{font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--ink-2);margin-top:4px;}
+  .focus-meta b{color:var(--ink);font-weight:500;}
+
+  /* ---------- service ledger ---------- */
+  .summary-tally{display:flex;gap:14px;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:11px;flex-wrap:wrap;}
+  .tally{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2);}
+  .tally .lamp{margin:0;width:9px;height:9px;}
+
+  .ledger{list-style:none;margin:14px 0 0;padding:0;}
+  .row{display:grid;grid-template-columns:14px 1fr auto;gap:7px 13px;align-items:start;padding:15px 0;border-top:1px solid var(--line);}
+  .row:first-child{border-top:0;}
+  .row.is-overdue{margin:0 -18px;padding-left:18px;padding-right:18px;background:linear-gradient(90deg,var(--rust-tint),transparent 82%);border-top-color:transparent;}
+  .row.is-overdue + .row{border-top-color:transparent;}
+
+  .lamp{grid-column:1;grid-row:1;width:11px;height:11px;border-radius:50%;margin-top:5px;}
+  .lamp.overdue{background:var(--rust);box-shadow:0 0 0 3px var(--rust-tint);}
+  .lamp.due{background:var(--amber);box-shadow:0 0 0 3px var(--amber-tint);}
+  .lamp.soon{background:transparent;border:2px solid var(--amber);}
+  .lamp.ok{background:var(--sage);box-shadow:0 0 0 3px var(--sage-tint);}
+
+  .row-main{grid-column:2;grid-row:1;min-width:0;}
+  .svc{font-family:var(--serif);font-weight:500;font-size:18px;letter-spacing:-.005em;line-height:1.2;}
+  .svc-meta{font-family:var(--mono);font-size:11.5px;letter-spacing:.03em;color:var(--ink-2);margin-top:4px;display:flex;flex-wrap:wrap;gap:5px 9px;}
+  .svc-meta .interval{color:var(--ink);}
+  .svc-meta .sep{color:var(--ink-3);}
+  .svc-meta .over{color:var(--rust);font-weight:500;}
+  .svc-meta .near{color:var(--amber);font-weight:500;}
+
+  .row-end{grid-column:3;grid-row:1;display:flex;flex-direction:column;align-items:flex-end;gap:7px;text-align:right;}
+  .status{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.11em;text-transform:uppercase;white-space:nowrap;}
+  .status.overdue{color:var(--rust);}
+  .status.due{color:var(--amber);}
+  .status.soon{color:var(--amber);}
+  .status.ok{color:var(--sage);}
+  .log-btn{font-family:var(--mono);font-size:10.5px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--olive);background:var(--olive-tint);border:1px solid transparent;border-radius:7px;padding:5px 10px;cursor:pointer;}
+  .log-btn:hover{border-color:var(--olive);}
+
+  /* bullet track under each row (progress vs target) — fintech graft, editorial-subtle */
+  .row-track{grid-column:2 / -1;grid-row:2;position:relative;height:6px;border-radius:999px;overflow:hidden;margin-top:2px;
+    background:linear-gradient(90deg,var(--sage-tint) 0 60%,var(--amber-tint) 60% 82%,var(--rust-tint) 82% 100%);}
+  .row-track .fill{position:absolute;left:0;top:0;bottom:0;border-radius:999px;opacity:.9;}
+  .row-track .fill.rust{background:var(--rust);}
+  .row-track .fill.amber{background:var(--amber);}
+  .row-track .fill.sage{background:var(--sage);}
+  .row-tick{grid-column:2 / -1;grid-row:2;position:relative;height:0;pointer-events:none;}
+  .row-tick i{position:absolute;top:-1px;width:1.5px;height:8px;background:var(--ink);opacity:.55;border-radius:2px;}
+
+  /* mechanic's note aside */
+  .note{margin:16px 0 2px;background:var(--paper-2);border-left:2.5px solid var(--olive);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:13px 15px;}
+  .note .kicker{color:var(--olive);display:block;margin-bottom:5px;}
+  .note p{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink);}
+  .note em{font-style:normal;font-family:var(--mono);font-size:12px;color:var(--olive-deep);}
+
+  /* ---------- history (condensed ledger) ---------- */
+  .hist{list-style:none;margin:12px 0 0;padding:0;}
+  .hist li{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line);}
+  .hist li:first-child{border-top:0;}
+  .hist-name{font-family:var(--serif);font-weight:500;font-size:16px;}
+  .hist-sub{font-family:var(--mono);font-size:11px;color:var(--ink-2);letter-spacing:.03em;margin-top:2px;}
+  .hist-right{text-align:right;flex-shrink:0;}
+  .hist-odo{font-family:var(--mono);font-size:12.5px;font-weight:500;color:var(--ink);font-variant-numeric:tabular-nums;}
+  .hist-cost{font-family:var(--mono);font-size:11px;color:var(--ink-2);margin-top:2px;}
+
+  .colophon{text-align:center;margin:26px 0 0;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);}
+
+  @media (max-width:430px){
+    .veh-name{font-size:32px;}
+    .odo{font-size:30px;}
+    .actions{flex-wrap:wrap;}
+    .btn-ghost{flex:1;}
+    .focus{flex-direction:column;align-items:flex-start;gap:12px;}
+    .focus-gauge{align-self:center;}
+    .instr-top{flex-direction:column;gap:14px;}
+    .instr-side{text-align:left;}
+    .ytd,.mbars{justify-content:flex-start;}
+  }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- masthead -->
+    <a class="back" href="#">‹ Garage</a>
+    <header class="masthead">
+      <span class="eyebrow">Service Record · No. F150-STX</span>
+      <div class="title-row">
+        <div>
+          <span class="veh-year">2020</span>
+          <h1 class="veh-name">Ford F-150</h1>
+        </div>
+        <span class="plate">STX</span>
+      </div>
+      <p class="veh-spec">2.7L ECOBOOST V6 · 4WD</p>
+      <hr class="rule-double" />
+    </header>
+
+    <!-- cover plate: odometer instrument + spec sheet -->
+    <section class="card cover">
+      <div class="instrument">
+        <div class="instr-top">
+          <div>
+            <span class="kicker">Odometer</span>
+            <div class="odo">84,231<span class="unit">MI</span></div>
+            <div class="odo-foot"><span class="live-dot"></span>Last reading Jul 8, 2026 · confidence high</div>
+          </div>
+          <div class="instr-side">
+            <span class="ytd">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg>
+              +2,220 mi
+            </span>
+            <div class="ytd-cap">in 2026</div>
+            <div class="mbars">
+              <div class="mbar" style="height:100%;"></div>
+              <div class="mbar dim" style="height:79%;"></div>
+            </div>
+            <div class="ytd-cap" style="margin-top:5px;">Jun · Jul</div>
+          </div>
+        </div>
+      </div>
+
+      <details class="fold">
+        <summary class="fold-head">
+          <div class="fold-titles"><h2 class="card-title">Specifications</h2><span class="fold-count">4 fields</span></div>
+          <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+        </summary>
+        <div class="fold-body">
+          <div class="spec-table">
+            <div class="spec-row"><span class="spec-k">Engine</span><span class="spec-lead"></span><span class="spec-v">2.7L EcoBoost V6</span></div>
+            <div class="spec-row"><span class="spec-k">Drivetrain</span><span class="spec-lead"></span><span class="spec-v">4WD</span></div>
+            <div class="spec-row"><span class="spec-k">Trim</span><span class="spec-lead"></span><span class="spec-v">STX</span></div>
+            <div class="spec-row"><span class="spec-k">VIN</span><span class="spec-lead"></span><span class="spec-v dim">Not set</span></div>
+          </div>
+        </div>
+      </details>
+    </section>
+
+    <!-- actions -->
+    <div class="actions">
+      <button class="btn btn-primary">+ Log service</button>
+      <button class="btn btn-ghost">Repair</button>
+      <button class="btn btn-ghost">Odometer</button>
+    </div>
+
+    <!-- service schedule: focal gauge + bullet ledger -->
+    <section class="card">
+     <details class="fold" open>
+      <summary class="fold-head">
+        <div class="fold-titles-col">
+          <div class="fold-titles"><h2 class="card-title">Service schedule</h2></div>
+          <div class="summary-tally">
+            <span class="tally"><span class="lamp overdue" style="box-shadow:0 0 0 2px var(--rust-tint);"></span>1 overdue</span>
+            <span class="tally"><span class="lamp due" style="box-shadow:0 0 0 2px var(--amber-tint);"></span>1 due now</span>
+            <span class="tally"><span class="lamp ok" style="box-shadow:0 0 0 2px var(--sage-tint);"></span>4 on track</span>
+          </div>
+        </div>
+        <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      </summary>
+      <div class="fold-body">
+      <div class="body-actions"><a class="textlink" href="#">Import history →</a></div>
+      <p class="card-sub" style="margin-top:0;">Ranked by what needs attention first — mechanic-consensus intervals, measured against this truck's log.</p>
+
+      <!-- focal instrument: single most-urgent item, gauged vs its interval -->
+      <div class="focus">
+        <svg class="focus-gauge" viewBox="0 0 158 96" aria-label="Engine oil: 125% of interval, 1,231 mi overdue">
+          <!-- threshold arc: healthy → due → overdue -->
+          <path d="M14 88 A65 65 0 0 1 96 27" fill="none" stroke="#5E7050" stroke-width="12" stroke-linecap="round"/>
+          <path d="M99 26 A65 65 0 0 1 132 44" fill="none" stroke="#A9741B" stroke-width="12"/>
+          <path d="M133 45 A65 65 0 0 1 144 88" fill="none" stroke="#B04A32" stroke-width="12" stroke-linecap="round"/>
+          <!-- target marker: the 100% due point -->
+          <line x1="137.5" y1="34" x2="150" y2="26" stroke="#2C2C2C" stroke-width="2" stroke-linecap="round" opacity=".7"/>
+          <!-- needle pegged into overdue -->
+          <g transform="rotate(70 79 88)">
+            <line x1="79" y1="88" x2="79" y2="33" stroke="#2C2C2C" stroke-width="3" stroke-linecap="round"/>
+          </g>
+          <circle cx="79" cy="88" r="6.5" fill="#F6F5F2" stroke="#B04A32" stroke-width="2.5"/>
+          <circle cx="79" cy="88" r="2.2" fill="#B04A32"/>
+        </svg>
+        <div class="focus-read">
+          <div class="focus-eye"><span class="dot"></span>Most urgent</div>
+          <div class="focus-svc">Engine oil &amp; filter</div>
+          <div class="focus-big">1,231 mi past due · <b>125% of interval</b></div>
+          <div class="focus-meta">due at <b>83,000 mi</b> · every <b>5,000 mi / 6 mo</b></div>
+        </div>
+      </div>
+
+      <ul class="ledger">
+        <li class="row is-overdue">
+          <span class="lamp overdue"></span>
+          <div class="row-main">
+            <div class="svc">Engine oil &amp; filter</div>
+            <div class="svc-meta"><span class="interval">every 5,000 mi / 6 mo</span><span class="sep">·</span><span class="over">1,231 mi over · due at 83,000</span></div>
+          </div>
+          <div class="row-end"><span class="status overdue">Overdue</span><button class="log-btn">Log</button></div>
+          <div class="row-track"><span class="fill rust" style="width:100%;"></span></div>
+          <div class="row-tick"><i style="left:82%;"></i></div>
+        </li>
+
+        <li class="row">
+          <span class="lamp due"></span>
+          <div class="row-main">
+            <div class="svc">Tire rotation</div>
+            <div class="svc-meta"><span class="interval">every 5,000 mi</span><span class="sep">·</span><span class="near">369 mi left · due at 84,600</span></div>
+          </div>
+          <div class="row-end"><span class="status due">Due now</span><button class="log-btn">Log</button></div>
+          <div class="row-track"><span class="fill amber" style="width:88%;"></span></div>
+          <div class="row-tick"><i style="left:82%;"></i></div>
+        </li>
+
+        <li class="row">
+          <span class="lamp soon"></span>
+          <div class="row-main">
+            <div class="svc">Brake inspection</div>
+            <div class="svc-meta"><span class="interval">every 10,000 mi</span><span class="sep">·</span><span>1,769 mi left · due at 86,000</span></div>
+          </div>
+          <div class="row-end"><span class="status soon">Soon</span><button class="log-btn">Log</button></div>
+          <div class="row-track"><span class="fill sage" style="width:56%;"></span></div>
+          <div class="row-tick"><i style="left:82%;"></i></div>
+        </li>
+
+        <li class="row">
+          <span class="lamp ok"></span>
+          <div class="row-main">
+            <div class="svc">Cabin air filter</div>
+            <div class="svc-meta"><span class="interval">every 25,000 mi</span><span class="sep">·</span><span>done at 62,000 · due at 87,000</span></div>
+          </div>
+          <div class="row-end"><span class="status ok">On track</span><button class="log-btn">Log</button></div>
+          <div class="row-track"><span class="fill sage" style="width:41%;"></span></div>
+          <div class="row-tick"><i style="left:82%;"></i></div>
+        </li>
+
+        <li class="row">
+          <span class="lamp ok"></span>
+          <div class="row-main">
+            <div class="svc">Engine air filter</div>
+            <div class="svc-meta"><span class="interval">every 30,000 mi</span><span class="sep">·</span><span>due at 90,000</span></div>
+          </div>
+          <div class="row-end"><span class="status ok">On track</span><button class="log-btn">Log</button></div>
+          <div class="row-track"><span class="fill sage" style="width:28%;"></span></div>
+          <div class="row-tick"><i style="left:82%;"></i></div>
+        </li>
+
+        <li class="row">
+          <span class="lamp ok"></span>
+          <div class="row-main">
+            <div class="svc">Spark plugs</div>
+            <div class="svc-meta"><span class="interval">every 60,000 mi</span><span class="sep">·</span><span>due at ~120,000</span></div>
+          </div>
+          <div class="row-end"><span class="status ok">On track</span><button class="log-btn">Log</button></div>
+          <div class="row-track"><span class="fill sage" style="width:14%;"></span></div>
+          <div class="row-tick"><i style="left:82%;"></i></div>
+        </li>
+      </ul>
+
+      <aside class="note">
+        <span class="kicker">Mechanic's note · Oil</span>
+        <p>A turbocharged EcoBoost on short trips, heat, or towing wears its oil out well before Ford's 10,000-mile max. We track it at <em>5,000 mi / 6 mo</em> — the interval that keeps this engine alive long-term.</p>
+      </aside>
+      </div>
+     </details>
+    </section>
+
+    <!-- maintenance history -->
+    <section class="card">
+     <details class="fold">
+      <summary class="fold-head">
+        <div class="fold-titles"><h2 class="card-title">Maintenance log</h2><span class="fold-count">4 entries</span></div>
+        <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      </summary>
+      <div class="fold-body">
+      <ul class="hist">
+        <li>
+          <div><div class="hist-name">Engine oil &amp; filter</div><div class="hist-sub">Jan 14, 2026 · Independent shop</div></div>
+          <div class="hist-right"><div class="hist-odo">78,000 mi</div><div class="hist-cost">$79.40</div></div>
+        </li>
+        <li>
+          <div><div class="hist-name">Tire rotation</div><div class="hist-sub">Jan 14, 2026 · Independent shop</div></div>
+          <div class="hist-right"><div class="hist-odo">78,000 mi</div><div class="hist-cost">$25.00</div></div>
+        </li>
+        <li>
+          <div><div class="hist-name">Cabin air filter</div><div class="hist-sub">Aug 2, 2025 · DIY</div></div>
+          <div class="hist-right"><div class="hist-odo">62,000 mi</div><div class="hist-cost">$18.75</div></div>
+        </li>
+      </ul>
+      </div>
+     </details>
+    </section>
+
+    <!-- repair history -->
+    <section class="card">
+     <details class="fold">
+      <summary class="fold-head">
+        <div class="fold-titles"><h2 class="card-title">Repair log</h2><span class="fold-count">1 entry</span></div>
+        <span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+      </summary>
+      <div class="fold-body">
+      <ul class="hist">
+        <li>
+          <div><div class="hist-name">Front brake pads &amp; rotors</div><div class="hist-sub">Mar 22, 2025 · Dealer · grinding noise</div></div>
+          <div class="hist-right"><div class="hist-odo">54,300 mi</div><div class="hist-cost">$612.00</div></div>
+        </li>
+      </ul>
+      </div>
+     </details>
+    </section>
+
+    <p class="colophon">Garage Log · The glovebox, kept honest</p>
+
+  </div>
+</body>
+</html>

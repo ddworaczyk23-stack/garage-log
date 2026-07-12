@@ -17,9 +17,9 @@
   --border: rgba(74, 60, 30, 0.15); /* warm hairline */
   --text: #2a271f; /* warm ink */
   --text-muted: #736b5b; /* warm taupe */
-  --accent: #5e6b34; /* olive — the brand signature */
-  --accent-hover: #515c2b;
-  --accent-tint: rgba(94, 107, 52, 0.12);
+  --accent: #4f5b2a; /* deepened olive — the brand signature */
+  --accent-hover: #414c22;
+  --accent-tint: rgba(79, 91, 42, 0.12);
   --accent-text: #fbfaf3;
   --danger: #a83326; /* warm brick red */
   --danger-tint: rgba(168, 51, 38, 0.09);
@@ -39,8 +39,8 @@
   --c-cost-bg: rgba(156, 91, 52, 0.13);
 
   /* Elevation — warm-tinted, soft */
-  --shadow-card: 0 1px 3px rgba(60, 48, 22, 0.07), 0 1px 2px rgba(60, 48, 22, 0.05);
-  --shadow-raised: 0 6px 18px rgba(60, 48, 22, 0.1), 0 2px 5px rgba(60, 48, 22, 0.06);
+  --shadow-card: 0 1px 2px rgba(60, 48, 22, 0.05), 0 10px 26px -14px rgba(60, 48, 22, 0.2);
+  --shadow-raised: 0 2px 6px rgba(60, 48, 22, 0.07), 0 16px 34px -18px rgba(60, 48, 22, 0.28);
   --shadow-modal: 0 24px 60px rgba(40, 32, 14, 0.22);
 
   /* Metrics */
@@ -48,6 +48,19 @@
   --radius-control: 10px; /* inputs, small buttons */
   --gap: 16px;
   --nav-height: 60px;
+
+  /* Type identity — editorial-motion design system (self-hosted, see styles/fonts.ts).
+     Spectral = serif display, IBM Plex Sans = body, IBM Plex Mono = data spine. */
+  --font-sans:
+    'IBM Plex Sans', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI',
+    Roboto, Helvetica, Arial, sans-serif;
+  --font-serif: 'Spectral', Georgia, 'Times New Roman', serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Motion vocabulary — one coherent physics across the app. */
+  --ease-paper: cubic-bezier(0.22, 0.61, 0.36, 1); /* soft settle: fades / rises */
+  --ease-mech: cubic-bezier(0.34, 0.9, 0.28, 1); /* weighted: meters, bars */
+  --ease-snap: cubic-bezier(0.4, 0, 0.2, 1); /* quick: fold toggles */
 
   color-scheme: light;
 }
@@ -63,9 +76,7 @@ body {
 }
 
 body {
-  font-family:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui,
-    'Segoe UI Variable', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   background: var(--bg);
   color: var(--text);
   -webkit-font-smoothing: antialiased;
@@ -501,7 +512,7 @@ a.list-row:active {
   text-align: center;
 }
 .btn.quick-add-btn:hover {
-  background: rgba(94, 107, 52, 0.18);
+  background: rgba(79, 91, 42, 0.18);
 }
 .event-form {
   display: flex;
@@ -1577,4 +1588,782 @@ iframe.preview-media {
 }
 .guide-steps code {
   font-size: 0.85em;
+}
+
+/* ============================================================
+   Editorial-motion design system — shared primitives.
+   Type via --font-*, motion via --ease-*, status via --c-*.
+   Every animation resolves to a static state under reduce.
+   ============================================================ */
+
+/* --- editorial type utilities --- */
+.font-serif {
+  font-family: var(--font-serif);
+}
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+.kicker {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.colophon {
+  text-align: center;
+  margin: 26px 0 8px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* --- reveal-on-scroll --- */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  transition:
+    opacity 0.55s var(--ease-paper),
+    transform 0.55s var(--ease-paper);
+}
+.reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* --- collapsible fold (Collapsible.tsx) --- */
+.fold {
+  margin: 0;
+}
+.fold-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  background: none;
+  border: 0;
+  padding: 6px 0;
+  min-height: 44px;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+}
+.fold-titles {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.fold-title {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: -0.01em;
+}
+.fold-count {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.chev {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  transition:
+    transform 0.25s var(--ease-snap),
+    background 0.12s ease,
+    color 0.12s ease;
+}
+.chev svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+.fold.is-open .chev {
+  transform: rotate(180deg);
+}
+.fold-head:hover .chev {
+  background: var(--bg-inset);
+  color: var(--accent);
+}
+.fold-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 0.38s var(--ease-snap),
+    opacity 0.3s ease;
+}
+.fold.is-open .fold-body {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+/* padding must be 0 when collapsed, else it floors the 0fr track; animate it too */
+.fold-inner {
+  overflow: hidden;
+  min-height: 0;
+  padding-top: 0;
+  transition: padding-top 0.38s var(--ease-snap);
+}
+.fold.is-open .fold-inner {
+  padding-top: 13px;
+}
+
+/* --- threshold gauge (Gauge.tsx) --- */
+.gauge {
+  width: 132px;
+  height: 80px;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* --- bullet track (BulletTrack.tsx) --- */
+.bullet {
+  position: relative;
+  margin-top: 8px;
+}
+.bullet-track {
+  position: relative;
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    var(--c-ok-bg) 0 60%,
+    var(--c-due-bg) 60% 82%,
+    var(--c-overdue-bg) 82% 100%
+  );
+}
+.bullet-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 999px;
+  opacity: 0.9;
+  width: 0;
+  transition:
+    width 0.85s var(--ease-mech),
+    background 0.5s ease;
+}
+.bullet-fill.z-overdue {
+  background: var(--c-overdue);
+}
+.bullet-fill.z-due {
+  background: var(--c-due);
+}
+.bullet-fill.z-watch {
+  background: var(--c-watch);
+}
+.bullet-fill.z-ok {
+  background: var(--c-ok);
+}
+.bullet-tick {
+  position: absolute;
+  top: -1px;
+  width: 1.5px;
+  height: 8px;
+  background: var(--text);
+  opacity: 0.5;
+  border-radius: 2px;
+  transform: translateX(-50%);
+}
+
+/* --- odometer instrument plate (Instrument.tsx) --- */
+.instrument {
+  background: #38463b; /* deep olive-charcoal — reads as an instrument bezel */
+  border-radius: var(--radius-control);
+  padding: 15px 17px 14px;
+  color: #eef0ea;
+  position: relative;
+  overflow: hidden;
+}
+.instrument .kicker {
+  color: rgba(238, 240, 234, 0.6);
+}
+.instr-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+.odo {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 36px;
+  letter-spacing: 0.1em;
+  margin: 5px 0 0;
+  line-height: 1;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.odo .unit {
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: rgba(238, 240, 234, 0.62);
+  font-weight: 500;
+}
+.odo-foot {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: rgba(238, 240, 234, 0.62);
+  margin: 9px 0 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.instr-side {
+  text-align: right;
+  flex-shrink: 0;
+}
+.ytd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  color: #cfe0be;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  justify-content: flex-end;
+}
+.ytd svg {
+  width: 11px;
+  height: 11px;
+}
+.ytd-cap {
+  font-family: var(--font-mono);
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(238, 240, 234, 0.5);
+  margin-top: 2px;
+}
+.mbars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 38px;
+  margin-top: 9px;
+  justify-content: flex-end;
+}
+.mbar {
+  width: 16px;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, #8fb37a, rgba(143, 179, 122, 0.35));
+  transform: scaleY(0);
+  transform-origin: bottom;
+  transition: transform 0.55s var(--ease-mech);
+}
+.mbars.is-in .mbar {
+  transform: scaleY(1);
+}
+.mbar.dim {
+  background: rgba(238, 240, 234, 0.16);
+}
+
+/* --- live "current reading" dot --- */
+.live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8fb37a;
+  box-shadow: 0 0 0 3px rgba(143, 179, 122, 0.22);
+  animation: breathe 3.4s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px rgba(143, 179, 122, 0.22);
+  }
+  50% {
+    box-shadow: 0 0 0 5.5px rgba(143, 179, 122, 0.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .fold-body,
+  .fold-inner,
+  .bullet-fill,
+  .mbar,
+  .chev {
+    transition: none !important;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .live-dot {
+    animation: none;
+  }
+  .vd-sticky {
+    animation: none;
+  }
+}
+
+/* ============================================================
+   VehicleDetail — the editorial "Service Record" (motion port)
+   ============================================================ */
+.vd-masthead {
+  margin-bottom: 18px;
+}
+.vd-masthead .eyebrow {
+  display: block;
+  margin-bottom: 9px;
+}
+.vd-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+.vd-year {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 2px;
+}
+.vd-name {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 34px;
+  line-height: 1.03;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+.vd-plate {
+  flex-shrink: 0;
+  margin-top: 6px;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.14em;
+  color: var(--accent-text);
+  background: var(--accent);
+  padding: 7px 12px;
+  border-radius: 7px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.22);
+}
+.vd-spec {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  margin: 12px 0 0;
+}
+.vd-rename {
+  margin-top: 8px;
+  display: inline-block;
+}
+.rule-double {
+  height: 0;
+  border: 0;
+  margin: 16px 0 0;
+  border-top: 1.5px solid var(--text);
+  position: relative;
+}
+.rule-double::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 3px;
+  border-top: 0.5px solid var(--border);
+}
+
+/* cover: instrument + specifications fold */
+.vd-cover .fold {
+  margin-top: 15px;
+  border-top: 1px solid var(--border);
+}
+.vd-spec-table {
+  margin: 0;
+}
+.vd-spec-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 0.5px solid var(--border);
+}
+.vd-spec-row:first-child {
+  border-top: 0;
+}
+.vd-spec-row dt {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0;
+}
+.vd-spec-row dd {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  text-align: right;
+}
+
+/* focal gauge instrument */
+.vd-focus {
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 15px 16px;
+  margin: 14px 0 4px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.vd-focus-read {
+  min-width: 0;
+  flex: 1;
+}
+.vd-focus-eye {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.vd-focus-eye .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.vd-focus-svc {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  margin: 5px 0 0;
+  line-height: 1.1;
+  color: var(--text);
+}
+.vd-focus-big {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 15px;
+  margin-top: 7px;
+  font-variant-numeric: tabular-nums;
+}
+.vd-focus-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+.vd-focus-meta b {
+  color: var(--text);
+  font-weight: 500;
+}
+.tone-overdue {
+  color: var(--c-overdue);
+}
+.tone-due {
+  color: var(--c-due);
+}
+.tone-watch {
+  color: var(--c-watch);
+}
+.tone-ok {
+  color: var(--c-ok);
+}
+
+/* tally + ledger */
+.vd-tally {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  color: var(--text-muted);
+}
+.vd-tally .tally {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.vd-lamp {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.vd-tally .vd-lamp {
+  width: 9px;
+  height: 9px;
+}
+.vd-lamp.is-overdue {
+  background: var(--c-overdue);
+  box-shadow: 0 0 0 3px var(--c-overdue-bg);
+}
+.vd-lamp.is-due {
+  background: var(--c-due);
+  box-shadow: 0 0 0 3px var(--c-due-bg);
+}
+.vd-lamp.is-watch {
+  background: transparent;
+  border: 2px solid var(--c-watch);
+}
+.vd-lamp.is-ok {
+  background: var(--c-ok);
+  box-shadow: 0 0 0 3px var(--c-ok-bg);
+}
+.vd-lamp.is-na {
+  background: var(--c-stale);
+  opacity: 0.5;
+}
+.vd-ledger {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+}
+.vd-row {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  gap: 7px 13px;
+  align-items: start;
+  padding: 15px 0;
+  border-top: 1px solid var(--border);
+}
+.vd-row:first-child {
+  border-top: 0;
+}
+.vd-row.is-overdue {
+  margin: 0 -18px;
+  padding-left: 18px;
+  padding-right: 18px;
+  background: linear-gradient(90deg, var(--c-overdue-bg), transparent 82%);
+  border-top-color: transparent;
+}
+.vd-row.is-overdue + .vd-row {
+  border-top-color: transparent;
+}
+.vd-row .vd-lamp {
+  grid-column: 1;
+  grid-row: 1;
+  margin-top: 5px;
+}
+.vd-row-main {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+.vd-svc {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  font-size: 17px;
+  letter-spacing: -0.005em;
+  line-height: 1.2;
+}
+.vd-svc-meta {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.vd-svc-meta .interval {
+  color: var(--text);
+}
+.vd-svc-meta .sep {
+  opacity: 0.5;
+}
+.vd-row-end {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+  text-align: right;
+}
+.vd-row .bullet {
+  grid-column: 2 / -1;
+  grid-row: 2;
+}
+.vd-log-btn {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* sticky "+ Log" — docks above the real bottom nav; hidden when a form is open */
+.vd-sticky {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(var(--nav-height) + 14px + env(safe-area-inset-bottom));
+  background: var(--accent);
+  color: var(--accent-text);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 14px;
+  border: 0;
+  padding: 11px 20px;
+  border-radius: 999px;
+  box-shadow: var(--shadow-raised);
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  cursor: pointer;
+  z-index: 40;
+  animation: stickyIn 0.3s var(--ease-paper);
+}
+.vd-sticky svg {
+  width: 15px;
+  height: 15px;
+}
+.vd-sticky:hover {
+  background: var(--accent-hover);
+}
+@keyframes stickyIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@media (max-width: 430px) {
+  .vd-name {
+    font-size: 28px;
+  }
+  .vd-focus {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .vd-focus .gauge {
+    align-self: center;
+  }
+  .instr-top {
+    flex-direction: column;
+    gap: 14px;
+  }
+  .instr-side {
+    text-align: left;
+  }
+  .ytd {
+    justify-content: flex-start;
+  }
+}
+
+/* ============================================================
+   Premium polish pass — depth, editorial type, deepened olive,
+   snappy 150ms micro-interactions. Layout & logic unchanged.
+   ============================================================ */
+/* Headings & vehicle names in Spectral (authoritative) */
+.page-title {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.card-title,
+.attention-title,
+.list-row-title,
+.reminder-line-title {
+  font-family: var(--font-serif);
+}
+.card-title {
+  font-size: 1.08rem;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+/* Technical data (odometer / cost / VIN) in IBM Plex Mono — instrumental feel */
+.cost-grand,
+.cost-row-amount,
+.cost-stats .stat dd,
+.compare-table td:not(:first-child) {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Snappy, professional micro-interactions (150ms) */
+.btn,
+.btn-link {
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease,
+    filter 0.15s ease,
+    border-color 0.15s ease;
+}
+.vehicle-summary,
+a.list-row,
+.vehicle-card {
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease,
+    border-color 0.15s ease;
+}
+.btn:hover,
+.vehicle-summary:hover,
+a.list-row:hover {
+  transform: translateY(-1px);
+}
+
+/* the redesigned gauge (viewBox 100×56) scales by width */
+.gauge {
+  height: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn:hover,
+  .vehicle-summary:hover,
+  a.list-row:hover {
+    transform: none;
+  }
 }

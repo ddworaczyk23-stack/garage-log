@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Garage · Home</title>
+<!-- Dashboard direction: "Attention-first Garage Board" (bento evolved).
+     Same editorial-motion language as the app: M12 olive/paper palette +
+     Spectral / IBM Plex Sans / IBM Plex Mono + gauge/instrument/lamp vocabulary.
+     Size encodes urgency — the most-urgent vehicle is the hero tile. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Spectral:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#f3efe4; --card:#fffdf7; --inset:#ece5d5;
+    --border:rgba(74,60,30,.15); --border-strong:rgba(74,60,30,.24);
+    --text:#2a271f; --muted:#736b5b; --faint:#a49a86;
+    --accent:#5e6b34; --accent-hover:#515c2b; --accent-text:#fbfaf3;
+    --c-overdue:#a3311f; --c-overdue-bg:rgba(168,51,38,.12);
+    --c-due:#99610f;     --c-due-bg:rgba(200,140,30,.16);
+    --c-watch:#7f6712;   --c-watch-bg:rgba(190,160,40,.18);
+    --c-ok:#4a7340;      --c-ok-bg:rgba(74,115,64,.15);
+    --instrument:#38463b;
+
+    --serif:'Spectral',Georgia,serif;
+    --sans:'IBM Plex Sans',system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+
+    --r-card:16px; --r-ctl:10px;
+    --ease-paper:cubic-bezier(.22,.61,.36,1);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 18% 10%, rgba(94,107,52,.05), transparent 42%),
+      radial-gradient(circle at 86% 82%, rgba(94,107,52,.045), transparent 46%),
+      var(--bg);
+    background-attachment:fixed;
+    color:var(--text);font-family:var(--sans);font-size:15px;line-height:1.5;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+  }
+  a{color:inherit;text-decoration:none;}
+  :focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:6px;}
+  .wrap{max-width:940px;margin:0 auto;padding:22px 18px 64px;}
+
+  .eyebrow{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--accent);}
+  .kicker{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);}
+  .num{font-family:var(--mono);font-variant-numeric:tabular-nums;}
+
+  /* ---------- masthead ---------- */
+  .top{margin-bottom:18px;}
+  .top .eyebrow{display:block;margin-bottom:8px;}
+  .top-row{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;}
+  .garage-name{font-family:var(--serif);font-weight:600;font-size:34px;letter-spacing:-.015em;line-height:1;margin:0;}
+  .status-line{font-family:var(--mono);font-size:12px;letter-spacing:.03em;color:var(--muted);display:inline-flex;align-items:center;gap:8px;}
+  .status-line b{color:var(--c-overdue);font-weight:600;}
+  .status-line .lamp{width:8px;height:8px;border-radius:50%;background:var(--c-overdue);box-shadow:0 0 0 3px var(--c-overdue-bg);}
+  .rule-double{height:0;border:0;margin:15px 0 0;border-top:1.5px solid var(--text);position:relative;}
+  .rule-double::after{content:"";position:absolute;left:0;right:0;top:3px;border-top:.5px solid var(--border-strong);}
+
+  /* ---------- bento board ---------- */
+  .board{display:grid;grid-template-columns:1.32fr 1fr;grid-auto-rows:min-content;gap:14px;margin-top:18px;align-items:start;}
+  .tile{background:var(--card);border:1px solid var(--border);border-radius:var(--r-card);
+    box-shadow:0 1px 3px rgba(60,48,22,.06),0 8px 22px -18px rgba(60,48,22,.4);
+    padding:18px;opacity:0;transform:translateY(12px);animation:rise .5s var(--ease-paper) forwards;}
+  .tile:nth-child(1){animation-delay:.02s;} .tile:nth-child(2){animation-delay:.09s;}
+  .tile:nth-child(3){animation-delay:.16s;} .tile:nth-child(4){animation-delay:.22s;}
+  @keyframes rise{to{opacity:1;transform:none;}}
+  a.tile{display:block;transition:transform .14s var(--ease-paper),box-shadow .14s ease,border-color .14s ease;}
+  a.tile:hover{transform:translateY(-2px);box-shadow:0 3px 8px rgba(60,48,22,.08),0 16px 30px -20px rgba(60,48,22,.5);border-color:var(--border-strong);}
+
+  .hero{grid-column:1;grid-row:1 / span 2;}
+  .veh2{grid-column:2;grid-row:1;}
+  .feed{grid-column:2;grid-row:2;}
+  .util{grid-column:1 / -1;display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .util .tile{margin:0;}
+
+  /* vehicle tile header */
+  .vt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+  .vt-eye{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;}
+  .vt-eye .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+  .vt-name{font-family:var(--serif);font-weight:600;font-size:24px;letter-spacing:-.01em;margin:6px 0 0;line-height:1.05;}
+  .vt-sub{font-family:var(--mono);font-size:11px;letter-spacing:.05em;color:var(--muted);margin-top:4px;}
+  .plate{flex-shrink:0;font-family:var(--mono);font-weight:600;font-size:12px;letter-spacing:.14em;color:var(--accent-text);
+    background:var(--accent);padding:6px 11px;border-radius:7px;box-shadow:inset 0 1px 0 rgba(255,255,255,.18),inset 0 -1.5px 0 rgba(0,0,0,.2);}
+  .tone-overdue{color:var(--c-overdue);} .tone-ok{color:var(--c-ok);} .tone-due{color:var(--c-due);}
+
+  /* odometer instrument */
+  .instrument{background:var(--instrument);border-radius:var(--r-ctl);padding:13px 15px;color:#eef0ea;margin-top:14px;
+    display:flex;align-items:flex-end;justify-content:space-between;gap:14px;}
+  .instrument .kicker{color:rgba(238,240,234,.6);}
+  .odo{font-family:var(--mono);font-weight:600;font-size:30px;letter-spacing:.08em;line-height:1;margin-top:4px;font-variant-numeric:tabular-nums;}
+  .odo .u{font-size:11px;letter-spacing:.16em;color:rgba(238,240,234,.6);margin-left:7px;}
+  .ytd{text-align:right;font-family:var(--mono);font-size:11px;color:#cfe0be;display:flex;flex-direction:column;align-items:flex-end;gap:3px;}
+  .ytd .cap{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:rgba(238,240,234,.5);}
+
+  /* focal gauge row (hero) */
+  .focus{display:flex;align-items:center;gap:14px;background:var(--inset);border:1px solid var(--border);border-radius:var(--r-ctl);padding:13px 14px;margin-top:14px;}
+  .gauge{width:118px;height:auto;flex-shrink:0;}
+  .focus-read{min-width:0;flex:1;}
+  .focus-svc{font-family:var(--serif);font-weight:600;font-size:17px;letter-spacing:-.01em;line-height:1.1;}
+  .focus-big{font-family:var(--mono);font-weight:600;font-size:13px;margin-top:6px;font-variant-numeric:tabular-nums;}
+  .focus-meta{font-family:var(--mono);font-size:10.5px;letter-spacing:.03em;color:var(--muted);margin-top:3px;}
+
+  /* mini tally */
+  .tally{display:flex;gap:13px;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-top:14px;flex-wrap:wrap;}
+  .tally span{display:inline-flex;align-items:center;gap:6px;}
+  .lamp{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+  .lamp.overdue{background:var(--c-overdue);box-shadow:0 0 0 2px var(--c-overdue-bg);}
+  .lamp.due{background:var(--c-due);box-shadow:0 0 0 2px var(--c-due-bg);}
+  .lamp.watch{background:transparent;border:2px solid var(--c-watch);}
+  .lamp.ok{background:var(--c-ok);box-shadow:0 0 0 2px var(--c-ok-bg);}
+
+  .open-link{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-top:16px;}
+  .open-link svg{width:13px;height:13px;}
+
+  /* compact status ring for the calm vehicle */
+  .mini-status{display:flex;align-items:center;gap:12px;margin-top:14px;}
+  .ring{width:52px;height:52px;flex-shrink:0;}
+  .mini-next{min-width:0;}
+  .mini-next .svc{font-family:var(--serif);font-weight:500;font-size:15px;line-height:1.15;}
+  .mini-next .meta{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:3px;}
+
+  /* attention feed */
+  .feed-title{font-family:var(--serif);font-weight:600;font-size:17px;letter-spacing:-.01em;}
+  .feed-list{list-style:none;margin:12px 0 0;padding:0;}
+  .feed-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--border);}
+  .feed-row:first-child{border-top:0;}
+  .feed-veh{font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);}
+  .feed-main .svc{font-size:14px;font-weight:500;}
+  .feed-main .veh{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--muted);margin-top:1px;}
+  .feed-when{font-family:var(--mono);font-size:11px;font-weight:500;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .feed-when.overdue{color:var(--c-overdue);} .feed-when.due{color:var(--c-due);} .feed-when.watch{color:var(--c-watch);}
+
+  /* utility tiles */
+  .u-tile{display:flex;flex-direction:column;gap:2px;min-height:96px;justify-content:space-between;}
+  .u-lab{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+  .u-big{font-family:var(--serif);font-weight:600;font-size:26px;letter-spacing:-.01em;}
+  .u-big.mono{font-family:var(--mono);font-weight:600;font-size:22px;letter-spacing:0;}
+  .u-sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);}
+  .u-cta{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);}
+  .u-add{align-items:center;justify-content:center;text-align:center;border-style:dashed;background:transparent;}
+  .u-add .plus{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--accent);color:var(--accent-text);margin-bottom:8px;}
+  .u-add .plus svg{width:16px;height:16px;}
+
+  .colophon{text-align:center;margin:26px 0 0;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+
+  @media (max-width:760px){
+    .board{grid-template-columns:1fr;}
+    .hero,.veh2,.feed{grid-column:1;grid-row:auto;}
+    .util{grid-template-columns:1fr;}
+    .garage-name{font-size:28px;}
+  }
+  @media (prefers-reduced-motion:reduce){.tile{animation:none;opacity:1;transform:none;} a.tile{transition:none;}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+
+    <!-- masthead -->
+    <header class="top">
+      <span class="eyebrow">The Garage · Home</span>
+      <div class="top-row">
+        <h1 class="garage-name">Your Garage</h1>
+        <span class="status-line"><span class="lamp"></span><b>1 needs attention</b> · 2 vehicles · updated today</span>
+      </div>
+      <hr class="rule-double" />
+    </header>
+
+    <div class="board">
+
+      <!-- HERO: most-urgent vehicle -->
+      <a class="tile hero" href="#">
+        <div class="vt-head">
+          <div>
+            <div class="vt-eye tone-overdue"><span class="dot"></span>Needs attention</div>
+            <div class="vt-name">Ford F-150</div>
+            <div class="vt-sub">2020 · 2.7L EcoBoost · 4WD</div>
+          </div>
+          <span class="plate">STX</span>
+        </div>
+
+        <div class="instrument">
+          <div>
+            <span class="kicker">Odometer</span>
+            <div class="odo"><span data-count="84231">84,231</span><span class="u">MI</span></div>
+          </div>
+          <div class="ytd">
+            <span><span class="num">+2,220</span> mi</span>
+            <span class="cap">in 2026</span>
+          </div>
+        </div>
+
+        <div class="focus">
+          <svg class="gauge" viewBox="0 0 100 56" style="overflow:visible" aria-label="Engine oil 125% of interval, overdue">
+            <path d="M15 50 A35 35 0 0 1 85 50" fill="none" stroke="#ece5d5" stroke-width="3" stroke-linecap="round"/>
+            <line x1="84.66" y1="45.13" x2="89.61" y2="44.43" stroke="#2a271f" stroke-width="1.5"/>
+            <line x1="50" y1="50" x2="82" y2="50" stroke="#a83232" stroke-width="2.5" stroke-linecap="round"/>
+            <circle cx="50" cy="50" r="3.5" fill="#2a271f"/><circle cx="50" cy="50" r="1" fill="#f3efe4"/>
+          </svg>
+          <div class="focus-read">
+            <div class="focus-svc">Engine oil &amp; filter</div>
+            <div class="focus-big tone-overdue">1,231 mi past due · 125% of interval</div>
+            <div class="focus-meta">due at 83,000 mi · every 5,000 mi / 6 mo</div>
+          </div>
+        </div>
+
+        <div class="tally">
+          <span><span class="lamp overdue"></span>1 overdue</span>
+          <span><span class="lamp due"></span>1 due now</span>
+          <span><span class="lamp ok"></span>12 on track</span>
+        </div>
+
+        <span class="open-link">Open Service Record
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg>
+        </span>
+      </a>
+
+      <!-- SECONDARY: calm vehicle -->
+      <a class="tile veh2" href="#">
+        <div class="vt-head">
+          <div>
+            <div class="vt-eye tone-ok"><span class="dot"></span>On track</div>
+            <div class="vt-name">Nissan Rogue</div>
+            <div class="vt-sub">2020 · 2.5L I4 · FWD</div>
+          </div>
+          <span class="plate">SL</span>
+        </div>
+
+        <div class="instrument">
+          <div>
+            <span class="kicker">Odometer</span>
+            <div class="odo"><span data-count="51040">51,040</span><span class="u">MI</span></div>
+          </div>
+          <div class="ytd">
+            <span><span class="num">+3,110</span> mi</span>
+            <span class="cap">in 2026</span>
+          </div>
+        </div>
+
+        <div class="mini-status">
+          <svg class="ring" viewBox="0 0 44 44" aria-hidden="true">
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--c-ok-bg)" stroke-width="5"/>
+            <circle cx="22" cy="22" r="18" fill="none" stroke="var(--c-ok)" stroke-width="5" stroke-linecap="round"
+              stroke-dasharray="113" stroke-dashoffset="45" transform="rotate(-90 22 22)"/>
+          </svg>
+          <div class="mini-next">
+            <div class="svc">Next: Tire rotation</div>
+            <div class="meta">in 1,400 mi · nothing overdue</div>
+          </div>
+        </div>
+
+        <div class="tally">
+          <span><span class="lamp watch"></span>1 coming up</span>
+          <span><span class="lamp ok"></span>11 on track</span>
+        </div>
+
+        <span class="open-link">Open Service Record
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg>
+        </span>
+      </a>
+
+      <!-- ATTENTION FEED -->
+      <section class="tile feed">
+        <div class="feed-title">Across the garage</div>
+        <ul class="feed-list">
+          <li class="feed-row">
+            <span class="lamp overdue"></span>
+            <div class="feed-main"><div class="svc">Engine oil &amp; filter</div><div class="veh">Ford F-150</div></div>
+            <span class="feed-when overdue">1,231 mi over</span>
+          </li>
+          <li class="feed-row">
+            <span class="lamp due"></span>
+            <div class="feed-main"><div class="svc">Tire rotation</div><div class="veh">Ford F-150</div></div>
+            <span class="feed-when due">in 369 mi</span>
+          </li>
+          <li class="feed-row">
+            <span class="lamp watch"></span>
+            <div class="feed-main"><div class="svc">Tire rotation</div><div class="veh">Nissan Rogue</div></div>
+            <span class="feed-when watch">in 1,400 mi</span>
+          </li>
+        </ul>
+      </section>
+
+      <!-- UTILITY STRIP -->
+      <div class="util">
+        <a class="tile u-tile" href="#">
+          <span class="u-lab">Spent this year</span>
+          <div class="u-big">$1,285</div>
+          <span class="u-cta">Cost summary
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg>
+          </span>
+        </a>
+        <a class="tile u-tile" href="#">
+          <span class="u-lab">Backup</span>
+          <div class="u-big mono">3d ago</div>
+          <span class="u-cta">Back up garage
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9"/></svg>
+          </span>
+        </a>
+        <a class="tile u-tile u-add" href="#">
+          <span class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg></span>
+          <span class="u-cta" style="color:var(--text)">Add a vehicle</span>
+        </a>
+      </div>
+
+    </div>
+
+    <p class="colophon">Garage Log · The glovebox, kept honest</p>
+  </div>
+
+<script>
+  // light touch: count the odometers up on load (motion system is already proven in-app)
+  (function(){
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    document.querySelectorAll('[data-count]').forEach(function(el){
+      var target=+el.getAttribute('data-count'), from=Math.round(target*0.985), start=performance.now();
+      (function tick(now){
+        var t=Math.min(1,(now-start)/900), e=1-Math.pow(1-t,3);
+        el.textContent=Math.round(from+(target-from)*e).toLocaleString('en-US');
+        if(t<1) requestAnimationFrame(tick);
+      })(start);
+    });
+  })();
+</script>
+</body>
+</html>
