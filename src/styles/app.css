@@ -1107,10 +1107,14 @@ code {
 }
 
 /* ---------- Document preview modal ---------- */
+/* z-index scale: header 10 < bottom-nav 20 < sticky CTA 40 < modal 100 —
+   a blocking overlay must always sit above a page-level sticky control (they
+   can both be visible at once, e.g. VehicleDetail's receipts section opens
+   this modal while its own sticky "Log service" pill is showing). */
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: 40;
+  z-index: 100;
   background: rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: flex-end;
@@ -2288,6 +2292,28 @@ iframe.preview-media {
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
+  }
+}
+
+/* Desktop two-column split: a sticky "cockpit" rail (identity, odometer,
+   most-urgent gauge, quick-add) stays visible while the schedule/history
+   column scrolls independently — instead of one long stacked column where
+   the whole ledger has to be scrolled past to reach anything below it.
+   Mobile/tablet stay exactly as the single stacked column below. */
+.vd-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+@media (min-width: 900px) {
+  .vd-layout {
+    grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+    gap: 20px;
+    align-items: start;
+  }
+  .vd-rail {
+    position: sticky;
+    top: 88px; /* clears the sticky app header + a little breathing room */
   }
 }
 

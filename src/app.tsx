@@ -66,7 +66,9 @@ export function App() {
         <h1 class="app-title">The Glovebox</h1>
       </header>
       <AccountBar />
-      <main class={`app-main${route === '/' ? ' app-main-wide' : ''}`}>
+      <main
+        class={`app-main${route === '/' || route.startsWith('/vehicle/') ? ' app-main-wide' : ''}`}
+      >
         <ErrorBoundary key={route}>{page}</ErrorBoundary>
       </main>
       <Nav route={route} />

@@ -100,7 +100,7 @@ export function ImportHistory({ vehicleId }: Props) {
               ignored automatically, and you review everything before it's saved.
             </p>
 
-            <h4 class="guide-h">On a computer (easiest)</h4>
+            <h3 class="guide-h">On a computer (easiest)</h3>
             <ol class="guide-steps">
               <li>
                 Sign in at <code>carfax.com</code> and open{' '}
@@ -115,7 +115,7 @@ export function ImportHistory({ vehicleId }: Props) {
               </li>
             </ol>
 
-            <h4 class="guide-h">On your phone</h4>
+            <h3 class="guide-h">On your phone</h3>
             <ol class="guide-steps">
               <li>
                 Open the <strong>Carfax Car Care</strong> app (or <code>carfax.com</code> in

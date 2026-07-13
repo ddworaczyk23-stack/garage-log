@@ -18,6 +18,7 @@ import { OdometerListItem } from '../components/OdometerListItem'
 import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
+import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { Loading, EmptyState, ConfirmButton } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
@@ -92,6 +93,7 @@ export function VehicleDetail({ id }: Props) {
 
   const [activeForm, setActiveForm] = useState<ActiveForm>(null)
   const [editingName, setEditingName] = useState(false)
+  const [editingSpecs, setEditingSpecs] = useState(false)
   const [serviceCategory, setServiceCategory] = useState<MaintenanceCategory | undefined>(undefined)
   const formRef = useRef<HTMLDivElement>(null)
   const quickAddRef = useRef<HTMLDivElement>(null)
@@ -202,6 +204,13 @@ export function VehicleDetail({ id }: Props) {
     ? (Date.now() - new Date(`${mileage.asOfDate}T00:00:00`).getTime()) / 86_400_000 > 45
     : false
 
+  // Split the ranked ledger so only what actually needs attention is expanded
+  // by default; everything on-track or not-applicable folds behind a single
+  // Collapsible — the full list was previously always shown in one long
+  // stack, forcing a scroll past everything just to reach history below it.
+  const actionable = list.filter((r) => r.status === 'overdue' || r.status === 'due-next')
+  const onTrack = list.filter((r) => r.status !== 'overdue' && r.status !== 'due-next')
+
   function closeForm() {
     setActiveForm(null)
     setServiceCategory(undefined)
@@ -220,12 +229,49 @@ export function VehicleDetail({ id }: Props) {
     else openForm(form)
   }
 
+  function renderRow(r: ComputedReminder) {
+    const prog = reminderProgress(r)
+    return (
+      <li key={r.rule.id} class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}`}>
+        <span class={`vd-lamp ${LAMP_CLASS[r.status]}`} />
+        <div class="vd-row-main">
+          <div class="vd-svc">{r.rule.label}</div>
+          <div class="vd-svc-meta">
+            <span class="interval">
+              {formatInterval(r.interval.miles, r.interval.months, r.interval.conditionBased)}
+            </span>
+            <span class="sep">·</span>
+            <span>
+              {r.reason}
+              {r.odometerStale ? ' ⚠️' : ''}
+            </span>
+          </div>
+        </div>
+        <div class="vd-row-end">
+          <span class={`status-pill status-${r.status}`}>{STATUS_LABELS[r.status]}</span>
+          {r.status !== 'not-applicable' && (
+            <button
+              type="button"
+              class="btn-link vd-log-btn"
+              onClick={() => openForm('service', r.rule.category)}
+            >
+              {r.rule.lastDoneDate ? 'Log' : 'Log first'}
+            </button>
+          )}
+        </div>
+        <BulletTrack pct={prog.pct} zone={prog.zone} animate={intro} reduced={reduced} />
+      </li>
+    )
+  }
+
   return (
     <section class="page vd">
       <a class="back-link" href="#/vehicles">
         ‹ Vehicles
       </a>
 
+      <div class="vd-layout">
+      <div class="vd-rail">
       {/* masthead */}
       <header class="vd-masthead">
         <span class="eyebrow">Service Record · {vehicle.year} {vehicle.make}</span>
@@ -284,13 +330,66 @@ export function VehicleDetail({ id }: Props) {
         )}
 
         <Collapsible title="Specifications" count="4 fields">
-          <dl class="vd-spec-table">
-            <div class="vd-spec-row"><dt>Engine</dt><dd>{vehicle.engine}</dd></div>
-            <div class="vd-spec-row"><dt>Drivetrain</dt><dd>{vehicle.drivetrain}</dd></div>
-            <div class="vd-spec-row"><dt>Trim</dt><dd>{vehicle.trim}</dd></div>
-            <div class="vd-spec-row"><dt>VIN</dt><dd class="muted">{vehicle.vin ?? 'Not set'}</dd></div>
-          </dl>
+          {editingSpecs ? (
+            <VehicleSpecsEditor vehicle={vehicle} onDone={() => setEditingSpecs(false)} />
+          ) : (
+            <>
+              <dl class="vd-spec-table">
+                <div class="vd-spec-row"><dt>Engine</dt><dd>{vehicle.engine}</dd></div>
+                <div class="vd-spec-row"><dt>Drivetrain</dt><dd>{vehicle.drivetrain}</dd></div>
+                <div class="vd-spec-row"><dt>Trim</dt><dd>{vehicle.trim}</dd></div>
+                <div class="vd-spec-row"><dt>VIN</dt><dd class="muted">{vehicle.vin ?? 'Not set'}</dd></div>
+              </dl>
+              <button type="button" class="btn-link" onClick={() => setEditingSpecs(true)}>
+                Edit specifications
+              </button>
+            </>
+          )}
         </Collapsible>
+      </section>
+
+      {/* focal status: most-urgent item + tally, always visible in the rail */}
+      <section class="card vd-focus-card">
+        {!reminders ? (
+          <Loading />
+        ) : !focal ? (
+          <p class="muted small">No schedule items.</p>
+        ) : (
+          (() => {
+            const c = focalCopy(focal)
+            const prog = reminderProgress(focal)
+            return (
+              <>
+                <div class="vd-focus">
+                  <Gauge
+                    pct={prog.pct}
+                    animate={intro}
+                    reduced={reduced}
+                    ariaLabel={`${focal.rule.label}: ${prog.pct != null ? Math.round(prog.pct) + '% of interval' : 'no fixed interval'}`}
+                  />
+                  <div class="vd-focus-read">
+                    <div class={`vd-focus-eye ${c.tone}`}>
+                      <span class="dot" />
+                      {c.eye}
+                    </div>
+                    <div class="vd-focus-svc">{focal.rule.label}</div>
+                    <div class={`vd-focus-big ${c.tone}`}>{c.big}</div>
+                    <div class="vd-focus-meta">
+                      {focal.dueAtMiles != null && <>due at <b>{formatMiles(focal.dueAtMiles)}</b> · </>}
+                      every{' '}
+                      <b>{formatInterval(focal.interval.miles, focal.interval.months, focal.interval.conditionBased)}</b>
+                    </div>
+                  </div>
+                </div>
+                <div class="vd-tally">
+                  <span class="tally"><span class="vd-lamp is-overdue" />{counts.overdue} overdue</span>
+                  <span class="tally"><span class="vd-lamp is-due" />{counts.due} due now</span>
+                  <span class="tally"><span class="vd-lamp is-ok" />{counts.ok} on track</span>
+                </div>
+              </>
+            )
+          })()
+        )}
       </section>
 
       {/* quick-add */}
@@ -325,8 +424,12 @@ export function VehicleDetail({ id }: Props) {
           <OdometerForm vehicleId={id} onDone={closeForm} onCancel={closeForm} />
         )}
       </div>
+      </div>
 
-      {/* service schedule: focal gauge + bullet ledger */}
+      <div class="vd-main">
+      {/* service schedule: bullet ledger, actionable items expanded, the rest
+          folded behind a Collapsible so the common case (most items on
+          track) doesn't force a long scroll to reach history below it */}
       <section class="card vd-schedule">
         <div class="card-title-row">
           <h3 class="card-title">Service schedule</h3>
@@ -345,77 +448,20 @@ export function VehicleDetail({ id }: Props) {
           <p class="muted small">No schedule items.</p>
         ) : (
           <>
-            {focal &&
-              (() => {
-                const c = focalCopy(focal)
-                const prog = reminderProgress(focal)
-                return (
-                  <div class="vd-focus">
-                    <Gauge
-                      pct={prog.pct}
-                      animate={intro}
-                      reduced={reduced}
-                      ariaLabel={`${focal.rule.label}: ${prog.pct != null ? Math.round(prog.pct) + '% of interval' : 'no fixed interval'}`}
-                    />
-                    <div class="vd-focus-read">
-                      <div class={`vd-focus-eye ${c.tone}`}>
-                        <span class="dot" />
-                        {c.eye}
-                      </div>
-                      <div class="vd-focus-svc">{focal.rule.label}</div>
-                      <div class={`vd-focus-big ${c.tone}`}>{c.big}</div>
-                      <div class="vd-focus-meta">
-                        {focal.dueAtMiles != null && <>due at <b>{formatMiles(focal.dueAtMiles)}</b> · </>}
-                        every{' '}
-                        <b>{formatInterval(focal.interval.miles, focal.interval.months, focal.interval.conditionBased)}</b>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })()}
+            {actionable.length === 0 ? (
+              <p class="muted small">Nothing needs attention right now — nice.</p>
+            ) : (
+              <ul class="vd-ledger">{actionable.map(renderRow)}</ul>
+            )}
 
-            <div class="vd-tally">
-              <span class="tally"><span class="vd-lamp is-overdue" />{counts.overdue} overdue</span>
-              <span class="tally"><span class="vd-lamp is-due" />{counts.due} due now</span>
-              <span class="tally"><span class="vd-lamp is-ok" />{counts.ok} on track</span>
-            </div>
-
-            <ul class="vd-ledger">
-              {list.map((r) => {
-                const prog = reminderProgress(r)
-                return (
-                  <li key={r.rule.id} class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}`}>
-                    <span class={`vd-lamp ${LAMP_CLASS[r.status]}`} />
-                    <div class="vd-row-main">
-                      <div class="vd-svc">{r.rule.label}</div>
-                      <div class="vd-svc-meta">
-                        <span class="interval">
-                          {formatInterval(r.interval.miles, r.interval.months, r.interval.conditionBased)}
-                        </span>
-                        <span class="sep">·</span>
-                        <span>
-                          {r.reason}
-                          {r.odometerStale ? ' ⚠️' : ''}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="vd-row-end">
-                      <span class={`status-pill status-${r.status}`}>{STATUS_LABELS[r.status]}</span>
-                      {r.status !== 'not-applicable' && (
-                        <button
-                          type="button"
-                          class="btn-link vd-log-btn"
-                          onClick={() => openForm('service', r.rule.category)}
-                        >
-                          {r.rule.lastDoneDate ? 'Log' : 'Log first'}
-                        </button>
-                      )}
-                    </div>
-                    <BulletTrack pct={prog.pct} zone={prog.zone} animate={intro} reduced={reduced} />
-                  </li>
-                )
-              })}
-            </ul>
+            {onTrack.length > 0 && (
+              <Collapsible
+                title="On track"
+                count={`${onTrack.length} item${onTrack.length === 1 ? '' : 's'}`}
+              >
+                <ul class="vd-ledger">{onTrack.map(renderRow)}</ul>
+              </Collapsible>
+            )}
           </>
         )}
       </section>
@@ -603,6 +649,8 @@ export function VehicleDetail({ id }: Props) {
       </Reveal>
 
       <p class="colophon">Garage Log · The glovebox, kept honest</p>
+      </div>
+      </div>
 
       {showSticky && !activeForm && (
         <button type="button" class="vd-sticky" onClick={() => openForm('service')}>
