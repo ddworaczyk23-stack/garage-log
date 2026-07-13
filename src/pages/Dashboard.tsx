@@ -71,17 +71,25 @@ export function Dashboard() {
       {summary.vehicles.length === 0 ? (
         <p class="muted small">No vehicles yet — add one to get started.</p>
       ) : (
-        <div class="gb-board">
-          <HeroTile summary={hero} intro={intro} reduced={reduced} />
-          <div class="gb-side">
-            {rest.map((s) => (
-              <CompactTile key={s.vehicle.id} summary={s} intro={intro} reduced={reduced} />
-            ))}
-            <Reveal>
-              <FeedCard items={summary.attention} />
-            </Reveal>
+        <>
+          <div class={`gb-board${rest.length === 0 ? ' gb-board-solo' : ''}`}>
+            <HeroTile summary={hero} intro={intro} reduced={reduced} />
+            {rest.length > 0 && (
+              <div class="gb-side">
+                {rest.map((s) => (
+                  <CompactTile key={s.vehicle.id} summary={s} intro={intro} reduced={reduced} />
+                ))}
+              </div>
+            )}
           </div>
-        </div>
+
+          {/* Full width, not squeezed into the side column — its row count is
+              independent of vehicle count, so pairing it with the (usually
+              much shorter) hero/compact column left a large dead gap. */}
+          <Reveal>
+            <FeedCard items={summary.attention} />
+          </Reveal>
+        </>
       )}
 
       <Reveal>

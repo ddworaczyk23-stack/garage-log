@@ -169,6 +169,13 @@ body {
   /* leave room for the fixed bottom nav + iOS home indicator */
   padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 28px);
 }
+/* The dashboard is a wide bento board, not a single-column document like
+   VehicleDetail/Backup/etc — give it more breathing room on desktop so the
+   hero + side column aren't squeezed and the page doesn't read as mostly
+   empty margin. Still just a max-width cap, so mobile is unaffected. */
+.app-main.app-main-wide {
+  max-width: 1080px;
+}
 
 /* ---------- Typography helpers ---------- */
 .page-title {
@@ -2420,6 +2427,9 @@ a.list-row:hover {
   align-items: start;
   margin-top: 18px;
 }
+.gb-board-solo {
+  grid-template-columns: 1fr;
+}
 .gb-side {
   display: flex;
   flex-direction: column;
@@ -2542,7 +2552,7 @@ a.list-row:hover {
 }
 .gb-feed-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) minmax(0, 108px);
+  grid-template-columns: auto minmax(0, 1fr) minmax(0, 220px);
   align-items: center;
   gap: 10px;
   padding: 10px 0;
@@ -2663,5 +2673,8 @@ a.list-row:hover {
   }
   .gb-focus .gauge {
     align-self: center;
+  }
+  .gb-feed-row {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 92px);
   }
 }
