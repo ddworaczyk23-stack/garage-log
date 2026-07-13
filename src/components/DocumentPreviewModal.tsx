@@ -147,7 +147,7 @@ export function DocumentPreviewModal({ entry, onClose }: Props) {
             <option value={GLOVEBOX_VALUE}>Glovebox (not an event)</option>
             {(events ?? []).map((ev) => (
               <option key={ev.id} value={ev.id}>
-                {ev.kind === 'repair' ? '🛠️' : '🔧'} {ev.title || CATEGORY_LABELS[ev.category]} · {ev.date}
+                {ev.kind === 'repair' ? 'Repair' : 'Service'} · {ev.title || CATEGORY_LABELS[ev.category]} · {ev.date}
               </option>
             ))}
           </select>

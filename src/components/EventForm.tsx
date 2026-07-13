@@ -23,6 +23,8 @@ interface Props {
   existing?: MaintenanceEvent
   /** Pre-selects the category when adding (e.g. "Log" from a schedule row). */
   initialCategory?: MaintenanceCategory
+  /** Prefills odometer with the vehicle's current mileage estimate on a fresh add. */
+  defaultOdometer?: number
   existingDocs?: { id: string; filename: string }[]
   onDone: () => void
   onCancel: () => void
@@ -39,12 +41,15 @@ export function EventForm({
   kind,
   existing,
   initialCategory,
+  defaultOdometer,
   existingDocs = [],
   onDone,
   onCancel,
 }: Props) {
   const [date, setDate] = useState(existing?.date ?? todayISO())
-  const [odometerMiles, setOdometerMiles] = useState(existing?.odometerMiles?.toString() ?? '')
+  const [odometerMiles, setOdometerMiles] = useState(
+    existing?.odometerMiles?.toString() ?? (defaultOdometer != null ? String(defaultOdometer) : ''),
+  )
   const [category, setCategory] = useState<MaintenanceCategory>(
     existing?.category ?? initialCategory ?? (kind === 'maintenance' ? 'oil-change' : 'other'),
   )
@@ -71,6 +76,12 @@ export function EventForm({
   const [overrideNote, setOverrideNote] = useState('')
   const [customMiles, setCustomMiles] = useState('')
   const [customMonths, setCustomMonths] = useState('')
+
+  // Secondary fields (label/parts/fluids/vendor/notes/etc.) are collapsed by
+  // default on a fresh add — a routine oil change only needs date/odometer/
+  // category/cost/attach to log fast. Editing an existing entry starts
+  // expanded so none of its already-filled detail is hidden from view.
+  const [showMore, setShowMore] = useState(!!existing)
 
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [removedDocIds, setRemovedDocIds] = useState<string[]>([])
@@ -179,127 +190,138 @@ export function EventForm({
         </select>
       </label>
 
+      {kind === 'repair' && (
+        <label class="admin-field">
+          <span class="muted small">Symptom</span>
+          <input
+            type="text"
+            value={symptom}
+            onInput={(e) => setSymptom((e.target as HTMLInputElement).value)}
+          />
+        </label>
+      )}
+
       <label class="admin-field">
-        <span class="muted small">Label (optional, shown in history)</span>
+        <span class="muted small">Cost ($)</span>
         <input
-          type="text"
-          placeholder={kind === 'maintenance' ? CATEGORY_LABELS[category] : symptom || 'Repair'}
-          value={title}
-          onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
+          type="number"
+          inputMode="decimal"
+          value={cost}
+          onInput={(e) => setCost((e.target as HTMLInputElement).value)}
         />
       </label>
 
-      {kind === 'maintenance' ? (
-        <>
-          <label class="admin-field">
-            <span class="muted small">Service performed</span>
-            <input
-              type="text"
-              placeholder={CATEGORY_LABELS[category]}
-              value={servicePerformed}
-              onInput={(e) => setServicePerformed((e.target as HTMLInputElement).value)}
-            />
-          </label>
-          <div class="admin-when">
+      <div class="override-section">
+        <button type="button" class="btn-link" onClick={() => setShowMore((s) => !s)}>
+          {showMore ? '▾' : '▸'} More details (label, vendor, parts, notes…)
+        </button>
+        {showMore && (
+          <div class="admin-form">
             <label class="admin-field">
-              <span class="muted small">Parts</span>
+              <span class="muted small">Label (optional, shown in history)</span>
               <input
                 type="text"
-                value={parts}
-                onInput={(e) => setParts((e.target as HTMLInputElement).value)}
+                placeholder={kind === 'maintenance' ? CATEGORY_LABELS[category] : symptom || 'Repair'}
+                value={title}
+                onInput={(e) => setTitle((e.target as HTMLInputElement).value)}
               />
             </label>
-            <label class="admin-field">
-              <span class="muted small">Fluids</span>
-              <input
-                type="text"
-                value={fluids}
-                onInput={(e) => setFluids((e.target as HTMLInputElement).value)}
-              />
-            </label>
-          </div>
-          <label class="admin-field">
-            <span class="muted small">Performed by</span>
-            <select
-              value={performedBy}
-              onChange={(e) => setPerformedBy((e.target as HTMLSelectElement).value as PerformedBy)}
-            >
-              <option value="">— not set —</option>
-              {PERFORMED_BY_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {PERFORMED_BY_LABELS[k]}
-                </option>
-              ))}
-            </select>
-          </label>
-        </>
-      ) : (
-        <>
-          <label class="admin-field">
-            <span class="muted small">Symptom</span>
-            <input
-              type="text"
-              value={symptom}
-              onInput={(e) => setSymptom((e.target as HTMLInputElement).value)}
-            />
-          </label>
-          <label class="admin-field">
-            <span class="muted small">Diagnosis</span>
-            <input
-              type="text"
-              value={diagnosis}
-              onInput={(e) => setDiagnosis((e.target as HTMLInputElement).value)}
-            />
-          </label>
-          <label class="admin-field">
-            <span class="muted small">Fix</span>
-            <input type="text" value={fix} onInput={(e) => setFix((e.target as HTMLInputElement).value)} />
-          </label>
-          <div class="admin-when">
-            <label class="admin-field">
-              <span class="muted small">Parts</span>
-              <input
-                type="text"
-                value={parts}
-                onInput={(e) => setParts((e.target as HTMLInputElement).value)}
-              />
-            </label>
-            <label class="admin-field">
-              <span class="muted small">Labor</span>
-              <input
-                type="text"
-                value={labor}
-                onInput={(e) => setLabor((e.target as HTMLInputElement).value)}
-              />
-            </label>
-          </div>
-        </>
-      )}
 
-      <div class="admin-when">
-        <label class="admin-field">
-          <span class="muted small">Cost ($)</span>
-          <input
-            type="number"
-            inputMode="decimal"
-            value={cost}
-            onInput={(e) => setCost((e.target as HTMLInputElement).value)}
-          />
-        </label>
-        <label class="admin-field">
-          <span class="muted small">Vendor / shop</span>
-          <input
-            type="text"
-            value={vendor}
-            onInput={(e) => setVendor((e.target as HTMLInputElement).value)}
-          />
-        </label>
+            {kind === 'maintenance' ? (
+              <>
+                <label class="admin-field">
+                  <span class="muted small">Service performed</span>
+                  <input
+                    type="text"
+                    placeholder={CATEGORY_LABELS[category]}
+                    value={servicePerformed}
+                    onInput={(e) => setServicePerformed((e.target as HTMLInputElement).value)}
+                  />
+                </label>
+                <div class="admin-when">
+                  <label class="admin-field">
+                    <span class="muted small">Parts</span>
+                    <input
+                      type="text"
+                      value={parts}
+                      onInput={(e) => setParts((e.target as HTMLInputElement).value)}
+                    />
+                  </label>
+                  <label class="admin-field">
+                    <span class="muted small">Fluids</span>
+                    <input
+                      type="text"
+                      value={fluids}
+                      onInput={(e) => setFluids((e.target as HTMLInputElement).value)}
+                    />
+                  </label>
+                </div>
+                <label class="admin-field">
+                  <span class="muted small">Performed by</span>
+                  <select
+                    value={performedBy}
+                    onChange={(e) => setPerformedBy((e.target as HTMLSelectElement).value as PerformedBy)}
+                  >
+                    <option value="">— not set —</option>
+                    {PERFORMED_BY_KINDS.map((k) => (
+                      <option key={k} value={k}>
+                        {PERFORMED_BY_LABELS[k]}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            ) : (
+              <>
+                <label class="admin-field">
+                  <span class="muted small">Diagnosis</span>
+                  <input
+                    type="text"
+                    value={diagnosis}
+                    onInput={(e) => setDiagnosis((e.target as HTMLInputElement).value)}
+                  />
+                </label>
+                <label class="admin-field">
+                  <span class="muted small">Fix</span>
+                  <input type="text" value={fix} onInput={(e) => setFix((e.target as HTMLInputElement).value)} />
+                </label>
+                <div class="admin-when">
+                  <label class="admin-field">
+                    <span class="muted small">Parts</span>
+                    <input
+                      type="text"
+                      value={parts}
+                      onInput={(e) => setParts((e.target as HTMLInputElement).value)}
+                    />
+                  </label>
+                  <label class="admin-field">
+                    <span class="muted small">Labor</span>
+                    <input
+                      type="text"
+                      value={labor}
+                      onInput={(e) => setLabor((e.target as HTMLInputElement).value)}
+                    />
+                  </label>
+                </div>
+              </>
+            )}
+
+            <label class="admin-field">
+              <span class="muted small">Vendor / shop</span>
+              <input
+                type="text"
+                value={vendor}
+                onInput={(e) => setVendor((e.target as HTMLInputElement).value)}
+              />
+            </label>
+
+            <label class="admin-field">
+              <span class="muted small">Notes</span>
+              <input type="text" value={notes} onInput={(e) => setNotes((e.target as HTMLInputElement).value)} />
+            </label>
+          </div>
+        )}
       </div>
-
-      <label class="admin-field">
-        <span class="muted small">Notes</span>
-        <input type="text" value={notes} onInput={(e) => setNotes((e.target as HTMLInputElement).value)} />
-      </label>
 
       <label class="admin-field">
         <span class="muted small">Attach photos / receipts / PDFs</span>

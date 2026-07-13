@@ -659,6 +659,14 @@ input::placeholder {
   align-items: center;
   justify-content: center;
 }
+/* Visual icon stays a compact 22px circle so it doesn't swallow the thumbnail,
+ * but the tap target is expanded (invisibly) toward the grid gap/padding —
+ * 22px alone is well under the 44px touch-target minimum. */
+.doc-remove-btn::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
 .doc-remove-btn:hover {
   background: var(--danger);
 }
@@ -1364,7 +1372,7 @@ iframe.preview-media {
   cursor: pointer;
   font-size: 0.66rem;
   font-weight: 700;
-  padding: 4px 7px;
+  padding: 8px 10px;
   line-height: 1;
 }
 .doc-confirm-yes {

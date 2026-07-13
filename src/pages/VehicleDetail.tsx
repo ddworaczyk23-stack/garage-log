@@ -313,12 +313,13 @@ export function VehicleDetail({ id }: Props) {
             vehicleId={id}
             kind="maintenance"
             initialCategory={serviceCategory}
+            defaultOdometer={mileage?.miles}
             onDone={closeForm}
             onCancel={closeForm}
           />
         )}
         {activeForm === 'repair' && (
-          <EventForm vehicleId={id} kind="repair" onDone={closeForm} onCancel={closeForm} />
+          <EventForm vehicleId={id} kind="repair" defaultOdometer={mileage?.miles} onDone={closeForm} onCancel={closeForm} />
         )}
         {activeForm === 'odometer' && (
           <OdometerForm vehicleId={id} onDone={closeForm} onCancel={closeForm} />
