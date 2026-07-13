@@ -6,6 +6,7 @@ import { resolveLastDone, resolveInterval, isNotApplicable } from '../domain/rem
 import { formatInterval, parseNumberInput } from '../domain/format'
 import { OVERRIDE_LABELS } from '../types'
 import { Loading } from '../components/ui'
+import { Reveal } from '../components/motion/Reveal'
 import type { ReminderRule, OverrideKind } from '../types'
 
 const OVERRIDE_KINDS = Object.keys(OVERRIDE_LABELS) as OverrideKind[]
@@ -42,14 +43,14 @@ export function TemplateAdmin() {
             (a, b) => (resolveInterval(a).miles ?? Infinity) - (resolveInterval(b).miles ?? Infinity),
           )
         return (
-          <div key={v.id}>
+          <Reveal key={v.id}>
             <h3 class="admin-vehicle">
               {v.name} · {vr.length} items
             </h3>
             {vr.map((r) => (
               <RuleRow key={r.id} rule={r} />
             ))}
-          </div>
+          </Reveal>
         )
       })}
     </section>

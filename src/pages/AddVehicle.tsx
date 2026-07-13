@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { addVehicle, hydrateVehicleExternalData } from '../db/vehicleOnboarding'
 import { decodeVin } from '../services/vinDecode'
 import { canonicalVehicleId } from '../domain/vehicleIdentity'
+import { Reveal } from '../components/motion/Reveal'
 import type { VehicleIdentity } from '../types'
 
 type Mode = 'vin' | 'manual'
@@ -182,6 +183,7 @@ export function AddVehicle() {
       )}
 
       {identity && (
+        <Reveal>
         <form class="card admin-form" onSubmit={submit}>
           <p class="muted small">
             {identity.year} {identity.make} {identity.model} {identity.trim}
@@ -216,6 +218,7 @@ export function AddVehicle() {
             </button>
           </div>
         </form>
+        </Reveal>
       )}
     </section>
   )

@@ -12,6 +12,7 @@ import {
 } from '../domain/documents'
 import { DocumentPreviewModal } from '../components/DocumentPreviewModal'
 import { EmptyState, Loading } from '../components/ui'
+import { Reveal } from '../components/motion/Reveal'
 import { vehicleLabel } from '../domain/vehicle'
 
 interface Props {
@@ -137,11 +138,13 @@ export function Documents({ initialVehicleId }: Props) {
           }
         />
       ) : (
-        <ul class="doc-result-list">
-          {results.map((e) => (
-            <DocumentResultRow key={e.doc.id} entry={e} onOpen={() => setOpenId(e.doc.id)} />
-          ))}
-        </ul>
+        <Reveal>
+          <ul class="doc-result-list">
+            {results.map((e) => (
+              <DocumentResultRow key={e.doc.id} entry={e} onOpen={() => setOpenId(e.doc.id)} />
+            ))}
+          </ul>
+        </Reveal>
       )}
 
       {openEntry && <DocumentPreviewModal entry={openEntry} onClose={() => setOpenId(null)} />}

@@ -11,6 +11,8 @@ import {
 import { formatMiles, formatShortDate } from '../domain/format'
 import { vehicleLabel } from '../domain/vehicle'
 import { Loading } from '../components/ui'
+import { Reveal } from '../components/motion/Reveal'
+import { Collapsible } from '../components/motion/Collapsible'
 import {
   CATEGORY_LABELS,
   MAINTENANCE_CATEGORIES,
@@ -35,7 +37,6 @@ export function ImportHistory({ vehicleId }: Props) {
   const [text, setText] = useState('')
   const [rows, setRows] = useState<ReviewRow[] | null>(null)
   const [importing, setImporting] = useState(false)
-  const [showGuide, setShowGuide] = useState(false)
   const [done, setDone] = useState<{ count: number; categories: string[] } | null>(null)
 
   if (vehicle === undefined) return <Loading />
@@ -93,81 +94,70 @@ export function ImportHistory({ vehicleId }: Props) {
 
       {!done && (
         <section class="card">
-          <button
-            type="button"
-            class="guide-toggle"
-            aria-expanded={showGuide}
-            onClick={() => setShowGuide((s) => !s)}
-          >
-            <span class="guide-chevron" aria-hidden="true">
-              {showGuide ? '▾' : '▸'}
-            </span>
-            How to get your history from Carfax
-          </button>
-          {showGuide && (
-            <div class="guide-body">
-              <p class="muted small">
-                Paste the whole thing — registration, title, and inspection lines are
-                ignored automatically, and you review everything before it's saved.
-              </p>
+          <Collapsible title="How to get your history from Carfax">
+            <p class="muted small">
+              Paste the whole thing — registration, title, and inspection lines are
+              ignored automatically, and you review everything before it's saved.
+            </p>
 
-              <h4 class="guide-h">On a computer (easiest)</h4>
-              <ol class="guide-steps">
-                <li>
-                  Sign in at <code>carfax.com</code> and open{' '}
-                  <strong>My Garage → your vehicle → Service History</strong>.
-                </li>
-                <li>
-                  Select the whole list — drag from the first record to the last, or press{' '}
-                  <strong>Ctrl/⌘ + A</strong> — and copy it (<strong>Ctrl/⌘ + C</strong>).
-                </li>
-                <li>
-                  Come back here, paste into the box below, and press <strong>Preview</strong>.
-                </li>
-              </ol>
+            <h4 class="guide-h">On a computer (easiest)</h4>
+            <ol class="guide-steps">
+              <li>
+                Sign in at <code>carfax.com</code> and open{' '}
+                <strong>My Garage → your vehicle → Service History</strong>.
+              </li>
+              <li>
+                Select the whole list — drag from the first record to the last, or press{' '}
+                <strong>Ctrl/⌘ + A</strong> — and copy it (<strong>Ctrl/⌘ + C</strong>).
+              </li>
+              <li>
+                Come back here, paste into the box below, and press <strong>Preview</strong>.
+              </li>
+            </ol>
 
-              <h4 class="guide-h">On your phone</h4>
-              <ol class="guide-steps">
-                <li>
-                  Open the <strong>Carfax Car Care</strong> app (or <code>carfax.com</code> in
-                  your browser) → your vehicle → <strong>Service History</strong>.
-                </li>
-                <li>
-                  Press and hold a record, choose <strong>Select All</strong>, then{' '}
-                  <strong>Copy</strong>.
-                </li>
-                <li>
-                  Open Garage Log, tap the box below, <strong>Paste</strong>, then{' '}
-                  <strong>Preview</strong>.
-                </li>
-              </ol>
+            <h4 class="guide-h">On your phone</h4>
+            <ol class="guide-steps">
+              <li>
+                Open the <strong>Carfax Car Care</strong> app (or <code>carfax.com</code> in
+                your browser) → your vehicle → <strong>Service History</strong>.
+              </li>
+              <li>
+                Press and hold a record, choose <strong>Select All</strong>, then{' '}
+                <strong>Copy</strong>.
+              </li>
+              <li>
+                Open Garage Log, tap the box below, <strong>Paste</strong>, then{' '}
+                <strong>Preview</strong>.
+              </li>
+            </ol>
 
-              <p class="muted small">
-                Fewer taps: import on a computer, then use <strong>Backup → Export</strong>{' '}
-                there and <strong>Restore</strong> on your phone to copy everything over.
-              </p>
-            </div>
-          )}
+            <p class="muted small">
+              Fewer taps: import on a computer, then use <strong>Backup → Export</strong>{' '}
+              there and <strong>Restore</strong> on your phone to copy everything over.
+            </p>
+          </Collapsible>
         </section>
       )}
 
       {done ? (
-        <section class="card">
-          <p class="notice notice-success" role="status">
-            Imported {done.count} service{done.count === 1 ? '' : 's'}.
-          </p>
-          {done.categories.length > 0 && (
-            <p class="muted small">Baselines set for: {done.categories.join(', ')}.</p>
-          )}
-          <div class="form-actions">
-            <a class="btn" href={`#/vehicle/${vehicleId}`}>
-              Back to {vehicleLabel(vehicle)}
-            </a>
-            <button class="btn-link" type="button" onClick={() => setDone(null)}>
-              Import more
-            </button>
-          </div>
-        </section>
+        <Reveal>
+          <section class="card">
+            <p class="notice notice-success" role="status">
+              Imported {done.count} service{done.count === 1 ? '' : 's'}.
+            </p>
+            {done.categories.length > 0 && (
+              <p class="muted small">Baselines set for: {done.categories.join(', ')}.</p>
+            )}
+            <div class="form-actions">
+              <a class="btn" href={`#/vehicle/${vehicleId}`}>
+                Back to {vehicleLabel(vehicle)}
+              </a>
+              <button class="btn-link" type="button" onClick={() => setDone(null)}>
+                Import more
+              </button>
+            </div>
+          </section>
+        </Reveal>
       ) : (
         <>
           <section class="card">
@@ -190,6 +180,7 @@ export function ImportHistory({ vehicleId }: Props) {
           </section>
 
           {rows && (
+            <Reveal>
             <section class="card">
               <h3 class="card-title">
                 Review ({included.length} of {rows.length} will import)
@@ -260,6 +251,7 @@ export function ImportHistory({ vehicleId }: Props) {
                 </>
               )}
             </section>
+            </Reveal>
           )}
         </>
       )}

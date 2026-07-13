@@ -9,6 +9,7 @@ import {
 } from '../db/backup'
 import { backupFilename, summarizeBackup, validateBackup, type BackupFile } from '../domain/backup'
 import { ConfirmButton } from '../components/ui'
+import { Reveal } from '../components/motion/Reveal'
 
 type Notice = { kind: 'success' | 'error'; text: string } | null
 
@@ -94,77 +95,81 @@ export function Backup() {
         browser data or switching phones — then restore it on the new device.
       </p>
 
-      <section class="card">
-        <h3 class="card-title">Export</h3>
-        <p class="muted small">
-          Downloads one file with every vehicle, service &amp; repair, odometer
-          reading, reminder override, and document (photos/PDFs included).
-        </p>
-        <button class="btn full" onClick={onExport} disabled={exporting}>
-          {exporting ? 'Preparing…' : 'Download backup'}
-        </button>
-        {exportNotice && (
-          <p
-            class={`notice notice-${exportNotice.kind}`}
-            role={exportNotice.kind === 'error' ? 'alert' : 'status'}
-          >
-            {exportNotice.text}
+      <Reveal>
+        <section class="card">
+          <h3 class="card-title">Export</h3>
+          <p class="muted small">
+            Downloads one file with every vehicle, service &amp; repair, odometer
+            reading, reminder override, and document (photos/PDFs included).
           </p>
-        )}
-      </section>
-
-      <section class="card">
-        <h3 class="card-title">Restore</h3>
-        <p class="muted small">
-          Restoring <strong>replaces all data on this device</strong> with the
-          backup file. Documents and their links are restored too.
-        </p>
-
-        <label class="admin-field">
-          <span class="muted small">Choose a backup file (.json)</span>
-          <input type="file" accept="application/json,.json" onChange={onFile} disabled={restoring} />
-        </label>
-
-        {restoreError && <p class="notice notice-error" role="alert">{restoreError}</p>}
-
-        {pending && (
-          <div class="restore-preview">
-            <p class="muted small">
-              Backup from <strong>{new Date(pending.exportedAt).toLocaleString()}</strong>{' '}
-              (format v{pending.version}). Contents:
+          <button class="btn full" onClick={onExport} disabled={exporting}>
+            {exporting ? 'Preparing…' : 'Download backup'}
+          </button>
+          {exportNotice && (
+            <p
+              class={`notice notice-${exportNotice.kind}`}
+              role={exportNotice.kind === 'error' ? 'alert' : 'status'}
+            >
+              {exportNotice.text}
             </p>
-            <ul class="restore-summary">
-              {summarizeBackup(pending).map((row) => (
-                <li key={row.label}>
-                  <span class="muted small">{row.label}</span>
-                  <span>{row.count}</span>
-                </li>
-              ))}
-            </ul>
-            <div class="form-actions">
-              <ConfirmButton
-                class="btn btn-danger"
-                label="Replace all data & restore"
-                confirmLabel={restoring ? 'Restoring…' : 'Yes, replace everything'}
-                busyLabel="Restoring…"
-                onConfirm={onConfirmRestore}
-              />
-              <button class="btn-link" type="button" onClick={() => setPending(null)} disabled={restoring}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
+          )}
+        </section>
+      </Reveal>
 
-        {restoreNotice && (
-          <p
-            class={`notice notice-${restoreNotice.kind}`}
-            role={restoreNotice.kind === 'error' ? 'alert' : 'status'}
-          >
-            {restoreNotice.text}
+      <Reveal>
+        <section class="card">
+          <h3 class="card-title">Restore</h3>
+          <p class="muted small">
+            Restoring <strong>replaces all data on this device</strong> with the
+            backup file. Documents and their links are restored too.
           </p>
-        )}
-      </section>
+
+          <label class="admin-field">
+            <span class="muted small">Choose a backup file (.json)</span>
+            <input type="file" accept="application/json,.json" onChange={onFile} disabled={restoring} />
+          </label>
+
+          {restoreError && <p class="notice notice-error" role="alert">{restoreError}</p>}
+
+          {pending && (
+            <div class="restore-preview">
+              <p class="muted small">
+                Backup from <strong>{new Date(pending.exportedAt).toLocaleString()}</strong>{' '}
+                (format v{pending.version}). Contents:
+              </p>
+              <ul class="restore-summary">
+                {summarizeBackup(pending).map((row) => (
+                  <li key={row.label}>
+                    <span class="muted small">{row.label}</span>
+                    <span>{row.count}</span>
+                  </li>
+                ))}
+              </ul>
+              <div class="form-actions">
+                <ConfirmButton
+                  class="btn btn-danger"
+                  label="Replace all data & restore"
+                  confirmLabel={restoring ? 'Restoring…' : 'Yes, replace everything'}
+                  busyLabel="Restoring…"
+                  onConfirm={onConfirmRestore}
+                />
+                <button class="btn-link" type="button" onClick={() => setPending(null)} disabled={restoring}>
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
+          {restoreNotice && (
+            <p
+              class={`notice notice-${restoreNotice.kind}`}
+              role={restoreNotice.kind === 'error' ? 'alert' : 'status'}
+            >
+              {restoreNotice.text}
+            </p>
+          )}
+        </section>
+      </Reveal>
 
       <p class="page-footer-link">
         <a class="btn-link" href="#/debug">
