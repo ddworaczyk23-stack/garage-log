@@ -630,6 +630,11 @@ input::placeholder {
   color: var(--accent);
   white-space: nowrap;
 }
+/* Source tag on a service-derived row in the unified mileage history. */
+.mileage-src {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
 .doc-remove-list {
   list-style: none;
   margin: 0;

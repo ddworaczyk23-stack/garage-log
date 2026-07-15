@@ -14,7 +14,7 @@ import { STATUS_LABELS } from '../types'
 import { EventForm } from '../components/EventForm'
 import { OdometerForm } from '../components/OdometerForm'
 import { EventListItem } from '../components/EventListItem'
-import { OdometerListItem } from '../components/OdometerListItem'
+import { MileageHistory } from '../components/MileageHistory'
 import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
@@ -597,21 +597,7 @@ export function VehicleDetail({ id }: Props) {
       </Reveal>
 
       <Reveal>
-        <section class="card">
-          <Collapsible title="Odometer log" count={`${odometerReadings?.length ?? 0} ${odometerReadings?.length === 1 ? 'reading' : 'readings'}`}>
-            {!odometerReadings ? (
-              <Loading />
-            ) : odometerReadings.length === 0 ? (
-              <p class="muted small">No readings logged yet — tap "+ Odometer" above.</p>
-            ) : (
-              <ul class="list">
-                {odometerReadings.map((r) => (
-                  <OdometerListItem key={r.id} vehicleId={id} reading={r} />
-                ))}
-              </ul>
-            )}
-          </Collapsible>
-        </section>
+        <MileageHistory vehicleId={id} />
       </Reveal>
 
       <Reveal>
