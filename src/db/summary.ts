@@ -1,6 +1,16 @@
 import { db } from './db'
-import { computeVehicleReminders, type ComputedReminder } from '../domain/reminderEngine'
+import {
+  computeVehicleReminders,
+  DEFAULT_ANNUAL_MILEAGE,
+  type ComputedReminder,
+} from '../domain/reminderEngine'
 import { getCurrentMileageEstimate } from './events'
+import {
+  estimateAnnualMileage,
+  resolveAnnualMileage,
+  type MileagePoint,
+  type ResolvedAnnualMileage,
+} from '../domain/mileage'
 import {
   countByStatus,
   compareVehicleUrgency,
@@ -19,16 +29,57 @@ import type { MaintenanceEvent, Vehicle } from '../types'
  * that needs it (Vehicle Detail, the reminders debug panel, list/dashboard
  * status badges) so there's one query shape instead of several copies. */
 export async function getVehicleReminders(vehicleId: string): Promise<ComputedReminder[]> {
-  const [rules, events, mileage] = await Promise.all([
+  const [rules, events, readings, mileage, vehicle] = await Promise.all([
     db.reminderRules.where('vehicleId').equals(vehicleId).toArray(),
     db.events.where('vehicleId').equals(vehicleId).toArray(),
+    db.odometerReadings.where('vehicleId').equals(vehicleId).toArray(),
     getCurrentMileageEstimate(vehicleId),
+    db.vehicles.get(vehicleId),
   ])
+  const annual = resolveAnnualMileage(
+    vehicle?.annualMileageOverride ?? null,
+    estimateAnnualMileage(mileagePoints(events, readings))?.annual ?? null,
+    DEFAULT_ANNUAL_MILEAGE,
+  )
   return computeVehicleReminders(rules, events, {
     currentMiles: mileage?.miles ?? null,
     odometerAsOfDate: mileage?.asOfDate ?? null,
     asOf: new Date(),
+    annualMileage: annual.value,
   })
+}
+
+/** All odometer observations for a vehicle (readings + service events), as the
+ * point set the annual-mileage estimator consumes. */
+function mileagePoints(
+  events: { date: string; odometerMiles: number }[],
+  readings: { date: string; miles: number }[],
+): MileagePoint[] {
+  return [
+    ...readings.map((r) => ({ date: r.date, miles: r.miles })),
+    ...events.map((e) => ({ date: e.date, miles: e.odometerMiles })),
+  ]
+}
+
+export interface VehicleAnnualMileage extends ResolvedAnnualMileage {
+  /** History-derived estimate, or null when there isn't enough history yet. */
+  calculated: number | null
+  /** The user's manual override, or null when unset. */
+  override: number | null
+}
+
+/** The effective average miles/year for a vehicle plus its inputs, for the
+ * "Average mileage" control on Vehicle Detail (which value is in use and why). */
+export async function getVehicleAnnualMileage(vehicleId: string): Promise<VehicleAnnualMileage> {
+  const [events, readings, vehicle] = await Promise.all([
+    db.events.where('vehicleId').equals(vehicleId).toArray(),
+    db.odometerReadings.where('vehicleId').equals(vehicleId).toArray(),
+    db.vehicles.get(vehicleId),
+  ])
+  const calculated = estimateAnnualMileage(mileagePoints(events, readings))?.annual ?? null
+  const override = vehicle?.annualMileageOverride ?? null
+  const resolved = resolveAnnualMileage(override, calculated, DEFAULT_ANNUAL_MILEAGE)
+  return { ...resolved, calculated, override }
 }
 
 /** Total logged cost for a vehicle within a calendar year (default: this year). */

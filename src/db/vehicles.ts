@@ -10,6 +10,15 @@ export async function setVehicleNickname(id: string, nickname: string): Promise<
   await db.vehicles.update(id, { nickname: nickname.trim() || undefined })
 }
 
+// Set (or clear) a vehicle's manual average miles/year. Pass null to clear and
+// fall back to the history-calculated average. A non-positive value is treated
+// as "clear". Flows through liveQuery so projected due dates recompute.
+export async function setAnnualMileageOverride(id: string, value: number | null): Promise<void> {
+  await db.vehicles.update(id, {
+    annualMileageOverride: value != null && value > 0 ? value : undefined,
+  })
+}
+
 // Editable subset of a vehicle's specifications. Deliberately excludes id,
 // createdAt, nickname (its own editor), and templateKey-linked identity used by
 // the reminder rules — rules key off vehicleId + a fixed templateKey, so editing

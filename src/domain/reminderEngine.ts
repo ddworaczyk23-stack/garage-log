@@ -5,6 +5,7 @@ import {
   isNotApplicable,
   type ResolvedInterval,
 } from './reminderStatus'
+import { projectDueDate } from './mileage'
 import { localDateISO } from './format'
 
 // ---------------------------------------------------------------------------
@@ -49,6 +50,9 @@ export interface ReminderInputs {
   odometerAsOfDate: string | null
   /** Evaluation date — pass a fixed Date in tests for determinism. */
   asOf: Date
+  /** Effective average miles/year for date projection; defaults to
+   * DEFAULT_ANNUAL_MILEAGE when omitted. Does NOT affect due-status. */
+  annualMileage?: number
 }
 
 export interface ComputedReminder {
@@ -62,6 +66,10 @@ export interface ComputedReminder {
   daysRemaining: number | null
   /** True when the odometer estimate is missing or older than STALE_ODOMETER_DAYS. */
   odometerStale: boolean
+  /** Estimated calendar date a mileage-based item comes due, projected from the
+   * effective average miles/year. Informational (does not drive status); null
+   * for date-based, condition-based, already-due, or unprojectable items. */
+  projectedDueDate?: string | null
   reason: string
 }
 
@@ -244,6 +252,11 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
       milesRemaining: projMilesRemaining,
       daysRemaining: null,
       odometerStale,
+      projectedDueDate: projectDueDate(
+        projMilesRemaining,
+        inputs.annualMileage ?? DEFAULT_ANNUAL_MILEAGE,
+        inputs.asOf,
+      ),
       reason:
         projectedDueMiles != null
           ? `No history yet — projected next at ~${projectedDueMiles.toLocaleString()} mi from the factory schedule. Log your last service to personalize.`
@@ -315,6 +328,11 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
     milesRemaining,
     daysRemaining,
     odometerStale,
+    projectedDueDate: projectDueDate(
+      milesRemaining,
+      inputs.annualMileage ?? DEFAULT_ANNUAL_MILEAGE,
+      inputs.asOf,
+    ),
     reason: reasonParts.join(' · ') || 'On track.',
   }
 }

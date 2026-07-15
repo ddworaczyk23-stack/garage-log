@@ -19,6 +19,7 @@ import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
+import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
 import { Loading, EmptyState, ConfirmButton } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
@@ -245,6 +246,12 @@ export function VehicleDetail({ id }: Props) {
               {r.reason}
               {r.odometerStale ? ' ⚠️' : ''}
             </span>
+            {r.projectedDueDate && (
+              <>
+                <span class="sep">·</span>
+                <span class="vd-eta">est. ~{formatShortDate(r.projectedDueDate)}</span>
+              </>
+            )}
           </div>
         </div>
         <div class="vd-row-end">
@@ -439,8 +446,10 @@ export function VehicleDetail({ id }: Props) {
         </div>
         <p class="muted small">
           Personalized from mechanic-consensus intervals + this vehicle's logged history. Ranked most
-          urgent first.
+          urgent first. Dates below are estimated from your average mileage.
         </p>
+
+        <AnnualMileageEditor vehicleId={id} />
 
         {!reminders ? (
           <Loading />

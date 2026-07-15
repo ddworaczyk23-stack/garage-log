@@ -605,6 +605,31 @@ input::placeholder {
   gap: 4px;
   margin-top: 2px;
 }
+
+/* "Average mileage" control on the schedule card + projected-date meta. */
+.annual-mileage {
+  border: 0.5px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--bg-inset);
+  padding: 10px 12px;
+  margin: 4px 0 12px;
+}
+.annual-mileage-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.annual-mileage-value {
+  font-weight: 600;
+}
+.annual-mileage .admin-form {
+  margin-top: 8px;
+}
+.vd-eta {
+  color: var(--accent);
+  white-space: nowrap;
+}
 .doc-remove-list {
   list-style: none;
   margin: 0;

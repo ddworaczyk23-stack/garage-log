@@ -20,6 +20,11 @@ export interface Vehicle {
   // cached and reused instead of re-fetched per vehicle. See
   // domain/vehicleIdentity.ts. Unset for the two hand-seeded vehicles.
   canonicalVehicleId?: string
+  // Optional user-set average miles/year. When present it overrides the value
+  // calculated from logged history for due-date projections (see
+  // domain/mileage.ts). Non-indexed/optional — no schema bump. Null/undefined =
+  // use the calculated average (or a default when there isn't enough history).
+  annualMileageOverride?: number
   photoId?: string // -> VehicleDocument.id (set in a later milestone)
   createdAt: string // ISO timestamp
 }
