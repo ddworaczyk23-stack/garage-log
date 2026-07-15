@@ -37,7 +37,7 @@ export function ImportHistory({ vehicleId }: Props) {
   const [text, setText] = useState('')
   const [rows, setRows] = useState<ReviewRow[] | null>(null)
   const [importing, setImporting] = useState(false)
-  const [done, setDone] = useState<{ count: number; categories: string[] } | null>(null)
+  const [done, setDone] = useState<{ count: number; rows: number; categories: string[] } | null>(null)
 
   if (vehicle === undefined) return <Loading />
   if (vehicle === null) {
@@ -76,7 +76,7 @@ export function ImportHistory({ vehicleId }: Props) {
     }))
     const count = await importServiceRecords(vehicleId, records)
     setImporting(false)
-    setDone({ count, categories: baselineCategories(included) })
+    setDone({ count, rows: records.length, categories: baselineCategories(included) })
     setRows(null)
     setText('')
   }
@@ -143,8 +143,15 @@ export function ImportHistory({ vehicleId }: Props) {
         <Reveal>
           <section class="card">
             <p class="notice notice-success" role="status">
-              Imported {done.count} service{done.count === 1 ? '' : 's'}.
+              Imported {done.count} visit{done.count === 1 ? '' : 's'}
+              {done.rows > done.count ? ` from ${done.rows} service records` : ''}.
             </p>
+            {done.rows > done.count && (
+              <p class="muted small">
+                Services done on the same day at the same mileage were combined into a single
+                entry tagged with everything performed.
+              </p>
+            )}
             {done.categories.length > 0 && (
               <p class="muted small">Baselines set for: {done.categories.join(', ')}.</p>
             )}
@@ -193,7 +200,8 @@ export function ImportHistory({ vehicleId }: Props) {
                 <>
                   <p class="muted small">
                     Uncheck anything you don't want, or fix a category. Rows without a date,
-                    mileage, or category can't be imported.
+                    mileage, or category can't be imported. Services from the same day and
+                    mileage are combined into one entry tagged with everything performed.
                   </p>
                   <ul class="import-list">
                     {rows.map((r, i) => {

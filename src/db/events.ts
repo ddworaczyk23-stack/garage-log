@@ -1,12 +1,13 @@
 import { db } from './db'
 import { attachEventDocument } from './documents'
 import { applyEventToRule, matchesRule } from '../domain/reminderEngine'
-import type {
-  MaintenanceCategory,
-  MaintenanceEvent,
-  OdometerReading,
-  OverrideKind,
-  ReminderRule,
+import {
+  effectiveCategories,
+  type MaintenanceCategory,
+  type MaintenanceEvent,
+  type OdometerReading,
+  type OverrideKind,
+  type ReminderRule,
 } from '../types'
 
 // Thin imperative wrapper around the pure reminder-engine helpers: this is
@@ -22,6 +23,7 @@ export interface EventInput {
   date: string
   odometerMiles: number
   category: MaintenanceCategory
+  additionalCategories?: MaintenanceCategory[]
   title: string
   cost?: number
   vendor?: string
@@ -69,6 +71,7 @@ export async function recordCompletedEvent(
     date: input.date,
     odometerMiles: input.odometerMiles,
     category: input.category,
+    additionalCategories: input.additionalCategories?.length ? input.additionalCategories : undefined,
     title: input.title,
     cost: input.cost ?? 0,
     vendor: input.vendor,
@@ -91,10 +94,15 @@ export async function recordCompletedEvent(
     await db.events.update(event.id, { documentIds: ids })
   }
 
-  const rule = await db.reminderRules.get(`${input.vehicleId}:${input.category}`)
-  if (rule) {
+  // Sync every rule this visit touched (primary + additional categories). The
+  // optional rule override is a property of the PRIMARY item the user is
+  // logging, so it's applied only to the primary category's rule; the extras
+  // just adopt the last-done if this event is newer.
+  for (const category of effectiveCategories(event)) {
+    const rule = await db.reminderRules.get(`${input.vehicleId}:${category}`)
+    if (!rule) continue
     const patch = applyEventToRule(rule, event)
-    await applyRulePatch(rule, patch, ruleOverride)
+    await applyRulePatch(rule, patch, category === input.category ? ruleOverride : undefined)
   }
 
   return event.id
@@ -125,9 +133,21 @@ export async function updateEvent(
 
   await db.events.update(id, stripUndefined({ ...patch, documentIds: [...keptDocIds, ...newDocIds] }))
 
-  await syncRuleFromHistory(existing.vehicleId, existing.category)
-  if (patch.category && patch.category !== existing.category) {
-    await syncRuleFromHistory(existing.vehicleId, patch.category)
+  // An edit can change which categories the event covers (primary and/or the
+  // additional set), so resync every rule in the OLD set ∪ NEW set — any of
+  // them may have gained or lost this as their latest matching event.
+  const affected = new Set<MaintenanceCategory>([
+    ...effectiveCategories(existing),
+    ...effectiveCategories({
+      category: patch.category ?? existing.category,
+      additionalCategories:
+        patch.additionalCategories !== undefined
+          ? patch.additionalCategories
+          : existing.additionalCategories,
+    }),
+  ])
+  for (const category of affected) {
+    await syncRuleFromHistory(existing.vehicleId, category)
   }
 
   if (ruleOverride) {
@@ -146,7 +166,9 @@ export async function deleteEvent(id: string): Promise<void> {
 
   if (event.documentIds.length) await db.documents.bulkDelete(event.documentIds)
   await db.events.delete(id)
-  await syncRuleFromHistory(event.vehicleId, event.category)
+  for (const category of effectiveCategories(event)) {
+    await syncRuleFromHistory(event.vehicleId, category)
+  }
 }
 
 /** Recompute a rule's cached lastDoneDate/lastDoneMiles from ALL of a vehicle's

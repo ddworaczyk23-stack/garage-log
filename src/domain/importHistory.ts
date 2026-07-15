@@ -22,10 +22,19 @@ export interface ParsedServiceRow {
 const CATEGORY_RULES: { re: RegExp; category: MaintenanceCategory }[] = [
   { re: /cabin\s*air|cabin\s*filter|in-?cabin|pollen filter/i, category: 'cabin-air-filter' },
   { re: /air\s*filter|engine air/i, category: 'engine-air-filter' },
+  { re: /fuel filter/i, category: 'fuel-filter' },
   { re: /oil (and|&) filter|oil change|changed oil|lube.*oil|oil.*chang/i, category: 'oil-change' },
+  // Tire work — specific tire actions before the generic rotation/alignment
+  // fallbacks so "new tires"/"balance" aren't swallowed as a rotation.
+  { re: /new tires?|replace.*tires?|tires?.*replace|mount(ed)?.*tires?|installed tires?|tire replacement/i, category: 'tire-replacement' },
   { re: /tire.*rotat|rotat.*tire|rotate/i, category: 'tire-rotation' },
+  { re: /balance.*tires?|tires?.*balance|wheel balance|road force/i, category: 'tire-balancing' },
+  { re: /tire.*(inspect|pressure|tread|condition)|inspect.*tires?/i, category: 'tire-inspection' },
   { re: /wheel align|alignment/i, category: 'wheel-alignment' },
   { re: /spark plug/i, category: 'spark-plugs' },
+  { re: /timing belt/i, category: 'timing-belt' },
+  { re: /serpentine|drive belt|accessory belt|v-?belt/i, category: 'serpentine-belt' },
+  { re: /power steering/i, category: 'power-steering-fluid' },
   { re: /coolant|antifreeze|radiator flush/i, category: 'coolant' },
   { re: /brake fluid/i, category: 'brake-fluid' },
   { re: /brake|brakes|pad(s)?\b|rotor/i, category: 'brake-inspection' },
@@ -49,6 +58,116 @@ export function mapServiceToCategory(service: string): MaintenanceCategory | nul
   return null
 }
 
+/** ALL categories a description matches, in rule order, deduped. A single
+ * free-text line ("oil change, multi-point inspection, battery test") can name
+ * several services at once — this captures them all so they can become one
+ * multi-category event instead of only the first match. */
+export function mapServiceToCategories(service: string): MaintenanceCategory[] {
+  const out: MaintenanceCategory[] = []
+  for (const { re, category } of CATEGORY_RULES) {
+    if (re.test(service) && !out.includes(category)) out.push(category)
+  }
+  return out
+}
+
+// Priority for choosing a grouped visit's PRIMARY (headline) category: real
+// services rank above inspections/checks/filters, so a visit that did an oil
+// change plus a multi-point inspection is titled "Engine oil & filter", not
+// "Multi-point inspection". Any category not listed sorts last.
+const PRIMARY_PRIORITY: MaintenanceCategory[] = [
+  'oil-change',
+  'transmission-fluid',
+  'cvt-fluid',
+  'timing-belt',
+  'spark-plugs',
+  'coolant',
+  'brake-fluid',
+  'tire-replacement',
+  'serpentine-belt',
+  'fuel-filter',
+  'differential-fluid',
+  'transfer-case-fluid',
+  'power-steering-fluid',
+  'tire-rotation',
+  'tire-balancing',
+  'wheel-alignment',
+  'brake-inspection',
+  'battery-check',
+  'engine-air-filter',
+  'cabin-air-filter',
+  'wiper-blades',
+  'tire-inspection',
+  'multi-point-inspection',
+  'other',
+]
+
+/** Pick the headline category from a set (highest PRIMARY_PRIORITY rank). */
+export function primaryCategoryOf(categories: MaintenanceCategory[]): MaintenanceCategory {
+  return [...categories].sort((a, b) => rankOf(a) - rankOf(b))[0]
+}
+
+function rankOf(c: MaintenanceCategory): number {
+  const i = PRIMARY_PRIORITY.indexOf(c)
+  return i === -1 ? PRIMARY_PRIORITY.length : i
+}
+
+/** One shop visit after grouping: a primary category + the extras it also
+ * covered, ready to become a single multi-category MaintenanceEvent. */
+export interface ImportVisit {
+  date: string
+  miles: number
+  category: MaintenanceCategory
+  additionalCategories: MaintenanceCategory[]
+  service: string
+}
+
+export interface VisitRow {
+  date: string
+  miles: number
+  categories: MaintenanceCategory[]
+  service: string
+}
+
+/**
+ * Group rows that share the same date AND mileage into a single visit (one real
+ * shop stop = one entry), unioning their categories. The most significant
+ * category becomes the primary; the rest become additionalCategories. This is
+ * why a Valvoline stop that lists oil change + multi-point + battery on separate
+ * Carfax lines imports as ONE event tagged with all three. Rows keep their input
+ * order; ties within a visit preserve first-seen order.
+ */
+export function groupIntoVisits(rows: VisitRow[]): ImportVisit[] {
+  const order: string[] = []
+  const byVisit = new Map<
+    string,
+    { date: string; miles: number; cats: MaintenanceCategory[]; services: string[] }
+  >()
+
+  for (const row of rows) {
+    const key = `${row.date}|${row.miles}`
+    let visit = byVisit.get(key)
+    if (!visit) {
+      visit = { date: row.date, miles: row.miles, cats: [], services: [] }
+      byVisit.set(key, visit)
+      order.push(key)
+    }
+    for (const c of row.categories) if (!visit.cats.includes(c)) visit.cats.push(c)
+    if (row.service && !visit.services.includes(row.service)) visit.services.push(row.service)
+  }
+
+  return order.map((key) => {
+    const v = byVisit.get(key)!
+    const primary = primaryCategoryOf(v.cats)
+    return {
+      date: v.date,
+      miles: v.miles,
+      category: primary,
+      additionalCategories: v.cats.filter((c) => c !== primary),
+      service: v.services.join(' · '),
+    }
+  })
+}
+
 const DATE_MDY = /\b(\d{1,2})\/(\d{1,2})\/(\d{2,4})\b/
 const DATE_ISO = /\b(\d{4})-(\d{2})-(\d{2})\b/
 
@@ -66,10 +185,13 @@ function toISO(line: string): { iso: string; matched: string } | null {
   return null
 }
 
-// A comma-grouped number (95,170) or a bare 4–7 digit run, optionally followed
-// by "mi". With an explicit "mi" suffix even short numbers count.
+// A comma-grouped number (95,170) or a bare 3–7 digit run, optionally followed
+// by "mi". With an explicit "mi" suffix even short numbers count. Bare numbers
+// go down to 3 digits so a legitimate low odometer (e.g. a break-in service at
+// 850 mi) isn't dropped; 1–2 digit tokens stay excluded since those are almost
+// always quantities ("4 tires") rather than an odometer.
 const MILES_WITH_UNIT = /(\d{1,3}(?:,\d{3})+|\d+)\s*mi\b/i
-const MILES_BARE = /\b(\d{1,3}(?:,\d{3})+|\d{4,7})\b/
+const MILES_BARE = /\b(\d{1,3}(?:,\d{3})+|\d{3,7})\b/
 
 function extractMiles(text: string): { miles: number; matched: string } | null {
   const withUnit = text.match(MILES_WITH_UNIT)

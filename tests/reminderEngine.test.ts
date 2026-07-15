@@ -231,12 +231,62 @@ describe('computeReminder — stale odometer', () => {
   })
 })
 
+describe('computeReminder — never-serviced items are projected, never falsely due/overdue', () => {
+  const mileageOnly = (miles: number) => makeRule({ customIntervalMiles: miles, customIntervalMonths: null })
+
+  it('does NOT show a far-future item as due now (70k current, 105k interval)', () => {
+    const r = computeReminder(mileageOnly(105000), inputsAt('2026-01-01', 70000))
+    expect(r.dueAtMiles).toBe(105000)
+    expect(r.milesRemaining).toBe(35000)
+    expect(r.status).toBe('completed') // on-track / upcoming, not due
+    expect(r.status).not.toBe('overdue')
+    expect(r.status).not.toBe('due-next')
+  })
+
+  it('projects the next interval boundary and reads as watch-next when close', () => {
+    const r = computeReminder(mileageOnly(5000), inputsAt('2026-01-01', 74000))
+    expect(r.dueAtMiles).toBe(75000)
+    expect(r.milesRemaining).toBe(1000)
+    expect(r.status).toBe('watch-next')
+  })
+
+  it('reads as due-next when the projected boundary is within the inner window', () => {
+    const r = computeReminder(mileageOnly(5000), inputsAt('2026-01-01', 74800))
+    expect(r.dueAtMiles).toBe(75000)
+    expect(r.status).toBe('due-next')
+  })
+
+  it('never goes overdue — at an exact boundary it projects to the NEXT one', () => {
+    const r = computeReminder(mileageOnly(5000), inputsAt('2026-01-01', 75000))
+    expect(r.dueAtMiles).toBe(80000)
+    expect(r.milesRemaining).toBe(5000)
+    expect(r.status).not.toBe('overdue')
+  })
+
+  it('falls back to a gentle watch-next (never due/overdue) with no odometer', () => {
+    const r = computeReminder(mileageOnly(5000), inputsAt('2026-01-01', null, null))
+    expect(r.dueAtMiles).toBeNull()
+    expect(r.milesRemaining).toBeNull()
+    expect(r.status).toBe('watch-next')
+  })
+})
+
 describe('event-history helpers', () => {
   it('matchesRule checks both vehicle and category', () => {
     const rule = makeRule()
     expect(matchesRule(makeEvent(), rule)).toBe(true)
     expect(matchesRule(makeEvent({ vehicleId: 'rogue-2020' }), rule)).toBe(false)
     expect(matchesRule(makeEvent({ category: 'tire-rotation' }), rule)).toBe(false)
+  })
+
+  it('matchesRule also matches an event via its additionalCategories', () => {
+    const batteryRule = makeRule({ id: 'f150-2020:battery-check', category: 'battery-check' })
+    // A primary oil-change event that also covered a battery check.
+    const multiEvent = makeEvent({ category: 'oil-change', additionalCategories: ['battery-check'] })
+    expect(matchesRule(multiEvent, batteryRule)).toBe(true)
+    // …but not a rule it doesn't touch at all.
+    const tireRule = makeRule({ id: 'f150-2020:tire-rotation', category: 'tire-rotation' })
+    expect(matchesRule(multiEvent, tireRule)).toBe(false)
   })
 
   it('latestMatchingEvent picks the most recent matching event', () => {

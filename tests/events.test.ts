@@ -92,6 +92,49 @@ describe('recordCompletedEvent', () => {
   })
 })
 
+describe('recordCompletedEvent — multi-category (one visit, several services)', () => {
+  it('syncs EVERY touched rule from a single multi-category event', async () => {
+    await db.reminderRules.bulkAdd([
+      makeRule({ id: `${VEHICLE_ID}:battery-check`, category: 'battery-check' }),
+      makeRule({ id: `${VEHICLE_ID}:multi-point-inspection`, category: 'multi-point-inspection' }),
+    ])
+    // A Valvoline-style oil change that also did a battery check + multi-point.
+    await recordCompletedEvent({
+      vehicleId: VEHICLE_ID,
+      kind: 'maintenance',
+      date: '2026-03-01',
+      odometerMiles: 52000,
+      category: 'oil-change',
+      additionalCategories: ['battery-check', 'multi-point-inspection'],
+      title: 'Full service',
+    })
+
+    for (const cat of ['oil-change', 'battery-check', 'multi-point-inspection']) {
+      const rule = await db.reminderRules.get(`${VEHICLE_ID}:${cat}`)
+      expect(rule?.lastDoneDate, cat).toBe('2026-03-01')
+      expect(rule?.lastDoneMiles, cat).toBe(52000)
+    }
+  })
+
+  it('resyncs every touched rule back to null when the multi-category event is deleted', async () => {
+    await db.reminderRules.add(makeRule({ id: `${VEHICLE_ID}:battery-check`, category: 'battery-check' }))
+    const id = await recordCompletedEvent({
+      vehicleId: VEHICLE_ID,
+      kind: 'maintenance',
+      date: '2026-03-01',
+      odometerMiles: 52000,
+      category: 'oil-change',
+      additionalCategories: ['battery-check'],
+      title: 'Full service',
+    })
+    await deleteEvent(id)
+    for (const cat of ['oil-change', 'battery-check']) {
+      const rule = await db.reminderRules.get(`${VEHICLE_ID}:${cat}`)
+      expect(rule?.lastDoneMiles, cat).toBeNull()
+    }
+  })
+})
+
 describe('updateEvent', () => {
   it('resyncs the rule cache when the edited event is still the latest', async () => {
     const id = await recordCompletedEvent({

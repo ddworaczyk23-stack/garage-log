@@ -4,7 +4,7 @@ import { deleteEvent } from '../db/events'
 import { formatMiles, formatMoney, formatShortDate } from '../domain/format'
 import { EventForm, loadEventDocs } from './EventForm'
 import { ConfirmButton } from './ui'
-import type { MaintenanceEvent } from '../types'
+import { CATEGORY_LABELS, type MaintenanceEvent } from '../types'
 
 interface Props {
   vehicleId: string
@@ -42,6 +42,14 @@ export function EventListItem({ vehicleId, event }: Props) {
           {event.documentIds.length ? ` · 📎 ${event.documentIds.length}` : ''}
         </span>
         {event.notes && <span class="muted small">{event.notes}</span>}
+        {event.additionalCategories && event.additionalCategories.length > 0 && (
+          <span class="also-tag-row">
+            <span class="muted small">Also:</span>
+            {event.additionalCategories.map((c) => (
+              <span key={c} class="doc-tag">{CATEGORY_LABELS[c]}</span>
+            ))}
+          </span>
+        )}
       </span>
       <span class="row-actions">
         <button type="button" class="btn-link" onClick={() => setEditing(true)}>

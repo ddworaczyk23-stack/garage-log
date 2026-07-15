@@ -143,7 +143,14 @@ export interface MaintenanceEvent {
   kind: EventKind
   date: string // ISO date
   odometerMiles: number
-  category: MaintenanceCategory // controlled vocabulary, shared with ReminderRule.category
+  category: MaintenanceCategory // PRIMARY category — drives title, cost attribution, display
+  // Other categories this same visit also covered (e.g. a Valvoline oil change
+  // that also did a multi-point inspection + battery check + fluid top-off).
+  // Optional/non-indexed (no schema bump); missing = just [category]. Cost stays
+  // on the primary `category` only, so these never double-count spend — but they
+  // DO refresh their matching reminder rules' "last done" (see matchesRule /
+  // effectiveCategories). Never includes `category` itself; deduped.
+  additionalCategories?: MaintenanceCategory[]
   title: string
   cost: number
   vendor?: string
@@ -290,6 +297,10 @@ export interface AppMetaRecord {
 export const MAINTENANCE_CATEGORIES = [
   'oil-change',
   'tire-rotation',
+  'tire-replacement',
+  'tire-balancing',
+  'tire-inspection',
+  'wheel-alignment',
   'engine-air-filter',
   'cabin-air-filter',
   'brake-fluid',
@@ -298,21 +309,40 @@ export const MAINTENANCE_CATEGORIES = [
   'transmission-fluid',
   'cvt-fluid',
   'spark-plugs',
+  'timing-belt',
+  'serpentine-belt',
+  'fuel-filter',
+  'power-steering-fluid',
   'transfer-case-fluid',
   'differential-fluid',
   'battery-check',
   'wiper-blades',
-  'wheel-alignment',
   'multi-point-inspection',
   'other',
 ] as const
 
 export type MaintenanceCategory = (typeof MAINTENANCE_CATEGORIES)[number]
 
+// The full set of categories a single event covers: its primary `category`
+// plus any `additionalCategories`, deduped and primary-first. This is what the
+// reminder engine matches against so ONE logged multi-service visit refreshes
+// every rule it touched. Pure; safe to call on any event-shaped object.
+export function effectiveCategories(
+  event: Pick<MaintenanceEvent, 'category' | 'additionalCategories'>,
+): MaintenanceCategory[] {
+  const seen = new Set<MaintenanceCategory>([event.category])
+  for (const c of event.additionalCategories ?? []) seen.add(c)
+  return [...seen]
+}
+
 // Human-friendly labels for each category (used in dropdowns and lists).
 export const CATEGORY_LABELS: Record<MaintenanceCategory, string> = {
   'oil-change': 'Engine oil & filter',
   'tire-rotation': 'Tire rotation',
+  'tire-replacement': 'Tire replacement',
+  'tire-balancing': 'Tire balancing',
+  'tire-inspection': 'Tire inspection',
+  'wheel-alignment': 'Wheel alignment',
   'engine-air-filter': 'Engine air filter',
   'cabin-air-filter': 'Cabin air filter',
   'brake-fluid': 'Brake fluid',
@@ -321,11 +351,14 @@ export const CATEGORY_LABELS: Record<MaintenanceCategory, string> = {
   'transmission-fluid': 'Transmission fluid',
   'cvt-fluid': 'CVT fluid',
   'spark-plugs': 'Spark plugs',
+  'timing-belt': 'Timing belt',
+  'serpentine-belt': 'Serpentine / drive belt',
+  'fuel-filter': 'Fuel filter',
+  'power-steering-fluid': 'Power steering fluid',
   'transfer-case-fluid': 'Transfer case fluid',
   'differential-fluid': 'Differential / axle fluid',
   'battery-check': 'Battery & charging check',
   'wiper-blades': 'Wiper blades',
-  'wheel-alignment': 'Wheel alignment',
   'multi-point-inspection': 'Multi-point inspection',
   other: 'Other',
 }

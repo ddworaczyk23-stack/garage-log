@@ -571,6 +571,40 @@ input::placeholder {
   border-top: 0.5px solid var(--border);
   padding-top: 8px;
 }
+/* "Also performed" multi-category tagger in the event form. */
+.also-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.also-chip {
+  border: 0.5px solid var(--border);
+  background: var(--bg-inset);
+  color: var(--text-muted);
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease, border-color 0.12s ease;
+}
+.also-chip:hover {
+  border-color: var(--accent);
+}
+.also-chip.is-on {
+  background: var(--accent-tint);
+  color: var(--accent);
+  border-color: var(--accent);
+  font-weight: 600;
+}
+/* "Also: <pills>" summary line on a history row (reuses the .doc-tag pill). */
+.also-tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 2px;
+}
 .doc-remove-list {
   list-style: none;
   margin: 0;

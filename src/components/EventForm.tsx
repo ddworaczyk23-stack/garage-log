@@ -53,6 +53,13 @@ export function EventForm({
   const [category, setCategory] = useState<MaintenanceCategory>(
     existing?.category ?? initialCategory ?? (kind === 'maintenance' ? 'oil-change' : 'other'),
   )
+  // "Also performed": extra categories this one visit covered (multi-point
+  // inspection, battery check, fluid top-off…). Collapsed unless editing an
+  // entry that already has some, so single-category logging stays fast.
+  const [additionalCategories, setAdditionalCategories] = useState<MaintenanceCategory[]>(
+    existing?.additionalCategories ?? [],
+  )
+  const [showAlso, setShowAlso] = useState((existing?.additionalCategories?.length ?? 0) > 0)
   const [title, setTitle] = useState(existing?.title ?? '')
   const [cost, setCost] = useState(existing?.cost?.toString() ?? '')
   const [vendor, setVendor] = useState(existing?.vendor ?? '')
@@ -115,6 +122,7 @@ export function EventForm({
       date,
       odometerMiles: parsedOdometerMiles,
       category,
+      additionalCategories: additionalCategories.filter((c) => c !== category),
       title: title.trim() || (kind === 'maintenance' ? CATEGORY_LABELS[category] : symptom || 'Repair'),
       cost: cost.trim() ? (parseNumberInput(cost) ?? 0) : 0,
       vendor: vendor.trim() || undefined,
@@ -189,6 +197,42 @@ export function EventForm({
           ))}
         </select>
       </label>
+
+      <div class="also-section">
+        <button type="button" class="btn-link" onClick={() => setShowAlso((s) => !s)}>
+          {showAlso ? '▾' : '▸'} Also performed{' '}
+          {additionalCategories.filter((c) => c !== category).length > 0
+            ? `(${additionalCategories.filter((c) => c !== category).length})`
+            : '(optional)'}
+        </button>
+        {showAlso && (
+          <>
+            <p class="muted small" style="margin:2px 0 6px">
+              Tag anything else done in this same visit — each also updates its own reminder.
+            </p>
+            <div class="also-chips">
+              {MAINTENANCE_CATEGORIES.filter((c) => c !== 'other' && c !== category).map((c) => {
+                const on = additionalCategories.includes(c)
+                return (
+                  <button
+                    key={c}
+                    type="button"
+                    class={`also-chip${on ? ' is-on' : ''}`}
+                    aria-pressed={on}
+                    onClick={() =>
+                      setAdditionalCategories((prev) =>
+                        prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+                      )
+                    }
+                  >
+                    {CATEGORY_LABELS[c]}
+                  </button>
+                )
+              })}
+            </div>
+          </>
+        )}
+      </div>
 
       {kind === 'repair' && (
         <label class="admin-field">

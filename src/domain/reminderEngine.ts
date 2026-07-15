@@ -1,4 +1,4 @@
-import type { MaintenanceEvent, MaintenanceStatus, ReminderRule } from '../types'
+import { effectiveCategories, type MaintenanceEvent, type MaintenanceStatus, type ReminderRule } from '../types'
 import {
   resolveInterval,
   resolveLastDone,
@@ -117,9 +117,11 @@ function moreUrgent(a: MaintenanceStatus, b: MaintenanceStatus): MaintenanceStat
   return TIER_ORDER.indexOf(a) <= TIER_ORDER.indexOf(b) ? a : b
 }
 
-/** True if event.category matches the rule's category for the same vehicle. */
+/** True if the event (same vehicle) covers the rule's category — either as its
+ * primary category or one of its additionalCategories. So a single multi-service
+ * visit updates every rule it touched, not just the primary one. */
 export function matchesRule(event: MaintenanceEvent, rule: ReminderRule): boolean {
-  return event.vehicleId === rule.vehicleId && event.category === rule.category
+  return event.vehicleId === rule.vehicleId && effectiveCategories(event).includes(rule.category)
 }
 
 /** The most recent logged event matching a rule, or null if none exist yet. */
@@ -208,18 +210,44 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
     }
   }
 
+  // Never serviced: there's no logged last-done to anchor a due point. Rather
+  // than blanket-flag it 'due-next' (which surfaced far-future items — e.g. a
+  // 105k-mi service on a 70k-mi vehicle — as if they were due now), PROJECT the
+  // next occurrence from the factory/consensus mileage interval as if the item
+  // were kept on schedule from new: the next interval boundary at or after the
+  // current odometer. That projection is always ahead of the current mileage,
+  // so a never-serviced item is never 'overdue' and a genuinely-future one
+  // reads as watch-next/completed (upcoming), not due now. Items we can't
+  // project (no mileage interval, or no odometer reading) fall back to a gentle
+  // 'watch-next' nudge — never an alarming 'overdue'/'due-next'.
   if (neverServiced) {
+    const canProjectMiles = interval.miles != null && inputs.currentMiles != null
+    const projectedDueMiles = canProjectMiles
+      ? (Math.floor(inputs.currentMiles! / interval.miles!) + 1) * interval.miles!
+      : null
+    const projMilesRemaining =
+      projectedDueMiles != null && inputs.currentMiles != null
+        ? projectedDueMiles - inputs.currentMiles
+        : null
+    // classify() never returns 'overdue' here since projMilesRemaining > 0.
+    const status: MaintenanceStatus =
+      projMilesRemaining != null
+        ? classify(projMilesRemaining, DUE_LEAD_MILES, WATCH_LEAD_MILES)
+        : 'watch-next'
     return {
       rule,
-      status: 'due-next',
+      status,
       interval,
       lastDone,
-      dueAtMiles: null,
+      dueAtMiles: projectedDueMiles,
       dueAtDate: null,
-      milesRemaining: null,
+      milesRemaining: projMilesRemaining,
       daysRemaining: null,
       odometerStale,
-      reason: 'Not yet logged — establish a baseline by logging the first service.',
+      reason:
+        projectedDueMiles != null
+          ? `No history yet — projected next at ~${projectedDueMiles.toLocaleString()} mi from the factory schedule. Log your last service to personalize.`
+          : 'No history yet — log a service to start tracking this item.',
     }
   }
 
