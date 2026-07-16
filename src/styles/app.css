@@ -2939,3 +2939,344 @@ a.list-row:hover {
 @media (max-width: 430px) {
   .cv-headline { font-size: 21px; }
 }
+
+/* =========================================================================
+   COAST — triage check flow (Stage 2). Reuses the .cv-* verdict panel/ruler
+   and the --sig-* tokens from Stage 1; everything here is the flow chrome:
+   the "what's going on?" chooser, question steps, verdict extras, the inline
+   shop brief, and the vehicle's open-concern list.
+   ========================================================================= */
+.chk { }
+.chk-title {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 25px;
+  line-height: 1.12;
+  letter-spacing: -0.015em;
+  margin: 4px 0 6px;
+  text-wrap: balance;
+}
+.chk-sub {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 15px;
+  color: var(--text-muted);
+  margin: 0 0 16px;
+}
+
+/* --- choice list (chooser + question options) --- */
+.chk-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+.chk-choice {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-card);
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  min-height: 56px;
+  text-decoration: none;
+  color: var(--text);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.05s;
+}
+.chk-choice:hover {
+  border-color: var(--text);
+  box-shadow: var(--shadow-card, 0 1px 2px rgba(35, 39, 43, 0.06), 0 8px 24px rgba(35, 39, 43, 0.07));
+}
+.chk-choice:active { transform: translateY(1px); }
+.chk-choice > span:first-child { flex: 1; min-width: 0; }
+.chk-choice b {
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 15.5px;
+  display: block;
+  letter-spacing: -0.005em;
+}
+.chk-choice small {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+.chk-chevron {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--sig-blue);
+}
+
+/* --- flow top: back + progress dots --- */
+.chk-flowtop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 2px 0 14px;
+  min-height: 40px;
+}
+.chk-back {
+  width: 40px;
+  height: 40px;
+  min-width: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: -8px;
+}
+.chk-back:hover { color: var(--text); }
+.chk-back svg { width: 20px; height: 20px; }
+.chk-steps { display: flex; gap: 6px; margin-left: auto; }
+.chk-steps i {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+.chk-steps i.done { background: var(--sig-blue); }
+
+/* --- verdict extras: causes, cost, escalation --- */
+.chk-sect {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 22px 2px 9px;
+}
+.chk-causes {
+  margin: 0;
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.chk-causes li {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.chk-cost { padding: 4px 16px; }
+.chk-cost-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+}
+.chk-cost-row + .chk-cost-row { border-top: 1px dashed var(--border); }
+.chk-cost-what {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  color: var(--text-muted);
+}
+.chk-cost-amt {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 15px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.chk-cost-amt.is-strong { color: var(--text); font-weight: 700; }
+.chk-escalate {
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--sig-red) 10%, var(--bg-card));
+  border: 1px solid color-mix(in srgb, var(--sig-red) 30%, transparent);
+  border-radius: 14px;
+}
+.chk-escalate b {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--sig-red);
+  display: block;
+  margin-bottom: 6px;
+}
+.chk-escalate ul { margin: 0; padding-left: 18px; }
+.chk-escalate li {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+/* --- actions --- */
+.chk-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+/* --- inline shop brief --- */
+.chk-brief {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+.chk-brief-head {
+  background: var(--text);
+  color: var(--bg-card);
+  padding: 15px 17px;
+}
+.chk-brief-tag {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  opacity: 0.72;
+}
+.chk-brief-head h3 {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.01em;
+  margin: 4px 0 0;
+}
+.chk-brief-meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  opacity: 0.8;
+  margin-top: 3px;
+}
+.chk-brief-sec {
+  padding: 13px 17px;
+  border-top: 1px solid var(--border);
+}
+.chk-brief-lbl {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 10.5px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.chk-brief-sec p {
+  font-family: var(--font-serif);
+  font-size: 15px;
+  line-height: 1.5;
+  margin: 0;
+}
+.chk-brief-fair {
+  background: color-mix(in srgb, var(--sig-blue) 9%, var(--bg-card));
+}
+.chk-brief-amt {
+  font-family: var(--font-mono) !important;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--sig-blue-deep);
+}
+.chk-brief-foot {
+  font-size: 13px !important;
+  color: var(--text-muted);
+  margin-top: 5px !important;
+}
+.chk-brief-note {
+  background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
+}
+.chk-brief-note p + p { margin-top: 6px; }
+
+/* --- the vehicle's open-concern list (the loop) --- */
+.chk-onlist { padding: 14px 16px; margin-bottom: 20px; }
+.chk-onlist-title {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+.chk-onlist-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 10px 0;
+}
+.chk-onlist-row + .chk-onlist-row { border-top: 1px solid var(--border); }
+.chk-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 5px;
+  flex: none;
+}
+.chk-dot.cv-red { background: var(--sig-red); }
+.chk-dot.cv-amber { background: var(--sig-amber); }
+.chk-dot.cv-blue { background: var(--sig-blue); }
+.chk-dot.cv-green { background: var(--sig-green); }
+.chk-onlist-main { flex: 1; min-width: 0; }
+.chk-onlist-main b {
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 14.5px;
+  display: block;
+}
+.chk-onlist-main small {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  display: block;
+  margin-top: 2px;
+}
+.chk-onlist-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  flex: none;
+}
+
+/* --- nav raised center action --- */
+.nav-check {
+  flex: 0 1 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 3px;
+  text-decoration: none;
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+}
+.nav-check.is-active { color: var(--sig-blue-deep); }
+.nav-check-disc {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--sig-blue);
+  display: grid;
+  place-items: center;
+  margin-top: -22px;
+  box-shadow: 0 6px 16px rgba(27, 95, 170, 0.38), inset 0 0 0 3px rgba(255, 255, 255, 0.4);
+  transition: background 0.15s, transform 0.15s;
+}
+.nav-check:hover .nav-check-disc { background: var(--sig-blue-deep); transform: translateY(-2px); }
+.nav-check-disc svg { width: 26px; height: 26px; display: block; }
+
+@media (max-width: 430px) {
+  .chk-title { font-size: 22px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chk-choice, .nav-check-disc { transition: none; }
+}

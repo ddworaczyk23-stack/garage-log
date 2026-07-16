@@ -288,6 +288,33 @@ export const STATUS_LABELS: Record<MaintenanceStatus, string> = {
   'not-applicable': 'Not applicable',
 }
 
+// A triage concern raised via the Coast "Start a check" flow (Stage 2 of the
+// Coast migration — see design/COAST-PLAN.md). Captures the verdict a driver
+// reached so it can sit on their list until it's handled. This is USER DATA and
+// syncs across devices, so `id` must be globally unique (concern-<uuid>), like
+// vehicle ids — see db/concerns.ts. Deliberately NOT wired into the reminder
+// engine: concerns are reactive triage items, kept alongside (not merged into)
+// the schedule-driven ReminderRule state.
+export interface Concern {
+  id: string // `concern-<uuid>` — globally unique for Dexie Cloud sync
+  vehicleId: string
+  createdDate: string // ISO date
+  playbookId: string // -> domain/playbooks.ts Playbook.id
+  outcomeId: string // -> the resolved PlaybookOutcome.id
+  answers: Record<string, string> // the triage answers that produced the verdict
+  band: MaintenanceSignalBand // snapshot of the verdict band at creation
+  title: string // snapshot of the outcome title (survives playbook edits)
+  category: MaintenanceCategory | null // best-guess category, for display/linking
+  status: 'open' | 'resolved'
+  resolvedDate: string | null
+  // If resolved by logging a repair, the event it was resolved with (optional).
+  resolvedEventId?: string
+}
+
+// The four-signal verdict vocabulary, defined here so types.ts stays the single
+// source of the data model. domain/verdict.ts re-exports it as `SignalBand`.
+export type MaintenanceSignalBand = 'fix-now' | 'book-soon' | 'coast' | 'all-clear'
+
 // Simple key/value bag for app-level state (last backup date, schema version, etc.)
 export interface AppMetaRecord {
   key: string

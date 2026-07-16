@@ -10,6 +10,7 @@ import type {
   FactoryMaintenanceData,
   ConsensusData,
   CostEstimateData,
+  Concern,
 } from '../types'
 
 // Single IndexedDB database for the whole app.
@@ -31,6 +32,9 @@ export class GarageDB extends Dexie {
   consensusData!: Table<ConsensusData, string>
   // Same canonicalVehicleId keying/reuse rationale as the two tables above.
   costEstimateData!: Table<CostEstimateData, string>
+  // Coast triage concerns (Stage 2). USER DATA — synced, globally-unique
+  // `concern-<uuid>` primary keys (see db/concerns.ts).
+  concerns!: Table<Concern, string>
 
   constructor() {
     super('garage-log', { addons: [dexieCloud] })
@@ -62,6 +66,14 @@ export class GarageDB extends Dexie {
     // as factoryMaintenanceData/consensusData above.
     this.version(3).stores({
       costEstimateData: 'canonicalVehicleId',
+    })
+
+    // Coast Stage 2: triage concerns. `[vehicleId+status]` compound index so a
+    // vehicle's OPEN concerns can be queried directly (mirrors the documents
+    // `[linkedTo.type+linkedTo.id]` pattern). Synced like the core user tables
+    // (NOT in unsyncedTables) — its primary keys are globally-unique uuids.
+    this.version(4).stores({
+      concerns: 'id, vehicleId, status, [vehicleId+status]',
     })
 
     // Dexie Cloud: every table above still works with its existing plain
