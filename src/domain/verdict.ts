@@ -1,0 +1,262 @@
+import type { ComputedReminder } from './reminderEngine'
+import type { MaintenanceStatus } from '../types'
+import { formatMiles } from './format'
+
+// ---------------------------------------------------------------------------
+// Coast verdict layer (Stage 1 of the Coast migration — see design/COAST-PLAN.md).
+//
+// Pure re-narration of the reminder engine's output: it never re-decides a
+// status, it only translates the ranked ComputedReminder list into the
+// four-signal verdict vocabulary and one plain-English sentence per vehicle.
+// The engine's 5-state MaintenanceStatus maps onto four signal bands:
+//   overdue    -> 'fix-now'    (red)
+//   due-next   -> 'book-soon'  (amber)
+//   watch-next -> 'coast'      (blue — the brand signal: "you can coast")
+//   completed  -> 'all-clear'  (green)
+//   not-applicable is excluded entirely.
+// No DOM, no Dexie, no I/O — unit-tested in tests/verdict.test.ts.
+// ---------------------------------------------------------------------------
+
+export type SignalBand = 'fix-now' | 'book-soon' | 'coast' | 'all-clear'
+
+export const BAND_LABELS: Record<SignalBand, string> = {
+  'fix-now': 'Fix now',
+  'book-soon': 'Book soon',
+  coast: 'Can coast',
+  'all-clear': 'All clear',
+}
+
+/** Band for a single engine status; null = excluded from verdicts. */
+export function bandFromStatus(s: MaintenanceStatus): SignalBand | null {
+  switch (s) {
+    case 'overdue':
+      return 'fix-now'
+    case 'due-next':
+      return 'book-soon'
+    case 'watch-next':
+      return 'coast'
+    case 'completed':
+      return 'all-clear'
+    case 'not-applicable':
+      return null
+  }
+}
+
+/** One deferred-but-tracked item for the "can coast" list. */
+export interface CoastItem {
+  label: string
+  /** Plain window text, e.g. "in ~1,200 mi" or "by Oct 2026". */
+  window: string
+}
+
+export interface VehicleVerdict {
+  band: SignalBand
+  /** The sign: short, declarative. e.g. "One thing to book soon." */
+  headline: string
+  /** The human voice: one serif sentence explaining the sign. */
+  sentence: string
+  /** Marker position on the 4-zone urgency ruler, 0 (worst) .. 100 (clear). */
+  rulerPin: number
+  /** e.g. "Safe window: about 3 weeks of normal driving." null when n/a. */
+  safeWindow: string | null
+  coastItems: CoastItem[]
+  /** Odometer caveat ("no reading on file" / "estimate is stale"), else null. */
+  confidenceNote: string | null
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+/** "2026-09-04" -> "Sep 2026" (month precision — verdicts promise windows, not days). */
+function monthYear(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const m = /^(\d{4})-(\d{2})/.exec(iso)
+  if (!m) return null
+  const month = Number(m[2]) - 1
+  if (month < 0 || month > 11) return null
+  return `${MONTHS[month]} ${m[1]}`
+}
+
+/** Days rendered as the unit a person would say: days under 2 weeks, else weeks/months. */
+function daysAsSpeech(days: number): string {
+  const abs = Math.abs(days)
+  if (abs < 14) return `${abs} day${abs === 1 ? '' : 's'}`
+  if (abs < 75) return `about ${Math.round(abs / 7)} weeks`
+  return `about ${Math.round(abs / 30)} months`
+}
+
+/** "in ~400 mi (around Sep 2026)" / "by Sep 2026" / null when nothing numeric. */
+function windowText(r: ComputedReminder): string | null {
+  const date = monthYear(r.dueAtDate ?? r.projectedDueDate)
+  if (r.milesRemaining != null && r.milesRemaining > 0) {
+    return `in ~${formatMiles(r.milesRemaining)}${date ? ` (around ${date})` : ''}`
+  }
+  if (r.daysRemaining != null && r.daysRemaining > 0 && date) return `by ${date}`
+  if (date) return `around ${date}`
+  return null
+}
+
+/** How far past due, spoken along the axis that's actually binding. */
+function overdueText(r: ComputedReminder): string {
+  if (r.milesRemaining != null && r.milesRemaining <= 0) {
+    return `${formatMiles(Math.abs(r.milesRemaining))} past due`
+  }
+  if (r.daysRemaining != null && r.daysRemaining <= 0) {
+    return `${daysAsSpeech(r.daysRemaining)} past due`
+  }
+  return 'past due'
+}
+
+function clamp(n: number, lo: number, hi: number): number {
+  return Math.min(hi, Math.max(lo, n))
+}
+
+/**
+ * Ruler zones (left = urgent): fix-now 0-25, book-soon 25-50, coast 50-75,
+ * all-clear 75-100. Within a band the pin slides with how deep into the band
+ * the driving item is, so two "book soon" vehicles can still read differently.
+ */
+function rulerPin(band: SignalBand, top: ComputedReminder | null): number {
+  if (band === 'all-clear' || !top) return 88
+  if (band === 'fix-now') {
+    // Deeper overdue -> further left. Scale by miles or days past due.
+    const overBy =
+      top.milesRemaining != null && top.milesRemaining <= 0
+        ? Math.abs(top.milesRemaining) / 2000
+        : top.daysRemaining != null && top.daysRemaining <= 0
+          ? Math.abs(top.daysRemaining) / 120
+          : 0.5
+    return clamp(21 - overBy * 17, 4, 21)
+  }
+  // Upcoming bands: fraction of the lead window still remaining (1 = just
+  // entered the band, 0 = about to cross into the next-worse band).
+  const frac =
+    top.milesRemaining != null && top.milesRemaining > 0
+      ? band === 'book-soon'
+        ? top.milesRemaining / 500
+        : (top.milesRemaining - 500) / 1000
+      : top.daysRemaining != null && top.daysRemaining > 0
+        ? band === 'book-soon'
+          ? top.daysRemaining / 30
+          : (top.daysRemaining - 30) / 60
+        : 0.5
+  const base = band === 'book-soon' ? 27 : 52
+  return clamp(base + frac * 21, base, base + 21)
+}
+
+function headline(band: SignalBand, count: number): string {
+  switch (band) {
+    case 'fix-now':
+      return count === 1 ? 'One thing needs attention now.' : `${count} things need attention now.`
+    case 'book-soon':
+      return count === 1 ? 'One thing to book soon.' : `${count} things to book soon.`
+    case 'coast':
+      return 'Nothing urgent. You can coast.'
+    case 'all-clear':
+      return 'All clear. Just drive.'
+  }
+}
+
+function sentence(band: SignalBand, top: ComputedReminder | null, next: ComputedReminder | null): string {
+  if (band === 'fix-now' && top) {
+    const extra = next && bandFromStatus(next.status) === 'fix-now' ? ' Another item is past due too.' : ''
+    return `${top.rule.label} is ${overdueText(top)} — sorting it soon keeps it a routine job.${extra}`
+  }
+  if (band === 'book-soon' && top) {
+    const when = windowText(top)
+    const extra = next && bandFromStatus(next.status) === 'book-soon' ? ' One more is close behind.' : ''
+    return `${top.rule.label} comes due ${when ?? 'soon'}.${extra}`
+  }
+  if (band === 'coast' && top) {
+    const when = windowText(top)
+    return `Next attention: ${top.rule.label.toLowerCase()}, ${when ?? 'a while out'}.`
+  }
+  if (top) {
+    const when = windowText(top)
+    return when
+      ? `Nothing needs you. Next attention: ${top.rule.label.toLowerCase()}, ${when}.`
+      : 'Nothing needs you right now.'
+  }
+  return 'Nothing on the schedule needs you.'
+}
+
+function safeWindow(band: SignalBand, top: ComputedReminder | null): string | null {
+  if (band === 'fix-now') return 'Don’t put this off — book it this week.'
+  if (!top) return null
+  if (band === 'book-soon') {
+    if (top.milesRemaining != null && top.milesRemaining > 0) {
+      return `Safe window: about ${formatMiles(top.milesRemaining)} of normal driving.`
+    }
+    if (top.daysRemaining != null && top.daysRemaining > 0) {
+      return `Safe window: ${daysAsSpeech(top.daysRemaining)}.`
+    }
+    return null
+  }
+  if (band === 'coast') {
+    if (top.milesRemaining != null && top.milesRemaining > 0) {
+      return `Next check-in: ~${formatMiles(top.milesRemaining)} from now.`
+    }
+    if (top.daysRemaining != null && top.daysRemaining > 0) {
+      return `Next check-in: ${daysAsSpeech(top.daysRemaining)} from now.`
+    }
+  }
+  return null
+}
+
+/** First reminder in a band (input list is already ranked by the engine). */
+function firstIn(reminders: ComputedReminder[], statuses: MaintenanceStatus[]): ComputedReminder | null {
+  return reminders.find((r) => statuses.includes(r.status)) ?? null
+}
+
+/**
+ * The one-sentence verdict for a vehicle. `reminders` must be the engine's
+ * ranked output (computeVehicleReminders / getVehicleReminders) — this layer
+ * trusts that ranking completely.
+ */
+export function vehicleVerdict(reminders: ComputedReminder[]): VehicleVerdict {
+  const tracked = reminders.filter((r) => r.status !== 'not-applicable')
+
+  const fixNow = tracked.filter((r) => r.status === 'overdue')
+  const bookSoon = tracked.filter((r) => r.status === 'due-next')
+  const watch = tracked.filter((r) => r.status === 'watch-next')
+
+  const band: SignalBand = fixNow.length
+    ? 'fix-now'
+    : bookSoon.length
+      ? 'book-soon'
+      : watch.length
+        ? 'coast'
+        : 'all-clear'
+
+  // The reminder that drives the sentence: worst actionable item, or for an
+  // all-clear vehicle the nearest upcoming completed item with a real target.
+  const top =
+    band === 'all-clear'
+      ? (tracked.find((r) => r.status === 'completed' && (r.milesRemaining != null || r.daysRemaining != null)) ?? null)
+      : firstIn(tracked, band === 'fix-now' ? ['overdue'] : band === 'book-soon' ? ['due-next'] : ['watch-next'])
+  const count = band === 'fix-now' ? fixNow.length : band === 'book-soon' ? bookSoon.length : watch.length
+  const runnerUp = band === 'fix-now' ? (fixNow[1] ?? null) : band === 'book-soon' ? (bookSoon[1] ?? null) : null
+
+  // "Can coast" = deferred-but-tracked: every watch-next item except the one
+  // already carrying the verdict sentence.
+  const coastItems: CoastItem[] = watch
+    .filter((r) => r !== top)
+    .slice(0, 4)
+    .map((r) => ({ label: r.rule.label, window: windowText(r) ?? 'a while out' }))
+
+  const stale = tracked.some((r) => r.odometerStale)
+  const noOdometer = stale && tracked.every((r) => r.milesRemaining == null || r.interval.miles == null)
+
+  return {
+    band,
+    headline: headline(band, count),
+    sentence: sentence(band, top, runnerUp),
+    rulerPin: rulerPin(band, top),
+    safeWindow: safeWindow(band, top),
+    coastItems,
+    confidenceNote: stale
+      ? noOdometer
+        ? 'No odometer on file — add a reading to tighten these windows.'
+        : 'Odometer estimate is stale — update it to tighten these windows.'
+      : null,
+  }
+}

@@ -2776,3 +2776,166 @@ a.list-row:hover {
     grid-template-columns: auto minmax(0, 1fr) minmax(0, 92px);
   }
 }
+
+/* =========================================================================
+   COAST — verdict layer (Stage 1, design/COAST-PLAN.md)
+   Road-signage instruments over the reminder engine: the VerdictPanel (a
+   solid signal-colored sign with a white inner keyline) and the four-zone
+   UrgencyRuler. Signal hues are their own token set — semantic state colors,
+   deliberately separate from the olive brand accent. Overpass (Highway
+   Gothic descendant) is the sign voice; Spectral stays the explanation
+   voice; Plex Mono stays the data spine.
+   ========================================================================= */
+:root {
+  --sig-red: #b3402e;
+  --sig-amber: #d98a00;
+  --sig-blue: #1b5faa; /* "you can coast" — guide-sign blue */
+  --sig-blue-deep: #164e8c;
+  --sig-green: #1e7a44;
+  --font-signal: 'Overpass', var(--font-sans);
+}
+
+/* --- Verdict panel (the sign) --- */
+.cv-panel {
+  border-radius: 18px;
+  padding: 7px;
+  color: #fff;
+  box-shadow: var(--shadow-card, 0 1px 2px rgba(35, 39, 43, 0.06), 0 8px 24px rgba(35, 39, 43, 0.07));
+}
+.cv-panel.cv-red { background: var(--sig-red); }
+.cv-panel.cv-amber { background: var(--sig-amber); }
+.cv-panel.cv-blue { background: var(--sig-blue); }
+.cv-panel.cv-green { background: var(--sig-green); }
+.cv-inner {
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  border-radius: 12px;
+  padding: 15px 16px 13px;
+}
+.cv-tag {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  opacity: 0.92;
+  margin-bottom: 7px;
+}
+.cv-headline {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 24px;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  margin: 0 0 8px;
+  text-wrap: balance;
+}
+.cv-sentence {
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  line-height: 1.45;
+  margin: 0;
+  opacity: 0.96;
+}
+
+/* --- Urgency ruler --- */
+.cv-ruler { margin: 14px 2px 2px; }
+.cv-ruler-wrap { position: relative; }
+.cv-ruler-track {
+  display: flex;
+  height: 9px;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--border-strong, rgba(74, 60, 30, 0.28));
+}
+.cv-ruler-track i { flex: 1; }
+.cv-ruler-track i.cv-red { background: var(--sig-red); }
+.cv-ruler-track i.cv-amber { background: var(--sig-amber); }
+.cv-ruler-track i.cv-blue { background: var(--sig-blue); }
+.cv-ruler-track i.cv-green { background: var(--sig-green); }
+.cv-ruler-pin {
+  position: absolute;
+  top: -6px;
+  width: 3px;
+  height: 21px;
+  background: var(--text);
+  border-radius: 2px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 2.5px var(--bg-card);
+}
+.cv-ruler-labels { display: flex; margin-top: 5px; }
+.cv-ruler-labels span {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 9.5px;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  text-align: center;
+  text-transform: uppercase;
+}
+.cv-ruler-labels span.on { color: var(--text); font-weight: 600; }
+.cv-ruler-note {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin: 8px 0 0;
+  text-align: center;
+}
+
+/* --- Today card (dashboard): panel + ruler + coast list per vehicle --- */
+.cv-card { display: block; }
+.cv-card + .cv-card { margin-top: 16px; }
+.cv-veh-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.cv-veh-name {
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 17px;
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+.cv-veh-meta {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.cv-coast-list { margin-top: 12px; }
+.cv-coast-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 9px 2px;
+}
+.cv-coast-item + .cv-coast-item { border-top: 1px solid var(--border, rgba(74, 60, 30, 0.15)); }
+.cv-coast-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--sig-blue);
+  margin-top: 5px;
+  flex: none;
+}
+.cv-coast-item b {
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 14px;
+  display: block;
+}
+.cv-coast-item .cv-win {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--sig-blue-deep);
+  display: block;
+  margin-top: 2px;
+}
+.cv-open-row { margin-top: 12px; }
+@media (max-width: 430px) {
+  .cv-headline { font-size: 21px; }
+}

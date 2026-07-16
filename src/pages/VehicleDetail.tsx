@@ -6,6 +6,8 @@ import { formatInterval, formatMiles, formatShortDate } from '../domain/format'
 import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
 import { reminderProgress } from '../domain/progress'
+import { vehicleVerdict } from '../domain/verdict'
+import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
 import { identityFromVehicle } from '../domain/vehicleIdentity'
 import { hydrateFactoryMaintenance, hydrateConsensusData, hydrateCostEstimates } from '../db/vehicleOnboarding'
@@ -303,6 +305,22 @@ export function VehicleDetail({ id }: Props) {
         )}
         <hr class="rule-double" />
       </header>
+
+      {/* Coast verdict: the one-sentence answer for this vehicle (Stage 1,
+          design/COAST-PLAN.md) — pure re-narration of the ranked reminders. */}
+      {reminders && reminders.length > 0 && (
+        <div class="cv-card">
+          {(() => {
+            const verdict = vehicleVerdict(reminders)
+            return (
+              <>
+                <VerdictPanel verdict={verdict} tag="This vehicle" />
+                <UrgencyRuler verdict={verdict} />
+              </>
+            )
+          })()}
+        </div>
+      )}
 
       {/* odometer instrument + specifications */}
       <section class="card vd-cover">
