@@ -23,7 +23,8 @@ import {
 } from '../domain/vehicleRanking'
 import { buildCostBreakdown, costPerMile, filterByYear, type CostBreakdown } from '../domain/cost'
 import { vehicleLabel } from '../domain/vehicle'
-import type { MaintenanceEvent, Vehicle } from '../types'
+import { getOpenConcerns } from './concerns'
+import type { Concern, MaintenanceEvent, Vehicle } from '../types'
 
 /** Full computed+ranked reminders list for a vehicle — shared by every page
  * that needs it (Vehicle Detail, the reminders debug panel, list/dashboard
@@ -102,6 +103,8 @@ const ATTENTION_MAX_PER_VEHICLE = 3
 export interface VehicleSummary {
   vehicle: Vehicle
   reminders: ComputedReminder[] // per-vehicle ranked (unchanged from the engine)
+  /** Open triage concerns (Stage 2) — merged into the Today verdict. */
+  openConcerns: Concern[]
   counts: ReminderCounts
   urgency: VehicleUrgency
   badges: AttentionBadge[]
@@ -170,12 +173,13 @@ function daysSince(isoDate: string, asOf: Date): number {
 }
 
 async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): Promise<VehicleSummary> {
-  const [reminders, events, readings, mileageEst, gloveboxDocCount] = await Promise.all([
+  const [reminders, events, readings, mileageEst, gloveboxDocCount, openConcerns] = await Promise.all([
     getVehicleReminders(vehicle.id),
     db.events.where('vehicleId').equals(vehicle.id).toArray(),
     db.odometerReadings.where('vehicleId').equals(vehicle.id).toArray(),
     getCurrentMileageEstimate(vehicle.id),
     db.documents.where('[linkedTo.type+linkedTo.id]').equals(['vehicle', vehicle.id]).count(),
+    getOpenConcerns(vehicle.id),
   ])
 
   const byDateDesc = (a: MaintenanceEvent, b: MaintenanceEvent) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0)
@@ -213,6 +217,7 @@ async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): 
   return {
     vehicle,
     reminders,
+    openConcerns,
     counts,
     urgency,
     badges: vehicleBadges(urgency),

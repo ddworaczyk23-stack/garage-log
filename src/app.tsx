@@ -7,6 +7,7 @@ import { Vehicles } from './pages/Vehicles'
 import { AddVehicle } from './pages/AddVehicle'
 import { VehicleDetail } from './pages/VehicleDetail'
 import { Check } from './pages/Check'
+import { ShopBriefPage } from './pages/ShopBrief'
 import { Documents } from './pages/Documents'
 import { Costs } from './pages/Costs'
 import { ImportHistory } from './pages/ImportHistory'
@@ -26,6 +27,7 @@ import { ReminderDebug } from './pages/ReminderDebug'
 //   #/vehicle/<id>          -> Vehicle detail
 //   #/check                 -> Start a triage check (pick a vehicle)
 //   #/check/<id>            -> …the triage flow for one vehicle
+//   #/brief/<id>            -> Shop brief (id = concern id OR reminder-rule id)
 //   #/documents             -> Cross-vehicle document browser
 //   #/documents/<vehicleId> -> …pre-filtered to one vehicle
 //   #/costs                 -> Cost summary (per-category spend)
@@ -52,6 +54,7 @@ export function App() {
     page = <VehicleDetail id={route.slice('/vehicle/'.length)} />
   else if (route === '/check') page = <Check />
   else if (route.startsWith('/check/')) page = <Check vehicleId={route.slice('/check/'.length)} />
+  else if (route.startsWith('/brief/')) page = <ShopBriefPage id={route.slice('/brief/'.length)} />
   else if (route === '/documents') page = <Documents />
   else if (route.startsWith('/documents/'))
     page = <Documents initialVehicleId={route.slice('/documents/'.length)} />

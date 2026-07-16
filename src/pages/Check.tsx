@@ -122,7 +122,9 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   const [answers, setAnswers] = useState<Answers>({})
   const [trail, setTrail] = useState<string[]>([])
   const [showBrief, setShowBrief] = useState(false)
-  const [added, setAdded] = useState(false)
+  // Null until "Add to my list" succeeds, then the new concern's id (which
+  // also unlocks the link to the standalone shareable brief page).
+  const [addedId, setAddedId] = useState<string | null>(null)
 
   if (!data) return <Loading />
   if (!data.vehicle) {
@@ -144,7 +146,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     setAnswers({})
     setTrail([])
     setShowBrief(false)
-    setAdded(false)
+    setAddedId(null)
   }
 
   function choosePlaybook(pb: Playbook) {
@@ -152,7 +154,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     setAnswers({})
     setTrail([])
     setShowBrief(false)
-    setAdded(false)
+    setAddedId(null)
   }
 
   function answer(qid: string, value: string) {
@@ -236,8 +238,8 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   const tone = BAND_TONE[outcome.band]
 
   async function addToList() {
-    await openConcern(vehicle.id, playbook!, outcome, answers)
-    setAdded(true)
+    const id = await openConcern(vehicle.id, playbook!, outcome, answers)
+    setAddedId(id)
   }
 
   return (
@@ -313,9 +315,9 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
       )}
 
       <div class="chk-actions">
-        {added ? (
+        {addedId ? (
           <div class="notice notice-ok" role="status">
-            Added to {vehicleLabel(vehicle)}’s list. It’ll stay here until it’s handled.
+            Added to {vehicleLabel(vehicle)}’s list. <a href={`#/brief/${addedId}`}>Open the shareable brief →</a>
           </div>
         ) : (
           <button type="button" class="btn btn-primary" onClick={addToList}>
@@ -346,7 +348,9 @@ function ConcernList({ vehicle, concerns }: { vehicle: Vehicle; concerns: Concer
             <span class={`chk-dot ${tone.cls}`} aria-hidden="true" />
             <span class="chk-onlist-main">
               <b>{c.title}</b>
-              <small>{tone.label} · raised {formatShortDate(c.createdDate)}</small>
+              <small>
+                {tone.label} · raised {formatShortDate(c.createdDate)} · <a href={`#/brief/${c.id}`}>Shop brief</a>
+              </small>
             </span>
             <span class="chk-onlist-actions">
               <ConfirmButton

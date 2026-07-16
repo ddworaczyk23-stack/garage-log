@@ -5,6 +5,7 @@ import { useQuery } from '../db/useQuery'
 import { formatInterval, formatMiles, formatShortDate } from '../domain/format'
 import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
+import { getOpenConcerns } from '../db/concerns'
 import { reminderProgress } from '../domain/progress'
 import { vehicleVerdict } from '../domain/verdict'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
@@ -104,6 +105,7 @@ export function VehicleDetail({ id }: Props) {
 
   const vehicle = useQuery(async () => (await db.vehicles.get(id)) ?? null, [id])
   const reminders = useQuery(() => getVehicleReminders(id), [id])
+  const openConcerns = useQuery(() => getOpenConcerns(id), [id])
   const mileage = useQuery(() => getCurrentMileageEstimate(id), [id])
   const events = useQuery(
     () =>
@@ -258,6 +260,13 @@ export function VehicleDetail({ id }: Props) {
         </div>
         <div class="vd-row-end">
           <span class={`status-pill status-${r.status}`}>{STATUS_LABELS[r.status]}</span>
+          {/* Actionable items get a one-tap shop brief (Stage 3) — the thing
+              you show at the counter when booking this service. */}
+          {(r.status === 'overdue' || r.status === 'due-next') && (
+            <a class="btn-link vd-log-btn" href={`#/brief/${r.rule.id}`}>
+              Brief
+            </a>
+          )}
           {r.status !== 'not-applicable' && (
             <button
               type="button"
@@ -307,11 +316,12 @@ export function VehicleDetail({ id }: Props) {
       </header>
 
       {/* Coast verdict: the one-sentence answer for this vehicle (Stage 1,
-          design/COAST-PLAN.md) — pure re-narration of the ranked reminders. */}
+          design/COAST-PLAN.md) — pure re-narration of the ranked reminders,
+          merged with any open triage concerns (Stage 2). */}
       {reminders && reminders.length > 0 && (
         <div class="cv-card">
           {(() => {
-            const verdict = vehicleVerdict(reminders)
+            const verdict = vehicleVerdict(reminders, openConcerns ?? [])
             return (
               <>
                 <VerdictPanel verdict={verdict} tag="This vehicle" />

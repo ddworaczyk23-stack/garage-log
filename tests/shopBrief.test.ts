@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ReminderRule, Vehicle } from '../src/types'
 import { computeVehicleReminders, type ReminderInputs } from '../src/domain/reminderEngine'
-import { composeBrief, briefFromReminder, type BriefFacts } from '../src/domain/shopBrief'
+import { composeBrief, briefFromReminder, briefToText, type BriefFacts } from '../src/domain/shopBrief'
 
 // Like tests/verdict.test.ts, the reminder-driven briefs are built from REAL
 // engine output so this layer can't drift from the engine's shape.
@@ -67,6 +67,12 @@ describe('composeBrief (triage-shaped facts)', () => {
     expect(b.footerNote).toContain('written explanation')
   })
 
+  it('does not duplicate a trim already baked into the model (seeded vehicles)', () => {
+    const seeded = { ...vehicle, model: 'F-150 STX' } // seed.ts style: trim inside model AND in trim
+    const b = composeBrief(seeded, 84231, triageFacts, { known: false }, '2026-07-15')
+    expect(b.vehicleLine).toBe('2020 Ford F-150 STX')
+  })
+
   it('unknown history adds the verify-before-replacing note; known history cites last-done', () => {
     const unknown = composeBrief(vehicle, 84231, triageFacts, { known: false }, '2026-07-15')
     expect(unknown.historyNotes[0]).toContain('history for this item is unknown')
@@ -91,6 +97,20 @@ describe('composeBrief (triage-shaped facts)', () => {
     expect(b.footerNote).toBe('Please provide a written estimate before starting work.')
     // The generic decline line is always present so the section never renders empty.
     expect(b.fineToDecline.length).toBeGreaterThan(0)
+  })
+})
+
+describe('briefToText', () => {
+  it('mirrors every rendered field into shareable plain text', () => {
+    const b = composeBrief(vehicle, 84231, triageFacts, { known: false }, '2026-07-15')
+    const text = briefToText(b)
+    expect(text).toContain('SHOP BRIEF — 2020 Ford F-150 STX')
+    expect(text).toContain('84,231 mi · prepared Jul 15, 2026')
+    expect(text).toContain('Symptom: Grinding noise')
+    expect(text).toContain('Fair range: $300–700 at an independent shop')
+    expect(text).toContain('Fine to decline today:')
+    expect(text).toContain('- Engine or injection “flush” services')
+    expect(text).toContain('history for this item is unknown')
   })
 })
 

@@ -151,6 +151,42 @@ describe('vehicleVerdict — ruler, coast list, confidence', () => {
     expect(v.safeWindow).toMatch(/weeks|days/)
   })
 
+  it('an open concern that outranks the schedule takes over band, sentence, and pin', () => {
+    // Schedule says coast (watch-next), but the driver flagged grinding brakes.
+    const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 44000))
+    const v = vehicleVerdict(reminders, [
+      { title: 'Front brakes — worn to the metal', band: 'fix-now', createdDate: '2026-07-15' },
+    ])
+    expect(v.band).toBe('fix-now')
+    expect(v.headline).toBe('One thing needs attention now.')
+    expect(v.sentence).toContain('You flagged “Front brakes — worn to the metal” on Jul 15, 2026')
+    expect(v.rulerPin).toBe(12)
+    expect(v.safeWindow).toContain('this week')
+  })
+
+  it('on a band tie the schedule keeps the sentence; band concerns still count in the headline', () => {
+    // Both the schedule (due-next) and a concern are book-soon.
+    const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 44600))
+    const v = vehicleVerdict(reminders, [
+      { title: 'Squeal on first stops', band: 'book-soon', createdDate: '2026-07-10' },
+    ])
+    expect(v.band).toBe('book-soon')
+    expect(v.headline).toBe('2 things to book soon.')
+    expect(v.sentence).toContain('in ~400 mi') // schedule sentence, not the concern's
+  })
+
+  it('coast-band concerns join the coast list without changing an all-clear band sentence source', () => {
+    const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 44000))
+    const v = vehicleVerdict(reminders, [
+      { title: 'Faint hum at highway speed', band: 'coast', createdDate: '2026-07-12' },
+    ])
+    expect(v.band).toBe('coast')
+    // Tie on coast: the schedule's watch-next item keeps the sentence...
+    expect(v.sentence).toContain('engine oil & filter')
+    // ...and the concern shows on the list with its provenance.
+    expect(v.coastItems.some((i) => i.label === 'Faint hum at highway speed' && i.window.includes('on your list'))).toBe(true)
+  })
+
   it('a stale or missing odometer surfaces a confidence note, never a scarier band', () => {
     const withOdo = verdictFor([makeRule()], inputsAt('2026-07-01', 44600))
     expect(withOdo.confidenceNote).toBeNull()

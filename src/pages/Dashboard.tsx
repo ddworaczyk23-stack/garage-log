@@ -87,7 +87,7 @@ export function Dashboard() {
 
 function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number }) {
   const v = s.vehicle
-  const verdict = vehicleVerdict(s.reminders)
+  const verdict = vehicleVerdict(s.reminders, s.openConcerns)
 
   return (
     <Reveal class="cv-card">

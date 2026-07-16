@@ -1,6 +1,6 @@
 import type { ComputedReminder } from './reminderEngine'
 import type { MaintenanceStatus } from '../types'
-import { formatMiles } from './format'
+import { formatMiles, formatShortDate } from './format'
 
 // ---------------------------------------------------------------------------
 // Coast verdict layer (Stage 1 of the Coast migration — see design/COAST-PLAN.md).
@@ -207,19 +207,47 @@ function firstIn(reminders: ComputedReminder[], statuses: MaintenanceStatus[]): 
   return reminders.find((r) => statuses.includes(r.status)) ?? null
 }
 
+/** The slice of a triage Concern the verdict needs (structural, so callers can
+ * pass types.ts Concern rows directly). Only OPEN concerns belong here. */
+export interface ConcernInput {
+  title: string
+  band: SignalBand
+  createdDate: string // ISO
+}
+
+const BAND_ORDER: SignalBand[] = ['fix-now', 'book-soon', 'coast', 'all-clear']
+const moreUrgentBand = (a: SignalBand, b: SignalBand): SignalBand =>
+  BAND_ORDER.indexOf(a) <= BAND_ORDER.indexOf(b) ? a : b
+
+/** Concern-driven sentence: the driver flagged this themselves, so the copy
+ * points back at their own observation instead of the schedule. */
+function concernSentence(band: SignalBand, c: ConcernInput): string {
+  const date = formatShortDate(c.createdDate)
+  if (band === 'fix-now') return `You flagged “${c.title}” on ${date} — it reads as fix now. Don’t sit on it.`
+  if (band === 'book-soon') return `You flagged “${c.title}” on ${date} — get it booked while it’s still a small job.`
+  return `You flagged “${c.title}” — it can wait, but keep an eye on it.`
+}
+
+// Concern verdicts have no mileage/date depth, so the pin sits mid-zone
+// (same anchors the Check flow uses for a fresh triage verdict).
+const CONCERN_PIN: Record<SignalBand, number> = { 'fix-now': 12, 'book-soon': 36, coast: 62, 'all-clear': 88 }
+
 /**
  * The one-sentence verdict for a vehicle. `reminders` must be the engine's
  * ranked output (computeVehicleReminders / getVehicleReminders) — this layer
- * trusts that ranking completely.
+ * trusts that ranking completely. Open triage concerns merge in as siblings:
+ * the vehicle's band is the worst of both worlds, a concern that outranks
+ * every scheduled item takes over the sentence, and coast-band concerns join
+ * the "can coast" list.
  */
-export function vehicleVerdict(reminders: ComputedReminder[]): VehicleVerdict {
+export function vehicleVerdict(reminders: ComputedReminder[], concerns: ConcernInput[] = []): VehicleVerdict {
   const tracked = reminders.filter((r) => r.status !== 'not-applicable')
 
   const fixNow = tracked.filter((r) => r.status === 'overdue')
   const bookSoon = tracked.filter((r) => r.status === 'due-next')
   const watch = tracked.filter((r) => r.status === 'watch-next')
 
-  const band: SignalBand = fixNow.length
+  const reminderBand: SignalBand = fixNow.length
     ? 'fix-now'
     : bookSoon.length
       ? 'book-soon'
@@ -227,21 +255,36 @@ export function vehicleVerdict(reminders: ComputedReminder[]): VehicleVerdict {
         ? 'coast'
         : 'all-clear'
 
+  const concernBand: SignalBand = concerns.reduce<SignalBand>((worst, c) => moreUrgentBand(worst, c.band), 'all-clear')
+  const band = moreUrgentBand(reminderBand, concernBand)
+  const bandConcerns = concerns.filter((c) => c.band === band)
+  // A concern only TAKES OVER the sentence when it strictly outranks every
+  // scheduled item — on a tie the schedule keeps the mic (it has real numbers).
+  const concernDriven = BAND_ORDER.indexOf(concernBand) < BAND_ORDER.indexOf(reminderBand)
+
   // The reminder that drives the sentence: worst actionable item, or for an
   // all-clear vehicle the nearest upcoming completed item with a real target.
   const top =
-    band === 'all-clear'
+    reminderBand === 'all-clear'
       ? (tracked.find((r) => r.status === 'completed' && (r.milesRemaining != null || r.daysRemaining != null)) ?? null)
-      : firstIn(tracked, band === 'fix-now' ? ['overdue'] : band === 'book-soon' ? ['due-next'] : ['watch-next'])
-  const count = band === 'fix-now' ? fixNow.length : band === 'book-soon' ? bookSoon.length : watch.length
+      : firstIn(tracked, reminderBand === 'fix-now' ? ['overdue'] : reminderBand === 'book-soon' ? ['due-next'] : ['watch-next'])
+  const reminderCount =
+    band === 'fix-now' ? fixNow.length : band === 'book-soon' ? bookSoon.length : band === 'coast' ? watch.length : 0
+  const count = reminderCount + (band === 'all-clear' ? 0 : bandConcerns.length)
   const runnerUp = band === 'fix-now' ? (fixNow[1] ?? null) : band === 'book-soon' ? (bookSoon[1] ?? null) : null
 
   // "Can coast" = deferred-but-tracked: every watch-next item except the one
-  // already carrying the verdict sentence.
-  const coastItems: CoastItem[] = watch
-    .filter((r) => r !== top)
-    .slice(0, 4)
-    .map((r) => ({ label: r.rule.label, window: windowText(r) ?? 'a while out' }))
+  // already carrying the verdict sentence, plus coast-band concerns (unless
+  // one of those is itself carrying the sentence).
+  const sentenceConcern = concernDriven ? bandConcerns[0] : null
+  const coastItems: CoastItem[] = [
+    ...concerns
+      .filter((c) => c.band === 'coast' && c !== sentenceConcern)
+      .map((c) => ({ label: c.title, window: `on your list since ${formatShortDate(c.createdDate)}` })),
+    ...watch
+      .filter((r) => r !== (concernDriven ? null : top))
+      .map((r) => ({ label: r.rule.label, window: windowText(r) ?? 'a while out' })),
+  ].slice(0, 4)
 
   const stale = tracked.some((r) => r.odometerStale)
   const noOdometer = stale && tracked.every((r) => r.milesRemaining == null || r.interval.miles == null)
@@ -249,9 +292,13 @@ export function vehicleVerdict(reminders: ComputedReminder[]): VehicleVerdict {
   return {
     band,
     headline: headline(band, count),
-    sentence: sentence(band, top, runnerUp),
-    rulerPin: rulerPin(band, top),
-    safeWindow: safeWindow(band, top),
+    sentence: sentenceConcern ? concernSentence(band, sentenceConcern) : sentence(band, top, runnerUp),
+    rulerPin: sentenceConcern ? CONCERN_PIN[band] : rulerPin(band, top),
+    safeWindow: sentenceConcern
+      ? band === 'fix-now'
+        ? 'Don’t put this off — book it this week.'
+        : null
+      : safeWindow(band, top),
     coastItems,
     confidenceNote: stale
       ? noOdometer
