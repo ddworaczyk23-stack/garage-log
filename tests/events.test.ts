@@ -9,6 +9,8 @@ import {
   deleteOdometerReading,
   getCurrentMileageEstimate,
 } from '../src/db/events'
+import { openConcern, resolveConcern } from '../src/db/concerns'
+import { getPlaybook } from '../src/domain/playbooks'
 import type { ReminderRule } from '../src/types'
 
 const VEHICLE_ID = 'test-vehicle'
@@ -40,6 +42,7 @@ beforeEach(async () => {
     db.events.clear(),
     db.documents.clear(),
     db.reminderRules.clear(),
+    db.concerns.clear(),
   ])
   await db.reminderRules.add(makeRule())
 })
@@ -293,5 +296,101 @@ describe('getCurrentMileageEstimate', () => {
 
   it('returns null when there is no mileage data at all', async () => {
     expect(await getCurrentMileageEstimate(VEHICLE_ID)).toBeNull()
+  })
+})
+
+// --- concern auto-resolve (Coast triage <-> event log loop) ------------------
+
+describe('concern auto-resolve', () => {
+  const pb = getPlaybook('brake-noise')!
+  const grind = pb.outcomes.find((o) => o.id === 'grind')! // category: brake-inspection
+
+  async function openBrakeConcern(vehicleId = VEHICLE_ID) {
+    return openConcern(vehicleId, pb, grind, { sound: 'grind' })
+  }
+
+  it('resolves an open concern when an event with a matching category is logged', async () => {
+    const concernId = await openBrakeConcern()
+    const eventId = await recordCompletedEvent({
+      vehicleId: VEHICLE_ID,
+      kind: 'repair',
+      date: '2026-06-01',
+      odometerMiles: 45000,
+      category: 'brake-inspection',
+      title: 'Front pads + rotors',
+    })
+    const c = await db.concerns.get(concernId)
+    expect(c?.status).toBe('resolved')
+    expect(c?.resolvedEventId).toBe(eventId)
+    expect(c?.resolvedDate).not.toBeNull()
+  })
+
+  it('matches via additionalCategories too', async () => {
+    const concernId = await openBrakeConcern()
+    await recordCompletedEvent({
+      vehicleId: VEHICLE_ID,
+      kind: 'maintenance',
+      date: '2026-06-01',
+      odometerMiles: 45000,
+      category: 'oil-change',
+      additionalCategories: ['brake-inspection'],
+      title: 'Oil change + brake check',
+    })
+    const c = await db.concerns.get(concernId)
+    expect(c?.status).toBe('resolved')
+  })
+
+  it('leaves non-matching categories, other vehicles, and null-category concerns alone', async () => {
+    const brakeElsewhere = await openBrakeConcern('other-vehicle')
+    const brakeHere = await openBrakeConcern()
+    // a concern with no category can never auto-match
+    const uncategorized = await openBrakeConcern()
+    await db.concerns.update(uncategorized, { category: null })
+
+    await recordCompletedEvent({
+      vehicleId: VEHICLE_ID,
+      kind: 'maintenance',
+      date: '2026-06-01',
+      odometerMiles: 45000,
+      category: 'oil-change',
+      title: 'Oil change only',
+    })
+    expect((await db.concerns.get(brakeHere))?.status).toBe('open')
+    expect((await db.concerns.get(brakeElsewhere))?.status).toBe('open')
+    expect((await db.concerns.get(uncategorized))?.status).toBe('open')
+  })
+
+  it('deleting the resolving event reopens the concern', async () => {
+    const concernId = await openBrakeConcern()
+    const eventId = await recordCompletedEvent({
+      vehicleId: VEHICLE_ID,
+      kind: 'repair',
+      date: '2026-06-01',
+      odometerMiles: 45000,
+      category: 'brake-inspection',
+      title: 'Front pads',
+    })
+    expect((await db.concerns.get(concernId))?.status).toBe('resolved')
+
+    await deleteEvent(eventId)
+    const c = await db.concerns.get(concernId)
+    expect(c?.status).toBe('open')
+    expect(c?.resolvedDate).toBeNull()
+    expect(c?.resolvedEventId).toBeUndefined()
+  })
+
+  it('deleting an unrelated event does not reopen a manually resolved concern', async () => {
+    const concernId = await openBrakeConcern()
+    await resolveConcern(concernId) // manual "Handled", no event id
+    const eventId = await recordCompletedEvent({
+      vehicleId: VEHICLE_ID,
+      kind: 'maintenance',
+      date: '2026-06-01',
+      odometerMiles: 45000,
+      category: 'oil-change',
+      title: 'Oil change',
+    })
+    await deleteEvent(eventId)
+    expect((await db.concerns.get(concernId))?.status).toBe('resolved')
   })
 })

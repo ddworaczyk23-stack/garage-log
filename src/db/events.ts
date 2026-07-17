@@ -1,5 +1,6 @@
 import { db } from './db'
 import { attachEventDocument } from './documents'
+import { getOpenConcerns, reopenConcern, resolveConcern } from './concerns'
 import { applyEventToRule, matchesRule } from '../domain/reminderEngine'
 import {
   effectiveCategories,
@@ -105,6 +106,18 @@ export async function recordCompletedEvent(
     await applyRulePatch(rule, patch, category === input.category ? ruleOverride : undefined)
   }
 
+  // Auto-resolve open triage concerns this visit addressed: any open concern on
+  // this vehicle whose (best-guess) category matches one of the event's
+  // categories is marked handled, stamped with this event's id so deleting the
+  // event reopens it. Concerns without a category can't be matched — those stay
+  // on the list for a manual "Handled".
+  const categories = new Set<MaintenanceCategory>(effectiveCategories(event))
+  for (const concern of await getOpenConcerns(input.vehicleId)) {
+    if (concern.category && categories.has(concern.category)) {
+      await resolveConcern(concern.id, event.id)
+    }
+  }
+
   return event.id
 }
 
@@ -169,6 +182,16 @@ export async function deleteEvent(id: string): Promise<void> {
   for (const category of effectiveCategories(event)) {
     await syncRuleFromHistory(event.vehicleId, category)
   }
+
+  // Symmetry with the auto-resolve on add: concerns this event resolved
+  // (auto-matched or picked manually) go back on the list when it's deleted —
+  // same "recompute, don't assume" philosophy as syncRuleFromHistory above.
+  const resolvedByThis = await db.concerns
+    .where('vehicleId')
+    .equals(event.vehicleId)
+    .filter((c) => c.resolvedEventId === id)
+    .toArray()
+  for (const concern of resolvedByThis) await reopenConcern(concern.id)
 }
 
 /** Recompute a rule's cached lastDoneDate/lastDoneMiles from ALL of a vehicle's

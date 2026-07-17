@@ -62,14 +62,16 @@ function serializeDocument(d: VehicleDocument, blobBase64: string): SerializedDo
  * are sorted by stable id (documents/appMeta included) so re-exporting unchanged
  * data yields byte-identical JSON. */
 export async function exportGarage(): Promise<BackupFile> {
-  const [vehicles, odometerReadings, events, reminderRules, appMeta, documents] = await Promise.all([
-    db.vehicles.toArray(),
-    db.odometerReadings.toArray(),
-    db.events.toArray(),
-    db.reminderRules.toArray(),
-    db.appMeta.toArray(),
-    db.documents.toArray(),
-  ])
+  const [vehicles, odometerReadings, events, reminderRules, appMeta, documents, concerns] =
+    await Promise.all([
+      db.vehicles.toArray(),
+      db.odometerReadings.toArray(),
+      db.events.toArray(),
+      db.reminderRules.toArray(),
+      db.appMeta.toArray(),
+      db.documents.toArray(),
+      db.concerns.toArray(),
+    ])
 
   const sortedDocs = documents.sort(byId)
   const serializedDocs = await Promise.all(
@@ -83,6 +85,7 @@ export async function exportGarage(): Promise<BackupFile> {
     reminderRules: reminderRules.sort(byId),
     appMeta: appMeta.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)),
     documents: serializedDocs,
+    concerns: concerns.sort(byId),
   }
 
   const counts = Object.fromEntries(
@@ -138,7 +141,15 @@ export async function importGarage(backup: BackupFile): Promise<void> {
 
   await db.transaction(
     'rw',
-    [db.vehicles, db.odometerReadings, db.events, db.documents, db.reminderRules, db.appMeta],
+    [
+      db.vehicles,
+      db.odometerReadings,
+      db.events,
+      db.documents,
+      db.reminderRules,
+      db.appMeta,
+      db.concerns,
+    ],
     async () => {
       await Promise.all([
         db.vehicles.clear(),
@@ -147,6 +158,7 @@ export async function importGarage(backup: BackupFile): Promise<void> {
         db.documents.clear(),
         db.reminderRules.clear(),
         db.appMeta.clear(),
+        db.concerns.clear(),
       ])
       await db.vehicles.bulkPut(backup.data.vehicles)
       await db.odometerReadings.bulkPut(backup.data.odometerReadings)
@@ -154,6 +166,9 @@ export async function importGarage(backup: BackupFile): Promise<void> {
       await db.reminderRules.bulkPut(backup.data.reminderRules)
       await db.appMeta.bulkPut(backup.data.appMeta)
       await db.documents.bulkPut(documents)
+      // validateBackup normalizes v1 files to an empty array, but guard anyway —
+      // bulkPut(undefined) would abort the whole restore transaction.
+      await db.concerns.bulkPut(backup.data.concerns ?? [])
     },
   )
 }

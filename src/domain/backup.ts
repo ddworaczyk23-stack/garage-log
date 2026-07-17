@@ -6,6 +6,7 @@
 
 import type {
   AppMetaRecord,
+  Concern,
   MaintenanceEvent,
   OdometerReading,
   ReminderRule,
@@ -16,8 +17,10 @@ import type {
  * other JSON). */
 export const BACKUP_FORMAT = 'garage-log-backup'
 /** Backup FILE-FORMAT version — bump only if this envelope shape changes in a
- * breaking way. Independent of the Dexie schema version (`appSchemaVersion`). */
-export const CURRENT_BACKUP_VERSION = 1
+ * breaking way. Independent of the Dexie schema version (`appSchemaVersion`).
+ * v2: added the `concerns` table (Coast triage). v1 files (no concerns section)
+ * still validate and restore — concerns default to empty. */
+export const CURRENT_BACKUP_VERSION = 2
 
 /** A VehicleDocument with its blob encoded as base64 so it survives JSON. The
  * blob itself is reconstructed on import; every other field is copied verbatim,
@@ -45,6 +48,7 @@ export interface BackupData {
   reminderRules: ReminderRule[]
   appMeta: AppMetaRecord[]
   documents: SerializedDocument[]
+  concerns: Concern[]
 }
 
 export type BackupTable = keyof BackupData
@@ -56,6 +60,7 @@ export const BACKUP_TABLES: BackupTable[] = [
   'reminderRules',
   'appMeta',
   'documents',
+  'concerns',
 ]
 
 /** Human labels for the per-table counts shown in the UI summary. */
@@ -66,6 +71,7 @@ export const BACKUP_TABLE_LABELS: Record<BackupTable, string> = {
   reminderRules: 'Reminder rules & overrides',
   appMeta: 'App settings',
   documents: 'Documents',
+  concerns: 'Triage concerns',
 }
 
 export interface BackupFile {
@@ -116,6 +122,10 @@ export function validateBackup(raw: unknown, appSchemaVersion: number): Validati
 
   const data = raw.data
   if (!isObject(data)) return { ok: false, error: 'Backup is missing its data section.' }
+
+  // v1 files predate the concerns table — normalize to empty so every consumer
+  // downstream (summary, counts, import) can treat the section as always-present.
+  if ((raw.version as number) < 2 && data.concerns === undefined) data.concerns = []
 
   for (const table of BACKUP_TABLES) {
     if (!Array.isArray(data[table])) {

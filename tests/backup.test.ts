@@ -5,9 +5,10 @@ import {
   importGarage,
   serializeBackupToJson,
 } from '../src/db/backup'
-import { validateBackup, BACKUP_FORMAT } from '../src/domain/backup'
+import { validateBackup, BACKUP_FORMAT, CURRENT_BACKUP_VERSION } from '../src/domain/backup'
 import type {
   AppMetaRecord,
+  Concern,
   MaintenanceEvent,
   OdometerReading,
   ReminderRule,
@@ -66,6 +67,20 @@ const rule: ReminderRule = {
 
 const meta: AppMetaRecord = { key: 'greeting', value: 'hello' }
 
+const concern: Concern = {
+  id: 'concern-1',
+  vehicleId: 'veh-1',
+  createdDate: '2026-05-01',
+  playbookId: 'brake-noise',
+  outcomeId: 'grind',
+  answers: { sound: 'grind' },
+  band: 'fix-now',
+  title: 'Brake pads worn to the metal',
+  category: 'brake-inspection',
+  status: 'open',
+  resolvedDate: null,
+}
+
 function eventDoc(): VehicleDocument {
   return {
     id: 'doc-1',
@@ -101,6 +116,7 @@ async function clearAll() {
     db.documents.clear(),
     db.reminderRules.clear(),
     db.appMeta.clear(),
+    db.concerns.clear(),
   ])
 }
 
@@ -113,6 +129,7 @@ async function seedFixture() {
   await db.appMeta.put(meta)
   await db.documents.put(eventDoc())
   await db.documents.put(gloveboxDoc())
+  await db.concerns.put(concern)
 }
 
 beforeEach(seedFixture)
@@ -121,7 +138,7 @@ describe('exportGarage', () => {
   it('captures every table with a versioned envelope', async () => {
     const backup = await exportGarage()
     expect(backup.format).toBe(BACKUP_FORMAT)
-    expect(backup.version).toBe(1)
+    expect(backup.version).toBe(CURRENT_BACKUP_VERSION)
     expect(backup.appSchemaVersion).toBe(db.verno)
     expect(backup.counts).toEqual({
       vehicles: 1,
@@ -130,6 +147,7 @@ describe('exportGarage', () => {
       reminderRules: 1,
       appMeta: 1,
       documents: 2,
+      concerns: 1,
     })
   })
 
@@ -192,6 +210,46 @@ describe('validateBackup', () => {
     if (!res.ok) expect(res.error).toMatch(/documents/i)
   })
 
+  it('accepts a v1 backup (pre-concerns) and normalizes concerns to empty', () => {
+    const res = validateBackup(
+      {
+        format: BACKUP_FORMAT,
+        version: 1,
+        data: {
+          vehicles: [],
+          odometerReadings: [],
+          events: [],
+          reminderRules: [],
+          appMeta: [],
+          documents: [],
+        },
+      },
+      db.verno,
+    )
+    expect(res.ok).toBe(true)
+    if (res.ok) expect(res.backup.data.concerns).toEqual([])
+  })
+
+  it('rejects a v2 backup missing its concerns section', () => {
+    const res = validateBackup(
+      {
+        format: BACKUP_FORMAT,
+        version: 2,
+        data: {
+          vehicles: [],
+          odometerReadings: [],
+          events: [],
+          reminderRules: [],
+          appMeta: [],
+          documents: [],
+        },
+      },
+      db.verno,
+    )
+    expect(res.ok).toBe(false)
+    if (!res.ok) expect(res.error).toMatch(/concerns/i)
+  })
+
   it('rejects a document entry without blob data', () => {
     const res = validateBackup(
       {
@@ -226,6 +284,30 @@ describe('importGarage (restore)', () => {
     expect(await db.documents.count()).toBe(2)
     expect(await db.reminderRules.count()).toBe(1)
     expect(await db.appMeta.count()).toBe(1)
+    expect(await db.concerns.count()).toBe(1)
+  })
+
+  it('round-trips concern fields intact', async () => {
+    const backup = await exportGarage()
+    await clearAll()
+    await importGarage(backup)
+
+    const restored = await db.concerns.get('concern-1')
+    expect(restored).toEqual(concern)
+  })
+
+  it('restores a v1 backup (no concerns section) with concerns left empty', async () => {
+    const backup = await exportGarage()
+    const v1 = JSON.parse(serializeBackupToJson(backup)) as Record<string, unknown>
+    v1.version = 1
+    delete (v1.data as Record<string, unknown>).concerns
+    const res = validateBackup(v1, db.verno)
+    expect(res.ok).toBe(true)
+    if (!res.ok) return
+
+    await importGarage(res.backup)
+    expect(await db.vehicles.count()).toBe(1)
+    expect(await db.concerns.count()).toBe(0)
   })
 
   it('preserves event↔document relationships and overrides', async () => {
