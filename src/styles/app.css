@@ -3483,6 +3483,77 @@ a.list-row:hover {
 }
 
 /* =========================================================================
+   DENSITY & INTERACTION POLISH (responsive plan R3) — the finish pass. Two
+   surfaces, two sets of affordances: desktop gets hover + a frame sized to its
+   wider measure; touch keeps big targets and no latching hover states.
+   ========================================================================= */
+
+/* --- Touch: neutralize desktop hover affordances ---
+   On a touch device :hover latches after a tap and stays until you press
+   something else, so the lift/elevation sticks on the row you just tapped and
+   reads as selected. These are mouse affordances; :active still gives touch its
+   own press feedback, so nothing is lost here. */
+@media (hover: none) {
+  .btn:hover,
+  .vehicle-summary:hover,
+  a.list-row:hover {
+    transform: none;
+  }
+  .vehicle-summary:hover,
+  .export-cta:hover,
+  .doc-result:hover {
+    box-shadow: var(--shadow-card);
+  }
+  .chk-choice:hover {
+    border-color: var(--border);
+    box-shadow: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* Cards here are 350–550px wide rather than a phone's ~343px; the mobile
+     16px padding reads tight against that measure. Frame only — the type scale
+     is deliberately unchanged, so this adds room without shrinking anything. */
+  .card {
+    padding: 18px 20px;
+  }
+
+  /* The triage flow stays linear and narrow on EVERY surface: a decision is one
+     question at a time, and a 3-option chooser stretched across 900px is harder
+     to scan, not easier. Cap and centre it in the content column instead. */
+  .page.chk {
+    max-width: 580px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* The floating "+ Log" pill is anchored to the bottom nav and centred on the
+     viewport — both wrong on desktop, where there is no bottom nav and left:50%
+     ignores the 248px sidebar (it landed visibly off-centre). Dock it to the
+     bottom-right, clear of the rail. The entry keyframe hardcodes the mobile
+     translateX(-50%) centring trick, and an animation outranks these
+     declarations while it plays, so desktop needs its own keyframe too. */
+  .vd-sticky {
+    left: auto;
+    right: 32px;
+    bottom: 24px;
+    transform: none;
+    animation-name: stickyInDesktop;
+  }
+}
+
+@keyframes stickyInDesktop {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =========================================================================
    COAST — shop brief page (Stage 3, design/COAST-PLAN.md)
    Reuses the .chk-brief card from the Check flow; adds the fair-vs-decline
    columns and print rules so the brief prints like a work order.
