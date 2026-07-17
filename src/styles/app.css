@@ -2364,7 +2364,12 @@ iframe.preview-media {
   grid-template-columns: 1fr;
   gap: 14px;
 }
-@media (min-width: 900px) {
+/* VehicleDetail two-column rail. Two ranges (R2): 900–1023px is tablet with no
+   sidebar (full viewport, plenty of room), and ≥1200px is desktop where the
+   248px sidebar still leaves a comfortable main column. The 1024–1199px gap
+   stays single-column — with the sidebar present the content there is too
+   narrow to split without cramping the schedule/history lists. */
+@media (min-width: 900px) and (max-width: 1023px), (min-width: 1200px) {
   .vd-layout {
     grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
     gap: 20px;
@@ -2373,6 +2378,13 @@ iframe.preview-media {
   .vd-rail {
     position: sticky;
     top: 88px; /* clears the sticky app header + a little breathing room */
+  }
+}
+/* On desktop the header is in the sidebar (not a sticky top bar), so the rail
+   can stick nearer the top of the scrolling content column. */
+@media (min-width: 1200px) {
+  .vd-rail {
+    top: 24px;
   }
 }
 
@@ -3413,11 +3425,56 @@ a.list-row:hover {
   }
 
   /* --- content column: scrolls independently; the fixed-nav bottom padding is
-     no longer needed. Reading measure kept (R2 widens the overview screens). --- */
+     no longer needed. Wider measures than mobile (R2) so overview screens use
+     the space the sidebar frames, not a 700px ribbon. --- */
   .app-main {
     grid-area: main;
     overflow-y: auto;
+    max-width: 980px;
     padding: 32px 40px 48px;
+  }
+  .app-main.app-main-wide {
+    max-width: 1200px;
+  }
+}
+
+/* =========================================================================
+   DESKTOP OVERVIEW GRIDS (responsive plan R2) — the overview screens spread
+   into real multi-column layouts at desktop width; the flow screens (Check,
+   single-column docs like Backup) stay linear. Gated ≥1024px so mobile/tablet
+   remain single-column stacks. Markup is unchanged except two grid wrappers
+   (.gb-today-grid, .cost-vehicle-grid) added in Dashboard/Costs.
+   ========================================================================= */
+@media (min-width: 1024px) {
+  /* Today: both vehicles' verdict cards side by side (a 2-car household sees
+     both at once); a lone vehicle fills the row. */
+  .gb-today-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* Costs: per-vehicle breakdown cards as a board rather than a tall stack. */
+  .cost-vehicle-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* Documents: result rows become a 2-column grid so the list doesn't run as
+     one narrow ribbon down a wide page. */
+  .doc-result-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 8px;
+  }
+  .doc-result-list > li {
+    display: flex;
+  }
+  .doc-result {
+    width: 100%;
   }
 }
 

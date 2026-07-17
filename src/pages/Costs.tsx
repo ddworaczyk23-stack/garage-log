@@ -68,11 +68,14 @@ export function Costs() {
           hint="Add a cost when you log a service or repair and the breakdown will appear here."
         />
       ) : (
-        summary.vehicles.map((v) => (
-          <Reveal key={v.vehicle.id}>
-            <VehicleCostCard summary={v} range={range} />
-          </Reveal>
-        ))
+        // Stacks on mobile; a 2-up board on desktop (see .cost-vehicle-grid, R2).
+        <div class="cost-vehicle-grid">
+          {summary.vehicles.map((v) => (
+            <Reveal key={v.vehicle.id}>
+              <VehicleCostCard summary={v} range={range} />
+            </Reveal>
+          ))}
+        </div>
       )}
     </section>
   )

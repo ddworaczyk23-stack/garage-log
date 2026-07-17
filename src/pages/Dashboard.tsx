@@ -44,7 +44,12 @@ export function Dashboard() {
       {summary.vehicles.length === 0 ? (
         <p class="muted small">No vehicles yet — add one to get started.</p>
       ) : (
-        summary.vehicles.map((s) => <TodayCard key={s.vehicle.id} summary={s} year={summary.year} />)
+        // Stacks on mobile; a 2-up board on desktop (see .gb-today-grid, R2).
+        <div class="gb-today-grid">
+          {summary.vehicles.map((s) => (
+            <TodayCard key={s.vehicle.id} summary={s} year={summary.year} />
+          ))}
+        </div>
       )}
 
       <Reveal>
