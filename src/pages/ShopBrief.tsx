@@ -6,6 +6,13 @@ import { getVehicleReminders } from '../db/summary'
 import { getPlaybook, outcomeToBriefFacts } from '../domain/playbooks'
 import { composeBrief, briefFromReminder, briefToText, type ShopBrief as Brief } from '../domain/shopBrief'
 import { BAND_LABELS } from '../domain/verdict'
+import {
+  checkQuote,
+  diagnosisChecksFromRequest,
+  type DiagnosisCheck,
+  type QuoteRating,
+} from '../domain/quoteCheck'
+import { parseNumberInput } from '../domain/format'
 import { Loading, EmptyState } from '../components/ui'
 import type { Vehicle } from '../types'
 
@@ -174,6 +181,8 @@ export function ShopBriefPage({ id }: { id: string }) {
         )}
       </div>
 
+      <QuoteCheck brief={brief} />
+
       {shared && (
         <p class="notice notice-ok sb-chrome" role="status">
           {shared}
@@ -188,6 +197,106 @@ export function ShopBriefPage({ id }: { id: string }) {
           Print it
         </button>
       </div>
+    </section>
+  )
+}
+
+// Stage 5C: "Got a quote? Check it." Lives on the brief because that's where the
+// fair range already is and where the driver is at the counter. Stateless — no
+// persistence in v1 (see COAST-PLAN-STAGE5.md); nothing here is saved.
+const RATING_TONE: Record<QuoteRating, { cls: string; label: string }> = {
+  reasonable: { cls: 'qc-ok', label: 'Looks reasonable' },
+  'a-bit-high': { cls: 'qc-high', label: 'A bit high' },
+  'worth-a-second-look': { cls: 'qc-flag', label: 'Worth a second look' },
+}
+
+function QuoteCheck({ brief }: { brief: Brief }) {
+  const [quoteRaw, setQuoteRaw] = useState('')
+  const [checks, setChecks] = useState<DiagnosisCheck[]>(() => diagnosisChecksFromRequest(brief.request))
+
+  const quoted = parseNumberInput(quoteRaw)
+  const showResult = quoted != null && quoted > 0
+  const result = showResult
+    ? checkQuote({ fairLow: brief.fairLow, fairHigh: brief.fairHigh, quotedTotal: quoted, diagnosisChecks: checks })
+    : null
+
+  function setCheck(id: string, done: boolean | null) {
+    setChecks((cs) => cs.map((c) => (c.id === id ? { ...c, done } : c)))
+  }
+
+  const tone = result ? RATING_TONE[result.rating] : null
+
+  return (
+    <section class="qc sb-chrome">
+      <h3 class="qc-title">Got a quote? Check it.</h3>
+      <p class="chk-sub">On your side of the counter — nothing here is saved or shared.</p>
+
+      <label class="qc-field">
+        <span class="qc-field-lbl">What did they quote?</span>
+        <span class="qc-input-wrap">
+          <span class="qc-dollar" aria-hidden="true">$</span>
+          <input
+            type="text"
+            inputMode="decimal"
+            class="qc-input"
+            placeholder="e.g. 1400"
+            value={quoteRaw}
+            onInput={(e) => setQuoteRaw((e.target as HTMLInputElement).value)}
+            aria-label="Quoted total in dollars"
+          />
+        </span>
+      </label>
+
+      {checks.length > 0 && (
+        <div class="qc-checks">
+          <div class="qc-checks-lbl">Did the shop do these before quoting?</div>
+          {checks.map((c) => (
+            <div key={c.id} class="qc-check">
+              <span class="qc-check-label">{c.label}?</span>
+              <span class="qc-check-btns" role="group" aria-label={c.label}>
+                <button
+                  type="button"
+                  class={`qc-yn${c.done === true ? ' is-on' : ''}`}
+                  aria-pressed={c.done === true}
+                  onClick={() => setCheck(c.id, c.done === true ? null : true)}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  class={`qc-yn qc-yn-no${c.done === false ? ' is-on' : ''}`}
+                  aria-pressed={c.done === false}
+                  onClick={() => setCheck(c.id, c.done === false ? null : false)}
+                >
+                  No
+                </button>
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {result && tone && (
+        <div class={`qc-result ${tone.cls}`} role="status">
+          <div class="qc-rating">
+            <span class="qc-dot" aria-hidden="true" />
+            {tone.label}
+          </div>
+          {result.reasons.map((r) => (
+            <p key={r} class="qc-reason">
+              {r}
+            </p>
+          ))}
+          <div class="qc-script">
+            <div class="qc-script-lbl">Worth asking</div>
+            <ul>
+              {result.secondOpinionScript.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </section>
   )
 }

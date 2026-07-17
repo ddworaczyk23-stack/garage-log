@@ -3646,6 +3646,165 @@ a.list-row:hover {
   .sb-okdecline { flex-direction: column; }
 }
 
+/* --- quote verification (Stage 5C) — the "check the quote" tool ------------ */
+.qc {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--border, rgba(35, 39, 43, 0.13));
+  border-radius: 16px;
+  background: var(--bg-card);
+}
+.qc-title {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 17px;
+  margin: 0 0 2px;
+}
+.qc-field { display: block; margin: 14px 0; }
+.qc-field-lbl {
+  display: block;
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.qc-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+  border: 1px solid var(--border, rgba(35, 39, 43, 0.18));
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--bg-inset, rgba(35, 39, 43, 0.04));
+}
+.qc-input-wrap:focus-within { border-color: var(--accent); }
+.qc-dollar {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  color: var(--text-muted);
+}
+.qc-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 11px 0;
+  font-family: var(--font-mono);
+  font-size: 17px;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+.qc-checks { margin: 14px 0; }
+.qc-checks-lbl {
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.qc-check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+}
+.qc-check + .qc-check { border-top: 1px solid var(--border, rgba(35, 39, 43, 0.1)); }
+.qc-check-label {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.qc-check-btns { display: flex; gap: 6px; flex: none; }
+.qc-yn {
+  min-width: 46px;
+  padding: 6px 10px;
+  border: 1px solid var(--border, rgba(35, 39, 43, 0.2));
+  border-radius: 9px;
+  background: var(--bg-card);
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.qc-yn.is-on {
+  border-color: var(--sig-green);
+  background: color-mix(in srgb, var(--sig-green) 14%, var(--bg-card));
+  color: var(--sig-green);
+}
+.qc-yn-no.is-on {
+  border-color: var(--sig-red);
+  background: color-mix(in srgb, var(--sig-red) 12%, var(--bg-card));
+  color: var(--sig-red);
+}
+.qc-result {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+}
+.qc-result.qc-ok {
+  background: color-mix(in srgb, var(--sig-green) 9%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-green) 28%, transparent);
+}
+.qc-result.qc-high {
+  background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-amber) 32%, transparent);
+}
+.qc-result.qc-flag {
+  background: color-mix(in srgb, var(--sig-red) 10%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-red) 30%, transparent);
+}
+.qc-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.qc-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.qc-ok .qc-rating { color: var(--sig-green); }
+.qc-ok .qc-dot { background: var(--sig-green); }
+.qc-high .qc-rating { color: var(--sig-amber); }
+.qc-high .qc-dot { background: var(--sig-amber); }
+.qc-flag .qc-rating { color: var(--sig-red); }
+.qc-flag .qc-dot { background: var(--sig-red); }
+.qc-reason {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 8px 0 0;
+}
+.qc-script { margin-top: 12px; }
+.qc-script-lbl {
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.qc-script ul { margin: 0; padding-left: 18px; }
+.qc-script li {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
 @media print {
   /* Only the brief card prints — no app chrome, no buttons. */
   .app-header,
