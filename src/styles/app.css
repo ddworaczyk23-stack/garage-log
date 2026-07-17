@@ -1808,14 +1808,6 @@ iframe.preview-media {
   padding-top: 13px;
 }
 
-/* --- threshold gauge (Gauge.tsx) --- */
-.gauge {
-  width: 132px;
-  height: 80px;
-  flex-shrink: 0;
-  display: block;
-}
-
 /* --- bullet track (BulletTrack.tsx) --- */
 .bullet {
   position: relative;
@@ -2114,73 +2106,6 @@ iframe.preview-media {
   text-align: right;
 }
 
-/* focal gauge instrument */
-.vd-focus {
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  padding: 15px 16px;
-  margin: 14px 0 4px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.vd-focus-read {
-  min-width: 0;
-  flex: 1;
-}
-.vd-focus-eye {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.vd-focus-eye .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
-}
-.vd-focus-svc {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: 19px;
-  letter-spacing: -0.01em;
-  margin: 5px 0 0;
-  line-height: 1.1;
-  color: var(--text);
-}
-.vd-focus-big {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  font-size: 15px;
-  margin-top: 7px;
-  font-variant-numeric: tabular-nums;
-}
-.vd-focus-meta {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.03em;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-.vd-focus-meta b {
-  color: var(--text);
-  font-weight: 500;
-}
-.tone-overdue {
-  color: var(--c-overdue);
-}
-.tone-due {
-  color: var(--c-due);
-}
-.tone-watch {
-  color: var(--c-watch);
-}
 .tone-ok {
   color: var(--c-ok);
 }
@@ -2392,14 +2317,6 @@ iframe.preview-media {
   .vd-name {
     font-size: 28px;
   }
-  .vd-focus {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .vd-focus .gauge {
-    align-self: center;
-  }
   .instr-top {
     flex-direction: column;
     gap: 14px;
@@ -2466,11 +2383,6 @@ a.list-row,
 .vehicle-summary:hover,
 a.list-row:hover {
   transform: translateY(-1px);
-}
-
-/* the banded gauge (viewBox 100×58) scales by width */
-.gauge {
-  height: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

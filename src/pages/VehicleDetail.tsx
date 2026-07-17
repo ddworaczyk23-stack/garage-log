@@ -2,7 +2,7 @@ import type { ComponentChildren } from 'preact'
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
-import { formatInterval, formatMiles, formatShortDate } from '../domain/format'
+import { formatInterval, formatShortDate } from '../domain/format'
 import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns } from '../db/concerns'
@@ -26,7 +26,6 @@ import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
 import { Loading, EmptyState, ConfirmButton } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
-import { Gauge } from '../components/motion/Gauge'
 import { BulletTrack } from '../components/motion/BulletTrack'
 import { Instrument } from '../components/motion/Instrument'
 import { useIntroGate, useReducedMotion } from '../motion/hooks'
@@ -63,31 +62,9 @@ const LAMP_CLASS: Record<MaintenanceStatus, string> = {
   'not-applicable': 'is-na',
 }
 
-// The focal instrument's headline: eyebrow + one honest sentence, driven by the
-// worst reminder that has a numeric target.
-function focalCopy(r: ComputedReminder): { eye: string; big: ComponentChildren; tone: string } {
-  const miles = r.milesRemaining
-  const pct = reminderProgress(r).pct
-  const pctText = pct != null ? `${Math.round(pct)}% of interval` : ''
-  if (r.status === 'overdue') {
-    const over = miles != null ? `${formatMiles(Math.abs(miles))} past due` : 'Past due'
-    return { eye: 'Most urgent', tone: 'tone-overdue', big: <>{over}{pctText ? <> · <b>{pctText}</b></> : null}</> }
-  }
-  if (r.status === 'due-next') {
-    const left = miles != null ? `${formatMiles(miles)} left` : 'Due now'
-    return { eye: 'Due now', tone: 'tone-due', big: <>{left}{pctText ? <> · <b>{pctText}</b></> : null}</> }
-  }
-  if (r.status === 'watch-next') {
-    const left = miles != null ? `${formatMiles(miles)} left` : 'Coming up'
-    return { eye: 'Coming up', tone: 'tone-watch', big: <>{left}{pctText ? <> · <b>{pctText}</b></> : null}</> }
-  }
-  const next = r.dueAtMiles != null ? `next at ${formatMiles(r.dueAtMiles)}` : 'on schedule'
-  return { eye: 'All on track', tone: 'tone-ok', big: <>On track · <b>{next}</b></> }
-}
-
 // Vehicle detail: the editorial "Service Record" — identity, the odometer
 // instrument, the personalized maintenance schedule scored by the reminders
-// engine (now with a focal gauge + per-row progress), quick-add for service/
+// engine (with per-row progress), quick-add for service/
 // repair/odometer, collapsible history, documents, and delete. The reminders
 // engine is untouched — it's only fed by what gets logged, and logging updates
 // the gauge/tally live via Dexie liveQuery.
@@ -199,12 +176,6 @@ export function VehicleDetail({ id }: Props) {
     },
     { overdue: 0, due: 0, ok: 0 },
   )
-  // getVehicleReminders() already returns the list ranked by urgency (overdue
-  // → due-next → watch-next → completed → not-applicable), so the top item is
-  // always the right one to feature — even before it has a numeric target
-  // (nothing logged yet), in which case Gauge/focalCopy render their "no data
-  // yet" state instead of the block disappearing entirely.
-  const focal = list[0] ?? null
   const stale = mileage
     ? (Date.now() - new Date(`${mileage.asOfDate}T00:00:00`).getTime()) / 86_400_000 > 45
     : false
@@ -326,6 +297,14 @@ export function VehicleDetail({ id }: Props) {
               <>
                 <VerdictPanel verdict={verdict} tag="This vehicle" />
                 <UrgencyRuler verdict={verdict} />
+                {/* The verdict names the ONE thing that matters; this says how
+                    many items sit behind it — the only fact the old focal gauge
+                    carried that the verdict doesn't. */}
+                <div class="vd-tally">
+                  <span class="tally"><span class="vd-lamp is-overdue" />{counts.overdue} overdue</span>
+                  <span class="tally"><span class="vd-lamp is-due" />{counts.due} due now</span>
+                  <span class="tally"><span class="vd-lamp is-ok" />{counts.ok} on track</span>
+                </div>
               </>
             )
           })()}
@@ -381,50 +360,6 @@ export function VehicleDetail({ id }: Props) {
             </>
           )}
         </Collapsible>
-      </section>
-
-      {/* focal status: most-urgent item + tally, always visible in the rail */}
-      <section class="card vd-focus-card">
-        {!reminders ? (
-          <Loading />
-        ) : !focal ? (
-          <p class="muted small">No schedule items.</p>
-        ) : (
-          (() => {
-            const c = focalCopy(focal)
-            const prog = reminderProgress(focal)
-            return (
-              <>
-                <div class="vd-focus">
-                  <Gauge
-                    pct={prog.pct}
-                    animate={intro}
-                    reduced={reduced}
-                    ariaLabel={`${focal.rule.label}: ${prog.pct != null ? Math.round(prog.pct) + '% of interval' : 'no fixed interval'}`}
-                  />
-                  <div class="vd-focus-read">
-                    <div class={`vd-focus-eye ${c.tone}`}>
-                      <span class="dot" />
-                      {c.eye}
-                    </div>
-                    <div class="vd-focus-svc">{focal.rule.label}</div>
-                    <div class={`vd-focus-big ${c.tone}`}>{c.big}</div>
-                    <div class="vd-focus-meta">
-                      {focal.dueAtMiles != null && <>due at <b>{formatMiles(focal.dueAtMiles)}</b> · </>}
-                      every{' '}
-                      <b>{formatInterval(focal.interval.miles, focal.interval.months, focal.interval.conditionBased)}</b>
-                    </div>
-                  </div>
-                </div>
-                <div class="vd-tally">
-                  <span class="tally"><span class="vd-lamp is-overdue" />{counts.overdue} overdue</span>
-                  <span class="tally"><span class="vd-lamp is-due" />{counts.due} due now</span>
-                  <span class="tally"><span class="vd-lamp is-ok" />{counts.ok} on track</span>
-                </div>
-              </>
-            )
-          })()
-        )}
       </section>
 
       {/* quick-add */}
