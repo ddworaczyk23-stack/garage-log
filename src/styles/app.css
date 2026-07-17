@@ -3454,6 +3454,10 @@ a.list-row:hover {
     gap: 16px;
     align-items: start;
   }
+  /* The stacked-mobile spacing rule (.cv-card + .cv-card) would push the second
+     vehicle's card down within its grid cell; here the grid `gap` handles
+     spacing, so reset it to keep both cards top-aligned. */
+  .gb-today-grid > .cv-card + .cv-card { margin-top: 0; }
 
   /* Costs: per-vehicle breakdown cards as a board rather than a tall stack. */
   .cost-vehicle-grid {
