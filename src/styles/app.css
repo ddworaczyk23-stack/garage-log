@@ -3277,6 +3277,151 @@ a.list-row:hover {
 }
 
 /* =========================================================================
+   DESKTOP LAYER — left sidebar (responsive plan R1, design/COAST-RESPONSIVE-PLAN.md)
+   ≥1024px only, so mobile/tablet are byte-for-byte unchanged. Pure CSS: the
+   same three chrome elements (header, bottom-nav, account-bar) are re-placed by
+   grid into a fixed left rail — brand at top, nav filling the middle, sync at
+   the foot — with the content column scrolling on its own. No DOM/JS change;
+   the ".bottom-nav" class name is a mobile-era misnomer here but kept to avoid
+   rippling through Nav.tsx.
+   ========================================================================= */
+@media (min-width: 1024px) {
+  .app-shell {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    grid-template-rows: auto 1fr auto;
+    grid-template-areas:
+      'brand   main'
+      'nav     main'
+      'account main';
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden; /* the content column scrolls, not the page body */
+  }
+
+  /* --- brand block (was the sticky top header) --- */
+  .app-header {
+    grid-area: brand;
+    position: static;
+    justify-content: flex-start;
+    gap: 10px;
+    padding: 22px 20px 16px;
+    border-bottom: none;
+    border-right: 0.5px solid var(--border);
+    background: var(--bg-elevated);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .app-mark {
+    width: 22px;
+    height: 22px;
+  }
+  .app-title {
+    font-size: 1rem;
+  }
+
+  /* --- sidebar nav (was the fixed bottom tab bar) --- */
+  .bottom-nav {
+    grid-area: nav;
+    position: static;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 3px;
+    height: auto;
+    padding: 8px 12px;
+    border-top: none;
+    border-right: 0.5px solid var(--border);
+    background: var(--bg-elevated);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    overflow-y: auto;
+  }
+  .nav-item {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: background 0.15s ease, color 0.15s ease;
+  }
+  .nav-item:hover {
+    background: var(--bg-inset);
+    color: var(--text);
+  }
+  .nav-item.is-active {
+    background: var(--accent-tint);
+    color: var(--accent);
+  }
+  .nav-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Check: the raised FAB becomes a full-width primary button, pinned to the
+     top of the rail (order:-1) as the app's headline action. */
+  .nav-check {
+    order: -1;
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 0 10px;
+    padding: 12px;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--accent-text);
+    font-size: 0.92rem;
+    transition: background 0.15s ease;
+  }
+  .nav-check.is-active {
+    color: var(--accent-text);
+  }
+  .nav-check:hover {
+    background: var(--accent-hover);
+  }
+  .nav-check-disc {
+    width: auto;
+    height: auto;
+    margin: 0;
+    background: none;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .nav-check-disc svg {
+    width: 20px;
+    height: 20px;
+  }
+  .nav-check:hover .nav-check-disc {
+    transform: none;
+  }
+
+  /* --- sync status (was the strip under the header) --- */
+  .account-bar {
+    grid-area: account;
+    max-width: none;
+    margin: 0;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 14px 18px 18px;
+    border-bottom: none;
+    border-right: 0.5px solid var(--border);
+    background: var(--bg-elevated);
+  }
+
+  /* --- content column: scrolls independently; the fixed-nav bottom padding is
+     no longer needed. Reading measure kept (R2 widens the overview screens). --- */
+  .app-main {
+    grid-area: main;
+    overflow-y: auto;
+    padding: 32px 40px 48px;
+  }
+}
+
+/* =========================================================================
    COAST — shop brief page (Stage 3, design/COAST-PLAN.md)
    Reuses the .chk-brief card from the Check flow; adds the fair-vs-decline
    columns and print rules so the brief prints like a work order.
