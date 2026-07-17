@@ -6,11 +6,14 @@ import {
   applicableQuestions,
   outcomeToBriefFacts,
   fairRangeText,
+  contextualizeOutcome,
   type Answers,
   type Playbook,
   type DriveVerdict,
+  type TriageContext,
 } from '../src/domain/playbooks'
 import type { SignalBand } from '../src/domain/verdict'
+import type { MaintenanceCategory } from '../src/types'
 
 const BANDS: SignalBand[] = ['fix-now', 'book-soon', 'coast', 'all-clear']
 
@@ -286,5 +289,61 @@ describe('action layer — whatToBring stays out of the shop brief', () => {
     const facts = outcomeToBriefFacts(outcome) as Record<string, unknown>
     expect(facts.whatToBring).toBeUndefined()
     expect(JSON.stringify(facts)).not.toContain('receipt')
+  })
+})
+
+// --- Stage 5B: context-aware verdicts (design/COAST-PLAN-STAGE5.md) --------
+
+function ctx(overdue: MaintenanceCategory[] = [], dueSoon: MaintenanceCategory[] = []): TriageContext {
+  return { overdueCategories: new Set(overdue), dueSoonCategories: new Set(dueSoon) }
+}
+
+describe('contextualizeOutcome', () => {
+  const pb = getPlaybook('brake-noise')!
+  const outcome = pb.outcomes.find((o) => o.id === 'grind')! // category: 'brake-inspection'
+
+  it('is a no-op (identity-equal) when the category is neither overdue nor due soon', () => {
+    const result = contextualizeOutcome(outcome, ctx(['oil-change'], ['tire-inspection']))
+    expect(result).toBe(outcome)
+  })
+
+  it('is a no-op when the outcome has no category at all', () => {
+    const synthetic = { ...outcome, category: undefined }
+    const result = contextualizeOutcome(synthetic, ctx(['brake-inspection']))
+    expect(result).toBe(synthetic)
+  })
+
+  it('prepends a context note when the category is overdue', () => {
+    const result = contextualizeOutcome(outcome, ctx(['brake-inspection']))
+    expect(result).not.toBe(outcome)
+    expect(result.explanation.toLowerCase()).toContain('overdue')
+    expect(result.explanation.endsWith(outcome.explanation)).toBe(true)
+  })
+
+  it('prepends a due-soon note (distinct from the overdue note) when only due soon', () => {
+    const result = contextualizeOutcome(outcome, ctx([], ['brake-inspection']))
+    expect(result.explanation.toLowerCase()).toContain('due soon')
+    expect(result.explanation.toLowerCase()).not.toContain('overdue')
+  })
+
+  it('overdue takes precedence when a category is in both sets', () => {
+    const result = contextualizeOutcome(outcome, ctx(['brake-inspection'], ['brake-inspection']))
+    expect(result.explanation.toLowerCase()).toContain('overdue')
+  })
+
+  it('never changes the band', () => {
+    const result = contextualizeOutcome(outcome, ctx(['brake-inspection']))
+    expect(result.band).toBe(outcome.band)
+  })
+
+  it('never changes or drops escalation triggers', () => {
+    const result = contextualizeOutcome(outcome, ctx(['brake-inspection']))
+    expect(result.escalation).toEqual(outcome.escalation)
+  })
+
+  it('does not mutate the original outcome object', () => {
+    const before = outcome.explanation
+    contextualizeOutcome(outcome, ctx(['brake-inspection']))
+    expect(outcome.explanation).toBe(before)
   })
 })

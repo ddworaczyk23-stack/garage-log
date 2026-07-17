@@ -1,5 +1,5 @@
 import type { SignalBand } from './verdict'
-import type { MaintenanceCategory } from '../types'
+import { CATEGORY_LABELS, type MaintenanceCategory } from '../types'
 import type { BriefFacts } from './shopBrief'
 
 // ---------------------------------------------------------------------------
@@ -558,7 +558,7 @@ const warningLight: Playbook = {
         'The oil you added, if you topped it up.',
       ],
       shopChoice:
-        'Any independent shop can test oil pressure with a mechanical gauge. Insist on that test before anyone quotes an oil pump or internal engine work — it’s the difference between a $150 sensor and a $3,000 teardown.',
+        'Any independent shop can test oil pressure with a mechanical gauge — insist on that test before anyone quotes an oil pump or internal engine work, the difference between a $150 sensor and a $3,000 teardown. If it IS the pump or something internal, check your powertrain warranty before paying out of pocket — that repair is often covered while a sensor alone usually isn’t.',
       askShopTo: 'measure oil pressure with a mechanical gauge, check for leaks, and report the pump/engine condition before authorizing major work.',
       category: 'oil-change',
       match: (a) => a.light === 'oil',
@@ -627,7 +627,7 @@ const warningLight: Playbook = {
         'Note which lights are on together (ABS, traction, red brake) and what changed about the pedal.',
       ],
       shopChoice:
-        'Any independent shop can pull ABS codes. Get the code and sensor test results before anyone quotes an ABS module — modules are the expensive guess.',
+        'Any independent shop can pull ABS codes and test a sensor. Get those results before anyone quotes an ABS module — modules are the expensive guess. If it does turn out to be the module, a dealer or ABS specialist has the programming/bleeding tools most independents don’t.',
       match: (a) => a.light === 'abs' && a.symptom === 'drive',
     },
     {
@@ -782,7 +782,7 @@ const leakSmell: Playbook = {
         'Any recent cooling-system receipts — hoses, water pump, radiator.',
       ],
       shopChoice:
-        'Any independent shop — but the pressure test IS the diagnosis. Get its result before agreeing to head-gasket work, which is the expensive assumption.',
+        'Start with any independent shop for the pressure test — that result IS the diagnosis, before agreeing to head-gasket work. If it does come back internal, check your powertrain warranty first: head-gasket repair is often covered while it’s active, and a dealer is worth the trip for that decision alone.',
       match: (a) => a.smoke === 'white' || a.color === 'milky' || (a.smell === 'sweet' && a.what === 'smell'),
     },
     {
@@ -919,6 +919,46 @@ export function fairRangeText(cost: CostRange): string {
  * a second one here; the playbook research already carries the symptom, the
  * mechanic-language request, the cost range, and the escalation triggers.
  */
+// --- context-aware verdicts (Stage 5B) --------------------------------------
+//
+// The engine (what's overdue) informs the triage (what's wrong): a PURE
+// contextualizer that annotates an already-resolved outcome with a note when
+// the outcome's own maintenance category is also overdue/due-soon on the
+// engine side. `resolveStep` and every `match` predicate stay pure and
+// context-free — this is a separate pass the page applies AFTER resolution,
+// so the decision tree itself is untouched.
+
+export interface TriageContext {
+  overdueCategories: Set<MaintenanceCategory>
+  dueSoonCategories: Set<MaintenanceCategory>
+}
+
+/**
+ * Returns an annotated COPY of `outcome` when its category is overdue or due
+ * soon on the reminder engine's side; otherwise returns `outcome` unchanged
+ * (identity-equal, so callers can rely on reference equality for "no-op").
+ * Only ever ADDS a leading context sentence to `explanation` — band and
+ * escalation triggers are never touched, so this can sharpen a verdict but
+ * never relax or reassure one away (same fail-safe rule as the engine).
+ * Reordering `likelyCauses` is deliberately NOT done here: the research-
+ * authored order already puts the "most often" cause first for every
+ * outcome, so a string-matching heuristic to find "the wear-related one"
+ * would be guessing at prose rather than reusing real data.
+ */
+export function contextualizeOutcome(outcome: PlaybookOutcome, context: TriageContext): PlaybookOutcome {
+  if (!outcome.category) return outcome
+  const overdue = context.overdueCategories.has(outcome.category)
+  const dueSoon = !overdue && context.dueSoonCategories.has(outcome.category)
+  if (!overdue && !dueSoon) return outcome
+
+  const label = CATEGORY_LABELS[outcome.category].toLowerCase()
+  const note = overdue
+    ? `Your ${label} is also overdue for service, which raises the odds this is the wear-related cause below.`
+    : `Your ${label} is also due soon, which raises the odds this is the wear-related cause below.`
+
+  return { ...outcome, explanation: `${note} ${outcome.explanation}` }
+}
+
 export function outcomeToBriefFacts(outcome: PlaybookOutcome): BriefFacts {
   return {
     title: outcome.title,

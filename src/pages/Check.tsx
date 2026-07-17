@@ -3,23 +3,26 @@ import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns, openConcern, resolveConcern, deleteConcern } from '../db/concerns'
+import { getVehicleReminders } from '../db/summary'
 import {
   PLAYBOOKS,
   getPlaybook,
   resolveStep,
   outcomeToBriefFacts,
   fairRangeText,
+  contextualizeOutcome,
   type Answers,
   type Playbook,
   type PlaybookOutcome,
   type DriveVerdict,
+  type TriageContext,
 } from '../domain/playbooks'
 import { composeBrief } from '../domain/shopBrief'
 import type { SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { formatShortDate } from '../domain/format'
 import { Loading, EmptyState, ConfirmButton } from '../components/ui'
-import type { Vehicle, Concern } from '../types'
+import type { Vehicle, Concern, MaintenanceCategory } from '../types'
 
 // ---------------------------------------------------------------------------
 // Coast "Start a check" triage flow (Stage 2 — see design/COAST-PLAN.md).
@@ -104,22 +107,32 @@ interface FlowData {
   mileage: number | null
   historyKnown: boolean
   concerns: Concern[]
+  /** Stage 5B: overdue/due-soon categories from the engine, for contextualizeOutcome. */
+  context: TriageContext
 }
 
 function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   const data = useQuery<FlowData>(
     async () => {
-      const [vehicle, mileage, eventCount, concerns] = await Promise.all([
+      const [vehicle, mileage, eventCount, concerns, reminders] = await Promise.all([
         db.vehicles.get(vehicleId),
         getCurrentMileageEstimate(vehicleId),
         db.events.where('vehicleId').equals(vehicleId).count(),
         getOpenConcerns(vehicleId),
+        getVehicleReminders(vehicleId),
       ])
+      const overdueCategories = new Set<MaintenanceCategory>()
+      const dueSoonCategories = new Set<MaintenanceCategory>()
+      for (const r of reminders) {
+        if (r.status === 'overdue') overdueCategories.add(r.rule.category)
+        else if (r.status === 'due-next') dueSoonCategories.add(r.rule.category)
+      }
       return {
         vehicle: vehicle ?? null,
         mileage: mileage?.miles ?? null,
         historyKnown: eventCount > 0,
         concerns,
+        context: { overdueCategories, dueSoonCategories },
       }
     },
     [vehicleId],
@@ -243,7 +256,10 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   }
 
   // ---- phase: verdict ----
-  const outcome = step.outcome
+  // Stage 5B: annotate with engine context (e.g. "your brakes are also
+  // overdue") before render. Nothing persisted (Concern rows, the shop brief)
+  // reads `explanation`, so this only affects what's shown here.
+  const outcome = contextualizeOutcome(step.outcome, data.context)
   const tone = BAND_TONE[outcome.band]
 
   async function addToList() {

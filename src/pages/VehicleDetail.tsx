@@ -8,7 +8,8 @@ import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns } from '../db/concerns'
 import { reminderProgress } from '../domain/progress'
 import { vehicleVerdict } from '../domain/verdict'
-import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
+import { vehicleHealth } from '../domain/health'
+import { VerdictPanel, UrgencyRuler, HealthMeter } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
 import { identityFromVehicle } from '../domain/vehicleIdentity'
 import { hydrateFactoryMaintenance, hydrateConsensusData, hydrateCostEstimates } from '../db/vehicleOnboarding'
@@ -312,6 +313,7 @@ export function VehicleDetail({ id }: Props) {
             </button>
           </>
         )}
+        {reminders && <HealthMeter health={vehicleHealth(reminders, openConcerns ?? [], stale)} />}
         <hr class="rule-double" />
       </header>
 

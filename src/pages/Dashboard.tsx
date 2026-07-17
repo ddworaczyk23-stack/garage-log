@@ -4,7 +4,7 @@ import { formatMiles, formatMoney } from '../domain/format'
 import { vehicleVerdict } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { Loading } from '../components/ui'
-import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
+import { VerdictPanel, UrgencyRuler, HealthMeter } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
 
 // Home dashboard: Coast "Today" (Stage 1, design/COAST-PLAN.md). One verdict
@@ -109,6 +109,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
               {s.spendThisYear > 0 && <> · {formatMoney(s.spendThisYear)} in {year}</>}
             </span>
           </div>
+          <HealthMeter health={s.health} />
 
           <VerdictPanel verdict={verdict} />
           <UrgencyRuler verdict={verdict} />
