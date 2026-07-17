@@ -56,6 +56,15 @@ export interface CostRange {
   dealerHigh?: number
 }
 
+/** Can the driver keep driving? The safety call, in plain terms (Stage 5A). */
+export type DriveVerdict = 'drive-ok' | 'short-trip-only' | 'tow'
+
+export interface DriveOrTow {
+  verdict: DriveVerdict
+  /** Why, and the threshold in terms a non-mechanic can act on. */
+  note: string
+}
+
 export interface PlaybookOutcome {
   id: string
   band: SignalBand
@@ -68,6 +77,16 @@ export interface PlaybookOutcome {
   cost: CostRange
   /** "It becomes fix-now if…" triggers a non-mechanic can watch for. */
   escalation: string[]
+  // --- action layer (Stage 5A) — all optional; uncurated outcomes simply
+  // render fewer cards, they are never blocked. See COAST-PLAN-STAGE5.md.
+  /** "Try this first" — steps a non-mechanic can safely do themselves. */
+  selfCheck?: string[]
+  /** The drive-vs-tow call. Curated for every fix-now outcome (safety). */
+  driveOrTow?: DriveOrTow
+  /** What to take to the shop. For the DRIVER — never rendered in the brief. */
+  whatToBring?: string[]
+  /** Independent-vs-dealer/warranty, anchored to THIS job (never generic). */
+  shopChoice?: string
   /** Symptom translated into what a shop needs to hear. */
   symptomLine: string
   /** What to ask the shop to check/report before authorizing the repair. */
@@ -152,6 +171,20 @@ const brakeNoise: Playbook = {
       symptomLine: 'Vehicle pulls / takes longer to stop under braking, with a noise from the front.',
       askShopTo: 'compare left/right brake temperatures, inspect caliper slide pins and piston operation, and check the hoses for restriction before quoting parts.',
       category: 'brake-inspection',
+      selfCheck: [
+        'After a short drive, hold your hand near (not on) each front wheel — one running much hotter than the other suggests a caliper stuck on that side.',
+        'Check the brake fluid reservoir under the hood: below the MIN line points at a leak or badly worn pads.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'A car that pulls or takes longer to stop has already lost part of its braking, and heat makes it worse. This isn’t one to “drive carefully” to the shop — have it looked at where it sits, or towed.',
+      },
+      whatToBring: [
+        'Any brake work receipts from the last couple of years.',
+        'Note which way it pulls, and whether it happens on every stop or only hard ones.',
+      ],
+      shopChoice:
+        'Any independent shop — calipers and hydraulics are routine. Ask them to check the whole corner rather than just replacing pads.',
       match: (a) => a.feel === 'pull' || a.feel === 'longer',
     },
     {
@@ -166,6 +199,19 @@ const brakeNoise: Playbook = {
       symptomLine: 'Metallic grinding during braking, likely pads worn through to the backing plate.',
       askShopTo: 'measure pad thickness, inspect the rotors for scoring / minimum thickness, and check for a seized caliper before quoting pads only.',
       category: 'brake-inspection',
+      selfCheck: [
+        'Look through the wheel spokes at the edge of the brake pad — much less than ⅛ inch (3 mm) of pad material left means it’s worn out.',
+        'Compare both front wheels: grinding from one side only often points at a stuck caliper on that side.',
+      ],
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Drive only if you have to, and only as far as the nearest shop — keep speeds low and leave extra room to stop. If stops have gotten longer or the car pulls to one side, don’t drive it; tow it.',
+      },
+      whatToBring: [
+        'Your last brake receipt — when the pads were done, and whether the rotors were replaced or resurfaced.',
+      ],
+      shopChoice:
+        'Any independent shop does brakes well — this is routine work, and a dealer premium buys you nothing here.',
       match: (a) => a.sound === 'grind',
     },
     {
@@ -194,6 +240,15 @@ const brakeNoise: Playbook = {
       symptomLine: 'Brake squeal on most stops, no pull or pulsation — likely pads near the wear indicator.',
       askShopTo: 'inspect pad thickness, rotor condition, and pad hardware, and report whether this is normal wear or something uneven.',
       category: 'brake-inspection',
+      selfCheck: [
+        'Look through the wheel spokes at the pad edge — you can usually see roughly how much material is left without removing anything.',
+      ],
+      driveOrTow: {
+        verdict: 'drive-ok',
+        note: 'Fine to keep driving — the wear indicator is doing exactly its job. Book it within the next couple of weeks, before it turns into grinding and takes the rotors with it.',
+      },
+      whatToBring: ['Your last brake receipt, so they can see how long this set has been on.'],
+      shopChoice: 'Any independent shop — routine pad work, no dealer premium warranted.',
       match: (a) => a.sound === 'squeal' && a.often === 'most',
     },
     {
@@ -425,6 +480,20 @@ const warningLight: Playbook = {
       symptomLine: 'Flashing MIL while driving — active misfire suspected.',
       askShopTo: 'read the OBD-II codes, report any misfire codes (P0300-series), and check coils, plugs, and fuel trims before replacing parts.',
       category: 'spark-plugs',
+      selfCheck: [
+        'Note what it’s doing as you stop — shaking, down on power, or a rotten-egg smell. That tells the shop a lot and costs you nothing.',
+        'Don’t bother with the gas cap: a flashing light is never a loose cap. That’s the solid-light story.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'A flashing light means raw fuel is pouring into the catalytic converter, and it can cook it in minutes of driving — turning a ~$300 ignition job into a $1,000+ converter. Stop somewhere safe and have it towed rather than pressing on.',
+      },
+      whatToBring: [
+        'Any codes, if you’ve had them read — most parts stores read them free.',
+        'Spark plug or ignition coil receipts, if that work has been done before.',
+      ],
+      shopChoice:
+        'An independent shop diagnoses misfires fine. Go to the dealer only if the car is still under powertrain warranty — a covered misfire repair is worth the trip.',
       match: (a) => a.light === 'cel' && a.flashing === 'flashing',
     },
     {
@@ -438,6 +507,17 @@ const warningLight: Playbook = {
       escalation: ['It starts flashing, or power drops further'],
       symptomLine: 'Solid check-engine light with rough running / power loss.',
       askShopTo: 'pull stored and pending codes with freeze-frame data and diagnose the driveability issue before quoting parts.',
+      selfCheck: [
+        'Get the code read before you spend anything — most parts stores do it free, and it turns "check engine" into a specific part.',
+        'Check the gas cap clicks tight. It’s a long shot once the car is running rough, but it costs nothing to rule out.',
+      ],
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Fine for a short, gentle trip if it holds a steady speed with no strong shaking — skip the highway, keep it local. If it shakes hard, loses power heavily, smells off, or the light starts flashing, stop and treat it as a tow.',
+      },
+      whatToBring: ['Any codes you’ve had read.', 'Note when it runs rough — cold start, idle, or under load.'],
+      shopChoice:
+        'An independent shop is fine for diagnosis. Dealer only if it’s under powertrain warranty, or if the codes point at something model-specific they’ve seen before.',
       match: (a) => a.light === 'cel' && a.flashing === 'solid' && a.symptom === 'drive',
     },
     {
@@ -463,6 +543,22 @@ const warningLight: Playbook = {
       cost: { diyLow: 10, diyHigh: 120, shopLow: 150, shopHigh: 800, dealerLow: 250, dealerHigh: 3500 },
       escalation: ['Any knocking, a metal smell, or the light stays on after topping up — stop and tow'],
       symptomLine: 'Oil-pressure warning light illuminated.',
+      selfCheck: [
+        'Pull over and shut the engine off first — this is the one light where continuing costs you the engine.',
+        'With the engine off and the car level, wait five minutes, then check the dipstick. Below the low mark, add the oil grade printed on the filler cap.',
+        'If the light goes out after topping up and stays out, you’ve found it — but still get the leak or oil burn-off looked at.',
+        'If the light stays on after topping up, shut it off and don’t restart it.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'Low oil pressure can destroy an engine in minutes — no errand is worth it. If topping up doesn’t clear the light, don’t restart the engine; have it towed.',
+      },
+      whatToBring: [
+        'Your last oil change receipt — date and mileage.',
+        'The oil you added, if you topped it up.',
+      ],
+      shopChoice:
+        'Any independent shop can test oil pressure with a mechanical gauge. Insist on that test before anyone quotes an oil pump or internal engine work — it’s the difference between a $150 sensor and a $3,000 teardown.',
       askShopTo: 'measure oil pressure with a mechanical gauge, check for leaks, and report the pump/engine condition before authorizing major work.',
       category: 'oil-change',
       match: (a) => a.light === 'oil',
@@ -479,6 +575,18 @@ const warningLight: Playbook = {
       symptomLine: 'Battery/charging light with dimming lights — charging failure suspected.',
       askShopTo: 'load-test the battery and charging system (voltage at idle and under load) and inspect the belt before replacing parts.',
       category: 'battery-check',
+      selfCheck: [
+        'Switch off everything you don’t need — A/C, heated seats, stereo, phone charging — to stretch the charge you have left.',
+        'Don’t shut the engine off until you’re where you want to end up. It may not restart.',
+        'Most parts stores test the battery and alternator free, right in the parking lot — that usually tells you which of the two it is.',
+      ],
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'You’re running on the battery alone, so range is short and unpredictable — it can stall in traffic without warning, and the steering can go heavy when it does. Under about 5 miles, city streets, no highway. If it’s further than that, or it’s dark or raining, tow it instead.',
+      },
+      whatToBring: ['The battery’s age, if you know it — often on a sticker on the case.'],
+      shopChoice:
+        'A free parts-store test first, then any independent shop. Alternator and battery work is routine — no dealer needed.',
       match: (a) => a.light === 'battery' && a.symptom === 'dim',
     },
     {
@@ -507,6 +615,19 @@ const warningLight: Playbook = {
       symptomLine: 'ABS/traction light with a change in braking feel.',
       askShopTo: 'pull the ABS codes, inspect the wheel-speed sensors, and check brake-fluid level before quoting a module.',
       category: 'brake-inspection',
+      selfCheck: [
+        'Check the brake fluid reservoir under the hood — below the MIN line is a real finding worth telling the shop.',
+        'Note whether the red brake warning light is on too, not just the amber ABS one. That difference matters a lot to the diagnosis.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'The brakes feeling different alongside the light means this isn’t just a sensor fault — something hydraulic may be involved. Don’t rely on it for an emergency stop; have it looked at where it sits.',
+      },
+      whatToBring: [
+        'Note which lights are on together (ABS, traction, red brake) and what changed about the pedal.',
+      ],
+      shopChoice:
+        'Any independent shop can pull ABS codes. Get the code and sensor test results before anyone quotes an ABS module — modules are the expensive guess.',
       match: (a) => a.light === 'abs' && a.symptom === 'drive',
     },
     {
@@ -619,6 +740,20 @@ const leakSmell: Playbook = {
       symptomLine: 'Fuel smell, possible fuel leak.',
       askShopTo: 'pressure-test the fuel system and inspect the lines, tank, pump seal, and filler neck before authorizing repair.',
       category: 'fuel-filter',
+      selfCheck: [
+        'Check the gas cap is on and clicks — a bad cap seal is a genuinely common cause of a fuel smell, and it’s free to rule out.',
+        'Park it outside and away from the house or garage, not in an enclosed space.',
+        'If you can smell fuel strongly or see drips, don’t start it.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'A fuel leak is a fire risk, not an errand — vapor alone is enough. Leave it parked outside and have it towed rather than driving it in.',
+      },
+      whatToBring: [
+        'Note when the smell is worst — right after refueling, on start-up, or all the time.',
+      ],
+      shopChoice:
+        'Any independent shop can trace a fuel leak. Check for an open recall first, though — fuel-system recalls are common and the fix is free at a dealer.',
       match: (a) => a.smell === 'gas' || a.smoke === 'black',
     },
     {
@@ -633,6 +768,21 @@ const leakSmell: Playbook = {
       symptomLine: 'Persistent white, sweet-smelling smoke/steam.',
       askShopTo: 'pressure-test the cooling system, determine external vs. internal coolant loss, and run a combustion-gas / head-gasket check if needed.',
       category: 'coolant',
+      selfCheck: [
+        'Watch the temperature gauge — if it climbs past the middle, shut the engine off and let it cool.',
+        'Never open the radiator cap or coolant reservoir on a warm engine. It’s under pressure and will scald you.',
+        'Once it’s properly COLD — hours, not minutes — check the coolant reservoir against the min/max lines.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'Coolant is escaping, and an engine that overheats can go from a $200 hose to a $3,000 head gasket in one drive. Don’t drive it to the shop — have it towed.',
+      },
+      whatToBring: [
+        'A photo of where the steam or puddle shows up.',
+        'Any recent cooling-system receipts — hoses, water pump, radiator.',
+      ],
+      shopChoice:
+        'Any independent shop — but the pressure test IS the diagnosis. Get its result before agreeing to head-gasket work, which is the expensive assumption.',
       match: (a) => a.smoke === 'white' || a.color === 'milky' || (a.smell === 'sweet' && a.what === 'smell'),
     },
     {
@@ -647,6 +797,18 @@ const leakSmell: Playbook = {
       symptomLine: 'Green/orange/pink sweet-smelling coolant leak.',
       askShopTo: 'pressure-test the cooling system and inspect the radiator, hoses, water pump, and reservoir, confirming external vs. internal.',
       category: 'coolant',
+      selfCheck: [
+        'With the engine COLD, check the coolant reservoir against its min/max lines — then re-check it weekly until it’s fixed.',
+        'Slide a sheet of cardboard under the front overnight: the colour and position of the drip tell the shop a lot.',
+        'Never open the cap on a warm engine — it’s pressurised and will scald.',
+      ],
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Short local trips only — under about 10 miles, watching the temperature gauge the whole way, and keep the coolant topped up. Skip long drives, hot days, and towing. The moment the gauge climbs or the heater blows cold, pull over: that is no longer a small leak.',
+      },
+      whatToBring: ['A photo of the drip on the cardboard — colour and position both help.'],
+      shopChoice:
+        'Any independent shop. Ask for a pressure test rather than a “top it up and see what happens.”',
       match: (a) => a.color === 'green',
     },
     {

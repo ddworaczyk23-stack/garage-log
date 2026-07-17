@@ -3122,6 +3122,85 @@ a.list-row:hover {
   color: var(--text);
 }
 
+/* --- action layer (Stage 5A): drive-vs-tow + self-check + bring + shop ---
+   The drive call is the safety line, so it's tinted by verdict: tow borrows
+   the escalation block's red, short-trip the amber, drive-ok the guide blue. */
+.chk-drive {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  margin-bottom: 10px;
+}
+.chk-drive-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chk-drive-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+.chk-drive b {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.chk-drive-note {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 6px 0 0;
+}
+.chk-drive.is-tow {
+  background: color-mix(in srgb, var(--sig-red) 10%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-red) 30%, transparent);
+}
+.chk-drive.is-tow b { color: var(--sig-red); }
+.chk-drive.is-tow .chk-drive-dot { background: var(--sig-red); }
+.chk-drive.is-short {
+  background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-amber) 34%, transparent);
+}
+.chk-drive.is-short b { color: var(--sig-amber); }
+.chk-drive.is-short .chk-drive-dot { background: var(--sig-amber); }
+.chk-drive.is-ok {
+  background: color-mix(in srgb, var(--sig-blue) 8%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-blue) 26%, transparent);
+}
+.chk-drive.is-ok b { color: var(--sig-blue-deep); }
+.chk-drive.is-ok .chk-drive-dot { background: var(--sig-blue); }
+
+.chk-action { margin-bottom: 10px; }
+.chk-action-title {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+.chk-action-list { margin: 0; padding-left: 18px; }
+.chk-action-list li {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.chk-action-list li + li { margin-top: 6px; }
+.chk-action-body {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 0;
+}
+
 /* --- actions --- */
 .chk-actions {
   display: flex;
@@ -3452,12 +3531,27 @@ a.list-row:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
     gap: 16px;
-    align-items: start;
+    /* stretch (the grid default) — a fix-now verdict's extra reason line and a
+       longer coast list make one card's content taller than the other's; both
+       cards should still read as the same height, so we don't fight the
+       default here (see the flex chain below for how the footer stays pinned
+       to the bottom of that stretched box either way). */
   }
   /* The stacked-mobile spacing rule (.cv-card + .cv-card) would push the second
      vehicle's card down within its grid cell; here the grid `gap` handles
      spacing, so reset it to keep both cards top-aligned. */
   .gb-today-grid > .cv-card + .cv-card { margin-top: 0; }
+  /* Stretch each card to the row's full height, then flex the tile itself so
+     the "Open Service Record" footer lands on the same bottom edge on both
+     cards regardless of which vehicle's verdict text/coast list is longer.
+     .cv-body (Dashboard.tsx) wraps everything above the footer link. */
+  .gb-today-grid > .cv-card { display: flex; }
+  .gb-today-grid > .cv-card > .gb-tile {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .gb-today-grid > .cv-card > .gb-tile > .cv-body { flex: 1; }
 
   /* Costs: per-vehicle breakdown cards as a board rather than a tall stack. */
   .cost-vehicle-grid {
