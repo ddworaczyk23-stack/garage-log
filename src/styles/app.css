@@ -3342,11 +3342,20 @@ a.list-row:hover {
   .app-main {
     grid-area: main;
     overflow-y: auto;
-    max-width: 980px;
-    padding: 32px 40px 48px;
+    /* Full-width scroll container so the scrollbar rides the screen's right
+       edge, not the edge of a centred 980px box floating mid-column. Content is
+       still centred + measure-capped, now via responsive side padding instead
+       of max-width (which is what pulled the bar inward). */
+    max-width: none;
+    padding: 32px max(40px, calc((100% - 980px) / 2)) 48px;
   }
   .app-main.app-main-wide {
-    max-width: 1200px;
+    /* override the base .app-main.app-main-wide max-width (1080px) too — it's
+       more specific than the .app-main:none above, so without this the wide
+       pages would stay capped and the scrollbar would float inward again. */
+    max-width: none;
+    padding-left: max(40px, calc((100% - 1200px) / 2));
+    padding-right: max(40px, calc((100% - 1200px) / 2));
   }
 }
 
