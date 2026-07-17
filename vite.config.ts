@@ -15,11 +15,13 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icons/apple-touch-icon.png'],
       manifest: {
-        name: 'The Glovebox',
-        short_name: 'The Glovebox',
-        description: 'Local-first maintenance tracker for the household vehicles.',
-        theme_color: '#f3efe4',
-        background_color: '#f3efe4',
+        // Display identity is "Coast" (Stage 4 cutover); start_url/scope and the
+        // repo/deploy path deliberately stay as-is — see design/COAST-PLAN.md.
+        name: 'Coast',
+        short_name: 'Coast',
+        description: 'Plain answers about your cars — what needs attention, what can wait, and what it should cost.',
+        theme_color: '#efefea',
+        background_color: '#efefea',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '.',

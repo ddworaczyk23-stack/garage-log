@@ -1,47 +1,49 @@
-/* Garage Log design system (Milestone 10 aesthetic pass).
+/* Coast design system (Stage 4 identity cutover, design/COAST-PLAN.md).
  *
- * Single light theme, Apple-inspired: calm gray canvas, white cards with
- * hairline borders + soft shadows, one blue accent, status colors reserved
- * for meaning. All class names predate this pass — only the presentation
- * changed, so markup and behavior are untouched. */
+ * Single light theme — "daylight road signage": concrete canvas, white cards
+ * with cool hairline borders, asphalt ink, and interstate guide-sign blue as
+ * the one interactive accent. Status colors ARE the four-signal verdict scale
+ * (fix-now red / book-soon amber / can-coast blue / all-clear green), so a
+ * status pill anywhere in the app and a verdict panel on Today speak the same
+ * language. All class names predate this pass — only presentation changed. */
 
 :root {
-  /* Palette — warm "workshop paper" with an olive-green brand signature.
-   * Canvas is a warm cream, surfaces a soft warm white, ink a warm near-black,
-   * and every interactive accent is olive. Status hues are earthy (brick, ochre,
-   * mustard, leaf, taupe, clay) so meaning still reads without feeling clinical. */
-  --bg: #f3efe4; /* warm paper canvas */
-  --bg-elevated: #fffdf7;
-  --bg-card: #fffdf7; /* soft warm white */
-  --bg-inset: #ece5d5; /* cream wells inside cards */
-  --border: rgba(74, 60, 30, 0.15); /* warm hairline */
-  --text: #2a271f; /* warm ink */
-  --text-muted: #736b5b; /* warm taupe */
-  --accent: #4f5b2a; /* deepened olive — the brand signature */
-  --accent-hover: #414c22;
-  --accent-tint: rgba(79, 91, 42, 0.12);
-  --accent-text: #fbfaf3;
-  --danger: #a83326; /* warm brick red */
-  --danger-tint: rgba(168, 51, 38, 0.09);
+  /* Palette — daylight concrete + asphalt, signed in guide-sign blue. */
+  --bg: #efefea; /* daylight concrete canvas */
+  --bg-elevated: #fafaf7;
+  --bg-card: #ffffff; /* sign-face white */
+  --bg-inset: #f0f0eb; /* concrete wells inside cards */
+  --border: rgba(35, 39, 43, 0.13); /* cool hairline */
+  --text: #23272b; /* asphalt ink */
+  --text-muted: #6b7076;
+  --accent: #1b5faa; /* interstate guide-sign blue — the brand signature */
+  --accent-hover: #164e8c;
+  --accent-tint: rgba(27, 95, 170, 0.11);
+  --accent-text: #ffffff;
+  --danger: #b3402e; /* signal red */
+  --danger-tint: rgba(179, 64, 46, 0.09);
 
-  /* Status hues (warm tint background + readable earthy text) */
-  --c-overdue: #a3311f;
-  --c-overdue-bg: rgba(168, 51, 38, 0.12);
-  --c-due: #99610f;
-  --c-due-bg: rgba(200, 140, 30, 0.16);
-  --c-watch: #7f6712;
-  --c-watch-bg: rgba(190, 160, 40, 0.18);
-  --c-ok: #4a7340; /* leaf green — distinct from the olive accent */
-  --c-ok-bg: rgba(74, 115, 64, 0.15);
-  --c-stale: #6f6553; /* neutral taupe */
-  --c-stale-bg: rgba(111, 101, 83, 0.14);
-  --c-cost: #9c5b34; /* clay */
-  --c-cost-bg: rgba(156, 91, 52, 0.13);
+  /* Status hues = the four-signal scale (+ neutrals for stale/cost).
+   * overdue → fix-now red · due → book-soon amber · watch → can-coast blue
+   * (watch-next literally means "you can coast for now") · ok → all-clear
+   * green. Text tones are deepened for contrast on their tints. */
+  --c-overdue: #a63a29;
+  --c-overdue-bg: rgba(179, 64, 46, 0.12);
+  --c-due: #8a5800; /* amber ink, readable on tint */
+  --c-due-bg: rgba(217, 138, 0, 0.15);
+  --c-watch: #164e8c; /* guide-sign blue, deepened */
+  --c-watch-bg: rgba(27, 95, 170, 0.11);
+  --c-ok: #1e7a44; /* highway guide green */
+  --c-ok-bg: rgba(30, 122, 68, 0.12);
+  --c-stale: #5c636b; /* cool slate */
+  --c-stale-bg: rgba(92, 99, 107, 0.12);
+  --c-cost: #4a5057; /* asphalt-soft: money is data, not a warning */
+  --c-cost-bg: rgba(74, 80, 87, 0.1);
 
-  /* Elevation — warm-tinted, soft */
-  --shadow-card: 0 1px 2px rgba(60, 48, 22, 0.05), 0 10px 26px -14px rgba(60, 48, 22, 0.2);
-  --shadow-raised: 0 2px 6px rgba(60, 48, 22, 0.07), 0 16px 34px -18px rgba(60, 48, 22, 0.28);
-  --shadow-modal: 0 24px 60px rgba(40, 32, 14, 0.22);
+  /* Elevation — cool-tinted, soft */
+  --shadow-card: 0 1px 2px rgba(35, 39, 43, 0.05), 0 10px 26px -14px rgba(35, 39, 43, 0.18);
+  --shadow-raised: 0 2px 6px rgba(35, 39, 43, 0.07), 0 16px 34px -18px rgba(35, 39, 43, 0.26);
+  --shadow-modal: 0 24px 60px rgba(23, 27, 32, 0.22);
 
   /* Metrics */
   --radius: 16px; /* cards */
@@ -49,13 +51,14 @@
   --gap: 16px;
   --nav-height: 60px;
 
-  /* Type identity — editorial-motion design system (self-hosted, see styles/fonts.ts).
-     Spectral = serif display, IBM Plex Sans = body, IBM Plex Mono = data spine. */
+  /* Type identity — the Coast trio (self-hosted, see styles/fonts.ts).
+     Overpass = the road-sign voice (UI, headings, verdicts), Newsreader = the
+     human explanation voice (serif prose), Overpass Mono = the data spine. */
   --font-sans:
-    'IBM Plex Sans', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI',
+    'Overpass', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI',
     Roboto, Helvetica, Arial, sans-serif;
-  --font-serif: 'Spectral', Georgia, 'Times New Roman', serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
+  --font-mono: 'Overpass Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Motion vocabulary — one coherent physics across the app. */
   --ease-paper: cubic-bezier(0.22, 0.61, 0.36, 1); /* soft settle: fades / rises */
@@ -112,27 +115,19 @@ body {
   z-index: 10;
 }
 
-/* Stamped olive emblem — a small brand mark beside the wordmark. */
+/* Coast road roundel — a guide-sign-blue ring with a road arc (inline SVG in
+ * app.tsx; this just sizes and colors it). */
 .app-mark {
-  width: 19px;
-  height: 19px;
-  border-radius: 5px;
-  background: var(--accent);
-  position: relative;
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
   flex-shrink: 0;
-}
-.app-mark::after {
-  content: '';
-  position: absolute;
-  inset: 5px;
-  border-radius: 2px;
-  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
 }
 
 .app-title {
   font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
+  font-weight: 800;
+  letter-spacing: 0.3em;
   text-transform: uppercase;
   color: var(--text);
   margin: 0;
@@ -485,7 +480,7 @@ a.list-row:active {
   letter-spacing: -0.008em;
 }
 .chevron {
-  color: rgba(74, 60, 30, 0.32);
+  color: rgba(35, 39, 43, 0.32);
   font-size: 1.4rem;
 }
 
@@ -558,7 +553,7 @@ input[type='file'] {
   font-size: 0.82rem;
 }
 input::placeholder {
-  color: rgba(74, 60, 30, 0.4);
+  color: rgba(35, 39, 43, 0.4);
 }
 
 .form-actions {
@@ -1239,7 +1234,7 @@ code {
   justify-content: center;
 }
 .modal-close:hover {
-  background: rgba(74, 60, 30, 0.13);
+  background: rgba(35, 39, 43, 0.13);
   color: var(--text);
 }
 .modal-preview {
@@ -1361,7 +1356,7 @@ iframe.preview-media {
 .spinner {
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(74, 60, 30, 0.18);
+  border: 2px solid rgba(35, 39, 43, 0.18);
   border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
@@ -1476,7 +1471,7 @@ iframe.preview-media {
 }
 .export-cta-cue {
   font-size: 1.3rem;
-  color: rgba(74, 60, 30, 0.32);
+  color: rgba(35, 39, 43, 0.32);
   flex-shrink: 0;
 }
 
@@ -2845,7 +2840,7 @@ a.list-row:hover {
   height: 9px;
   border-radius: 5px;
   overflow: hidden;
-  border: 1px solid var(--border-strong, rgba(74, 60, 30, 0.28));
+  border: 1px solid var(--border-strong, rgba(35, 39, 43, 0.28));
 }
 .cv-ruler-track i { flex: 1; }
 .cv-ruler-track i.cv-red { background: var(--sig-red); }
@@ -2913,7 +2908,7 @@ a.list-row:hover {
   gap: 10px;
   padding: 9px 2px;
 }
-.cv-coast-item + .cv-coast-item { border-top: 1px solid var(--border, rgba(74, 60, 30, 0.15)); }
+.cv-coast-item + .cv-coast-item { border-top: 1px solid var(--border, rgba(35, 39, 43, 0.13)); }
 .cv-coast-dot {
   width: 10px;
   height: 10px;

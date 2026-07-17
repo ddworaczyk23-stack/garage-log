@@ -12,6 +12,19 @@
         "5173"
       ],
       "port": 5173
+    },
+    {
+      "name": "garage-log-alt",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "node_modules/vite/bin/vite.js",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "5199",
+        "--strictPort"
+      ],
+      "port": 5199
     }
   ]
 }

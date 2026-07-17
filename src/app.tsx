@@ -70,8 +70,17 @@ export function App() {
   return (
     <div class="app-shell">
       <header class="app-header">
-        <span class="app-mark" aria-hidden="true" />
-        <h1 class="app-title">The Glovebox</h1>
+        <svg class="app-mark" viewBox="0 0 22 22" aria-hidden="true">
+          <circle cx="11" cy="11" r="9" fill="none" stroke="currentColor" stroke-width="2.6" />
+          <path
+            d="M6.5 12.5c2-3.5 7-3.5 9-1"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2.2"
+            stroke-linecap="round"
+          />
+        </svg>
+        <h1 class="app-title">Coast</h1>
       </header>
       <AccountBar />
       <main
