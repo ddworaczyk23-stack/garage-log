@@ -8,10 +8,11 @@ import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns } from '../db/concerns'
 import { reminderProgress } from '../domain/progress'
 import { vehicleVerdict } from '../domain/verdict'
-import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
+import { vehicleHealth } from '../domain/health'
+import { VerdictPanel, UrgencyRuler, HealthMeter } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
 import { identityFromVehicle } from '../domain/vehicleIdentity'
-import { hydrateFactoryMaintenance, hydrateConsensusData, hydrateCostEstimates } from '../db/vehicleOnboarding'
+import { hydrateFactoryMaintenance, hydrateConsensusData } from '../db/vehicleOnboarding'
 import { deleteVehicle } from '../db/vehicles'
 import { STATUS_LABELS } from '../types'
 import { EventForm } from '../components/EventForm'
@@ -32,7 +33,6 @@ import { useIntroGate, useReducedMotion } from '../motion/hooks'
 import { vehicleLabel } from '../domain/vehicle'
 import type {
   ConsensusData,
-  CostEstimateData,
   FactoryMaintenanceData,
   MaintenanceCategory,
   MaintenanceStatus,
@@ -113,10 +113,6 @@ export function VehicleDetail({ id }: Props) {
   )
   const consensusData = useQuery<ConsensusData | null>(
     () => (canonicalId ? db.consensusData.get(canonicalId).then((r) => r ?? null) : Promise.resolve(null)),
-    [canonicalId],
-  )
-  const costData = useQuery<CostEstimateData | null>(
-    () => (canonicalId ? db.costEstimateData.get(canonicalId).then((r) => r ?? null) : Promise.resolve(null)),
     [canonicalId],
   )
 
@@ -283,6 +279,7 @@ export function VehicleDetail({ id }: Props) {
             </button>
           </>
         )}
+        {reminders && <HealthMeter health={vehicleHealth(reminders, openConcerns ?? [], stale)} />}
         <hr class="rule-double" />
       </header>
 
@@ -489,37 +486,6 @@ export function VehicleDetail({ id }: Props) {
             />
           </Reveal>
 
-          <Reveal>
-            <ExternalDataCard
-              title="Estimated costs (reference)"
-              data={costData}
-              onRetry={() => hydrateCostEstimates(identityFromVehicle(vehicle))}
-              renderOk={(d) =>
-                d.items.length === 0 ? (
-                  <p class="muted small">No estimates returned.</p>
-                ) : (
-                  <>
-                    <ul class="schedule-list">
-                      {d.items.map((item) => (
-                        <li key={item.category} class="schedule-row">
-                          <div class="schedule-main">
-                            <span class="schedule-label">{item.label}</span>
-                            <span class="muted small">
-                              ${item.totalLow}–${item.totalHigh} ·{' '}
-                              {formatInterval(item.practicalInterval.miles, item.practicalInterval.months)} ·{' '}
-                              {item.confidence} confidence
-                            </span>
-                          </div>
-                          <p class="muted small">{item.timingNote}</p>
-                        </li>
-                      ))}
-                    </ul>
-                    <p class="muted small">{d.laborRateNote} Estimates only — not a quote.</p>
-                  </>
-                )
-              }
-            />
-          </Reveal>
         </>
       )}
 

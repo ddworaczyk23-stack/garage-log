@@ -3,22 +3,26 @@ import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns, openConcern, resolveConcern, deleteConcern } from '../db/concerns'
+import { getVehicleReminders } from '../db/summary'
 import {
   PLAYBOOKS,
   getPlaybook,
   resolveStep,
   outcomeToBriefFacts,
   fairRangeText,
+  contextualizeOutcome,
   type Answers,
   type Playbook,
   type PlaybookOutcome,
+  type DriveVerdict,
+  type TriageContext,
 } from '../domain/playbooks'
 import { composeBrief } from '../domain/shopBrief'
 import type { SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { formatShortDate } from '../domain/format'
 import { Loading, EmptyState, ConfirmButton } from '../components/ui'
-import type { Vehicle, Concern } from '../types'
+import type { Vehicle, Concern, MaintenanceCategory } from '../types'
 
 // ---------------------------------------------------------------------------
 // Coast "Start a check" triage flow (Stage 2 — see design/COAST-PLAN.md).
@@ -38,6 +42,14 @@ const BAND_TONE: Record<SignalBand, { cls: string; tag: string; pin: number; lab
   'book-soon': { cls: 'cv-amber', tag: 'Verdict · Book soon', pin: 36, label: 'Book soon' },
   coast: { cls: 'cv-blue', tag: 'Verdict · You can coast', pin: 62, label: 'Can coast' },
   'all-clear': { cls: 'cv-green', tag: 'Verdict · All clear', pin: 88, label: 'All clear' },
+}
+
+// The drive-vs-tow call (Stage 5A). 'tow' is the safety call, so it carries the
+// strongest treatment — the red tint the escalation block already uses.
+const DRIVE_TONE: Record<DriveVerdict, { cls: string; label: string }> = {
+  'drive-ok': { cls: 'is-ok', label: 'Safe to keep driving' },
+  'short-trip-only': { cls: 'is-short', label: 'Short trip only — nearest shop' },
+  tow: { cls: 'is-tow', label: 'Don’t drive it' },
 }
 
 export function Check({ vehicleId }: { vehicleId?: string }) {
@@ -95,22 +107,32 @@ interface FlowData {
   mileage: number | null
   historyKnown: boolean
   concerns: Concern[]
+  /** Stage 5B: overdue/due-soon categories from the engine, for contextualizeOutcome. */
+  context: TriageContext
 }
 
 function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   const data = useQuery<FlowData>(
     async () => {
-      const [vehicle, mileage, eventCount, concerns] = await Promise.all([
+      const [vehicle, mileage, eventCount, concerns, reminders] = await Promise.all([
         db.vehicles.get(vehicleId),
         getCurrentMileageEstimate(vehicleId),
         db.events.where('vehicleId').equals(vehicleId).count(),
         getOpenConcerns(vehicleId),
+        getVehicleReminders(vehicleId),
       ])
+      const overdueCategories = new Set<MaintenanceCategory>()
+      const dueSoonCategories = new Set<MaintenanceCategory>()
+      for (const r of reminders) {
+        if (r.status === 'overdue') overdueCategories.add(r.rule.category)
+        else if (r.status === 'due-next') dueSoonCategories.add(r.rule.category)
+      }
       return {
         vehicle: vehicle ?? null,
         mileage: mileage?.miles ?? null,
         historyKnown: eventCount > 0,
         concerns,
+        context: { overdueCategories, dueSoonCategories },
       }
     },
     [vehicleId],
@@ -234,7 +256,10 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   }
 
   // ---- phase: verdict ----
-  const outcome = step.outcome
+  // Stage 5B: annotate with engine context (e.g. "your brakes are also
+  // overdue") before render. Nothing persisted (Concern rows, the shop brief)
+  // reads `explanation`, so this only affects what's shown here.
+  const outcome = contextualizeOutcome(step.outcome, data.context)
   const tone = BAND_TONE[outcome.band]
 
   async function addToList() {
@@ -305,6 +330,8 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         </>
       )}
 
+      <ActionCards outcome={outcome} />
+
       {showBrief && (
         <ShopBriefCard
           vehicle={vehicle}
@@ -336,6 +363,67 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
 }
 
 // --- pieces ----------------------------------------------------------------
+
+/**
+ * The action layer (Stage 5A): turns a verdict's what/urgency/cost into the
+ * simplest next move. Every field is optional — an uncurated outcome renders
+ * fewer cards (or none) rather than blocking, the same discipline the shop
+ * brief uses for CATEGORY_BRIEFS. `whatToBring` is deliberately Check-only:
+ * it's for the driver, not the shop, so it never reaches the printed brief.
+ */
+function ActionCards({ outcome }: { outcome: PlaybookOutcome }) {
+  const { selfCheck, driveOrTow, whatToBring, shopChoice } = outcome
+  const hasAny =
+    driveOrTow != null || !!selfCheck?.length || !!whatToBring?.length || !!shopChoice
+  if (!hasAny) return null
+
+  const drive = driveOrTow ? DRIVE_TONE[driveOrTow.verdict] : null
+
+  return (
+    <>
+      <h3 class="chk-sect">Your next move</h3>
+
+      {driveOrTow && drive && (
+        <div class={`chk-drive ${drive.cls}`} role={driveOrTow.verdict === 'tow' ? 'alert' : undefined}>
+          <div class="chk-drive-head">
+            <span class="chk-drive-dot" aria-hidden="true" />
+            <b>{drive.label}</b>
+          </div>
+          <p class="chk-drive-note">{driveOrTow.note}</p>
+        </div>
+      )}
+
+      {!!selfCheck?.length && (
+        <div class="card chk-action">
+          <h4 class="chk-action-title">Try this first</h4>
+          <ul class="chk-action-list">
+            {selfCheck.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {!!whatToBring?.length && (
+        <div class="card chk-action">
+          <h4 class="chk-action-title">What to bring</h4>
+          <ul class="chk-action-list">
+            {whatToBring.map((s) => (
+              <li key={s}>{s}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {shopChoice && (
+        <div class="card chk-action">
+          <h4 class="chk-action-title">Where to take it</h4>
+          <p class="chk-action-body">{shopChoice}</p>
+        </div>
+      )}
+    </>
+  )
+}
 
 function ConcernList({ vehicle, concerns }: { vehicle: Vehicle; concerns: Concern[] }) {
   return (

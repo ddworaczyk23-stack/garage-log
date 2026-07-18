@@ -9,7 +9,6 @@ import type {
   AppMetaRecord,
   FactoryMaintenanceData,
   ConsensusData,
-  CostEstimateData,
   Concern,
 } from '../types'
 
@@ -30,8 +29,6 @@ export class GarageDB extends Dexie {
   // fetch instead of duplicating it. See db/vehicleOnboarding.ts.
   factoryMaintenanceData!: Table<FactoryMaintenanceData, string>
   consensusData!: Table<ConsensusData, string>
-  // Same canonicalVehicleId keying/reuse rationale as the two tables above.
-  costEstimateData!: Table<CostEstimateData, string>
   // Coast triage concerns (Stage 2). USER DATA — synced, globally-unique
   // `concern-<uuid>` primary keys (see db/concerns.ts).
   concerns!: Table<Concern, string>
@@ -76,14 +73,23 @@ export class GarageDB extends Dexie {
       concerns: 'id, vehicleId, status, [vehicleId+status]',
     })
 
+    // The cost/timing-estimate feature was removed (see git history) — drop its
+    // table (`null` deletes it in Dexie). It only ever held a refetchable local
+    // cache of sample data, so no user data is lost. The version(3) block above
+    // is kept intact as history, per this file's "never edit an existing
+    // version" rule.
+    this.version(5).stores({
+      costEstimateData: null,
+    })
+
     // Dexie Cloud: every table above still works with its existing plain
     // string primary keys (no '@id' rewrite needed — see db/cloud.ts for why
     // seed.ts now generates random ids instead of the old hardcoded
     // 'f150-2020'/'rogue-2020', which Dexie Cloud requires to be globally
-    // unique). `appMeta`/`factoryMaintenanceData`/`consensusData`/
-    // `costEstimateData` are kept local-only (unsyncedTables in db/cloud.ts)
-    // since their primary keys are deterministic, not globally unique, and
-    // none of them hold user-entered data worth syncing.
+    // unique). `appMeta`/`factoryMaintenanceData`/`consensusData` are kept
+    // local-only (unsyncedTables in db/cloud.ts) since their primary keys are
+    // deterministic, not globally unique, and none of them hold user-entered
+    // data worth syncing.
   }
 }
 

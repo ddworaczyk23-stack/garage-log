@@ -61,6 +61,10 @@ export interface ShopBrief {
   request: string
   /** "$300–700 at an independent shop", null when no cost facts exist. */
   fairRange: string | null
+  /** Raw fair-range bounds behind `fairRange` — the price anchor Stage 5C's
+   *  quote checker reads. Both null when the brief has no cost facts. */
+  fairLow: number | null
+  fairHigh: number | null
   /** "Doing it yourself: roughly $100–300 in parts.", null when absent. */
   diyNote: string | null
   reasonableIfSuggested: string[]
@@ -202,6 +206,8 @@ export function composeBrief(
     symptom: facts.symptom?.trim() || 'No symptom — scheduled maintenance.',
     request: facts.request?.trim() || GENERIC_REQUEST,
     fairRange: fair ? `${fair} at an independent shop` : null,
+    fairLow: facts.costLow ?? null,
+    fairHigh: facts.costHigh ?? null,
     diyNote: diy ? `Doing it yourself: roughly ${diy} in parts.` : null,
     reasonableIfSuggested: facts.reasonableIfSuggested ?? [],
     fineToDecline: [...(facts.fineToDecline ?? []), GENERIC_DECLINE],

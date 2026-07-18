@@ -2802,6 +2802,37 @@ a.list-row:hover {
   text-align: center;
 }
 
+/* --- health meter (Stage 5B): compact score bar, colored by band --- */
+.vh-meter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+.vh-track {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--bg-inset, rgba(35, 39, 43, 0.08));
+  overflow: hidden;
+}
+.vh-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.vh-label {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex: none;
+}
+.vh-meter.cv-red .vh-fill { background: var(--sig-red); }
+.vh-meter.cv-amber .vh-fill { background: var(--sig-amber); }
+.vh-meter.cv-blue .vh-fill { background: var(--sig-blue); }
+.vh-meter.cv-green .vh-fill { background: var(--sig-green); }
+
 /* --- Today card (dashboard): panel + ruler + coast list per vehicle --- */
 .cv-card { display: block; }
 .cv-card + .cv-card { margin-top: 16px; }
@@ -3032,6 +3063,85 @@ a.list-row:hover {
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--text);
+}
+
+/* --- action layer (Stage 5A): drive-vs-tow + self-check + bring + shop ---
+   The drive call is the safety line, so it's tinted by verdict: tow borrows
+   the escalation block's red, short-trip the amber, drive-ok the guide blue. */
+.chk-drive {
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  margin-bottom: 10px;
+}
+.chk-drive-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chk-drive-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+}
+.chk-drive b {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.chk-drive-note {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 6px 0 0;
+}
+.chk-drive.is-tow {
+  background: color-mix(in srgb, var(--sig-red) 10%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-red) 30%, transparent);
+}
+.chk-drive.is-tow b { color: var(--sig-red); }
+.chk-drive.is-tow .chk-drive-dot { background: var(--sig-red); }
+.chk-drive.is-short {
+  background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-amber) 34%, transparent);
+}
+.chk-drive.is-short b { color: var(--sig-amber); }
+.chk-drive.is-short .chk-drive-dot { background: var(--sig-amber); }
+.chk-drive.is-ok {
+  background: color-mix(in srgb, var(--sig-blue) 8%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-blue) 26%, transparent);
+}
+.chk-drive.is-ok b { color: var(--sig-blue-deep); }
+.chk-drive.is-ok .chk-drive-dot { background: var(--sig-blue); }
+
+.chk-action { margin-bottom: 10px; }
+.chk-action-title {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+.chk-action-list { margin: 0; padding-left: 18px; }
+.chk-action-list li {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+}
+.chk-action-list li + li { margin-top: 6px; }
+.chk-action-body {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 0;
 }
 
 /* --- actions --- */
@@ -3373,12 +3483,27 @@ a.list-row:hover {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
     gap: 16px;
-    align-items: start;
+    /* stretch (the grid default) — a fix-now verdict's extra reason line and a
+       longer coast list make one card's content taller than the other's; both
+       cards should still read as the same height, so we don't fight the
+       default here (see the flex chain below for how the footer stays pinned
+       to the bottom of that stretched box either way). */
   }
   /* The stacked-mobile spacing rule (.cv-card + .cv-card) would push the second
      vehicle's card down within its grid cell; here the grid `gap` handles
      spacing, so reset it to keep both cards top-aligned. */
   .gb-today-grid > .cv-card + .cv-card { margin-top: 0; }
+  /* Stretch each card to the row's full height, then flex the tile itself so
+     the "Open Service Record" footer lands on the same bottom edge on both
+     cards regardless of which vehicle's verdict text/coast list is longer.
+     .cv-body (Dashboard.tsx) wraps everything above the footer link. */
+  .gb-today-grid > .cv-card { display: flex; }
+  .gb-today-grid > .cv-card > .gb-tile {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+  .gb-today-grid > .cv-card > .gb-tile > .cv-body { flex: 1; }
 
   /* Costs: per-vehicle breakdown cards as a board rather than a tall stack. */
   .cost-vehicle-grid {
@@ -3511,6 +3636,165 @@ a.list-row:hover {
 }
 @media (max-width: 520px) {
   .sb-okdecline { flex-direction: column; }
+}
+
+/* --- quote verification (Stage 5C) — the "check the quote" tool ------------ */
+.qc {
+  margin-top: 20px;
+  padding: 18px;
+  border: 1px solid var(--border, rgba(35, 39, 43, 0.13));
+  border-radius: 16px;
+  background: var(--bg-card);
+}
+.qc-title {
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 17px;
+  margin: 0 0 2px;
+}
+.qc-field { display: block; margin: 14px 0; }
+.qc-field-lbl {
+  display: block;
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+.qc-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 220px;
+  border: 1px solid var(--border, rgba(35, 39, 43, 0.18));
+  border-radius: 12px;
+  padding: 0 12px;
+  background: var(--bg-inset, rgba(35, 39, 43, 0.04));
+}
+.qc-input-wrap:focus-within { border-color: var(--accent); }
+.qc-dollar {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  color: var(--text-muted);
+}
+.qc-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 11px 0;
+  font-family: var(--font-mono);
+  font-size: 17px;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+.qc-checks { margin: 14px 0; }
+.qc-checks-lbl {
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.qc-check {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 0;
+}
+.qc-check + .qc-check { border-top: 1px solid var(--border, rgba(35, 39, 43, 0.1)); }
+.qc-check-label {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--text);
+}
+.qc-check-btns { display: flex; gap: 6px; flex: none; }
+.qc-yn {
+  min-width: 46px;
+  padding: 6px 10px;
+  border: 1px solid var(--border, rgba(35, 39, 43, 0.2));
+  border-radius: 9px;
+  background: var(--bg-card);
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.qc-yn.is-on {
+  border-color: var(--sig-green);
+  background: color-mix(in srgb, var(--sig-green) 14%, var(--bg-card));
+  color: var(--sig-green);
+}
+.qc-yn-no.is-on {
+  border-color: var(--sig-red);
+  background: color-mix(in srgb, var(--sig-red) 12%, var(--bg-card));
+  color: var(--sig-red);
+}
+.qc-result {
+  margin-top: 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+}
+.qc-result.qc-ok {
+  background: color-mix(in srgb, var(--sig-green) 9%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-green) 28%, transparent);
+}
+.qc-result.qc-high {
+  background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-amber) 32%, transparent);
+}
+.qc-result.qc-flag {
+  background: color-mix(in srgb, var(--sig-red) 10%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-red) 30%, transparent);
+}
+.qc-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-signal);
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.qc-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.qc-ok .qc-rating { color: var(--sig-green); }
+.qc-ok .qc-dot { background: var(--sig-green); }
+.qc-high .qc-rating { color: var(--sig-amber); }
+.qc-high .qc-dot { background: var(--sig-amber); }
+.qc-flag .qc-rating { color: var(--sig-red); }
+.qc-flag .qc-dot { background: var(--sig-red); }
+.qc-reason {
+  font-family: var(--font-serif);
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--text);
+  margin: 8px 0 0;
+}
+.qc-script { margin-top: 12px; }
+.qc-script-lbl {
+  font-family: var(--font-signal);
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.qc-script ul { margin: 0; padding-left: 18px; }
+.qc-script li {
+  font-family: var(--font-serif);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
 }
 
 @media print {

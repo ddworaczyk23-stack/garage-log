@@ -4,7 +4,7 @@ import { formatMiles, formatMoney } from '../domain/format'
 import { vehicleVerdict } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { Loading } from '../components/ui'
-import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
+import { VerdictPanel, UrgencyRuler, HealthMeter } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
 
 // Home dashboard: Coast "Today" (Stage 1, design/COAST-PLAN.md). One verdict
@@ -97,30 +97,37 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
   return (
     <Reveal class="cv-card">
       <a class="card gb-tile" href={`#/vehicle/${v.id}`}>
-        <div class="cv-veh-row">
-          <h3 class="cv-veh-name">{vehicleLabel(v)}</h3>
-          <span class="cv-veh-meta">
-            {s.mileage ? formatMiles(s.mileage.miles) : '— mi'}
-            {s.spendThisYear > 0 && <> · {formatMoney(s.spendThisYear)} in {year}</>}
-          </span>
-        </div>
-
-        <VerdictPanel verdict={verdict} />
-        <UrgencyRuler verdict={verdict} />
-
-        {verdict.coastItems.length > 0 && (
-          <div class="cv-coast-list">
-            {verdict.coastItems.map((item) => (
-              <div key={item.label} class="cv-coast-item">
-                <span class="cv-coast-dot" />
-                <span>
-                  <b>{item.label}</b>
-                  <span class="cv-win">{item.window}</span>
-                </span>
-              </div>
-            ))}
+        {/* Groups the variable-length content (verdict sentence, optional ruler
+            note, coast list) so it can flex-grow on the desktop 2-up grid —
+            that pins the footer link to the same bottom edge on both cards
+            regardless of which vehicle's verdict text is longer. */}
+        <div class="cv-body">
+          <div class="cv-veh-row">
+            <h3 class="cv-veh-name">{vehicleLabel(v)}</h3>
+            <span class="cv-veh-meta">
+              {s.mileage ? formatMiles(s.mileage.miles) : '— mi'}
+              {s.spendThisYear > 0 && <> · {formatMoney(s.spendThisYear)} in {year}</>}
+            </span>
           </div>
-        )}
+          <HealthMeter health={s.health} />
+
+          <VerdictPanel verdict={verdict} />
+          <UrgencyRuler verdict={verdict} />
+
+          {verdict.coastItems.length > 0 && (
+            <div class="cv-coast-list">
+              {verdict.coastItems.map((item) => (
+                <div key={item.label} class="cv-coast-item">
+                  <span class="cv-coast-dot" />
+                  <span>
+                    <b>{item.label}</b>
+                    <span class="cv-win">{item.window}</span>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
 
         <span class="open-link cv-open-row">
           Open Service Record

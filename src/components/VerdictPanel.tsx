@@ -1,5 +1,6 @@
 import type { SignalBand, VehicleVerdict } from '../domain/verdict'
 import { BAND_LABELS } from '../domain/verdict'
+import type { VehicleHealth } from '../domain/health'
 
 // Coast verdict instruments (Stage 1, design/COAST-PLAN.md): the road-sign
 // VerdictPanel and the four-zone UrgencyRuler. Pure presentation over a
@@ -53,6 +54,20 @@ export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
         ))}
       </div>
       {note && <p class="cv-ruler-note">{note}</p>}
+    </div>
+  )
+}
+
+// Stage 5B: a single honest read on a vehicle — a compact meter colored by
+// band (worst-wins across reminders + open concerns, domain/health.ts). Never
+// a ranking input, purely a summary readout.
+export function HealthMeter({ health }: { health: VehicleHealth }) {
+  return (
+    <div class={`vh-meter ${BAND_CLASS[health.band]}`}>
+      <div class="vh-track">
+        <div class="vh-fill" style={`width:${health.score}%`} />
+      </div>
+      <span class="vh-label">{health.reasons.join(' · ')}</span>
     </div>
   )
 }

@@ -22,6 +22,7 @@ import {
   type VehicleUrgency,
 } from '../domain/vehicleRanking'
 import { buildCostBreakdown, costPerMile, filterByYear, type CostBreakdown } from '../domain/cost'
+import { vehicleHealth, type VehicleHealth } from '../domain/health'
 import { vehicleLabel } from '../domain/vehicle'
 import { getOpenConcerns } from './concerns'
 import type { Concern, MaintenanceEvent, Vehicle } from '../types'
@@ -108,6 +109,9 @@ export interface VehicleSummary {
   counts: ReminderCounts
   urgency: VehicleUrgency
   badges: AttentionBadge[]
+  /** A single honest read on the vehicle (Stage 5B) — summary field only,
+   *  does NOT feed compareVehicleUrgency (ranking stays the audited order). */
+  health: VehicleHealth
   /** Most urgent actionable reminder (overdue/due-next/watch-next), else null. */
   topReminder: ComputedReminder | null
   /** The next few actionable reminders after the top one. */
@@ -221,6 +225,7 @@ async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): 
     counts,
     urgency,
     badges: vehicleBadges(urgency),
+    health: vehicleHealth(reminders, openConcerns, odometerStale),
     topReminder: actionable[0] ?? null,
     nextReminders: actionable.slice(1, 4),
     recentServices: services.slice(0, 2),
