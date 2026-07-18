@@ -84,41 +84,6 @@ export interface ConsensusData {
   error?: string
 }
 
-// A single maintenance item's cost/timing estimate. `practicalInterval` comes
-// from the heuristic layer (domain/practicalTiming.ts), NOT the factory
-// schedule — kept as its own field so the raw factory interval (in
-// FactoryMaintenanceData) is never overwritten by the heuristic. `confidence`
-// reflects how much of this came from real provider data vs. a flat sample
-// placeholder (see services/costProvider.ts).
-export interface CostEstimateItem {
-  category: MaintenanceCategory
-  label: string
-  practicalInterval: Interval
-  timingNote: string
-  laborHours: number
-  laborRatePerHour: number
-  partsCostLow: number
-  partsCostHigh: number
-  totalLow: number
-  totalHigh: number
-  confidence: 'low' | 'medium' | 'high'
-}
-
-// Cached per canonicalVehicleId, same reuse rationale as FactoryMaintenanceData.
-// Deliberately a separate table/type from both FactoryMaintenanceData
-// (manufacturer schedule) and ConsensusData (common-issues text) — cost
-// estimates are a distinct data source combining provider labor/parts data
-// with local rate math (domain/costHeuristics.ts).
-export interface CostEstimateData {
-  canonicalVehicleId: string
-  status: ExternalDataStatus
-  items: CostEstimateItem[]
-  laborRateNote: string
-  source: string
-  fetchedAt: string | null
-  error?: string
-}
-
 export interface OdometerReading {
   id: string
   vehicleId: string
