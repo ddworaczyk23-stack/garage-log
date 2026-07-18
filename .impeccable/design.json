@@ -1,0 +1,117 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-18T00:00:00Z",
+  "title": "Design System: Coast",
+  "extensions": {
+    "colorMeta": {
+      "guide-sign-blue": { "role": "primary", "displayName": "Guide-Sign Blue", "canonical": "#1b5faa", "tonalRamp": ["oklch(20% 0.09 255)", "oklch(30% 0.11 255)", "oklch(40% 0.12 255)", "oklch(50% 0.12 255)", "oklch(60% 0.11 255)", "oklch(72% 0.09 255)", "oklch(84% 0.06 255)", "oklch(94% 0.02 255)"] },
+      "signal-red": { "role": "secondary", "displayName": "Signal Red", "canonical": "#b3402e", "tonalRamp": ["oklch(20% 0.08 30)", "oklch(30% 0.11 30)", "oklch(40% 0.13 30)", "oklch(50% 0.14 30)", "oklch(60% 0.13 30)", "oklch(72% 0.10 30)", "oklch(84% 0.06 30)", "oklch(94% 0.02 30)"] },
+      "signal-amber": { "role": "secondary", "displayName": "Signal Amber", "canonical": "#d98a00", "tonalRamp": ["oklch(25% 0.07 75)", "oklch(35% 0.09 75)", "oklch(45% 0.11 75)", "oklch(55% 0.13 75)", "oklch(66% 0.14 75)", "oklch(76% 0.12 75)", "oklch(86% 0.08 75)", "oklch(95% 0.03 75)"] },
+      "signal-green": { "role": "secondary", "displayName": "Signal Green", "canonical": "#1e7a44", "tonalRamp": ["oklch(20% 0.06 152)", "oklch(30% 0.08 152)", "oklch(40% 0.10 152)", "oklch(50% 0.11 152)", "oklch(60% 0.10 152)", "oklch(72% 0.08 152)", "oklch(84% 0.05 152)", "oklch(94% 0.02 152)"] },
+      "daylight-concrete": { "role": "neutral", "displayName": "Daylight Concrete", "canonical": "#efefea", "tonalRamp": ["oklch(20% 0.004 110)", "oklch(32% 0.004 110)", "oklch(44% 0.004 110)", "oklch(56% 0.004 110)", "oklch(68% 0.004 110)", "oklch(80% 0.004 110)", "oklch(89% 0.004 110)", "oklch(96% 0.004 110)"] },
+      "asphalt-ink": { "role": "neutral", "displayName": "Asphalt Ink", "canonical": "#23272b", "tonalRamp": ["oklch(15% 0.008 240)", "oklch(25% 0.008 240)", "oklch(35% 0.008 240)", "oklch(45% 0.008 240)", "oklch(55% 0.008 240)", "oklch(68% 0.008 240)", "oklch(82% 0.006 240)", "oklch(94% 0.004 240)"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Verdict Headline", "purpose": "The sign's message — Overpass 800, white on a signal slab." },
+      "prose": { "displayName": "Explanation Voice", "purpose": "Newsreader serif for any sentence that explains, reassures, or advises." },
+      "label": { "displayName": "Data Spine", "purpose": "Overpass Mono uppercase kickers, tags, and every number (money, miles, dates)." }
+    },
+    "shadows": [
+      { "name": "card", "value": "0 1px 2px rgba(35,39,43,0.05), 0 10px 26px -14px rgba(35,39,43,0.18)", "purpose": "Card at rest — ambient paper-on-concrete material." },
+      { "name": "raised", "value": "0 2px 6px rgba(35,39,43,0.07), 0 16px 34px -18px rgba(35,39,43,0.26)", "purpose": "Hover lift on cards that navigate." },
+      { "name": "modal", "value": "0 24px 60px rgba(23,27,32,0.22)", "purpose": "Dialogs and bottom sheets only." }
+    ],
+    "motion": [
+      { "name": "ease-paper", "value": "cubic-bezier(0.22, 0.61, 0.36, 1)", "purpose": "Soft settle — fades and rises." },
+      { "name": "ease-mech", "value": "cubic-bezier(0.34, 0.9, 0.28, 1)", "purpose": "Weighted — meters and bars." },
+      { "name": "ease-snap", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Quick — fold toggles and state flips." }
+    ],
+    "breakpoints": [
+      { "name": "modal-centered", "value": "640px" },
+      { "name": "desktop-sidebar", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one filled action per group — Guide-Sign Blue, sturdy and plain.",
+      "html": "<button class=\"ds-btn-primary\">Add to my list</button>",
+      "css": ".ds-btn-primary { background: #1b5faa; color: #fff; border: none; border-radius: 10px; padding: 12px 18px; font-family: 'Overpass', system-ui, sans-serif; font-size: 0.95rem; font-weight: 600; letter-spacing: -0.008em; cursor: pointer; transition: background 0.12s ease, filter 0.12s ease; } .ds-btn-primary:hover { background: #164e8c; } .ds-btn-primary:active { filter: brightness(0.92); } .ds-btn-primary:focus-visible { outline: 2px solid #1b5faa; outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Destructive confirm — Signal Red, same sturdy geometry.",
+      "html": "<button class=\"ds-btn-danger\">Delete this vehicle</button>",
+      "css": ".ds-btn-danger { background: #b3402e; color: #fff; border: none; border-radius: 10px; padding: 12px 18px; font-family: 'Overpass', system-ui, sans-serif; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: filter 0.12s ease; } .ds-btn-danger:hover { filter: brightness(1.06); } .ds-btn-danger:focus-visible { outline: 2px solid #b3402e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Sign-face white sheet on the concrete canvas.",
+      "html": "<div class=\"ds-card\"><h3 class=\"ds-card-title\">Service schedule</h3><p class=\"ds-card-body\">Personalized from consensus intervals and this vehicle's logged history.</p></div>",
+      "css": ".ds-card { background: #ffffff; border: 1px solid rgba(35,39,43,0.13); border-radius: 16px; padding: 16px; box-shadow: 0 1px 2px rgba(35,39,43,0.05), 0 10px 26px -14px rgba(35,39,43,0.18); } .ds-card-title { margin: 0 0 6px; font-family: 'Overpass', system-ui, sans-serif; font-size: 1.02rem; font-weight: 600; letter-spacing: -0.012em; color: #23272b; } .ds-card-body { margin: 0; font-family: 'Overpass', system-ui, sans-serif; font-size: 0.95rem; color: #6b7076; }"
+    },
+    {
+      "name": "Text Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Globally themed field — white, hairline, 10px radius, blue focus ring.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"e.g. 1400\" />",
+      "css": ".ds-input { background: #ffffff; color: #23272b; border: 1px solid rgba(35,39,43,0.2); border-radius: 10px; height: 42px; padding: 0 12px; font-family: 'Overpass', system-ui, sans-serif; font-size: 0.95rem; } .ds-input::placeholder { color: #6b7076; } .ds-input:focus-visible { outline: 2px solid #1b5faa; outline-offset: 1px; border-color: #1b5faa; }"
+    },
+    {
+      "name": "Kicker Label",
+      "kind": "chip",
+      "refersTo": "label",
+      "description": "Overpass Mono uppercase eyebrow — the data-spine voice.",
+      "html": "<span class=\"ds-kicker\">The Garage · Today</span>",
+      "css": ".ds-kicker { font-family: 'Overpass Mono', ui-monospace, monospace; font-size: 11px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: #6b7076; }"
+    },
+    {
+      "name": "Verdict Panel",
+      "kind": "custom",
+      "refersTo": "cv-panel",
+      "description": "The road sign itself — signal-color slab with tag, headline, and serif sentence. The signature component; never invent alternative status displays.",
+      "html": "<div class=\"ds-verdict\"><div class=\"ds-verdict-tag\">Verdict · Fix now</div><h2 class=\"ds-verdict-headline\">Brake pads worn to the metal</h2><p class=\"ds-verdict-sentence\">Every drive makes the repair bigger, and stopping power is dropping.</p></div>",
+      "css": ".ds-verdict { background: #b3402e; color: #fff; border-radius: 16px; padding: 18px 20px; } .ds-verdict-tag { font-family: 'Overpass Mono', ui-monospace, monospace; font-size: 11px; font-weight: 600; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.85; margin-bottom: 6px; } .ds-verdict-headline { margin: 0 0 8px; font-family: 'Overpass', system-ui, sans-serif; font-weight: 800; font-size: 24px; line-height: 1.1; letter-spacing: -0.015em; text-wrap: balance; } .ds-verdict-sentence { margin: 0; font-family: 'Newsreader', Georgia, serif; font-size: 15.5px; line-height: 1.45; opacity: 0.96; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Road Sign",
+    "overview": "Coast's interface is built on the visual grammar of US highway signage: one message per sign, instantly legible at a glance, calm authority with zero decoration. Verdict panels are literal signs — saturated signal-color slabs carrying one declarative headline in the signage face and one humane serif sentence beneath it. Everything else is the roadside: a daylight-concrete canvas, white sign-face cards, asphalt-ink text, and mono data set like mile markers.",
+    "keyCharacteristics": [
+      "One verdict per surface, set as signage; depth lives one tap below.",
+      "Four-signal band vocabulary (fix-now red / book-soon amber / can-coast blue / all-clear green) is universal and never remapped.",
+      "Paper-on-concrete materiality: white cards, soft ambient shadows, hairline borders.",
+      "Three-voice typography: signage (Overpass), human explanation (Newsreader), data (Overpass Mono).",
+      "Matter-of-fact, sturdy controls — dependable over expressive."
+    ],
+    "rules": [
+      { "name": "The Signal Budget Rule", "body": "The four signal colors carry status meaning only. They are never decoration and never appear at full saturation on an inactive element. If a screen shows red, something is genuinely urgent.", "section": "colors" },
+      { "name": "The Earned Green Rule", "body": "All-clear green renders only when real logged history justifies it. Absence of data is never green.", "section": "colors" },
+      { "name": "The Three Voices Rule", "body": "Signage (Overpass), explanation (Newsreader serif), data (Overpass Mono) — every text element belongs to exactly one voice. Numbers never render in the serif; verdicts never render in the mono.", "section": "typography" },
+      { "name": "The Ambient-Only Rule", "body": "Shadows describe material, never importance. Urgency is carried exclusively by the signal colors — a fix-now verdict gets no extra shadow.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do lead every surface with one verdict in signage voice; put detail one tap below.",
+      "Do use the four-signal bands for all status everywhere — same hue, same meaning, no new status colors.",
+      "Do set explanatory sentences in Newsreader serif and all numbers in Overpass Mono with tabular figures.",
+      "Do keep controls sturdy and plain: solid fills, 10px radius, 42px touch targets, visible focus ring.",
+      "Do hold text contrast at WCAG 2.1 AA (≥4.5:1); Muted Slate (#6b7076) is the lightest allowed text color."
+    ],
+    "donts": [
+      "Don't build \"the generic SaaS dashboard\" — no stat-tile grids, no gradients, no density for its own sake.",
+      "Don't add \"parts-store / service-lane upsell energy\" — no banners, badges, or urgency theater that monetizes uncertainty.",
+      "Don't be \"the fear-mongering car app\" — Signal Red only for genuinely-stop-now; never dramatize a book-soon into red.",
+      "Don't show all-clear green for a vehicle without real logged history (The Earned Green Rule).",
+      "Don't stack two solid-fill buttons of equal weight; one primary per group.",
+      "Don't warm the neutrals — the canvas is cool daylight concrete, not cream or parchment.",
+      "Don't use side-stripe borders, gradient text, or nested cards, ever."
+    ]
+  }
+}
