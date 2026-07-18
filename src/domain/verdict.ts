@@ -19,11 +19,41 @@ import { formatMiles, formatShortDate } from './format'
 
 export type SignalBand = 'fix-now' | 'book-soon' | 'coast' | 'all-clear'
 
+/**
+ * The verdict layer's band adds one honest state the signal scale can't carry:
+ * 'not-set-up' — the app has NO real data for this vehicle (no logged history,
+ * no odometer estimate), so it refuses to claim anything. Absence of data must
+ * never render as "all clear" (or even "you can coast"): green is earned by
+ * real history. Playbook outcomes and concerns never produce this band — a
+ * driver-reported symptom is real data.
+ */
+export type VerdictBand = SignalBand | 'not-set-up'
+
 export const BAND_LABELS: Record<SignalBand, string> = {
   'fix-now': 'Fix now',
   'book-soon': 'Book soon',
   coast: 'Can coast',
   'all-clear': 'All clear',
+}
+
+export const VERDICT_BAND_LABELS: Record<VerdictBand, string> = {
+  ...BAND_LABELS,
+  'not-set-up': 'Not set up yet',
+}
+
+/**
+ * True when the reminder engine's output rests on at least one real data point
+ * for this vehicle: a logged last-done (history) or a computable
+ * miles-remaining (implies a current odometer estimate). When false, every
+ * status in `reminders` is a data-free baseline — the verdict and health
+ * layers exclude them rather than narrating them as knowledge.
+ */
+export function hasRealData(reminders: ComputedReminder[]): boolean {
+  return reminders.some(
+    (r) =>
+      r.status !== 'not-applicable' &&
+      (r.lastDone.date != null || r.lastDone.miles != null || r.milesRemaining != null),
+  )
 }
 
 /** Band for a single engine status; null = excluded from verdicts. */
@@ -50,13 +80,14 @@ export interface CoastItem {
 }
 
 export interface VehicleVerdict {
-  band: SignalBand
+  band: VerdictBand
   /** The sign: short, declarative. e.g. "One thing to book soon." */
   headline: string
   /** The human voice: one serif sentence explaining the sign. */
   sentence: string
-  /** Marker position on the 4-zone urgency ruler, 0 (worst) .. 100 (clear). */
-  rulerPin: number
+  /** Marker position on the 4-zone urgency ruler, 0 (worst) .. 100 (clear).
+   *  Null for 'not-set-up' — an unknown vehicle has no place on the scale. */
+  rulerPin: number | null
   /** e.g. "Safe window: about 3 weeks of normal driving." null when n/a. */
   safeWindow: string | null
   coastItems: CoastItem[]
@@ -241,7 +272,24 @@ const CONCERN_PIN: Record<SignalBand, number> = { 'fix-now': 12, 'book-soon': 36
  * the "can coast" list.
  */
 export function vehicleVerdict(reminders: ComputedReminder[], concerns: ConcernInput[] = []): VehicleVerdict {
-  const tracked = reminders.filter((r) => r.status !== 'not-applicable')
+  // No real data at all → refuse to claim anything (never "all clear", never
+  // "you can coast"). A flagged concern IS real data — with one present, the
+  // verdict proceeds concern-driven, but the data-free baseline reminder
+  // statuses are still excluded so they can't inflate counts or coast lists.
+  const known = hasRealData(reminders)
+  if (!known && !concerns.some((c) => c.band !== 'all-clear')) {
+    return {
+      band: 'not-set-up',
+      headline: 'Not set up yet.',
+      sentence:
+        'Coast doesn’t know this car yet — add an odometer reading, or log or import a service, and real verdicts start.',
+      rulerPin: null,
+      safeWindow: null,
+      coastItems: [],
+      confidenceNote: null,
+    }
+  }
+  const tracked = known ? reminders.filter((r) => r.status !== 'not-applicable') : []
 
   const fixNow = tracked.filter((r) => r.status === 'overdue')
   const bookSoon = tracked.filter((r) => r.status === 'due-next')

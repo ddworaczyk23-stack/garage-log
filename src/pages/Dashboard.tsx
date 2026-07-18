@@ -20,7 +20,13 @@ export function Dashboard() {
 
   const documentCount = summary.vehicles.reduce((n, s) => n + s.documentCount, 0)
   const spendThisYear = summary.vehicles.reduce((n, s) => n + s.spendThisYear, 0)
-  const needsAttention = summary.vehicles.reduce((n, s) => n + s.counts.overdue + s.counts.dueNext, 0)
+  // Health band (worst-wins across reminders AND open concerns) drives the
+  // garage lamp, so a fix-now concern can't sit under a green "All caught up"
+  // header. Not-set-up vehicles are neither: they get their own neutral line.
+  const needsAttention = summary.vehicles.filter(
+    (s) => s.health.band === 'fix-now' || s.health.band === 'book-soon',
+  ).length
+  const notSetUp = summary.vehicles.filter((s) => s.health.band === 'not-set-up').length
 
   return (
     <section class="page gb">
@@ -29,9 +35,15 @@ export function Dashboard() {
         <div class="gb-top-row">
           <h2 class="gb-name">Your Garage</h2>
           <span class="gb-status">
-            <span class={`vd-lamp ${needsAttention > 0 ? 'is-overdue' : 'is-ok'}`} />
+            <span
+              class={`vd-lamp ${needsAttention > 0 ? 'is-overdue' : notSetUp > 0 ? 'is-na' : 'is-ok'}`}
+            />
             {needsAttention > 0 ? (
-              <b>{needsAttention} need{needsAttention === 1 ? 's' : ''} attention</b>
+              <b>
+                {needsAttention} vehicle{needsAttention === 1 ? '' : 's'} need{needsAttention === 1 ? 's' : ''} attention
+              </b>
+            ) : notSetUp > 0 ? (
+              <b>{notSetUp === summary.vehicles.length ? 'Not set up yet' : `${notSetUp} not set up yet`}</b>
             ) : (
               <b class="tone-ok">All caught up</b>
             )}{' '}

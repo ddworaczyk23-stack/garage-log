@@ -1,5 +1,5 @@
-import type { SignalBand, VehicleVerdict } from '../domain/verdict'
-import { BAND_LABELS } from '../domain/verdict'
+import type { SignalBand, VehicleVerdict, VerdictBand } from '../domain/verdict'
+import { BAND_LABELS, VERDICT_BAND_LABELS } from '../domain/verdict'
 import type { VehicleHealth } from '../domain/health'
 
 // Coast verdict instruments (Stage 1, design/COAST-PLAN.md): the road-sign
@@ -7,11 +7,13 @@ import type { VehicleHealth } from '../domain/health'
 // VehicleVerdict — no queries, no state; every number was decided in
 // domain/verdict.ts so this stays a dumb signage renderer.
 
-const BAND_CLASS: Record<SignalBand, string> = {
+const BAND_CLASS: Record<VerdictBand, string> = {
   'fix-now': 'cv-red',
   'book-soon': 'cv-amber',
   coast: 'cv-blue',
   'all-clear': 'cv-green',
+  // The honest unknown state — slate, deliberately outside the signal scale.
+  'not-set-up': 'cv-slate',
 }
 
 export function VerdictPanel({ verdict, tag = 'Today' }: { verdict: VehicleVerdict; tag?: string }) {
@@ -19,7 +21,7 @@ export function VerdictPanel({ verdict, tag = 'Today' }: { verdict: VehicleVerdi
     <div class={`cv-panel ${BAND_CLASS[verdict.band]}`}>
       <div class="cv-inner">
         <div class="cv-tag">
-          {tag} · {BAND_LABELS[verdict.band]}
+          {tag} · {VERDICT_BAND_LABELS[verdict.band]}
         </div>
         <h3 class="cv-headline">{verdict.headline}</h3>
         <p class="cv-sentence">{verdict.sentence}</p>
@@ -31,12 +33,15 @@ export function VerdictPanel({ verdict, tag = 'Today' }: { verdict: VehicleVerdi
 const ZONES: SignalBand[] = ['fix-now', 'book-soon', 'coast', 'all-clear']
 
 export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
+  // An unknown vehicle has no position on the urgency scale — no ruler at all
+  // beats a pin that implies a judgment (domain/verdict.ts, 'not-set-up').
+  if (verdict.rulerPin == null) return null
   const note = verdict.safeWindow ?? verdict.confidenceNote
   return (
     <div
       class="cv-ruler"
       role="img"
-      aria-label={`Urgency: ${BAND_LABELS[verdict.band]}.${note ? ` ${note}` : ''}`}
+      aria-label={`Urgency: ${VERDICT_BAND_LABELS[verdict.band]}.${note ? ` ${note}` : ''}`}
     >
       <div class="cv-ruler-wrap">
         <div class="cv-ruler-track">
@@ -65,7 +70,8 @@ export function HealthMeter({ health }: { health: VehicleHealth }) {
   return (
     <div class={`vh-meter ${BAND_CLASS[health.band]}`}>
       <div class="vh-track">
-        <div class="vh-fill" style={`width:${health.score}%`} />
+        {/* Null score = 'not-set-up': an empty track, not a full green bar. */}
+        {health.score != null && <div class="vh-fill" style={`width:${health.score}%`} />}
       </div>
       <span class="vh-label">{health.reasons.join(' · ')}</span>
     </div>

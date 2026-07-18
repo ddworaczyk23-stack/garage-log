@@ -1,5 +1,6 @@
 import { db } from './db'
 import { matchesExistingVehicle } from '../domain/vehicleIdentity'
+import { GENERIC_TEMPLATE_KEY, rulesForVehicle } from './scheduleTemplates'
 import { activeMaintenanceProvider } from '../services/maintenanceProvider'
 import type { ConsensusData, FactoryMaintenanceData, Vehicle, VehicleIdentity } from '../types'
 
@@ -53,7 +54,15 @@ export async function addVehicle(input: AddVehicleInput): Promise<AddVehicleResu
     canonicalVehicleId: input.identity.canonicalVehicleId,
     createdAt: new Date().toISOString(),
   }
-  await db.vehicles.add(vehicle)
+  // Vehicle + its generic maintenance schedule land together (one transaction:
+  // a half-created vehicle with no rules would read "not set up" forever). The
+  // generic template is the fallback for any car we don't have a curated
+  // model schedule for — intervals personalize via custom overrides + logged
+  // history from here. See GENERIC_TEMPLATE_KEY in scheduleTemplates.ts.
+  await db.transaction('rw', db.vehicles, db.reminderRules, async () => {
+    await db.vehicles.add(vehicle)
+    await db.reminderRules.bulkAdd(rulesForVehicle(vehicle.id, GENERIC_TEMPLATE_KEY))
+  })
   return { vehicle, created: true }
 }
 

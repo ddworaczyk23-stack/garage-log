@@ -1,4 +1,5 @@
-import type { Interval, MaintenanceCategory } from '../types'
+import type { Interval, MaintenanceCategory, ReminderRule } from '../types'
+import { CATEGORY_LABELS } from '../types'
 
 // Static, code-versioned maintenance schedules used to seed each vehicle's
 // ReminderRule set and to supply interval references. Not a DB table, not
@@ -32,6 +33,9 @@ export interface ScheduleTemplateEntry {
   /** General note about the item (conditions, scope). */
   note?: string
 }
+
+/** Template key for vehicles added via "Add Car" — see the generic entry below. */
+export const GENERIC_TEMPLATE_KEY = 'generic-gas-vehicle'
 
 // Keyed by the fixed logical template key (ReminderRule.templateKey, set in
 // seed.ts) — NOT by Vehicle.id, which is per-user-unique.
@@ -216,6 +220,84 @@ export const SCHEDULE_TEMPLATES: Record<string, ScheduleTemplateEntry[]> = {
       note: 'Replace ~annually; sooner if streaking/chattering.',
     },
   ],
+
+  // Generic fallback for vehicles added via "Add Car" (db/vehicleOnboarding.ts)
+  // — broadly-applicable items for a modern gas vehicle, deliberately excluding
+  // drivetrain-specific services (CVT vs. automatic, transfer case, diffs) that
+  // can't be assumed without knowing the car. Intervals are honest general
+  // defaults, not model data; every note says to verify against the owner's
+  // manual, and per-rule custom overrides personalize from there.
+  [GENERIC_TEMPLATE_KEY]: [
+    {
+      category: 'oil-change',
+      factoryInterval: { miles: 7500, months: 12 },
+      mechanicConsensusInterval: { miles: 5000, months: 6 },
+      consensusNote:
+        'General default — most manufacturers publish 5,000–10,000 mi. Short trips, heat, and stop-and-go wear oil faster; verify your manual and oil spec.',
+    },
+    {
+      category: 'tire-rotation',
+      factoryInterval: { miles: 7500, months: null },
+      mechanicConsensusInterval: { miles: 5000, months: null },
+      consensusNote: 'Rotate roughly every oil change to even out tread wear.',
+    },
+    {
+      category: 'brake-inspection',
+      factoryInterval: { miles: 10000, months: 12 },
+      mechanicConsensusInterval: { miles: 10000, months: null },
+      consensusNote: 'Pads/rotors also get eyeballed at each tire rotation in between.',
+    },
+    {
+      category: 'engine-air-filter',
+      factoryInterval: { miles: 30000, months: null },
+      mechanicConsensusInterval: { miles: 30000, months: null },
+      consensusNote: 'Inspect sooner in dusty conditions.',
+    },
+    {
+      category: 'cabin-air-filter',
+      factoryInterval: { miles: 25000, months: null },
+      mechanicConsensusInterval: { miles: 25000, months: null },
+      consensusNote: 'Comfort item — sooner with heavy pollen/dust exposure.',
+    },
+    {
+      category: 'brake-fluid',
+      factoryInterval: { miles: null, months: 36 },
+      mechanicConsensusInterval: { miles: null, months: 36 },
+      consensusNote: 'Hygroscopic — absorbs moisture over time regardless of miles.',
+    },
+    {
+      category: 'coolant',
+      factoryInterval: { miles: 100000, months: 120 },
+      mechanicConsensusInterval: { miles: 60000, months: 60 },
+      consensusNote:
+        'Varies widely by coolant type (60k–150k factory claims). 60k/5yr is a safe general default — verify the spec for your engine.',
+    },
+    {
+      category: 'spark-plugs',
+      factoryInterval: { miles: 100000, months: null },
+      mechanicConsensusInterval: { miles: 90000, months: null },
+      consensusNote:
+        'Iridium/platinum plugs typically 90–100k; copper plugs and turbo engines wear much sooner — check your manual.',
+    },
+    {
+      category: 'battery-check',
+      factoryInterval: { miles: null, months: 12 },
+      mechanicConsensusInterval: { miles: null, months: 12 },
+      consensusNote: 'Annual load/charge test — most batteries last 3–5 years.',
+    },
+    {
+      category: 'wheel-alignment',
+      factoryInterval: { miles: null, months: 24 },
+      mechanicConsensusInterval: { miles: null, months: null, conditionBased: true },
+      consensusNote:
+        'Condition-based, not a fixed interval: check when tires wear unevenly, the car pulls, or after curb/pothole impacts.',
+    },
+    {
+      category: 'wiper-blades',
+      factoryInterval: { miles: null, months: 12 },
+      note: 'Replace ~annually; sooner if streaking/chattering.',
+    },
+  ],
 }
 
 // Look up the pristine, factory + consensus template entry for a
@@ -229,4 +311,31 @@ export function getTemplateEntry(
   category: MaintenanceCategory,
 ): ScheduleTemplateEntry | undefined {
   return SCHEDULE_TEMPLATES[templateKey]?.find((e) => e.category === category)
+}
+
+// Build the initial ReminderRule set for one vehicle from a schedule template.
+// Rule id is `${vehicleId}:${category}` so it's stable across re-seeds/imports
+// and globally unique (vehicleId is). `templateKey` is what actually looks up
+// the template — see the ReminderRule.templateKey doc comment in types.ts.
+// Rules store NO interval of their own by default — the effective interval is
+// resolved from the template (consensus ?? factory) unless the user sets a
+// custom override. lastDone* start null (never serviced yet). Used by seed.ts
+// (the two hand-seeded vehicles + backfill) and db/vehicleOnboarding.ts
+// ("Add Car" vehicles, with GENERIC_TEMPLATE_KEY).
+export function rulesForVehicle(vehicleId: string, templateKey: string): ReminderRule[] {
+  const entries = SCHEDULE_TEMPLATES[templateKey] ?? []
+  return entries.map((e) => ({
+    id: `${vehicleId}:${e.category}`,
+    vehicleId,
+    templateKey,
+    category: e.category,
+    label: e.label ?? CATEGORY_LABELS[e.category],
+    customIntervalMiles: null,
+    customIntervalMonths: null,
+    lastDoneDate: null,
+    lastDoneMiles: null,
+    override: null,
+    notes: null,
+    source: 'manufacturer-default',
+  }))
 }

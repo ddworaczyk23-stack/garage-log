@@ -123,3 +123,37 @@ describe('vehicleHealth — reasons explain the read', () => {
     expect(health.reasons).toContain('mileage estimate is stale')
   })
 })
+
+describe('vehicleHealth — not-set-up honesty', () => {
+  it('no reminders at all is not-set-up with a null score, never a 100 green bar', () => {
+    const health = vehicleHealth([], [], false)
+    expect(health.band).toBe('not-set-up')
+    expect(health.score).toBeNull()
+    expect(health.reasons).toEqual(['not set up yet'])
+  })
+
+  it('rules with no history and no odometer are not-set-up — baselines are not knowledge', () => {
+    const reminders = computeVehicleReminders(
+      [makeRule({ lastDoneDate: null, lastDoneMiles: null })],
+      [],
+      inputsAt('2026-01-10', null),
+    )
+    const health = vehicleHealth(reminders, [], true)
+    expect(health.band).toBe('not-set-up')
+    expect(health.score).toBeNull()
+  })
+
+  it('a concern on an unknown vehicle produces a concern-only read', () => {
+    const concerns: ConcernBandInput[] = [{ band: 'fix-now' }]
+    const health = vehicleHealth([], concerns, false)
+    expect(health.band).toBe('fix-now')
+    expect(health.score).toBe(75)
+    expect(health.reasons).toContain('1 open concern')
+    expect(health.reasons).toContain('not set up yet')
+  })
+
+  it('an all-clear concern alone cannot rescue an unknown vehicle', () => {
+    const health = vehicleHealth([], [{ band: 'all-clear' }], false)
+    expect(health.band).toBe('not-set-up')
+  })
+})

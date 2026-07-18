@@ -104,10 +104,50 @@ describe('vehicleVerdict — band selection', () => {
     expect(v.sentence).not.toContain('CVT')
   })
 
-  it('an empty schedule is all-clear with a generic sentence', () => {
+  it('an empty schedule is not-set-up, never all-clear', () => {
     const v = vehicleVerdict([])
-    expect(v.band).toBe('all-clear')
-    expect(v.sentence).toBe('Nothing on the schedule needs you.')
+    expect(v.band).toBe('not-set-up')
+    expect(v.headline).toBe('Not set up yet.')
+    expect(v.rulerPin).toBeNull()
+    expect(v.coastItems).toEqual([])
+  })
+
+  it('rules with no history AND no odometer are not-set-up — baseline statuses are not knowledge', () => {
+    const rules = [
+      makeRule({ lastDoneDate: null, lastDoneMiles: null }),
+      makeRule({ lastDoneDate: null, lastDoneMiles: null, category: 'tire-rotation' }),
+    ]
+    const v = verdictFor(rules, inputsAt('2026-07-01', null))
+    expect(v.band).toBe('not-set-up')
+    expect(v.rulerPin).toBeNull()
+  })
+
+  it('an odometer reading alone counts as real data — projections replace not-set-up', () => {
+    const rules = [makeRule({ lastDoneDate: null, lastDoneMiles: null })]
+    const v = verdictFor(rules, inputsAt('2026-07-01', 46200))
+    expect(v.band).not.toBe('not-set-up')
+    expect(v.rulerPin).not.toBeNull()
+  })
+
+  it('a concern on an unknown vehicle drives the verdict; baseline reminders stay excluded', () => {
+    const rules = [
+      makeRule({ lastDoneDate: null, lastDoneMiles: null }),
+      makeRule({ lastDoneDate: null, lastDoneMiles: null, category: 'tire-rotation' }),
+    ]
+    const reminders = computeVehicleReminders(rules, [], inputsAt('2026-07-01', null))
+    const v = vehicleVerdict(reminders, [
+      { title: 'Brake pads worn to the metal', band: 'fix-now', createdDate: '2026-06-30' },
+    ])
+    expect(v.band).toBe('fix-now')
+    expect(v.headline).toBe('One thing needs attention now.')
+    expect(v.sentence).toContain('Brake pads worn to the metal')
+    // Exactly the concern — the two data-free baseline reminders don't count.
+    expect(v.coastItems).toEqual([])
+  })
+
+  it('an all-clear concern alone cannot rescue an unknown vehicle from not-set-up', () => {
+    const v = vehicleVerdict([], [{ title: 'Probably just condensation', band: 'all-clear', createdDate: '2026-06-30' }])
+    expect(v.band).toBe('not-set-up')
   })
 })
 

@@ -1,5 +1,5 @@
 import type { ComputedReminder } from './reminderEngine'
-import { bandFromStatus, type SignalBand } from './verdict'
+import { bandFromStatus, hasRealData, type SignalBand, type VerdictBand } from './verdict'
 
 // ---------------------------------------------------------------------------
 // Coast vehicle health score (Stage 5B — design/COAST-PLAN-STAGE5.md).
@@ -12,9 +12,10 @@ import { bandFromStatus, type SignalBand } from './verdict'
 // ---------------------------------------------------------------------------
 
 export interface VehicleHealth {
-  band: SignalBand
-  /** 0 (worst) .. 100 (nothing pending), for a compact meter. */
-  score: number
+  band: VerdictBand
+  /** 0 (worst) .. 100 (nothing pending), for a compact meter. Null when the
+   *  band is 'not-set-up' — a score would imply knowledge we don't have. */
+  score: number | null
   /** Plain phrases explaining the read, e.g. ["1 overdue", "1 open concern"]. */
   reasons: string[]
 }
@@ -54,6 +55,25 @@ export function vehicleHealth(
   openConcerns: ConcernBandInput[],
   mileageStale: boolean,
 ): VehicleHealth {
+  // Same honesty rule as vehicleVerdict: with no real data, the baseline
+  // reminder statuses are excluded and a scoreless 'not-set-up' read is
+  // returned — unless an open concern (real, driver-reported data) exists,
+  // in which case the read is concern-only.
+  const known = hasRealData(reminders)
+  if (!known) {
+    const realConcerns = openConcerns.filter((c) => c.band !== 'all-clear')
+    if (realConcerns.length === 0) {
+      return { band: 'not-set-up', score: null, reasons: ['not set up yet'] }
+    }
+    const band = realConcerns.reduce<SignalBand>((worst, c) => moreUrgentBand(worst, c.band), 'all-clear')
+    const score = Math.max(0, 100 - realConcerns.reduce((sum, c) => sum + PENALTY_CONCERN[c.band], 0))
+    return {
+      band,
+      score,
+      reasons: [`${realConcerns.length} open concern${realConcerns.length === 1 ? '' : 's'}`, 'not set up yet'],
+    }
+  }
+
   const tracked = reminders.filter((r) => r.status !== 'not-applicable')
   const overdueCount = tracked.filter((r) => r.status === 'overdue').length
   const dueSoonCount = tracked.filter((r) => r.status === 'due-next').length

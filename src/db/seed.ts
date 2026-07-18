@@ -1,8 +1,7 @@
 import { db } from './db'
 import { cloudConfigured } from './cloud'
-import type { Vehicle, ReminderRule } from '../types'
-import { CATEGORY_LABELS } from '../types'
-import { SCHEDULE_TEMPLATES } from './scheduleTemplates'
+import type { Vehicle } from '../types'
+import { GENERIC_TEMPLATE_KEY, rulesForVehicle } from './scheduleTemplates'
 
 // The two household vehicles. `templateKey` is the fixed logical key into
 // SCHEDULE_TEMPLATES (db/scheduleTemplates.ts) — the vehicle *id* itself is a
@@ -36,30 +35,8 @@ export const SEED_VEHICLES: Omit<Vehicle, 'id' | 'createdAt'>[] = [
 // Stable forever — SCHEDULE_TEMPLATES is keyed by these, not by any vehicle id.
 const SEED_TEMPLATE_KEYS = ['f150-2020', 'rogue-2020']
 
-// Build the initial ReminderRule set for one vehicle from its schedule template.
-// Rule id is `${vehicleId}:${category}` so it's stable across re-seeds/imports
-// and globally unique (vehicleId is). `templateKey` is what actually looks up
-// the template — see the ReminderRule.templateKey doc comment in types.ts.
-// Rules store NO interval of their own by default — the effective interval is
-// resolved from the template (consensus ?? factory) unless the user sets a
-// custom override. lastDone* start null (never serviced yet).
-function rulesForVehicle(vehicleId: string, templateKey: string): ReminderRule[] {
-  const entries = SCHEDULE_TEMPLATES[templateKey] ?? []
-  return entries.map((e) => ({
-    id: `${vehicleId}:${e.category}`,
-    vehicleId,
-    templateKey,
-    category: e.category,
-    label: e.label ?? CATEGORY_LABELS[e.category],
-    customIntervalMiles: null,
-    customIntervalMonths: null,
-    lastDoneDate: null,
-    lastDoneMiles: null,
-    override: null,
-    notes: null,
-    source: 'manufacturer-default',
-  }))
-}
+// rulesForVehicle now lives in scheduleTemplates.ts (shared with the "Add Car"
+// flow in db/vehicleOnboarding.ts).
 
 // Seed the two vehicles and reconcile their reminder rules against the current
 // templates. Reconciliation is ADDITIVE and idempotent: it inserts any template
@@ -105,9 +82,10 @@ export async function seedIfEmpty(): Promise<void> {
       ;(r as unknown as Record<string, unknown>).templateKey = r.vehicleId
     })
 
-  // Reconcile against the current templates for every vehicle that has a
-  // templateKey (i.e. was seeded from a static schedule — "Add Car" vehicles
-  // have none and are intentionally skipped, see db/vehicleOnboarding.ts).
+  // Reconcile against the current templates for every vehicle that has rules
+  // (hand-seeded vehicles use their model template; "Add Car" vehicles use the
+  // generic one — either way, new template items forward-fill on next boot).
+  // ADDITIVELY: never overwrites an existing rule, so user edits are preserved.
   const existingRules = await db.reminderRules.toArray()
   const templateKeyByVehicle = new Map(existingRules.map((r) => [r.vehicleId, r.templateKey]))
   const expected = [...templateKeyByVehicle.entries()].flatMap(([vehicleId, templateKey]) =>
@@ -116,6 +94,19 @@ export async function seedIfEmpty(): Promise<void> {
   const existingIds = new Set(existingRules.map((r) => r.id))
   const missing = expected.filter((r) => !existingIds.has(r.id))
   if (missing.length) await db.reminderRules.bulkAdd(missing)
+
+  // Backfill: any vehicle with NO rules at all gets the generic schedule.
+  // Covers vehicles added via "Add Car" before that flow created rules (it does
+  // now — db/vehicleOnboarding.ts), so existing installs pick up a real
+  // maintenance schedule on next boot instead of showing "No schedule items".
+  const ruledVehicleIds = new Set(existingRules.map((r) => r.vehicleId))
+  const allVehicles = await db.vehicles.toArray()
+  const ruleless = allVehicles.filter((v) => !ruledVehicleIds.has(v.id))
+  if (ruleless.length) {
+    await db.reminderRules.bulkAdd(
+      ruleless.flatMap((v) => rulesForVehicle(v.id, GENERIC_TEMPLATE_KEY)),
+    )
+  }
 
   // Migrate rules from earlier builds to the current shape (no index change, so
   // a plain data migration rather than a Dexie version bump). Older rules carried

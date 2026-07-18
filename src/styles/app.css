@@ -2725,6 +2725,9 @@ a.list-row:hover {
 .cv-panel.cv-amber { background: var(--sig-amber); }
 .cv-panel.cv-blue { background: var(--sig-blue); }
 .cv-panel.cv-green { background: var(--sig-green); }
+/* The honest unknown state — slate, deliberately outside the signal scale
+   (white on #5c636b ≈ 5.9:1, AA at all sizes used on the panel). */
+.cv-panel.cv-slate { background: var(--c-stale); }
 .cv-inner {
   border: 2px solid rgba(255, 255, 255, 0.55);
   border-radius: 12px;
@@ -2832,6 +2835,7 @@ a.list-row:hover {
 .vh-meter.cv-amber .vh-fill { background: var(--sig-amber); }
 .vh-meter.cv-blue .vh-fill { background: var(--sig-blue); }
 .vh-meter.cv-green .vh-fill { background: var(--sig-green); }
+/* not-set-up renders no fill (see HealthMeter) — the empty track is the point. */
 
 /* --- Today card (dashboard): panel + ruler + coast list per vehicle --- */
 .cv-card { display: block; }
