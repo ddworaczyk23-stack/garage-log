@@ -292,19 +292,31 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
       : (milesStatus ?? daysStatus ?? 'completed')
 
   const reasonParts: string[] = []
-  if (milesRemaining != null) {
+  // A hybrid rule tracking both axes usually has them agree on direction
+  // (both counting down, or both past due) — "3,934 mi / 156 days remaining"
+  // reads better than repeating "remaining"/"overdue" on each half. Only
+  // fall back to two separate clauses when the axes disagree (one overdue,
+  // one still remaining), which can happen since each is scored independently.
+  if (milesRemaining != null && daysRemaining != null && milesRemaining <= 0 === daysRemaining <= 0) {
+    const suffix = milesRemaining <= 0 ? 'overdue' : 'remaining'
     reasonParts.push(
-      milesRemaining <= 0
-        ? `${Math.abs(milesRemaining).toLocaleString()} mi overdue`
-        : `${milesRemaining.toLocaleString()} mi remaining`,
+      `${Math.abs(milesRemaining).toLocaleString()} mi / ${Math.abs(daysRemaining)} days ${suffix}`,
     )
-  }
-  if (daysRemaining != null) {
-    reasonParts.push(
-      daysRemaining <= 0
-        ? `${Math.abs(daysRemaining)} days overdue`
-        : `${daysRemaining} days remaining`,
-    )
+  } else {
+    if (milesRemaining != null) {
+      reasonParts.push(
+        milesRemaining <= 0
+          ? `${Math.abs(milesRemaining).toLocaleString()} mi overdue`
+          : `${milesRemaining.toLocaleString()} mi remaining`,
+      )
+    }
+    if (daysRemaining != null) {
+      reasonParts.push(
+        daysRemaining <= 0
+          ? `${Math.abs(daysRemaining)} days overdue`
+          : `${daysRemaining} days remaining`,
+      )
+    }
   }
   // Flag staleness whenever this item is mileage-tracked, even if milesRemaining
   // itself couldn't be computed (no odometer reading at all) — that's precisely
