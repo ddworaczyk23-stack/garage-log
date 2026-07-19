@@ -163,15 +163,6 @@ export function VehicleDetail({ id }: Props) {
   const repairEvents = (events ?? []).filter((e) => e.kind === 'repair')
 
   const list = reminders ?? []
-  const counts = list.reduce(
-    (a, r) => {
-      if (r.status === 'overdue') a.overdue++
-      else if (r.status === 'due-next') a.due++
-      else if (r.status !== 'not-applicable') a.ok++
-      return a
-    },
-    { overdue: 0, due: 0, ok: 0 },
-  )
   // False while the vehicle has no logged history and no odometer estimate —
   // the schedule's baseline statuses aren't knowledge yet (see domain/verdict).
   const known = reminders ? hasRealData(reminders) : true
@@ -267,15 +258,12 @@ export function VehicleDetail({ id }: Props) {
           <NicknameEditor vehicle={vehicle} onDone={() => setEditingName(false)} />
         ) : (
           <>
-            <div class="vd-title-row">
-              <div>
-                <span class="vd-year num">{vehicle.year}</span>
-                <h2 class="vd-name">{vehicleLabel(vehicle)}</h2>
-              </div>
-              {vehicle.trim && <span class="vd-plate">{vehicle.trim}</span>}
-            </div>
+            <h2 class="vd-name">{vehicleLabel(vehicle)}</h2>
             <p class="vd-spec">
-              {[vehicle.engine, vehicle.drivetrain].filter(Boolean).join(' · ').toUpperCase()}
+              {[`${vehicle.year} ${vehicle.make} ${vehicle.name}`, vehicle.engine, vehicle.drivetrain]
+                .filter(Boolean)
+                .join(' · ')
+                .toUpperCase()}
             </p>
             <button type="button" class="btn-link vd-rename" onClick={() => setEditingName(true)}>
               {vehicle.nickname ? 'Edit nickname' : 'Add nickname'}
@@ -297,10 +285,7 @@ export function VehicleDetail({ id }: Props) {
               <>
                 <VerdictPanel verdict={verdict} tag="This vehicle" />
                 <UrgencyRuler verdict={verdict} />
-                {verdict.band === 'not-set-up' ? (
-                  /* Setup, not statistics: the tally's "N on track" would be
-                     baseline noise for a car with no real data. These two
-                     actions are the whole activation path. */
+                {verdict.band === 'not-set-up' && (
                   <div class="vd-setup">
                     <button type="button" class="btn btn-primary" onClick={() => openForm('odometer')}>
                       + Add odometer reading
@@ -308,15 +293,6 @@ export function VehicleDetail({ id }: Props) {
                     <a class="btn-link" href={`#/import/${id}`}>
                       Import service history →
                     </a>
-                  </div>
-                ) : (
-                  /* The verdict names the ONE thing that matters; this says how
-                     many items sit behind it — the only fact the old focal gauge
-                     carried that the verdict doesn't. */
-                  <div class="vd-tally">
-                    <span class="tally"><span class="vd-lamp is-overdue" />{counts.overdue} overdue</span>
-                    <span class="tally"><span class="vd-lamp is-due" />{counts.due} due now</span>
-                    <span class="tally"><span class="vd-lamp is-ok" />{counts.ok} on track</span>
                   </div>
                 )}
               </>
