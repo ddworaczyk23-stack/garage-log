@@ -287,9 +287,6 @@ export function VehicleDetail({ id }: Props) {
                 <UrgencyRuler verdict={verdict} />
                 {verdict.band === 'not-set-up' && (
                   <div class="vd-setup">
-                    <button type="button" class="btn btn-primary" onClick={() => openForm('odometer')}>
-                      + Add odometer reading
-                    </button>
                     <a class="btn-link" href={`#/import/${id}`}>
                       Import service history →
                     </a>
@@ -329,7 +326,10 @@ export function VehicleDetail({ id }: Props) {
             <div class="odo">
               <span class="num">—</span>
             </div>
-            <div class="odo-foot">No readings yet — tap “+ Odometer”.</div>
+            <div class="odo-foot">No readings yet.</div>
+            <button type="button" class="btn odo-cta" onClick={() => openForm('odometer')}>
+              + Add odometer reading
+            </button>
           </div>
         )}
 

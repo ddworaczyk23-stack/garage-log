@@ -1916,6 +1916,17 @@ iframe.preview-media {
   align-items: center;
   gap: 8px;
 }
+/* The odometer gauge is a solid accent-colored plate, so its own CTA reads
+   inverted (white fill, accent text) rather than the usual solid-accent
+   primary — a same-color button here would nearly vanish into the plate. */
+.odo-cta {
+  margin-top: 12px;
+  background: var(--bg-card);
+  color: var(--accent);
+}
+.odo-cta:hover {
+  filter: brightness(0.96);
+}
 .instr-side {
   text-align: right;
   flex-shrink: 0;
@@ -2719,7 +2730,9 @@ a.list-row:hover {
   color: var(--text-muted);
   max-width: 34ch;
 }
-/* Under a not-set-up verdict on VehicleDetail: the two setup actions. */
+/* Under a not-set-up verdict on VehicleDetail: the import-history setup
+   action. Adding an odometer reading now lives on the odometer instrument
+   itself (.odo-cta) instead of duplicating a second CTA up here. */
 .vd-setup {
   margin-top: 12px;
   display: flex;
