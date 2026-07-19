@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { db } from '../src/db/db'
 import {
   recordCompletedEvent,
@@ -135,6 +135,55 @@ describe('recordCompletedEvent — multi-category (one visit, several services)'
       const rule = await db.reminderRules.get(`${VEHICLE_ID}:${cat}`)
       expect(rule?.lastDoneMiles, cat).toBeNull()
     }
+  })
+})
+
+describe('recordCompletedEvent — atomicity', () => {
+  it('rolls back the event write if the rule-sync step fails mid-transaction', async () => {
+    const failure = new Error('simulated write failure')
+    vi.spyOn(db.reminderRules, 'update').mockRejectedValueOnce(failure)
+
+    await expect(
+      recordCompletedEvent({
+        vehicleId: VEHICLE_ID,
+        kind: 'maintenance',
+        date: '2026-01-01',
+        odometerMiles: 40000,
+        category: 'oil-change',
+        title: 'Oil change',
+      }),
+    ).rejects.toThrow('simulated write failure')
+
+    // Without the db.transaction() wrapper, the event add would have already
+    // committed before the rule-sync loop ran — this is exactly what the
+    // transaction is for: an event never lands with its rule un-synced.
+    expect(await db.events.count()).toBe(0)
+
+    vi.restoreAllMocks()
+  })
+})
+
+describe('deleteEvent — atomicity', () => {
+  it('rolls back the delete if the rule-resync step fails mid-transaction', async () => {
+    const id = await recordCompletedEvent({
+      vehicleId: VEHICLE_ID,
+      kind: 'maintenance',
+      date: '2026-01-01',
+      odometerMiles: 40000,
+      category: 'oil-change',
+      title: 'Oil change',
+    })
+
+    const failure = new Error('simulated write failure')
+    vi.spyOn(db.reminderRules, 'update').mockRejectedValueOnce(failure)
+
+    await expect(deleteEvent(id)).rejects.toThrow('simulated write failure')
+
+    // The event must still exist — a failed resync must not leave a deleted
+    // event whose rule cache was never recomputed.
+    expect(await db.events.get(id)).toBeTruthy()
+
+    vi.restoreAllMocks()
   })
 })
 

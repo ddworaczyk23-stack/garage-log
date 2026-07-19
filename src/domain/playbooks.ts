@@ -22,6 +22,17 @@ import type { BriefFacts } from './shopBrief'
 //    only fires once the answers it needs are present (grind short-circuits after
 //    one question; squeal waits for the follow-up). If every question is answered
 //    and nothing matched, the playbook's `fallback` (a safe book-soon) is used.
+//
+// FROZEN IDS: every `Playbook.id` and `PlaybookOutcome.id` below (fallbacks
+// included) is persisted — a saved `Concern` (types.ts) stores `playbookId` +
+// `outcomeId` and re-resolves them against THIS file's live code every time its
+// shop brief is opened (see `ShopBrief.tsx`'s `loadBrief`, which returns null —
+// "brief not found" — if the lookup misses). New outcomes are free to add; an
+// existing id must never be renamed, removed, or reused for a different
+// outcome, or every previously-saved concern pointing at it silently orphans.
+// If an outcome's *content* needs to change, edit it in place; if it needs to
+// be retired, leave a fallback-shaped stub outcome at the old id rather than
+// deleting it.
 // ---------------------------------------------------------------------------
 
 export type Answers = Record<string, string>

@@ -2,7 +2,7 @@ import type { ComponentChildren } from 'preact'
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
-import { formatInterval, formatShortDate } from '../domain/format'
+import { formatInterval, formatShortDate, localDateISO } from '../domain/format'
 import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns } from '../db/concerns'
@@ -292,7 +292,7 @@ export function VehicleDetail({ id }: Props) {
       {reminders && reminders.length > 0 && (
         <div class="cv-card">
           {(() => {
-            const verdict = vehicleVerdict(reminders, openConcerns ?? [])
+            const verdict = vehicleVerdict(reminders, openConcerns ?? [], localDateISO(new Date()))
             return (
               <>
                 <VerdictPanel verdict={verdict} tag="This vehicle" />

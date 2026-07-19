@@ -84,6 +84,23 @@ describe('resolveConcern / reopenConcern', () => {
     expect(c!.resolvedDate).toBeNull()
     expect(await getOpenConcerns(VEHICLE_ID)).toHaveLength(1)
   })
+
+  it('reopening truly clears resolvedEventId — the key is removed, not left as literal undefined', async () => {
+    // Dexie's update() special-cases a `key: undefined` change as a delete of
+    // that key (verified against node_modules/dexie's applyUpdateSpec/
+    // setByKeyPath, which calls `delete obj[keyPath]` for an undefined value) —
+    // this guards that behavior so a future Dexie upgrade can't silently
+    // regress it into storing a literal `undefined` instead.
+    const id = await openConcern(VEHICLE_ID, pb, grind, {})
+    await resolveConcern(id, 'event-123')
+    expect((await db.concerns.get(id))!.resolvedEventId).toBe('event-123')
+
+    await reopenConcern(id)
+
+    const c = await db.concerns.get(id)
+    expect(c!.resolvedEventId).toBeUndefined()
+    expect('resolvedEventId' in c!).toBe(false)
+  })
 })
 
 describe('deleteConcern', () => {

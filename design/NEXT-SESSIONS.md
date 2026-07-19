@@ -43,20 +43,57 @@ Verified live: both new light options and both new playbooks appear and
 resolve correctly in the Check flow; a reminder-based shop brief (no cost
 data) now shows "Amount not checked" instead of a false-positive green.
 
-## SESSION B — hardening (glue code, no design)
+## DONE — Session B: hardening (glue code, no design)
 
-- Wrap `recordCompletedEvent` / `deleteEvent` (src/db/events.ts) multi-write
-  sequences (event + rule sync + concern resolve/reopen) in one
-  `db.transaction`, like db/backup.ts does.
-- Concern↔playbook coupling: saved concerns re-resolve `outcomeId` against
-  code (`src/pages/ShopBrief.tsx` loadBrief) — either document outcome ids as
-  frozen in playbooks.ts, or snapshot composed BriefFacts onto the Concern.
-- `reopenConcern` (src/db/concerns.ts) writes `resolvedEventId: undefined` —
-  verify Dexie clears the key vs storing undefined.
-- Concern age: fix-now concern copy should acknowledge age ("flagged 19
-  weeks ago") — `concernSentence` in src/domain/verdict.ts.
-- Don't offer "Add to my list" for all-clear outcomes (src/pages/Check.tsx) —
-  saved all-clear concerns are invisible everywhere else.
+- `src/db/events.ts` — `recordCompletedEvent`/`deleteEvent`'s multi-write
+  sequences (event + rule sync + concern resolve/reopen) now run inside one
+  `db.transaction`, like db/backup.ts. Care point: file attachment
+  (`attachEventDocument`) does canvas/`createImageBitmap` compression work
+  outside Dexie's tracked promise zone, which can silently commit an open
+  transaction early — so `recordCompletedEvent` now generates the event id
+  up front, attaches files BEFORE opening the transaction, and only wraps
+  the pure-Dexie event-write + rule-sync + concern-resolve trio.
+  `deleteEvent` has no such hazard (bulk-deleting stored blobs isn't
+  compression) so its whole sequence is wrapped. Two new tests
+  (`tests/events.test.ts`) force a mid-transaction failure via
+  `vi.spyOn(db.reminderRules, 'update')` and assert the event write/delete
+  actually rolls back — proving the atomicity, not just re-testing the
+  already-covered happy path.
+- Concern↔playbook coupling: documented (not schema-migrated) — added a
+  "FROZEN IDS" header block to `src/domain/playbooks.ts` and strengthened
+  the `Concern.playbookId`/`outcomeId` comments in `types.ts`: new outcomes
+  are free to add, but an id must never be renamed/removed/reused or every
+  saved concern pointing at it silently orphans its shop brief.
+- `reopenConcern`'s `resolvedEventId: undefined` write: verified against
+  Dexie's own source (`applyUpdateSpec`/`setByKeyPath` calls `delete
+  obj[keyPath]` for an `undefined` value) that the key is genuinely removed,
+  not stored as literal `undefined` — already correct, no code change
+  needed. Added a regression test in `tests/concerns.test.ts` asserting
+  `'resolvedEventId' in c` is `false` after reopening, so a future Dexie
+  upgrade can't silently regress this.
+- Concern age: `concernSentence` (src/domain/verdict.ts) now takes an
+  explicit `today` ISO date (same convention as the reminder engine's
+  `asOf` — no wall-clock reads inside the pure domain layer) and a fix-now
+  concern open 14+ days says "N weeks ago" instead of repeating an
+  increasingly-stale-looking date; under the threshold it still shows the
+  actual date. `vehicleVerdict`'s new `today` param is required, not
+  defaulted — a silently-wrong default would render "NaN weeks ago" for an
+  unmigrated caller, so tsc catches every call site instead. Updated both
+  production call sites (Dashboard.tsx, VehicleDetail.tsx) and all test call
+  sites; 2 new age-threshold tests in `tests/verdict.test.ts`.
+- `src/pages/Check.tsx`: "Add to my list" is hidden for `all-clear` outcomes
+  (a saved all-clear concern is invisible everywhere else — never surfaces
+  in `vehicleVerdict`'s sentence or coast list — so it would become a
+  permanently-orphaned row with no way to see or clear it).
+
+330/330 tests pass (5 new since Session A's 325: 2 verdict age tests, 1
+concerns regression test, 2 events atomicity tests), tsc + build clean.
+Verified live:
+logging a service now writes through the transaction-wrapped path with the
+rule cache correctly synced and zero console errors; the all-clear
+"condensation" outcome in the Check flow shows no "Add to my list" button
+(only "Make my shop brief" / "Check something else"), while fix-now/
+book-soon/coast outcomes still show it.
 
 ## SESSION C — polish + brand cutover
 

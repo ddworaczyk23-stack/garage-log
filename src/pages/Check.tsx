@@ -347,9 +347,11 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
             Added to {vehicleLabel(vehicle)}’s list. <a href={`#/brief/${addedId}`}>Open the shareable brief →</a>
           </div>
         ) : (
-          <button type="button" class="btn btn-primary" onClick={addToList}>
-            Add to my list
-          </button>
+          outcome.band !== 'all-clear' && (
+            <button type="button" class="btn btn-primary" onClick={addToList}>
+              Add to my list
+            </button>
+          )
         )}
         <button type="button" class="btn" onClick={() => setShowBrief((s) => !s)}>
           {showBrief ? 'Hide the shop brief' : 'Make my shop brief'}

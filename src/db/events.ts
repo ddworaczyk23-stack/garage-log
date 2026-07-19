@@ -65,8 +65,18 @@ export async function recordCompletedEvent(
   files: File[] = [],
   ruleOverride?: RuleOverrideInput,
 ): Promise<string> {
+  const eventId = `evt-${crypto.randomUUID()}`
+
+  // File attachment (attachEventDocument) does browser image-compression work
+  // via createImageBitmap/canvas — real async work outside Dexie's tracked
+  // promise zone. Doing that inside a db.transaction() risks the IndexedDB
+  // transaction auto-committing early (TransactionInactiveError) once it sees
+  // a gap with no pending Dexie request, so it must run BEFORE the atomic
+  // write below, never inside it.
+  const documentIds = files.length ? await Promise.all(files.map((f) => attachEventDocument(eventId, f))) : []
+
   const event: MaintenanceEvent = stripUndefined({
-    id: `evt-${crypto.randomUUID()}`,
+    id: eventId,
     vehicleId: input.vehicleId,
     kind: input.kind,
     date: input.date,
@@ -85,38 +95,39 @@ export async function recordCompletedEvent(
     diagnosis: input.diagnosis,
     fix: input.fix,
     labor: input.labor,
-    documentIds: [],
+    documentIds,
   })
 
-  await db.events.add(event)
+  // The event write, the rule-sync it triggers, and the auto-resolve of any
+  // open concern it addresses all happen atomically — a failure partway
+  // through must not leave a logged event with its rule un-synced, or a
+  // concern marked resolved while the event that resolved it never landed.
+  await db.transaction('rw', [db.events, db.reminderRules, db.concerns], async () => {
+    await db.events.add(event)
 
-  if (files.length) {
-    const ids = await Promise.all(files.map((f) => attachEventDocument(event.id, f)))
-    await db.events.update(event.id, { documentIds: ids })
-  }
-
-  // Sync every rule this visit touched (primary + additional categories). The
-  // optional rule override is a property of the PRIMARY item the user is
-  // logging, so it's applied only to the primary category's rule; the extras
-  // just adopt the last-done if this event is newer.
-  for (const category of effectiveCategories(event)) {
-    const rule = await db.reminderRules.get(`${input.vehicleId}:${category}`)
-    if (!rule) continue
-    const patch = applyEventToRule(rule, event)
-    await applyRulePatch(rule, patch, category === input.category ? ruleOverride : undefined)
-  }
-
-  // Auto-resolve open triage concerns this visit addressed: any open concern on
-  // this vehicle whose (best-guess) category matches one of the event's
-  // categories is marked handled, stamped with this event's id so deleting the
-  // event reopens it. Concerns without a category can't be matched — those stay
-  // on the list for a manual "Handled".
-  const categories = new Set<MaintenanceCategory>(effectiveCategories(event))
-  for (const concern of await getOpenConcerns(input.vehicleId)) {
-    if (concern.category && categories.has(concern.category)) {
-      await resolveConcern(concern.id, event.id)
+    // Sync every rule this visit touched (primary + additional categories). The
+    // optional rule override is a property of the PRIMARY item the user is
+    // logging, so it's applied only to the primary category's rule; the extras
+    // just adopt the last-done if this event is newer.
+    for (const category of effectiveCategories(event)) {
+      const rule = await db.reminderRules.get(`${input.vehicleId}:${category}`)
+      if (!rule) continue
+      const patch = applyEventToRule(rule, event)
+      await applyRulePatch(rule, patch, category === input.category ? ruleOverride : undefined)
     }
-  }
+
+    // Auto-resolve open triage concerns this visit addressed: any open concern
+    // on this vehicle whose (best-guess) category matches one of the event's
+    // categories is marked handled, stamped with this event's id so deleting
+    // the event reopens it. Concerns without a category can't be matched —
+    // those stay on the list for a manual "Handled".
+    const categories = new Set<MaintenanceCategory>(effectiveCategories(event))
+    for (const concern of await getOpenConcerns(input.vehicleId)) {
+      if (concern.category && categories.has(concern.category)) {
+        await resolveConcern(concern.id, event.id)
+      }
+    }
+  })
 
   return event.id
 }
@@ -172,26 +183,32 @@ export async function updateEvent(
 
 /** Delete an event, its attached documents, and resync the matching rule's
  * cached last-done from whatever history remains (may regress to an earlier
- * event, or to null if this was the only one). */
+ * event, or to null if this was the only one). Document deletion here is just
+ * removing already-stored blob rows (no canvas/compression work, unlike
+ * attaching), so unlike recordCompletedEvent the whole sequence is safe to
+ * run inside a single db.transaction. */
 export async function deleteEvent(id: string): Promise<void> {
   const event = await db.events.get(id)
   if (!event) return
 
-  if (event.documentIds.length) await db.documents.bulkDelete(event.documentIds)
-  await db.events.delete(id)
-  for (const category of effectiveCategories(event)) {
-    await syncRuleFromHistory(event.vehicleId, category)
-  }
+  await db.transaction('rw', [db.documents, db.events, db.reminderRules, db.concerns], async () => {
+    if (event.documentIds.length) await db.documents.bulkDelete(event.documentIds)
+    await db.events.delete(id)
+    for (const category of effectiveCategories(event)) {
+      await syncRuleFromHistory(event.vehicleId, category)
+    }
 
-  // Symmetry with the auto-resolve on add: concerns this event resolved
-  // (auto-matched or picked manually) go back on the list when it's deleted —
-  // same "recompute, don't assume" philosophy as syncRuleFromHistory above.
-  const resolvedByThis = await db.concerns
-    .where('vehicleId')
-    .equals(event.vehicleId)
-    .filter((c) => c.resolvedEventId === id)
-    .toArray()
-  for (const concern of resolvedByThis) await reopenConcern(concern.id)
+    // Symmetry with the auto-resolve on add: concerns this event resolved
+    // (auto-matched or picked manually) go back on the list when it's
+    // deleted — same "recompute, don't assume" philosophy as
+    // syncRuleFromHistory above.
+    const resolvedByThis = await db.concerns
+      .where('vehicleId')
+      .equals(event.vehicleId)
+      .filter((c) => c.resolvedEventId === id)
+      .toArray()
+    for (const concern of resolvedByThis) await reopenConcern(concern.id)
+  })
 }
 
 /** Recompute a rule's cached lastDoneDate/lastDoneMiles from ALL of a vehicle's

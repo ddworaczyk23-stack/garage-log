@@ -1,6 +1,6 @@
 import { useQuery } from '../db/useQuery'
 import { getGarageSummary, type VehicleSummary } from '../db/summary'
-import { formatMiles, formatMoney } from '../domain/format'
+import { formatMiles, formatMoney, localDateISO } from '../domain/format'
 import { vehicleVerdict } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { Loading } from '../components/ui'
@@ -146,7 +146,7 @@ export function Dashboard() {
 
 function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number }) {
   const v = s.vehicle
-  const verdict = vehicleVerdict(s.reminders, s.openConcerns)
+  const verdict = vehicleVerdict(s.reminders, s.openConcerns, localDateISO(new Date()))
 
   return (
     <Reveal class="cv-card">

@@ -264,8 +264,8 @@ export interface Concern {
   id: string // `concern-<uuid>` — globally unique for Dexie Cloud sync
   vehicleId: string
   createdDate: string // ISO date
-  playbookId: string // -> domain/playbooks.ts Playbook.id
-  outcomeId: string // -> the resolved PlaybookOutcome.id
+  playbookId: string // -> domain/playbooks.ts Playbook.id — FROZEN, see that file's header
+  outcomeId: string // -> the resolved PlaybookOutcome.id — FROZEN, see that file's header
   answers: Record<string, string> // the triage answers that produced the verdict
   band: MaintenanceSignalBand // snapshot of the verdict band at creation
   title: string // snapshot of the outcome title (survives playbook edits)

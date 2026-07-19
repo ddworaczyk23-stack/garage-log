@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { ReminderRule } from '../src/types'
 import { computeVehicleReminders, type ReminderInputs } from '../src/domain/reminderEngine'
 import { bandFromStatus, vehicleVerdict, BAND_LABELS } from '../src/domain/verdict'
+import { localDateISO } from '../src/domain/format'
 
 // Verdicts are built from REAL engine output (computeVehicleReminders) rather
 // than hand-assembled ComputedReminder literals, so these tests break if the
@@ -32,7 +33,7 @@ function inputsAt(date: string, currentMiles: number | null): ReminderInputs {
 }
 
 function verdictFor(rules: ReminderRule[], inputs: ReminderInputs) {
-  return vehicleVerdict(computeVehicleReminders(rules, [], inputs))
+  return vehicleVerdict(computeVehicleReminders(rules, [], inputs), [], localDateISO(inputs.asOf))
 }
 
 describe('bandFromStatus', () => {
@@ -105,7 +106,7 @@ describe('vehicleVerdict — band selection', () => {
   })
 
   it('an empty schedule is not-set-up, never all-clear', () => {
-    const v = vehicleVerdict([])
+    const v = vehicleVerdict([], [], '2026-07-01')
     expect(v.band).toBe('not-set-up')
     expect(v.headline).toBe('Not set up yet.')
     expect(v.rulerPin).toBeNull()
@@ -135,9 +136,11 @@ describe('vehicleVerdict — band selection', () => {
       makeRule({ lastDoneDate: null, lastDoneMiles: null, category: 'tire-rotation' }),
     ]
     const reminders = computeVehicleReminders(rules, [], inputsAt('2026-07-01', null))
-    const v = vehicleVerdict(reminders, [
-      { title: 'Brake pads worn to the metal', band: 'fix-now', createdDate: '2026-06-30' },
-    ])
+    const v = vehicleVerdict(
+      reminders,
+      [{ title: 'Brake pads worn to the metal', band: 'fix-now', createdDate: '2026-06-30' }],
+      '2026-07-01',
+    )
     expect(v.band).toBe('fix-now')
     expect(v.headline).toBe('One thing needs attention now.')
     expect(v.sentence).toContain('Brake pads worn to the metal')
@@ -146,7 +149,11 @@ describe('vehicleVerdict — band selection', () => {
   })
 
   it('an all-clear concern alone cannot rescue an unknown vehicle from not-set-up', () => {
-    const v = vehicleVerdict([], [{ title: 'Probably just condensation', band: 'all-clear', createdDate: '2026-06-30' }])
+    const v = vehicleVerdict(
+      [],
+      [{ title: 'Probably just condensation', band: 'all-clear', createdDate: '2026-06-30' }],
+      '2026-07-01',
+    )
     expect(v.band).toBe('not-set-up')
   })
 })
@@ -194,9 +201,11 @@ describe('vehicleVerdict — ruler, coast list, confidence', () => {
   it('an open concern that outranks the schedule takes over band, sentence, and pin', () => {
     // Schedule says coast (watch-next), but the driver flagged grinding brakes.
     const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 44000))
-    const v = vehicleVerdict(reminders, [
-      { title: 'Front brakes — worn to the metal', band: 'fix-now', createdDate: '2026-07-15' },
-    ])
+    const v = vehicleVerdict(
+      reminders,
+      [{ title: 'Front brakes — worn to the metal', band: 'fix-now', createdDate: '2026-07-15' }],
+      '2026-07-15', // same day it was flagged — still fresh, so the date shows
+    )
     expect(v.band).toBe('fix-now')
     expect(v.headline).toBe('One thing needs attention now.')
     expect(v.sentence).toContain('You flagged “Front brakes — worn to the metal” on Jul 15, 2026')
@@ -204,12 +213,36 @@ describe('vehicleVerdict — ruler, coast list, confidence', () => {
     expect(v.safeWindow).toContain('this week')
   })
 
+  it('a fix-now concern open 14+ days states its age instead of a now-stale-looking date', () => {
+    const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 44000))
+    const v = vehicleVerdict(
+      reminders,
+      [{ title: 'Front brakes — worn to the metal', band: 'fix-now', createdDate: '2026-03-01' }],
+      '2026-07-15', // ~19 weeks after createdDate
+    )
+    expect(v.sentence).toContain('19 weeks ago')
+    expect(v.sentence).not.toContain('on Mar 1, 2026')
+  })
+
+  it('a fix-now concern just under the age threshold still shows the date', () => {
+    const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 44000))
+    const v = vehicleVerdict(
+      reminders,
+      [{ title: 'Front brakes — worn to the metal', band: 'fix-now', createdDate: '2026-07-05' }],
+      '2026-07-15', // 10 days later — under the 14-day threshold
+    )
+    expect(v.sentence).toContain('on Jul 5, 2026')
+    expect(v.sentence).not.toContain('weeks ago')
+  })
+
   it('on a band tie the schedule keeps the sentence; band concerns still count in the headline', () => {
     // Both the schedule (due-next) and a concern are book-soon.
     const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 44600))
-    const v = vehicleVerdict(reminders, [
-      { title: 'Squeal on first stops', band: 'book-soon', createdDate: '2026-07-10' },
-    ])
+    const v = vehicleVerdict(
+      reminders,
+      [{ title: 'Squeal on first stops', band: 'book-soon', createdDate: '2026-07-10' }],
+      '2026-07-15',
+    )
     expect(v.band).toBe('book-soon')
     expect(v.headline).toBe('2 things to book soon.')
     expect(v.sentence).toContain('in ~400 mi') // schedule sentence, not the concern's
@@ -217,9 +250,11 @@ describe('vehicleVerdict — ruler, coast list, confidence', () => {
 
   it('coast-band concerns join the coast list without changing an all-clear band sentence source', () => {
     const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 44000))
-    const v = vehicleVerdict(reminders, [
-      { title: 'Faint hum at highway speed', band: 'coast', createdDate: '2026-07-12' },
-    ])
+    const v = vehicleVerdict(
+      reminders,
+      [{ title: 'Faint hum at highway speed', band: 'coast', createdDate: '2026-07-12' }],
+      '2026-07-15',
+    )
     expect(v.band).toBe('coast')
     // Tie on coast: the schedule's watch-next item keeps the sentence...
     expect(v.sentence).toContain('engine oil & filter')

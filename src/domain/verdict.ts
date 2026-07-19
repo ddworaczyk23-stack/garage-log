@@ -250,12 +250,41 @@ const BAND_ORDER: SignalBand[] = ['fix-now', 'book-soon', 'coast', 'all-clear']
 const moreUrgentBand = (a: SignalBand, b: SignalBand): SignalBand =>
   BAND_ORDER.indexOf(a) <= BAND_ORDER.indexOf(b) ? a : b
 
+/** Days between two ISO (day-only) dates. Never negative in practice — a
+ * concern's createdDate is always <= today — but not clamped defensively,
+ * so a corrupt/future createdDate is visible rather than silently hidden. */
+function daysBetweenISO(from: string, to: string): number {
+  const a = new Date(`${from}T00:00:00`).getTime()
+  const b = new Date(`${to}T00:00:00`).getTime()
+  return Math.round((b - a) / 86_400_000)
+}
+
+// Below this age a concern still reads as fresh — showing the actual date is
+// more informative than "1 week ago". At or above it, a fix-now concern that's
+// been sitting is worth saying so plainly rather than repeating a now-stale
+// date as if it were still new information.
+const CONCERN_AGE_THRESHOLD_DAYS = 14
+
+function concernAgeLabel(days: number): string | null {
+  if (days < CONCERN_AGE_THRESHOLD_DAYS) return null
+  const weeks = Math.round(days / 7)
+  return weeks < 1 ? 'this week' : `${weeks} week${weeks === 1 ? '' : 's'} ago`
+}
+
 /** Concern-driven sentence: the driver flagged this themselves, so the copy
- * points back at their own observation instead of the schedule. */
-function concernSentence(band: SignalBand, c: ConcernInput): string {
-  const date = formatShortDate(c.createdDate)
-  if (band === 'fix-now') return `You flagged “${c.title}” on ${date} — it reads as fix now. Don’t sit on it.`
-  if (band === 'book-soon') return `You flagged “${c.title}” on ${date} — get it booked while it’s still a small job.`
+ * points back at their own observation instead of the schedule. A fix-now
+ * concern that's been open a while says so by age instead of repeating an
+ * increasingly-stale-looking date — a "fix now" flagged 19 weeks ago and
+ * still open deserves honesty about how long it's actually been sitting. */
+function concernSentence(band: SignalBand, c: ConcernInput, today: string): string {
+  if (band === 'fix-now') {
+    const age = concernAgeLabel(daysBetweenISO(c.createdDate, today))
+    const when = age ?? `on ${formatShortDate(c.createdDate)}`
+    return `You flagged “${c.title}” ${when} — it reads as fix now. Don’t sit on it.`
+  }
+  if (band === 'book-soon') {
+    return `You flagged “${c.title}” on ${formatShortDate(c.createdDate)} — get it booked while it’s still a small job.`
+  }
   return `You flagged “${c.title}” — it can wait, but keep an eye on it.`
 }
 
@@ -270,8 +299,19 @@ const CONCERN_PIN: Record<SignalBand, number> = { 'fix-now': 12, 'book-soon': 36
  * the vehicle's band is the worst of both worlds, a concern that outranks
  * every scheduled item takes over the sentence, and coast-band concerns join
  * the "can coast" list.
+ *
+ * `today` is an explicit ISO date, the same convention as the reminder
+ * engine's `asOf` — this module stays wall-clock-free; callers compute "now"
+ * once and pass it in. Required (not defaulted) rather than silently falling
+ * back to something that would render "NaN weeks ago" for an unmigrated
+ * caller — a missing date should fail to compile, not fail at the counter.
+ * Only used for a fix-now concern's age framing.
  */
-export function vehicleVerdict(reminders: ComputedReminder[], concerns: ConcernInput[] = []): VehicleVerdict {
+export function vehicleVerdict(
+  reminders: ComputedReminder[],
+  concerns: ConcernInput[],
+  today: string,
+): VehicleVerdict {
   // No real data at all → refuse to claim anything (never "all clear", never
   // "you can coast"). A flagged concern IS real data — with one present, the
   // verdict proceeds concern-driven, but the data-free baseline reminder
@@ -340,7 +380,7 @@ export function vehicleVerdict(reminders: ComputedReminder[], concerns: ConcernI
   return {
     band,
     headline: headline(band, count),
-    sentence: sentenceConcern ? concernSentence(band, sentenceConcern) : sentence(band, top, runnerUp),
+    sentence: sentenceConcern ? concernSentence(band, sentenceConcern, today) : sentence(band, top, runnerUp),
     rulerPin: sentenceConcern ? CONCERN_PIN[band] : rulerPin(band, top),
     safeWindow: sentenceConcern
       ? band === 'fix-now'
