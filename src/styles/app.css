@@ -2308,6 +2308,24 @@ iframe.preview-media {
 .vd-svc-meta .sep {
   opacity: 0.5;
 }
+/* Edit lives inline right after the interval it edits (not in the .vd-row-end
+   action stack) — that keeps the row's height from growing with every
+   status-dependent action button, and it's unambiguous what "Edit" acts on
+   when it's touching the interval text instead of floating at the row's end. */
+.vd-interval-edit {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .vd-row-end {
   grid-column: 2;
   grid-row: 1;

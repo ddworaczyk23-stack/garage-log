@@ -40,6 +40,9 @@ export function ScheduleRow({ reminder: r, onLog, animate, reduced }: Props) {
           <span class="interval">
             {formatInterval(r.interval.miles, r.interval.months, r.interval.conditionBased)}
           </span>
+          <button type="button" class="vd-interval-edit" onClick={() => setEditing(true)}>
+            Edit
+          </button>
           <span class="sep">·</span>
           <span>
             {r.reason}
@@ -71,9 +74,6 @@ export function ScheduleRow({ reminder: r, onLog, animate, reduced }: Props) {
             {r.rule.lastDoneDate ? 'Log' : 'Log first'}
           </button>
         )}
-        <button type="button" class="btn-link vd-log-btn" onClick={() => setEditing(true)}>
-          Edit
-        </button>
       </div>
       <BulletTrack pct={prog.pct} zone={prog.zone} animate={animate} reduced={reduced} />
     </li>
