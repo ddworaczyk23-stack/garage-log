@@ -2262,6 +2262,21 @@ iframe.preview-media {
 .vd-row.is-overdue + .vd-row {
   border-top-color: transparent;
 }
+/* Editing mode: the row becomes a plain block so RuleOverrideEditor spans
+   full width instead of being squeezed into the 1fr label column. */
+.vd-row.vd-row-editing {
+  display: block;
+}
+/* Inset sub-surface, not a card — .vd-row already lives inside the
+   Service schedule card, and DESIGN.md bans nested cards. */
+.vd-rule-editor {
+  background: var(--bg-inset);
+  border-radius: 12px;
+  padding: 14px;
+}
+.vd-rule-editor .card-title {
+  margin: 0 0 8px;
+}
 .vd-row-main {
   grid-column: 1;
   grid-row: 1;

@@ -6,8 +6,7 @@ import { formatInterval, formatShortDate, localDateISO } from '../domain/format'
 import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns } from '../db/concerns'
-import { reminderProgress } from '../domain/progress'
-import { bandFromStatus, BAND_LABELS, hasRealData, vehicleVerdict } from '../domain/verdict'
+import { hasRealData, vehicleVerdict } from '../domain/verdict'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
 import { identityFromVehicle } from '../domain/vehicleIdentity'
@@ -16,6 +15,7 @@ import { deleteVehicle } from '../db/vehicles'
 import { EventForm } from '../components/EventForm'
 import { OdometerForm } from '../components/OdometerForm'
 import { EventListItem } from '../components/EventListItem'
+import { ScheduleRow } from '../components/ScheduleRow'
 import { MileageHistory } from '../components/MileageHistory'
 import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
@@ -25,7 +25,6 @@ import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
 import { Loading, EmptyState, ConfirmButton } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
-import { BulletTrack } from '../components/motion/BulletTrack'
 import { Instrument } from '../components/motion/Instrument'
 import { useIntroGate, useReducedMotion } from '../motion/hooks'
 import { vehicleLabel } from '../domain/vehicle'
@@ -185,56 +184,14 @@ export function VehicleDetail({ id }: Props) {
   }
 
   function renderRow(r: ComputedReminder) {
-    const prog = reminderProgress(r)
     return (
-      <li key={r.rule.id} class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}`}>
-        <div class="vd-row-main">
-          <div class="vd-svc">{r.rule.label}</div>
-          <div class="vd-svc-meta">
-            <span class="interval">
-              {formatInterval(r.interval.miles, r.interval.months, r.interval.conditionBased)}
-            </span>
-            <span class="sep">·</span>
-            <span>
-              {r.reason}
-              {r.odometerStale ? ' ⚠️' : ''}
-            </span>
-            {r.projectedDueDate && (
-              <>
-                <span class="sep">·</span>
-                <span class="vd-eta">est. ~{formatShortDate(r.projectedDueDate)}</span>
-              </>
-            )}
-          </div>
-        </div>
-        <div class="vd-row-end">
-          <span class={`status-pill status-${r.status}`}>
-            {/* Band vocabulary, not the raw engine status — DESIGN.md: the
-                four-signal labels mean the same thing everywhere. */}
-            {(() => {
-              const band = bandFromStatus(r.status)
-              return band ? BAND_LABELS[band] : 'Not applicable'
-            })()}
-          </span>
-          {/* Actionable items get a one-tap shop brief (Stage 3) — the thing
-              you show at the counter when booking this service. */}
-          {(r.status === 'overdue' || r.status === 'due-next') && (
-            <a class="btn-link vd-log-btn" href={`#/brief/${r.rule.id}`}>
-              Brief
-            </a>
-          )}
-          {r.status !== 'not-applicable' && (
-            <button
-              type="button"
-              class="btn-link vd-log-btn"
-              onClick={() => openForm('service', r.rule.category)}
-            >
-              {r.rule.lastDoneDate ? 'Log' : 'Log first'}
-            </button>
-          )}
-        </div>
-        <BulletTrack pct={prog.pct} zone={prog.zone} animate={intro} reduced={reduced} />
-      </li>
+      <ScheduleRow
+        key={r.rule.id}
+        reminder={r}
+        onLog={(category) => openForm('service', category)}
+        animate={intro}
+        reduced={reduced}
+      />
     )
   }
 
