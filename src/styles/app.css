@@ -1975,6 +1975,8 @@ iframe.preview-media {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
+  row-gap: 10px;
   gap: 16px;
 }
 .odo {
@@ -2024,6 +2026,7 @@ iframe.preview-media {
 .instr-side {
   text-align: right;
   flex-shrink: 0;
+  margin-left: auto;
 }
 .ytd {
   font-family: var(--font-mono);
@@ -2905,6 +2908,11 @@ a.list-row:hover {
 /* --- Today card (dashboard): panel + ruler + coast list per vehicle --- */
 .cv-card { display: block; }
 .cv-card + .cv-card { margin-top: 16px; }
+/* When a verdict card is directly followed by a plain card (e.g. Vehicle
+   Detail's odometer/specifications card), .card's own margin-bottom doesn't
+   help — that only spaces what comes *after* it. Without this the ruler
+   note's tight 8px top margin was the only gap, reading as cramped. */
+.cv-card + .card { margin-top: var(--gap); }
 .cv-veh-row {
   display: flex;
   align-items: baseline;
