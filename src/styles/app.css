@@ -1975,20 +1975,21 @@ iframe.preview-media {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  flex-wrap: wrap;
-  row-gap: 10px;
-  gap: 16px;
+  gap: 10px;
 }
 .odo {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 36px;
-  letter-spacing: 0.1em;
+  /* Sized down from a fixed 36px, and scales with viewport width, so the YTD
+     block (.instr-side) reliably fits on the same row without wrapping or
+     clipping, even on the narrowest phones. */
+  font-size: clamp(22px, 7vw, 30px);
+  letter-spacing: 0.06em;
   margin: 5px 0 0;
   line-height: 1;
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: 8px;
   font-variant-numeric: tabular-nums;
 }
 .odo .unit {
@@ -2026,7 +2027,6 @@ iframe.preview-media {
 .instr-side {
   text-align: right;
   flex-shrink: 0;
-  margin-left: auto;
 }
 .ytd {
   font-family: var(--font-mono);
@@ -2433,16 +2433,6 @@ iframe.preview-media {
 @media (max-width: 430px) {
   .vd-name {
     font-size: 28px;
-  }
-  .instr-top {
-    flex-direction: column;
-    gap: 14px;
-  }
-  .instr-side {
-    text-align: left;
-  }
-  .ytd {
-    justify-content: flex-start;
   }
 }
 
