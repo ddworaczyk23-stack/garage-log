@@ -60,13 +60,14 @@ describe('checkQuote — a skipped diagnosis step overrides the number', () => {
 })
 
 describe('checkQuote — no price anchor (advisory only)', () => {
-  it('rates on the diagnosis steps alone and says the amount is not judged', () => {
+  it('rates as no-anchor (neutral), not reasonable — the amount was never judged', () => {
     const r = checkQuote({ fairLow: null, fairHigh: null, quotedTotal: 1400, diagnosisChecks: [] })
-    expect(r.rating).toBe('reasonable')
+    expect(r.rating).toBe('no-anchor')
+    expect(r.rating).not.toBe('reasonable')
     expect(r.reasons.join(' ')).toMatch(/no fair-price range/i)
   })
 
-  it('still flags a skipped check without an anchor', () => {
+  it('still flags a skipped check without an anchor, overriding the neutral rating', () => {
     const r = checkQuote({
       fairLow: null,
       fairHigh: null,
@@ -74,6 +75,11 @@ describe('checkQuote — no price anchor (advisory only)', () => {
       diagnosisChecks: [{ id: 'a', label: 'Pressure-test first', done: false }],
     })
     expect(r.rating).toBe('worth-a-second-look')
+  })
+
+  it('an anchor of only fairLow still counts as an anchor (not no-anchor)', () => {
+    const r = checkQuote({ fairLow: 300, fairHigh: null, quotedTotal: 250, diagnosisChecks: [] })
+    expect(r.rating).toBe('reasonable')
   })
 })
 

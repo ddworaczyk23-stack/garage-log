@@ -208,6 +208,7 @@ const RATING_TONE: Record<QuoteRating, { cls: string; label: string }> = {
   reasonable: { cls: 'qc-ok', label: 'Looks reasonable' },
   'a-bit-high': { cls: 'qc-high', label: 'A bit high' },
   'worth-a-second-look': { cls: 'qc-flag', label: 'Worth a second look' },
+  'no-anchor': { cls: 'qc-neutral', label: 'Amount not checked' },
 }
 
 function QuoteCheck({ brief }: { brief: Brief }) {

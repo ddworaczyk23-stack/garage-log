@@ -30,7 +30,7 @@ export interface QuoteInput {
   diagnosisChecks: DiagnosisCheck[]
 }
 
-export type QuoteRating = 'reasonable' | 'a-bit-high' | 'worth-a-second-look'
+export type QuoteRating = 'reasonable' | 'a-bit-high' | 'worth-a-second-look' | 'no-anchor'
 
 export interface QuoteResult {
   rating: QuoteRating
@@ -67,9 +67,11 @@ function fairRangeText(low: number | null, high: number | null): string | null {
  *  - ANY diagnosis check marked skipped ..... worth a second look (overrides
  *    the number — a big-ticket quote without the test that justifies it is the
  *    canonical flag, e.g. a head-gasket quote with no pressure test)
- *  - no fair anchor (both bounds null) ...... advisory only: can't judge the
- *    number, so the rating rests entirely on the diagnosis steps, and the
- *    reasons say so plainly.
+ *  - no fair anchor (both bounds null) ...... 'no-anchor' — a neutral rating,
+ *    distinct from 'reasonable': the amount genuinely wasn't checked (no
+ *    price data to check it against), so the UI must not show the same green
+ *    "looks reasonable" it would for a number that actually passed. The
+ *    reasons say so plainly. A skipped diagnosis check still overrides this.
  * Never throws; a non-positive/non-finite quote is treated as "no number yet"
  * and rated on the checks alone.
  */
@@ -115,7 +117,11 @@ export function checkQuote(input: QuoteInput): QuoteResult {
   }
 
   const rating: QuoteRating =
-    skipped.length > 0 ? 'worth-a-second-look' : (numberRating ?? 'reasonable')
+    skipped.length > 0
+      ? 'worth-a-second-look'
+      : hasAnchor
+        ? (numberRating ?? 'reasonable')
+        : 'no-anchor'
 
   // Make sure there's always at least one reason, even in the all-clear case.
   if (reasons.length === 0) {

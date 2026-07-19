@@ -4,38 +4,44 @@ State as of 2026-07-18. Findings come from a full app review (Fable session);
 context docs are in place: PRODUCT.md (strategy), DESIGN.md (visual system),
 CLAUDE.md (architecture). Each session below is scoped to run standalone.
 
-## IN THE WORKING TREE NOW (uncommitted, tests pass 304/304, tsc clean)
+## DONE — onboarding polish (commit `380af1e`, deployed)
 
-The `/impeccable onboard` pass — verify in the browser, then commit:
-- `src/pages/AddVehicle.tsx` — manual mode is one form; only year/make/model
-  required; trim/engine/drivetrain optional ("— optional" labels); validation
-  message instead of a hidden submit button.
-- `src/pages/Dashboard.tsx` — first-run hero for an empty garage (slate panel,
-  3-step activation list, one CTA); Side-by-side hidden under 2 vehicles;
-  Today-card footer says "Set it up" for not-set-up vehicles.
-- `src/pages/VehicleDetail.tsx` — not-set-up verdict shows a setup strip
-  (+ Add odometer reading, Import history) instead of the 0/0/N tally;
-  schedule empty-copy no longer says "Nothing needs attention — nice." for
-  unknown vehicles; spec table shows "Not set" for blank fields.
-- `src/styles/app.css` — `.fr-steps/.fr-actions/.fr-note/.vd-setup`.
-Verify: empty garage → hero; add car with ONLY year/make/model → lands on
-detail with setup strip; odometer button opens the form; then reset the DB
-(Debug page → Delete database & re-seed; plain deleteDatabase gets blocked).
+The `/impeccable onboard` pass: `AddVehicle.tsx` manual mode needs only
+year/make/model; `Dashboard.tsx` first-run hero for an empty garage;
+`VehicleDetail.tsx` not-set-up setup strip instead of the 0/0/N tally.
+Verified live and pushed to main.
 
-## SESSION A — playbook coverage (safety content)
+## DONE — Session A: playbook coverage (safety content)
 
-Add to `src/domain/playbooks.ts` (follow the existing outcome shape incl.
-Stage 5A fields selfCheck/driveOrTow/whatToBring/shopChoice; research files
-pattern: `design/playbooks-research/`):
-- Coolant-temperature light + overheating (drive verdict: tow).
-- Red brake warning light as its own entry (now only reachable via ABS).
-- "Car won't start" playbook.
-- "Steering feels wrong / vibration while driving" playbook.
-Also `src/domain/quoteCheck.ts`: when no fair-range anchor exists and no
-checks are skipped, rating is 'reasonable' → UI shows green "Looks
-reasonable" while the reason says the number wasn't checked. Add a neutral
-rating (e.g. 'no-anchor') + tone in `src/pages/ShopBrief.tsx`.
-Tests: extend `tests/playbooks.test.ts`, `tests/quoteCheck.test.ts`.
+Added to `src/domain/playbooks.ts` (research in
+`design/playbooks-research/05-warning-lights-addendum.md`,
+`06-car-wont-start.md`, `07-steering-vibration.md`):
+- Coolant-temperature light + overheating outcome on the existing
+  `warning-light` playbook (fix-now, drive verdict tow).
+- Red brake warning light as its own top-level light option (was only
+  reachable as an aside inside the ABS flow) — asks whether the parking
+  brake is fully released first (the most common false alarm) before
+  landing on the hydraulic-system fix-now outcome.
+- New "The car won't start" playbook (dead battery / starter / cranks-but-
+  won't-catch / starts-then-dies — every outcome is fix-now, a no-start is
+  never coast/all-clear).
+- New "Steering feels wrong or vibrates" playbook (loose steering and
+  sudden heaviness are fix-now; balance/alignment/CV-joint/tie-rod wear are
+  book-soon), deliberately scoped away from the existing brake-pulse outcome.
+
+Also fixed `src/domain/quoteCheck.ts`: when there's no fair-range anchor and
+no diagnosis check is marked skipped, the rating is now the neutral
+`'no-anchor'` (UI label "Amount not checked", slate tone) instead of
+`'reasonable'` — previously a reminder-based brief (no cost data) showed a
+green "Looks reasonable" even though the dollar amount was never checked, a
+skipped-check overrides it regardless. `ShopBrief.tsx`/`app.css` got a
+`qc-neutral` tone reusing `--c-stale`.
+
+Tests: 33 new tests across `tests/playbooks.test.ts` (58 total) and
+`tests/quoteCheck.test.ts` (17 total) — 325/325 tests pass, tsc clean.
+Verified live: both new light options and both new playbooks appear and
+resolve correctly in the Check flow; a reminder-based shop brief (no cost
+data) now shows "Amount not checked" instead of a false-positive green.
 
 ## SESSION B — hardening (glue code, no design)
 

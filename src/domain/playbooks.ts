@@ -441,7 +441,9 @@ const warningLight: Playbook = {
         { value: 'tpms', label: 'Tire pressure', hint: 'A flat-tire / exclamation symbol' },
         { value: 'battery', label: 'Battery / charging', hint: 'A battery box, or GEN / ALT' },
         { value: 'oil', label: 'Oil pressure', hint: 'An oil can' },
+        { value: 'temp', label: 'Coolant temperature', hint: 'A thermometer, or the gauge needle in the red' },
         { value: 'abs', label: 'ABS or traction control' },
+        { value: 'brake', label: 'Red brake warning light', hint: 'Not ABS — the brake symbol itself, or "BRAKE"' },
       ],
     },
     {
@@ -464,6 +466,17 @@ const warningLight: Playbook = {
         { value: 'none', label: 'No — just the light' },
         { value: 'drive', label: 'The car runs rough, loses power, or the brakes feel different' },
         { value: 'dim', label: 'Lights dim or accessories cut out', hint: 'For the battery light' },
+      ],
+    },
+    {
+      id: 'parkingBrake',
+      eyebrow: 'Red brake warning light',
+      text: 'Is the parking / emergency brake fully released?',
+      sub: 'The single most common cause of this light is a parking brake that isn’t all the way off.',
+      when: (a) => a.light === 'brake',
+      options: [
+        { value: 'released', label: 'Yes — it’s fully released and the light is still on' },
+        { value: 'engaged', label: 'It might still be partly on' },
       ],
     },
   ],
@@ -562,6 +575,76 @@ const warningLight: Playbook = {
       askShopTo: 'measure oil pressure with a mechanical gauge, check for leaks, and report the pump/engine condition before authorizing major work.',
       category: 'oil-change',
       match: (a) => a.light === 'oil',
+    },
+    {
+      id: 'coolant-temp',
+      band: 'fix-now',
+      title: 'Overheating — stop and let it cool now',
+      explanation:
+        'A temperature light or a gauge climbing into the red means the engine is overheating. Keep driving and you risk warping the cylinder head or blowing the head gasket within minutes — this is the one light where "drive carefully to the shop" is the wrong move.',
+      likelyCauses: ['Most often a coolant leak — a hose, the radiator, or the water pump', 'Sometimes a failed cooling fan or stuck thermostat', 'Less often an already-damaged head gasket'],
+      cost: { diyLow: 20, diyHigh: 250, shopLow: 150, shopHigh: 900, dealerLow: 250, dealerHigh: 3500 },
+      escalation: ['You smell coolant, see steam, or the gauge won’t come back down after cooling — arrange a tow'],
+      symptomLine: 'Temperature warning light or gauge in the red — overheating.',
+      askShopTo: 'pressure-test the cooling system, determine external vs. internal coolant loss, and run a combustion-gas / head-gasket check if internal loss is suspected before quoting a head-gasket repair.',
+      category: 'coolant',
+      selfCheck: [
+        'Pull off safely and shut the engine off once stopped — running it longer is what turns a $200 hose into a $3,000 repair.',
+        'Turn the heater on full blast on the way to pulling over — it pulls heat off the engine and buys you a little time.',
+        'Once the engine is properly COLD — hours, not minutes — check the coolant reservoir against the min/max lines. Never open the cap on a warm engine; it’s pressurized and will scald.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'An overheating engine can warp the cylinder head or blow the head gasket in minutes of continued driving — there’s no safe distance to press on for. Shut it off where you stopped and have it towed.',
+      },
+      whatToBring: [
+        'Any recent cooling-system receipts — hoses, water pump, radiator, coolant flush.',
+        'Note whether you saw steam, smelled coolant, or heard anything unusual just before the light came on.',
+      ],
+      shopChoice:
+        'Start with any independent shop for the pressure test — that result is the diagnosis before agreeing to head-gasket work. If it comes back internal, check your powertrain warranty first: head-gasket repair is often covered while active.',
+      match: (a) => a.light === 'temp',
+    },
+    {
+      id: 'brake-light-released',
+      band: 'fix-now',
+      title: 'Brake system needs attention — not the parking brake',
+      explanation:
+        'With the parking brake confirmed off, a red brake warning light points at the core hydraulic brake system — low fluid from a leak, or pads worn down to their built-in sensor. Brake fluid doesn’t evaporate on its own, so this isn’t something to top up and forget.',
+      likelyCauses: ['Most often low brake fluid from a leak or worn-out pads', 'Sometimes a hydraulic fault — the master cylinder or a proportioning valve'],
+      cost: { diyLow: 10, diyHigh: 200, shopLow: 150, shopHigh: 900, dealerLow: 300, dealerHigh: 2000 },
+      escalation: ['The pedal feels soft or sinks toward the floor, or stopping takes noticeably longer'],
+      symptomLine: 'Red brake warning light on, parking brake confirmed released.',
+      askShopTo: 'check the brake fluid level and look for a leak, inspect the pad wear sensors, and test the hydraulic system before quoting a repair.',
+      category: 'brake-fluid',
+      selfCheck: [
+        'Check the brake fluid reservoir under the hood — below the MIN line confirms a leak or badly worn pads, and is worth telling the shop up front.',
+        'Look through the wheel spokes at the pad edge on each front wheel — visibly thin pads point at the sensor as the cause.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'This is the core braking system, not an assist feature — low fluid or a hydraulic fault can mean reduced stopping power with no further warning. Don’t rely on it for an emergency stop; have it looked at where it sits or towed.',
+      },
+      whatToBring: [
+        'Any recent brake work receipts.',
+        'Whether the pedal feels normal, soft, or sinks — that detail changes the diagnosis.',
+      ],
+      shopChoice:
+        'Any independent shop can check fluid, pads, and basic hydraulics. If it turns out to be the master cylinder, get a firm quote before authorizing — it’s routine work, no dealer premium needed.',
+      match: (a) => a.light === 'brake' && a.parkingBrake === 'released',
+    },
+    {
+      id: 'brake-light-parking',
+      band: 'all-clear',
+      title: 'Almost certainly just the parking brake',
+      explanation:
+        'The red brake light’s single most common trigger is a parking brake that isn’t all the way off. Fully release it (push it down firmly, or make sure an electronic parking brake shows "off") and see if the light clears.',
+      likelyCauses: ['Most often the parking brake not fully disengaged'],
+      cost: { shopLow: 0, shopHigh: 0 },
+      escalation: ['The light stays on after you’re sure it’s fully released — treat it as the hydraulic-system outcome instead'],
+      symptomLine: 'Red brake warning light, parking brake possibly still engaged.',
+      askShopTo: 'no action needed if the light clears once the parking brake is confirmed off.',
+      match: (a) => a.light === 'brake' && a.parkingBrake === 'engaged',
     },
     {
       id: 'battery-dim',
@@ -867,7 +950,311 @@ const leakSmell: Playbook = {
   },
 }
 
-export const PLAYBOOKS: Playbook[] = [warningLight, brakeNoise, otherNoise, leakSmell]
+// ===========================================================================
+// 5. CAR WON'T START  (design/playbooks-research/06-car-wont-start.md)
+// ===========================================================================
+const carWontStart: Playbook = {
+  id: 'car-wont-start',
+  label: 'The car won’t start',
+  blurb: 'Nothing happens, clicking, cranks but won’t catch, or dies right away',
+  questions: [
+    {
+      id: 'symptom',
+      eyebrow: 'Car won’t start',
+      text: 'What happens when you turn the key or press start?',
+      sub: 'Pick the closest — you don’t have to be exact.',
+      options: [
+        { value: 'nothing', label: 'Nothing at all', hint: 'No lights, no sound' },
+        { value: 'clicks', label: 'A click or rapid clicking', hint: 'The engine doesn’t turn over' },
+        { value: 'cranks', label: 'The engine cranks but won’t catch', hint: 'It turns over, just doesn’t start' },
+        { value: 'dies', label: 'It starts, then dies right away' },
+      ],
+    },
+    {
+      id: 'clickType',
+      eyebrow: 'Car won’t start',
+      text: 'Is it one solid click, or rapid clicking?',
+      sub: 'These point at different parts.',
+      when: (a) => a.symptom === 'clicks',
+      options: [
+        { value: 'single', label: 'One solid click' },
+        { value: 'rapid', label: 'Rapid clicking, like a machine gun' },
+      ],
+    },
+  ],
+  outcomes: [
+    {
+      id: 'dead-battery',
+      band: 'fix-now',
+      title: 'Likely a dead or weak battery',
+      explanation:
+        'Total silence when you turn the key, or rapid clicking, is the classic sign of a battery too weak to crank the engine — by far the most common cause of a no-start. A jump start is usually the safe first move; the goal after that is finding out whether it’s the battery or the alternator behind it.',
+      likelyCauses: ['Most often a dead or badly discharged battery', 'Sometimes corroded or loose battery terminals', 'Occasionally a failing alternator that let the battery run down'],
+      cost: { diyLow: 0, diyHigh: 200, shopLow: 100, shopHigh: 300, dealerLow: 150, dealerHigh: 400 },
+      escalation: ['A jump gets it running but it dies again soon after — that points at the alternator, not just the battery'],
+      symptomLine: 'No response or rapid clicking when starting — suspect a dead/weak battery.',
+      askShopTo: 'load-test the battery and charging system and inspect the terminals and cables before recommending a new battery.',
+      category: 'battery-check',
+      selfCheck: [
+        'Look at the battery terminals for corrosion (white/blue crust) or looseness — a quick clean and tighten sometimes solves it outright.',
+        'If you have jumper cables and another car, a jump start is safe here and the normal first move.',
+        'Most parts stores test a battery and alternator free, right in the parking lot — that tells you which of the two it is.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'If a jump gets it running, drive straight to get the battery and charging system tested — don’t shut the engine off until you’re there. If a jump doesn’t get it running at all, have it towed.',
+      },
+      whatToBring: ['The battery’s age, if you know it — often on a sticker on the case.'],
+      shopChoice:
+        'A free parts-store test first, then any independent shop — battery and alternator work is routine, no dealer needed.',
+      match: (a) => a.symptom === 'nothing' || (a.symptom === 'clicks' && a.clickType === 'rapid'),
+    },
+    {
+      id: 'starter',
+      band: 'fix-now',
+      title: 'Likely the starter',
+      explanation:
+        'One solid click with no crank usually means the starter solenoid or the starter motor itself — the battery has enough to engage the solenoid but not enough (or the motor can’t) to turn the engine over. It can also still be a borderline-weak battery, since a solenoid needs less power than a full crank.',
+      likelyCauses: ['Most often a faulty starter solenoid or starter motor', 'Sometimes a weak battery or a bad connection at the starter'],
+      cost: { diyLow: 30, diyHigh: 300, shopLow: 300, shopHigh: 800, dealerLow: 400, dealerHigh: 1000 },
+      escalation: ['Tapping the starter housing gets it to crank once — that’s a strong sign it’s the starter, not the battery'],
+      symptomLine: 'One solid click, no crank, when starting.',
+      askShopTo: 'test the starter draw and the battery/connections, and confirm whether it’s the starter, the solenoid, or a bad connection before quoting a starter replacement.',
+      selfCheck: [
+        'Check that the battery terminals are clean and tight — the same single-click symptom can come from a bad connection, which costs nothing to rule out.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'A car that won’t crank isn’t driveable regardless of the cause, and a failing starter can leave you stranded somewhere worse if it does start intermittently. Have it looked at where it sits or towed.',
+      },
+      whatToBring: ['Note whether tapping the starter housing (if you can reach it safely) gets it to crank once.'],
+      shopChoice:
+        'Any independent shop replaces starters routinely — no dealer premium needed here.',
+      match: (a) => a.symptom === 'clicks' && a.clickType === 'single',
+    },
+    {
+      id: 'cranks-no-start',
+      band: 'fix-now',
+      title: 'Cranks but won’t catch — spark or fuel',
+      explanation:
+        'The engine turning over normally rules out the battery and starter, which narrows this to no spark (ignition), no fuel delivery, or — less often — a security system refusing to let it run. It needs a shop to tell which, since the fix and the cost differ a lot between them.',
+      likelyCauses: ['Often an ignition problem — coils or spark plugs', 'Sometimes no fuel delivery — pump, filter, or a relay', 'Occasionally a security/immobilizer fault'],
+      cost: { diyLow: 20, diyHigh: 300, shopLow: 150, shopHigh: 1000, dealerLow: 250, dealerHigh: 1400 },
+      escalation: ['You smell fuel while cranking — stop and treat it as a possible fuel leak instead'],
+      symptomLine: 'Engine cranks normally but doesn’t start or catch.',
+      askShopTo: 'check for spark and fuel pressure, pull any codes, and confirm whether it’s ignition, fuel delivery, or the security system before quoting parts.',
+      selfCheck: [
+        'If you smell fuel after a few tries, stop cranking it — that’s a different, more urgent issue.',
+        'Note whether the security/immobilizer light flashed differently than usual, if your car has one.',
+      ],
+      driveOrTow: {
+        verdict: 'tow',
+        note: 'A car that cranks but won’t start isn’t going anywhere until a shop finds which system is at fault — have it towed rather than repeatedly cranking it, which can flood the engine or drain the battery.',
+      },
+      whatToBring: ['Any codes, if you’ve had them read.', 'Note how long you cranked it before giving up.'],
+      shopChoice:
+        'An independent shop can diagnose spark/fuel/security fine. Dealer only if it’s a security-system fault tied to the factory key/fob system.',
+      match: (a) => a.symptom === 'cranks',
+    },
+    {
+      id: 'starts-then-dies',
+      band: 'fix-now',
+      title: 'Starts, then stalls — idle or fuel delivery',
+      explanation:
+        'An engine that catches and then immediately dies usually can’t hold a stable idle — often an idle air/idle circuit issue, a vacuum leak, or the fuel pump losing prime. It’s not the safety emergency an overheating or oil-pressure light is, but the car currently can’t be relied on to stay running.',
+      likelyCauses: ['Often an idle air control or idle circuit issue', 'Sometimes a vacuum leak', 'Sometimes the fuel pump losing prime or pressure'],
+      cost: { diyLow: 20, diyHigh: 200, shopLow: 150, shopHigh: 600, dealerLow: 250, dealerHigh: 1000 },
+      escalation: ['It won’t stay running even briefly after several tries, or you smell fuel — treat as a tow'],
+      symptomLine: 'Engine starts, then stalls immediately.',
+      askShopTo: 'check for a vacuum leak, test idle control, and check fuel pressure and prime before quoting a repair.',
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'If it manages to idle for more than a few seconds after restarting, a short local trip to the shop is fine. If it dies within a second or two every time, don’t keep trying — have it towed instead.',
+      },
+      whatToBring: ['Note how long it idles before dying, and whether it’s worse cold or warm.'],
+      shopChoice: 'Any independent shop can diagnose an idle or fuel-delivery issue — routine work.',
+      match: (a) => a.symptom === 'dies',
+    },
+  ],
+  fallback: {
+    id: 'wont-start-generic',
+    band: 'fix-now',
+    title: 'Won’t start — needs a diagnosis',
+    explanation:
+      'A no-start needs a shop to narrow down before anything can be fixed. Describe exactly what happens when you try to start it — that’s the fastest way to a diagnosis.',
+    likelyCauses: ['A proper diagnosis will pin down the cause'],
+    cost: { shopLow: 80, shopHigh: 300 },
+    escalation: ['Any fuel smell while cranking — treat it as a possible fuel leak instead'],
+    symptomLine: 'Car won’t start, cause not yet narrowed down.',
+    askShopTo: 'check the battery, starter, spark, and fuel delivery and report which system is at fault before quoting a repair.',
+    driveOrTow: { verdict: 'tow', note: 'A car that won’t start reliably isn’t safe to keep attempting on the road — have it looked at where it sits or towed.' },
+  },
+}
+
+// ===========================================================================
+// 6. STEERING / VIBRATION  (design/playbooks-research/07-steering-vibration.md)
+// ===========================================================================
+const steeringVibration: Playbook = {
+  id: 'steering-vibration',
+  label: 'Steering feels wrong or vibrates',
+  blurb: 'A shimmy in the wheel, pulling, looseness, heaviness, or a clunk when turning',
+  questions: [
+    {
+      id: 'when',
+      eyebrow: 'Steering / vibration',
+      text: 'When do you feel it?',
+      sub: 'Not about braking — that’s a separate question elsewhere.',
+      options: [
+        { value: 'highway', label: 'Mostly at highway speed' },
+        { value: 'turning', label: 'When turning the wheel' },
+        { value: 'always', label: 'All the time, even parking-lot speeds' },
+      ],
+    },
+    {
+      id: 'feel',
+      eyebrow: 'Steering / vibration',
+      text: 'What does it feel like?',
+      options: [
+        { value: 'vibrate', label: 'A vibration or shimmy in the wheel' },
+        { value: 'pull', label: 'The car pulls or wanders to one side' },
+        { value: 'loose', label: 'Loose, with play before it responds' },
+        { value: 'stiff', label: 'Heavy or hard to turn' },
+        { value: 'noise', label: 'A clunk or grinding when turning' },
+      ],
+    },
+  ],
+  outcomes: [
+    {
+      id: 'loose-steering',
+      band: 'fix-now',
+      title: 'Play in the steering — worth treating as urgent',
+      explanation:
+        'Steering that feels loose or has play before it responds usually means a worn tie rod end, ball joint, or steering rack. That play tends to get worse, and it means slower, less precise steering exactly when you’d need it most.',
+      likelyCauses: ['Most often a worn tie rod end or ball joint', 'Less often a worn steering rack'],
+      cost: { diyLow: 100, diyHigh: 350, shopLow: 150, shopHigh: 600, dealerLow: 300, dealerHigh: 1500 },
+      escalation: ['The play gets noticeably worse over a single drive, or the wheel feels like it could bind — treat it as a tow'],
+      symptomLine: 'Steering play/looseness before it responds.',
+      askShopTo: 'inspect the tie rod ends, ball joints, and steering rack for play and report which is worn before quoting a repair.',
+      category: 'multi-point-inspection',
+      selfCheck: [
+        'With the car parked and the wheel straight, gently rock the steering wheel side to side — noticeable play before the wheels move is worth reporting exactly as you feel it.',
+      ],
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Driveable at low speed to a shop, but skip the highway — steering play tends to worsen and highway speed amplifies the risk. If it gets worse over the drive, stop and arrange a tow instead.',
+      },
+      whatToBring: ['Note whether it’s worse over bumps, on turns, or both.'],
+      shopChoice:
+        'Any independent shop handles tie rods and ball joints routinely — no dealer premium needed unless it turns out to be the steering rack itself.',
+      match: (a) => a.feel === 'loose',
+    },
+    {
+      id: 'power-steering-stiff',
+      band: 'fix-now',
+      title: 'Steering suddenly heavy — check power steering',
+      explanation:
+        'Steering that’s heavy or hard to turn points at low power-steering fluid, a leak, a failing pump, or — on electric power steering — a fault in the assist system. Still steerable, just harder, which makes tight parking-lot turns and emergency maneuvers noticeably worse.',
+      likelyCauses: ['Often low power-steering fluid or a leak', 'Sometimes a failing power-steering pump', 'On electric power steering, an assist-system fault'],
+      cost: { diyLow: 20, diyHigh: 200, shopLow: 150, shopHigh: 500, dealerLow: 250, dealerHigh: 1200 },
+      escalation: ['Steering goes very heavy very suddenly, or you hear a squeal when turning — treat it as more urgent'],
+      symptomLine: 'Steering suddenly heavy or hard to turn.',
+      askShopTo: 'check the power-steering fluid level and look for a leak, and diagnose the pump or assist system before quoting a repair.',
+      category: 'power-steering-fluid',
+      selfCheck: [
+        'Check the power-steering fluid reservoir under the hood, if your car has a hydraulic system — low fluid or a milky look points at a leak.',
+      ],
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Still steerable, just harder — fine for a short, careful local trip. Skip the highway and tight maneuvers where the extra effort matters most.',
+      },
+      whatToBring: ['Whether it happened suddenly or crept up over weeks — that changes the likely cause.'],
+      shopChoice: 'Any independent shop can diagnose power steering — routine work, no dealer needed.',
+      match: (a) => a.feel === 'stiff',
+    },
+    {
+      id: 'pull-wander',
+      band: 'book-soon',
+      title: 'Pulling or wandering — alignment or tires',
+      explanation:
+        'A car that pulls or wanders is most often an alignment issue, uneven tire wear, or a tire pressure difference between sides. Not usually dangerous on its own, but worth sorting soon since it also wears tires faster.',
+      likelyCauses: ['Most often an alignment issue', 'Sometimes uneven tire wear or a pressure difference side to side', 'Occasionally a worn suspension component'],
+      cost: { diyLow: 0, diyHigh: 60, shopLow: 80, shopHigh: 200, dealerLow: 120, dealerHigh: 250 },
+      escalation: ['The pull gets strong, or it happens under braking too — treat it as the brake-noise playbook’s pulling outcome instead'],
+      symptomLine: 'Car pulls or wanders to one side while driving.',
+      askShopTo: 'check tire pressures and wear, then perform an alignment check and report the readings before recommending a service.',
+      category: 'wheel-alignment',
+      match: (a) => a.feel === 'pull',
+    },
+    {
+      id: 'vibrate-highway',
+      band: 'book-soon',
+      title: 'Likely a tire or wheel balance issue',
+      explanation:
+        'A vibration or shimmy that shows up mainly at highway speed is most often a wheel out of balance, sometimes a bent wheel or an out-of-round tire. Book a balance check soon — it’s quick and inexpensive to rule in or out.',
+      likelyCauses: ['Most often an unbalanced tire/wheel', 'Sometimes a bent wheel', 'Occasionally an out-of-round tire'],
+      cost: { diyLow: 0, diyHigh: 40, shopLow: 20, shopHigh: 150, dealerLow: 60, dealerHigh: 250 },
+      escalation: ['The vibration grows quickly, or you can see a bulge or damage on a tire — treat it as fix-now'],
+      symptomLine: 'Steering vibration mainly at highway speed.',
+      askShopTo: 'check wheel balance on all four wheels and inspect for a bent rim or out-of-round tire before recommending a fix.',
+      category: 'tire-balancing',
+      match: (a) => a.when === 'highway' && a.feel === 'vibrate',
+    },
+    {
+      id: 'vibrate-turning',
+      band: 'book-soon',
+      title: 'Likely a worn tie rod end or CV joint',
+      explanation:
+        'A vibration that shows up specifically when turning — rather than a steady highway shimmy — points more at a worn tie rod end or CV joint than a balance issue. Book it soon; a tie rod end resolves this kind of vibration in most cases once it’s replaced.',
+      likelyCauses: ['Most often a worn outer tie rod end', 'Sometimes a worn CV joint'],
+      cost: { diyLow: 60, diyHigh: 300, shopLow: 150, shopHigh: 500, dealerLow: 250, dealerHigh: 700 },
+      escalation: ['You also hear a rhythmic click on turns — that’s the other-noise playbook’s CV-joint outcome, worth checking too'],
+      symptomLine: 'Steering vibration specifically when turning.',
+      askShopTo: 'inspect the tie rod ends and CV joints for play or wear and confirm which is causing the vibration.',
+      match: (a) => a.when === 'turning' && a.feel === 'vibrate',
+    },
+    {
+      id: 'vibrate-always',
+      band: 'book-soon',
+      title: 'Likely tire wear or a wheel bearing',
+      explanation:
+        'A vibration present at all speeds, including low speed, more often points at cupped/unevenly worn tires or a wheel bearing than a simple balance issue. Book it soon since worn tires also handle worse.',
+      likelyCauses: ['Most often cupped or unevenly worn tires', 'Sometimes a wheel bearing'],
+      cost: { diyLow: 50, diyHigh: 250, shopLow: 100, shopHigh: 450, dealerLow: 200, dealerHigh: 800 },
+      escalation: ['The vibration grows quickly, or you hear a hum that rises with speed — treat it as a wheel-bearing concern'],
+      symptomLine: 'Steering vibration present at all speeds, including low speed.',
+      askShopTo: 'inspect the tread for cupping, check wheel-bearing play, and confirm tire pressures before recommending a fix.',
+      category: 'tire-inspection',
+      match: (a) => a.when === 'always' && a.feel === 'vibrate',
+    },
+    {
+      id: 'clunk-turning',
+      band: 'book-soon',
+      title: 'A worn part is clunking when you turn',
+      explanation:
+        'A clunk or grinding specifically when turning usually means a worn CV joint or axle, a strut mount, or a suspension bushing. Book it soon so a small worn part doesn’t stress bigger ones around it.',
+      likelyCauses: ['Most often a worn CV joint or axle', 'Sometimes a strut mount or suspension bushing'],
+      cost: { diyLow: 40, diyHigh: 300, shopLow: 150, shopHigh: 500, dealerLow: 250, dealerHigh: 800 },
+      escalation: ['The clunk becomes constant or you feel a shudder under acceleration too — treat it as fix-now'],
+      symptomLine: 'Clunk or grinding when turning the wheel.',
+      askShopTo: 'inspect the CV joints/axles, strut mounts, and suspension bushings and report which is causing the noise.',
+      match: (a) => a.feel === 'noise',
+    },
+  ],
+  fallback: {
+    id: 'steering-generic',
+    band: 'book-soon',
+    title: 'Worth having the steering looked at',
+    explanation:
+      'Steering issues are worth a proper inspection to pin down. Book it soon so a shop can road-test and reproduce what you’re feeling.',
+    likelyCauses: ['A road-test and inspection will localize the cause'],
+    cost: { shopLow: 60, shopHigh: 250 },
+    escalation: ['Steering suddenly feels loose, very heavy, or the car wanders strongly — treat it as fix-now'],
+    symptomLine: 'A steering feel or vibration issue that needs diagnosis.',
+    askShopTo: 'road-test the vehicle, check tire balance and alignment, and inspect the steering and suspension linkage before quoting a repair.',
+  },
+}
+
+export const PLAYBOOKS: Playbook[] = [warningLight, brakeNoise, otherNoise, leakSmell, carWontStart, steeringVibration]
 
 export function getPlaybook(id: string): Playbook | undefined {
   return PLAYBOOKS.find((p) => p.id === id)

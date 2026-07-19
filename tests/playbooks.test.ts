@@ -28,9 +28,9 @@ function run(pb: Playbook, answers: Answers) {
 }
 
 describe('playbook data integrity', () => {
-  it('has the four expected playbooks', () => {
+  it('has the six expected playbooks', () => {
     expect(PLAYBOOKS.map((p) => p.id).sort()).toEqual(
-      ['brake-noise', 'leak-smell', 'other-noise', 'warning-light'].sort(),
+      ['brake-noise', 'car-wont-start', 'leak-smell', 'other-noise', 'steering-vibration', 'warning-light'].sort(),
     )
   })
 
@@ -132,6 +132,129 @@ describe('resolver — warning lights', () => {
   it('does not ask the flashing question for a non-CEL light', () => {
     const qs = applicableQuestions(pb, { light: 'tpms' }).map((q) => q.id)
     expect(qs).not.toContain('flashing')
+  })
+
+  it('coolant-temperature light is fix-now with a tow verdict', () => {
+    const o = run(pb, { light: 'temp' })
+    expect(o.id).toBe('coolant-temp')
+    expect(o.band).toBe('fix-now')
+    expect(o.driveOrTow?.verdict).toBe('tow')
+  })
+
+  it('red brake light with parking brake confirmed released is fix-now', () => {
+    const o = run(pb, { light: 'brake', parkingBrake: 'released' })
+    expect(o.id).toBe('brake-light-released')
+    expect(o.band).toBe('fix-now')
+    expect(o.driveOrTow?.verdict).toBe('tow')
+  })
+
+  it('red brake light with the parking brake possibly still on is all-clear', () => {
+    const o = run(pb, { light: 'brake', parkingBrake: 'engaged' })
+    expect(o.id).toBe('brake-light-parking')
+    expect(o.band).toBe('all-clear')
+  })
+
+  it('asks the parking-brake question only for the red brake light', () => {
+    const qs = applicableQuestions(pb, { light: 'abs' }).map((q) => q.id)
+    expect(qs).not.toContain('parkingBrake')
+  })
+})
+
+describe('resolver — car won’t start', () => {
+  const pb = getPlaybook('car-wont-start')!
+
+  it('starts by asking the symptom question', () => {
+    const step = resolveStep(pb, {})
+    expect(step.kind).toBe('question')
+    if (step.kind === 'question') expect(step.question.id).toBe('symptom')
+  })
+
+  it('nothing at all resolves to dead battery without a follow-up', () => {
+    const o = run(pb, { symptom: 'nothing' })
+    expect(o.id).toBe('dead-battery')
+    expect(o.band).toBe('fix-now')
+  })
+
+  it('rapid clicking also resolves to dead battery', () => {
+    const o = run(pb, { symptom: 'clicks', clickType: 'rapid' })
+    expect(o.id).toBe('dead-battery')
+  })
+
+  it('a single click resolves to the starter', () => {
+    const o = run(pb, { symptom: 'clicks', clickType: 'single' })
+    expect(o.id).toBe('starter')
+  })
+
+  it('clicking needs the click-type follow-up before resolving', () => {
+    const step = resolveStep(pb, { symptom: 'clicks' })
+    expect(step.kind).toBe('question')
+    if (step.kind === 'question') expect(step.question.id).toBe('clickType')
+  })
+
+  it('cranking but not catching resolves without a follow-up', () => {
+    const o = run(pb, { symptom: 'cranks' })
+    expect(o.id).toBe('cranks-no-start')
+    expect(o.band).toBe('fix-now')
+  })
+
+  it('starting then dying is fix-now with a short-trip-only verdict', () => {
+    const o = run(pb, { symptom: 'dies' })
+    expect(o.id).toBe('starts-then-dies')
+    expect(o.driveOrTow?.verdict).toBe('short-trip-only')
+  })
+
+  it('every outcome in this playbook is fix-now (a no-start is never coast/all-clear)', () => {
+    for (const o of pb.outcomes) expect(o.band).toBe('fix-now')
+  })
+})
+
+describe('resolver — steering / vibration', () => {
+  const pb = getPlaybook('steering-vibration')!
+
+  it('starts by asking when it happens', () => {
+    const step = resolveStep(pb, {})
+    expect(step.kind).toBe('question')
+    if (step.kind === 'question') expect(step.question.id).toBe('when')
+  })
+
+  it('loose steering is fix-now regardless of when', () => {
+    const o = run(pb, { when: 'always', feel: 'loose' })
+    expect(o.id).toBe('loose-steering')
+    expect(o.band).toBe('fix-now')
+    expect(o.driveOrTow?.verdict).toBe('short-trip-only')
+  })
+
+  it('heavy/stiff steering is fix-now', () => {
+    const o = run(pb, { when: 'highway', feel: 'stiff' })
+    expect(o.id).toBe('power-steering-stiff')
+    expect(o.band).toBe('fix-now')
+  })
+
+  it('a highway vibration is book-soon (tire/wheel balance)', () => {
+    const o = run(pb, { when: 'highway', feel: 'vibrate' })
+    expect(o.id).toBe('vibrate-highway')
+    expect(o.band).toBe('book-soon')
+  })
+
+  it('a vibration only when turning points at a tie rod / CV joint', () => {
+    const o = run(pb, { when: 'turning', feel: 'vibrate' })
+    expect(o.id).toBe('vibrate-turning')
+  })
+
+  it('a constant low-speed vibration points at tires or a bearing', () => {
+    const o = run(pb, { when: 'always', feel: 'vibrate' })
+    expect(o.id).toBe('vibrate-always')
+  })
+
+  it('pulling/wandering is book-soon (alignment)', () => {
+    const o = run(pb, { when: 'always', feel: 'pull' })
+    expect(o.id).toBe('pull-wander')
+    expect(o.band).toBe('book-soon')
+  })
+
+  it('a clunk when turning matches regardless of the "when" answer', () => {
+    const o = run(pb, { when: 'turning', feel: 'noise' })
+    expect(o.id).toBe('clunk-turning')
   })
 })
 

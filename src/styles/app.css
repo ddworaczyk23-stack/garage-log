@@ -3799,6 +3799,12 @@ a.list-row:hover {
   background: color-mix(in srgb, var(--sig-red) 10%, var(--bg-card));
   border-color: color-mix(in srgb, var(--sig-red) 30%, transparent);
 }
+/* Neutral: the amount genuinely wasn't checked (no price anchor) — deliberately
+   NOT green, so it never reads as "passed" the way qc-ok does. */
+.qc-result.qc-neutral {
+  background: color-mix(in srgb, var(--c-stale) 9%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--c-stale) 28%, transparent);
+}
 .qc-rating {
   display: flex;
   align-items: center;
