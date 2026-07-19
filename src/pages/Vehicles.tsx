@@ -1,18 +1,27 @@
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
-import { STATUS_LABELS } from '../types'
 import { vehicleLabel } from '../domain/vehicle'
+import { bandFromStatus, hasRealData, VERDICT_BAND_LABELS, type VerdictBand } from '../domain/verdict'
 import { Loading } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 
 async function loadVehiclesWithStatus() {
   const vehicles = await db.vehicles.orderBy('name').toArray()
   return Promise.all(
-    vehicles.map(async (v) => ({
-      vehicle: v,
-      top: (await getVehicleReminders(v.id))[0] ?? null,
-    })),
+    vehicles.map(async (v) => {
+      const reminders = await getVehicleReminders(v.id)
+      // Same band vocabulary and the same not-set-up honesty as every other
+      // status readout in the app (Dashboard, VehicleDetail) — a vehicle with
+      // no logged service history must never show a status pill implying it
+      // does (see domain/verdict.ts hasRealData, the Earned Green Rule).
+      const known = hasRealData(reminders)
+      // rankReminders (via getVehicleReminders) already sorts worst-first, so
+      // the first non-not-applicable entry is this vehicle's worst band.
+      const top = known ? (reminders.find((r) => r.status !== 'not-applicable') ?? null) : null
+      const band: VerdictBand = known ? (top ? (bandFromStatus(top.status) ?? 'all-clear') : 'all-clear') : 'not-set-up'
+      return { vehicle: v, band }
+    }),
   )
 }
 
@@ -34,11 +43,11 @@ export function Vehicles() {
 
       <Reveal>
         <ul class="list">
-          {rows.map(({ vehicle: v, top }) => (
+          {rows.map(({ vehicle: v, band }) => (
             <li key={v.id}>
               <a class="list-row" href={`#/vehicle/${v.id}`}>
                 <span class="vehicle-emoji" aria-hidden="true">
-                  {v.make === 'Ford' ? '🛻' : '🚙'}
+                  🚗
                 </span>
                 <span class="list-row-main">
                   <span class="list-row-title">{vehicleLabel(v)}</span>
@@ -46,9 +55,7 @@ export function Vehicles() {
                     {v.year} {v.make} {v.model}
                   </span>
                 </span>
-                {top && (
-                  <span class={`status-pill status-${top.status}`}>{STATUS_LABELS[top.status]}</span>
-                )}
+                <span class={`status-pill status-pill-${band}`}>{VERDICT_BAND_LABELS[band]}</span>
                 <span class="chevron" aria-hidden="true">
                   ›
                 </span>

@@ -73,6 +73,7 @@ async function loadBrief(id: string): Promise<LoadedBrief | null> {
 export function ShopBriefPage({ id }: { id: string }) {
   const data = useQuery(() => loadBrief(id), [id])
   const [shared, setShared] = useState<string | null>(null)
+  const [shareError, setShareError] = useState<string | null>(null)
 
   if (data === undefined) return <Loading />
   if (data === null) {
@@ -90,6 +91,7 @@ export function ShopBriefPage({ id }: { id: string }) {
 
   async function share() {
     const text = briefToText(brief)
+    setShareError(null)
     try {
       if (navigator.share) {
         await navigator.share({ title: `Shop brief — ${brief.vehicleLine}`, text })
@@ -97,8 +99,15 @@ export function ShopBriefPage({ id }: { id: string }) {
       }
       await navigator.clipboard.writeText(text)
       setShared('Copied to the clipboard — paste it anywhere.')
-    } catch {
-      // Share sheet dismissed or clipboard blocked — nothing to clean up.
+    } catch (err) {
+      // AbortError = the user dismissed the native share sheet themselves —
+      // a cancel, not a failure, and correctly gets no message. Any other
+      // rejection (clipboard blocked, non-secure context, iOS quirks) fires
+      // at the highest-stakes moment in the app — standing at a counter
+      // trying to hand this to a mechanic — so silence there previously
+      // just read as "the app is broken."
+      if (err instanceof DOMException && err.name === 'AbortError') return
+      setShareError("Couldn't share — the brief is still on screen above, or tap Print.")
     }
   }
 
@@ -186,6 +195,11 @@ export function ShopBriefPage({ id }: { id: string }) {
       {shared && (
         <p class="notice notice-ok sb-chrome" role="status">
           {shared}
+        </p>
+      )}
+      {shareError && (
+        <p class="notice notice-error sb-chrome" role="alert">
+          {shareError}
         </p>
       )}
 

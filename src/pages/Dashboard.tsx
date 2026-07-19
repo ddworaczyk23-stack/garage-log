@@ -18,8 +18,6 @@ export function Dashboard() {
 
   if (!summary) return <Loading />
 
-  const documentCount = summary.vehicles.reduce((n, s) => n + s.documentCount, 0)
-  const spendThisYear = summary.vehicles.reduce((n, s) => n + s.spendThisYear, 0)
   // Health band (worst-wins across reminders AND open concerns) drives the
   // garage lamp, so a fix-now concern can't sit under a green "All caught up"
   // header. Not-set-up vehicles are neither: they get their own neutral line.
@@ -110,35 +108,19 @@ export function Dashboard() {
         </Reveal>
       )}
 
-      <div class="gb-util">
-        <Reveal class="gb-u-wrap">
-          <a class="card gb-u-tile" href="#/costs">
-            <span class="kicker">Spent this year</span>
-            <span class="gb-u-big">{formatMoney(spendThisYear)}</span>
-            <span class="gb-u-cta">
-              Cost summary
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
-            </span>
-          </a>
-        </Reveal>
-        <Reveal class="gb-u-wrap">
-          <a class="card gb-u-tile" href="#/backup">
-            <span class="kicker">Backup</span>
-            <span class="gb-u-big">{summary.vehicles.length} · {documentCount}</span>
-            <span class="gb-u-cta">
-              Back up garage
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
-            </span>
-          </a>
-        </Reveal>
-        <Reveal class="gb-u-wrap">
-          <a class="card gb-u-tile gb-u-add" href="#/add-vehicle">
-            <span class="gb-u-plus" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" /></svg>
-            </span>
-            <span class="gb-u-cta" style="color:var(--text)">Add a vehicle</span>
-          </a>
-        </Reveal>
+      <div class="gb-links">
+        <a class="gb-link" href="#/costs">
+          Cost summary
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
+        </a>
+        <a class="gb-link" href="#/backup">
+          Back up your garage
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
+        </a>
+        <a class="gb-link" href="#/add-vehicle">
+          Add a vehicle
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" /></svg>
+        </a>
       </div>
     </section>
   )
@@ -163,7 +145,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
               {s.spendThisYear > 0 && <> · {formatMoney(s.spendThisYear)} in {year}</>}
             </span>
           </div>
-          <VerdictPanel verdict={verdict} />
+          <VerdictPanel verdict={verdict} headingLevel="h4" />
           <UrgencyRuler verdict={verdict} />
 
           {verdict.coastItems.length > 0 && (

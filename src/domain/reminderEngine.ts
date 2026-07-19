@@ -238,10 +238,15 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
         ? projectedDueMiles - inputs.currentMiles
         : null
     // classify() never returns 'overdue' here since projMilesRemaining > 0.
-    const status: MaintenanceStatus =
+    // It CAN return 'completed' for a far-out projection, but 'completed'
+    // means "this was done" — never true for an item with no logged history.
+    // Clamp that case to 'watch-next' so a never-serviced item can never
+    // read as done, however comfortably far its projection sits.
+    const projStatus: MaintenanceStatus =
       projMilesRemaining != null
         ? classify(projMilesRemaining, DUE_LEAD_MILES, WATCH_LEAD_MILES)
         : 'watch-next'
+    const status: MaintenanceStatus = projStatus === 'completed' ? 'watch-next' : projStatus
     return {
       rule,
       status,

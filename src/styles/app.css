@@ -15,7 +15,7 @@
   --bg-inset: #f0f0eb; /* concrete wells inside cards */
   --border: rgba(35, 39, 43, 0.13); /* cool hairline */
   --text: #23272b; /* asphalt ink */
-  --text-muted: #6b7076;
+  --text-muted: #5a6167; /* deepened from #6b7076 — the original failed 4.5:1 on the canvas and inset wells (4.33/4.37), passing only on white cards */
   --accent: #1b5faa; /* interstate guide-sign blue — the brand signature */
   --accent-hover: #164e8c;
   --accent-tint: rgba(27, 95, 170, 0.11);
@@ -39,6 +39,24 @@
   --c-stale-bg: rgba(92, 99, 107, 0.12);
   --c-cost: #4a5057; /* asphalt-soft: money is data, not a warning */
   --c-cost-bg: rgba(74, 80, 87, 0.1);
+
+  /* Signal tones (Coast verdict layer — VerdictPanel, UrgencyRuler, Check's
+   * chk-drive/qc-rating): the SAME four-signal meaning as --c-* above, but
+   * tuned for solid panel fills with white text rather than ink-on-tint, so
+   * red/amber deliberately differ from --c-overdue/--c-due (a brighter panel
+   * reads better than a pill-tuned dark ink would). Where a value is
+   * identical to its --c-* counterpart, it aliases rather than repeats it —
+   * these used to live in a second, separate :root block with no comment
+   * explaining the split, which read as accidental drift. It wasn't; this is
+   * the single source of truth for both usages now. */
+  --sig-red: #b3402e;
+  --sig-amber: #d98a00;
+  --sig-amber-ink: #8a5800; /* text-on-tint / panel-text-bearing amber — see DESIGN.md */
+  --sig-blue: var(--accent);
+  --sig-blue-deep: var(--c-watch);
+  --sig-green: var(--c-ok);
+  --sig-green-ink: #1a6a3c; /* text-on-tint green — --sig-green itself measured 4.40:1 on its own 14% tint, just under 4.5:1 */
+  --font-signal: 'Overpass', var(--font-sans);
 
   /* Elevation — cool-tinted, soft */
   --shadow-card: 0 1px 2px rgba(35, 39, 43, 0.05), 0 10px 26px -14px rgba(35, 39, 43, 0.18);
@@ -76,6 +94,13 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* Safety net, not a fix for reflowed content: on pages tall enough to need
+     a vertical scrollbar, `position: fixed; left:0; right:0` elements (the
+     bottom nav) can size a few px wider than the visible viewport in some
+     engines — a scrollbar-gutter quirk in how the fixed containing block is
+     computed, unrelated to any single component. There is no intentional
+     horizontal-scrolling UI anywhere in the app, so clipping here is free. */
+  overflow-x: hidden;
 }
 
 body {
@@ -140,16 +165,32 @@ body {
   justify-content: space-between;
   gap: 8px;
   padding: 6px 16px;
+  /* width:100% + max-width:700px + margin:0 auto caps and centers on wide
+     viewports while still filling the column on narrow ones. width:100% is
+     load-bearing: .app-shell is a column flex container, so .account-bar is
+     a flex item on the CROSS axis, and the auto side-margins here (needed
+     for desktop centering) disable the default stretch sizing per the
+     flexbox spec — without an explicit width the item falls back to sizing
+     from its own un-shrinkable content (its flex-shrink:0 button + text),
+     which is what was dragging the whole page (and the fixed bottom nav
+     along with it) wider at 200% text zoom. */
+  width: 100%;
   max-width: 700px;
   margin: 0 auto;
   font-size: 0.75rem;
   border-bottom: 0.5px solid var(--border);
+  min-width: 0;
 }
 .account-status {
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  /* Flex items default to min-width: auto, which floors shrinking at the
+     text's natural width and defeats the ellipsis above — confirmed causing
+     horizontal viewport overflow at 200% text zoom together with the
+     adjacent flex-shrink:0 button. min-width: 0 lets it actually truncate. */
+  min-width: 0;
 }
 .account-bar .btn-link {
   flex-shrink: 0;
@@ -480,7 +521,7 @@ a.list-row:active {
   letter-spacing: -0.008em;
 }
 .chevron {
-  color: rgba(35, 39, 43, 0.32);
+  color: rgba(35, 39, 43, 0.58); /* was .32 (~1.9:1) — needs 3:1 as large-scale text */
   font-size: 1.4rem;
 }
 
@@ -507,6 +548,10 @@ a.list-row:active {
  * has one clear visual hierarchy instead of three shouting primaries. */
 .btn.quick-add-btn {
   flex: 1;
+  /* Same flex-item content-width-floor bug as .account-bar (now fixed): with
+     no min-width, three un-shrinkable buttons force this row past the
+     viewport at 200% text zoom. min-width: 0 lets them actually shrink. */
+  min-width: 0;
   background: var(--accent-tint);
   color: var(--accent);
   padding: 11px 8px;
@@ -553,7 +598,7 @@ input[type='file'] {
   font-size: 0.82rem;
 }
 input::placeholder {
-  color: rgba(35, 39, 43, 0.4);
+  color: rgba(35, 39, 43, 0.65); /* was .4 (2.37:1) — placeholder text needs the same 4.5:1 as any other text */
 }
 
 .form-actions {
@@ -694,7 +739,8 @@ input::placeholder {
   color: var(--text-muted);
   text-align: center;
   width: 100%;
-  opacity: 0.85;
+  /* was opacity: 0.85 — even after deepening --text-muted, .85 opacity still
+     landed at 4.41:1 (needs 4.5). --text-muted is already muted; full opacity. */
 }
 /* Wrapper so the delete control can sit over the thumbnail. */
 .doc-cell {
@@ -860,6 +906,30 @@ input::placeholder {
 .status-not-applicable {
   background: var(--bg-inset);
   color: var(--text-muted);
+}
+
+/* Band-vocabulary pill variants (Vehicles.tsx) — same four-signal tokens as
+ * every other status readout, keyed by VerdictBand instead of the engine's
+ * MaintenanceStatus, so the list uses the same words as Dashboard/VehicleDetail. */
+.status-pill-fix-now {
+  background: var(--c-overdue-bg);
+  color: var(--c-overdue);
+}
+.status-pill-book-soon {
+  background: var(--c-due-bg);
+  color: var(--c-due);
+}
+.status-pill-coast {
+  background: var(--c-watch-bg);
+  color: var(--c-watch);
+}
+.status-pill-all-clear {
+  background: var(--c-ok-bg);
+  color: var(--c-ok);
+}
+.status-pill-not-set-up {
+  background: var(--c-stale-bg);
+  color: var(--c-stale);
 }
 
 /* ---------- Template admin view ---------- */
@@ -1042,6 +1112,12 @@ code {
   bottom: 0;
   left: 0;
   right: 0;
+  /* A fixed-position flex container with width:auto apparently doesn't
+     reliably resolve to "fill the containing block" the way a plain block
+     does when its content can't shrink to fit — measured resolving to its
+     un-shrunk content width instead, same symptom as the .account-bar bug.
+     An explicit width removes the ambiguity. */
+  width: 100%;
   height: calc(var(--nav-height) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
   display: flex;
@@ -1051,9 +1127,22 @@ code {
   backdrop-filter: blur(20px) saturate(160%);
   border-top: 0.5px solid var(--border);
   z-index: 20;
+  /* At 200% text zoom, 5 nav items' min-content floor (~293px) exceeds a
+     375px viewport and used to overflow the whole page horizontally
+     (WCAG 1.4.4). Contain the overflow to the nav bar itself instead — it
+     scrolls, the page doesn't. */
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 .nav-item {
   flex: 0 1 120px;
+  /* Flex items default to min-width: auto — at 200% text zoom, 5 items'
+     un-shrinkable label text can force .bottom-nav's own box wider than the
+     viewport even with overflow-x:auto and an explicit width set on the
+     container, because the container's automatic sizing still accounts for
+     its items' content-width floor. min-width: 0 lets each item actually
+     shrink (and truncate/wrap) instead. */
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1481,7 +1570,7 @@ iframe.preview-media {
 }
 .export-cta-cue {
   font-size: 1.3rem;
-  color: rgba(35, 39, 43, 0.32);
+  color: rgba(35, 39, 43, 0.58); /* was .32 (~1.9:1) — needs 3:1 as large-scale text */
   flex-shrink: 0;
 }
 
@@ -1872,7 +1961,7 @@ iframe.preview-media {
 
 /* --- odometer instrument plate (Instrument.tsx) --- */
 .instrument {
-  background: var(--accent-hover); /* same olive family as the plate + gauge green zone */
+  background: var(--accent-hover); /* deepened guide-sign blue, matching the accent */
   border-radius: var(--radius-control);
   padding: 15px 17px 14px;
   color: #eef0ea;
@@ -1880,7 +1969,7 @@ iframe.preview-media {
   overflow: hidden;
 }
 .instrument .kicker {
-  color: rgba(238, 240, 234, 0.6);
+  color: rgba(238, 240, 234, 0.72); /* was .6 (3.71:1) — needs 4.5:1 */
 }
 .instr-top {
   display: flex;
@@ -1903,14 +1992,14 @@ iframe.preview-media {
 .odo .unit {
   font-size: 13px;
   letter-spacing: 0.18em;
-  color: rgba(238, 240, 234, 0.62);
+  color: rgba(238, 240, 234, 0.72); /* was .62 (3.85:1) — needs 4.5:1 */
   font-weight: 500;
 }
 .odo-foot {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.05em;
-  color: rgba(238, 240, 234, 0.62);
+  color: rgba(238, 240, 234, 0.72); /* was .62 (3.85:1) — needs 4.5:1 */
   margin: 9px 0 0;
   display: flex;
   align-items: center;
@@ -1940,7 +2029,11 @@ iframe.preview-media {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: #cfe0be;
+  /* was #cfe0be, a pale off-palette green left over from the pre-M12 olive
+     theme — the Signal Budget Rule reserves color for status meaning, and
+     this is a plain data readout. Matches the rest of the plate's white-on-
+     blue text family instead. */
+  color: rgba(238, 240, 234, 0.9);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -1955,7 +2048,7 @@ iframe.preview-media {
   font-size: 9.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(238, 240, 234, 0.5);
+  color: rgba(238, 240, 234, 0.78); /* was .5 (3.05:1) — the smallest text on the plate, needs 4.5:1 */
   margin-top: 2px;
 }
 .mbars {
@@ -1969,7 +2062,10 @@ iframe.preview-media {
 .mbar {
   width: 16px;
   border-radius: 4px 4px 2px 2px;
-  background: linear-gradient(180deg, #8fb37a, rgba(143, 179, 122, 0.35));
+  /* was a pale green gradient (#8fb37a), leftover from the pre-M12 olive
+     theme — decorative, off-palette, and reads as a stray status color next
+     to the real signal greens. White-on-blue, like the rest of the plate. */
+  background: linear-gradient(180deg, rgba(238, 240, 234, 0.9), rgba(238, 240, 234, 0.35));
   transform: scaleY(0);
   transform-origin: bottom;
   transition: transform 0.55s var(--ease-mech);
@@ -1982,22 +2078,24 @@ iframe.preview-media {
 }
 
 /* --- live "current reading" dot --- */
+/* was #8fb37a, a pale green — leftover from the pre-M12 olive theme, off-
+   palette, and easy to misread as a status signal next to the real greens. */
 .live-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #8fb37a;
-  box-shadow: 0 0 0 3px rgba(143, 179, 122, 0.22);
+  background: rgba(238, 240, 234, 0.9);
+  box-shadow: 0 0 0 3px rgba(238, 240, 234, 0.22);
   animation: breathe 3.4s ease-in-out infinite;
   flex-shrink: 0;
 }
 @keyframes breathe {
   0%,
   100% {
-    box-shadow: 0 0 0 3px rgba(143, 179, 122, 0.22);
+    box-shadow: 0 0 0 3px rgba(238, 240, 234, 0.22);
   }
   50% {
-    box-shadow: 0 0 0 5.5px rgba(143, 179, 122, 0.08);
+    box-shadow: 0 0 0 5.5px rgba(238, 240, 234, 0.08);
   }
 }
 
@@ -2007,7 +2105,8 @@ iframe.preview-media {
   .fold-inner,
   .bullet-fill,
   .mbar,
-  .chev {
+  .chev,
+  .cost-bar-fill {
     transition: none !important;
   }
   .reveal {
@@ -2141,7 +2240,7 @@ iframe.preview-media {
 }
 .vd-row {
   display: grid;
-  grid-template-columns: 14px 1fr auto;
+  grid-template-columns: 1fr auto;
   gap: 7px 13px;
   align-items: start;
   padding: 15px 0;
@@ -2154,19 +2253,17 @@ iframe.preview-media {
   margin: 0 -18px;
   padding-left: 18px;
   padding-right: 18px;
-  background: linear-gradient(90deg, var(--c-overdue-bg), transparent 82%);
+  /* was a left-anchored gradient fading to transparent — reads as a side
+     stripe (banned) implemented via a gradient (also banned). A flat tint
+     across the row carries the same emphasis without either. */
+  background: var(--c-overdue-bg);
   border-top-color: transparent;
 }
 .vd-row.is-overdue + .vd-row {
   border-top-color: transparent;
 }
-.vd-row .vd-lamp {
-  grid-column: 1;
-  grid-row: 1;
-  margin-top: 5px;
-}
 .vd-row-main {
-  grid-column: 2;
+  grid-column: 1;
   grid-row: 1;
   min-width: 0;
 }
@@ -2194,7 +2291,7 @@ iframe.preview-media {
   opacity: 0.5;
 }
 .vd-row-end {
-  grid-column: 3;
+  grid-column: 2;
   grid-row: 1;
   display: flex;
   flex-direction: column;
@@ -2203,7 +2300,7 @@ iframe.preview-media {
   text-align: right;
 }
 .vd-row .bullet {
-  grid-column: 2 / -1;
+  grid-column: 1 / -1;
   grid-row: 2;
 }
 .vd-log-btn {
@@ -2264,6 +2361,15 @@ iframe.preview-media {
   grid-template-columns: 1fr;
   gap: 14px;
 }
+.vd-rail,
+.vd-main {
+  /* Grid items default to min-width: auto — the same content-width floor
+     that broke .account-bar at 200% text zoom, here on the two-column
+     VehicleDetail layout. Without this, an un-shrinkable child (e.g.
+     .quick-add-bar's buttons) can push this column past the 1fr track and
+     out past the viewport regardless of the grid's own constraint. */
+  min-width: 0;
+}
 /* VehicleDetail two-column rail. Two ranges (R2): 900–1023px is tablet with no
    sidebar (full viewport, plenty of room), and ≥1200px is desktop where the
    248px sidebar still leaves a comfortable main column. The 1024–1199px gap
@@ -2305,10 +2411,10 @@ iframe.preview-media {
 }
 
 /* ============================================================
-   Premium polish pass — depth, editorial type, deepened olive,
-   snappy 150ms micro-interactions. Layout & logic unchanged.
+   Premium polish pass — depth, editorial type, snappy 150ms
+   micro-interactions. Layout & logic unchanged.
    ============================================================ */
-/* Headings & vehicle names in Spectral (authoritative) */
+/* Headings & vehicle names in Newsreader (the explanation serif voice) */
 .page-title {
   font-family: var(--font-serif);
   font-weight: 700;
@@ -2326,7 +2432,7 @@ iframe.preview-media {
   letter-spacing: -0.005em;
 }
 
-/* Technical data (odometer / cost / VIN) in IBM Plex Mono — instrumental feel */
+/* Technical data (odometer / cost / VIN) in Overpass Mono — instrumental feel */
 .cost-grand,
 .cost-row-amount,
 .cost-stats .stat dd,
@@ -2583,74 +2689,38 @@ a.list-row:hover {
   text-align: right;
 }
 
-/* utility strip */
-.gb-util {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+/* Utility row — was a 3-tile stat-tile grid (kicker + big numeral + CTA per
+ * tile, one tile literally concatenating two unrelated counts). That's the
+ * generic-SaaS-dashboard pattern PRODUCT.md names as an anti-reference
+ * verbatim; none of these are numbers a driver came to this screen to read.
+ * Plain text links instead — the numbers still live on their destination
+ * pages (Costs, Backup), with the context that makes them meaningful. */
+.gb-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
   margin-top: 4px;
 }
-.gb-u-wrap {
-  display: block;
-}
-.gb-u-tile {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-height: 96px;
-  justify-content: space-between;
-  text-decoration: none;
-  color: inherit;
-}
-.gb-u-big {
-  font-family: var(--font-serif);
-  font-weight: 600;
-  font-size: 24px;
-  letter-spacing: -0.01em;
-}
-.gb-u-cta {
+.gb-link {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  gap: 5px;
+  font-weight: 600;
+  font-size: 0.88rem;
   color: var(--accent);
+  text-decoration: none;
 }
-.gb-u-cta svg {
+.gb-link:hover {
+  text-decoration: underline;
+}
+.gb-link svg {
   width: 13px;
   height: 13px;
-}
-.gb-u-add {
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  border-style: dashed;
-}
-.gb-u-plus {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: var(--accent);
-  color: var(--accent-text);
-  margin-bottom: 8px;
-}
-.gb-u-plus svg {
-  width: 16px;
-  height: 16px;
+  flex-shrink: 0;
 }
 
 @media (max-width: 760px) {
   .gb-board {
-    grid-template-columns: 1fr;
-  }
-}
-@media (max-width: 620px) {
-  .gb-util {
     grid-template-columns: 1fr;
   }
 }
@@ -2675,19 +2745,12 @@ a.list-row:hover {
    COAST — verdict layer (Stage 1, design/COAST-PLAN.md)
    Road-signage instruments over the reminder engine: the VerdictPanel (a
    solid signal-colored sign with a white inner keyline) and the four-zone
-   UrgencyRuler. Signal hues are their own token set — semantic state colors,
-   deliberately separate from the olive brand accent. Overpass (Highway
-   Gothic descendant) is the sign voice; Spectral stays the explanation
-   voice; Plex Mono stays the data spine.
+   UrgencyRuler. Signal tones (--sig-*) and --font-signal are declared in the
+   main :root at the top of this file, alongside --c-* — see the comment
+   there for why the two status-color families exist. Overpass (Highway
+   Gothic descendant) is the sign voice; Newsreader stays the explanation
+   voice; Overpass Mono stays the data spine.
    ========================================================================= */
-:root {
-  --sig-red: #b3402e;
-  --sig-amber: #d98a00;
-  --sig-blue: #1b5faa; /* "you can coast" — guide-sign blue */
-  --sig-blue-deep: #164e8c;
-  --sig-green: #1e7a44;
-  --font-signal: 'Overpass', var(--font-sans);
-}
 
 /* --- Verdict panel (the sign) --- */
 .cv-panel {
@@ -2697,7 +2760,9 @@ a.list-row:hover {
   box-shadow: var(--shadow-card, 0 1px 2px rgba(35, 39, 43, 0.06), 0 8px 24px rgba(35, 39, 43, 0.07));
 }
 .cv-panel.cv-red { background: var(--sig-red); }
-.cv-panel.cv-amber { background: var(--sig-amber); }
+/* --sig-amber-ink, not --sig-amber: white text on #d98a00 measured 2.77:1
+   (fails 3:1 even at the 24px/800 headline size). #8a5800 passes at 6:1+. */
+.cv-panel.cv-amber { background: var(--sig-amber-ink); }
 .cv-panel.cv-blue { background: var(--sig-blue); }
 .cv-panel.cv-green { background: var(--sig-green); }
 /* The honest unknown state — slate, deliberately outside the signal scale
@@ -2821,38 +2886,6 @@ a.list-row:hover {
   margin: 8px 0 0;
   text-align: center;
 }
-
-/* --- health meter (Stage 5B): compact score bar, colored by band --- */
-.vh-meter {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 10px 0;
-}
-.vh-track {
-  flex: 1;
-  height: 5px;
-  border-radius: 3px;
-  background: var(--bg-inset, rgba(35, 39, 43, 0.08));
-  overflow: hidden;
-}
-.vh-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-.vh-label {
-  font-family: var(--font-mono);
-  font-size: 11.5px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  flex: none;
-}
-.vh-meter.cv-red .vh-fill { background: var(--sig-red); }
-.vh-meter.cv-amber .vh-fill { background: var(--sig-amber); }
-.vh-meter.cv-blue .vh-fill { background: var(--sig-blue); }
-.vh-meter.cv-green .vh-fill { background: var(--sig-green); }
-/* not-set-up renders nothing at all (see HealthMeter) — no cv-slate variant needed. */
 
 /* --- Today card (dashboard): panel + ruler + coast list per vehicle --- */
 .cv-card { display: block; }
@@ -3130,7 +3163,7 @@ a.list-row:hover {
   background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
   border-color: color-mix(in srgb, var(--sig-amber) 34%, transparent);
 }
-.chk-drive.is-short b { color: var(--sig-amber); }
+.chk-drive.is-short b { color: var(--sig-amber-ink); } /* was --sig-amber (~2.4:1 on the light tint bg) */
 .chk-drive.is-short .chk-drive-dot { background: var(--sig-amber); }
 .chk-drive.is-ok {
   background: color-mix(in srgb, var(--sig-blue) 8%, var(--bg-card));
@@ -3620,6 +3653,18 @@ a.list-row:hover {
   }
 }
 
+/* The reduced-motion override above and the desktop animation-name rule are
+ * both a plain `.vd-sticky` selector — identical specificity — so whichever
+ * comes LAST in source order wins the cascade, and the desktop rule was
+ * winning regardless of the user's OS-level reduced-motion preference. A
+ * combined query that's unconditionally later in source fixes it for real,
+ * rather than relying on rule ordering to stay correct. */
+@media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
+  .vd-sticky {
+    animation: none;
+  }
+}
+
 /* =========================================================================
    COAST — shop brief page (Stage 3, design/COAST-PLAN.md)
    Reuses the .chk-brief card from the Check flow; adds the fair-vs-decline
@@ -3751,7 +3796,7 @@ a.list-row:hover {
 .qc-yn.is-on {
   border-color: var(--sig-green);
   background: color-mix(in srgb, var(--sig-green) 14%, var(--bg-card));
-  color: var(--sig-green);
+  color: var(--sig-green-ink); /* was --sig-green (4.40:1 on this tint) — same pattern as the amber-ink fix */
 }
 .qc-yn-no.is-on {
   border-color: var(--sig-red);
@@ -3795,7 +3840,7 @@ a.list-row:hover {
 .qc-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .qc-ok .qc-rating { color: var(--sig-green); }
 .qc-ok .qc-dot { background: var(--sig-green); }
-.qc-high .qc-rating { color: var(--sig-amber); }
+.qc-high .qc-rating { color: var(--sig-amber-ink); } /* was --sig-amber (~2.4:1 on the light tint bg) */
 .qc-high .qc-dot { background: var(--sig-amber); }
 .qc-flag .qc-rating { color: var(--sig-red); }
 .qc-flag .qc-dot { background: var(--sig-red); }

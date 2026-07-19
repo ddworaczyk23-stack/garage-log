@@ -238,9 +238,13 @@ describe('computeReminder — never-serviced items are projected, never falsely 
     const r = computeReminder(mileageOnly(105000), inputsAt('2026-01-01', 70000))
     expect(r.dueAtMiles).toBe(105000)
     expect(r.milesRemaining).toBe(35000)
-    expect(r.status).toBe('completed') // on-track / upcoming, not due
+    // Never 'completed' — nothing was ever done. A far-out projection still
+    // reads as watch-next ("can coast"), not overdue/due-next, and never as
+    // done (see the Earned Green Rule in domain/verdict.ts).
+    expect(r.status).toBe('watch-next')
     expect(r.status).not.toBe('overdue')
     expect(r.status).not.toBe('due-next')
+    expect(r.status).not.toBe('completed')
   })
 
   it('projects the next interval boundary and reads as watch-next when close', () => {

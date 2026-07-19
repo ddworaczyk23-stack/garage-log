@@ -7,14 +7,12 @@ import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns } from '../db/concerns'
 import { reminderProgress } from '../domain/progress'
-import { hasRealData, vehicleVerdict } from '../domain/verdict'
-import { vehicleHealth } from '../domain/health'
-import { VerdictPanel, UrgencyRuler, HealthMeter } from '../components/VerdictPanel'
+import { bandFromStatus, BAND_LABELS, hasRealData, vehicleVerdict } from '../domain/verdict'
+import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
 import { identityFromVehicle } from '../domain/vehicleIdentity'
 import { hydrateFactoryMaintenance, hydrateConsensusData } from '../db/vehicleOnboarding'
 import { deleteVehicle } from '../db/vehicles'
-import { STATUS_LABELS } from '../types'
 import { EventForm } from '../components/EventForm'
 import { OdometerForm } from '../components/OdometerForm'
 import { EventListItem } from '../components/EventListItem'
@@ -35,7 +33,6 @@ import type {
   ConsensusData,
   FactoryMaintenanceData,
   MaintenanceCategory,
-  MaintenanceStatus,
   VehicleDocument,
 } from '../types'
 
@@ -53,14 +50,6 @@ async function loadVehicleDocuments(eventIds: string[]): Promise<VehicleDocument
 }
 
 type ActiveForm = 'service' | 'repair' | 'odometer' | null
-
-const LAMP_CLASS: Record<MaintenanceStatus, string> = {
-  overdue: 'is-overdue',
-  'due-next': 'is-due',
-  'watch-next': 'is-watch',
-  completed: 'is-ok',
-  'not-applicable': 'is-na',
-}
 
 // Vehicle detail: the editorial "Service Record" — identity, the odometer
 // instrument, the personalized maintenance schedule scored by the reminders
@@ -199,7 +188,6 @@ export function VehicleDetail({ id }: Props) {
     const prog = reminderProgress(r)
     return (
       <li key={r.rule.id} class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}`}>
-        <span class={`vd-lamp ${LAMP_CLASS[r.status]}`} />
         <div class="vd-row-main">
           <div class="vd-svc">{r.rule.label}</div>
           <div class="vd-svc-meta">
@@ -220,7 +208,14 @@ export function VehicleDetail({ id }: Props) {
           </div>
         </div>
         <div class="vd-row-end">
-          <span class={`status-pill status-${r.status}`}>{STATUS_LABELS[r.status]}</span>
+          <span class={`status-pill status-${r.status}`}>
+            {/* Band vocabulary, not the raw engine status — DESIGN.md: the
+                four-signal labels mean the same thing everywhere. */}
+            {(() => {
+              const band = bandFromStatus(r.status)
+              return band ? BAND_LABELS[band] : 'Not applicable'
+            })()}
+          </span>
           {/* Actionable items get a one-tap shop brief (Stage 3) — the thing
               you show at the counter when booking this service. */}
           {(r.status === 'overdue' || r.status === 'due-next') && (
@@ -279,7 +274,6 @@ export function VehicleDetail({ id }: Props) {
             </button>
           </>
         )}
-        {reminders && <HealthMeter health={vehicleHealth(reminders, openConcerns ?? [], stale)} />}
         <hr class="rule-double" />
       </header>
 

@@ -296,6 +296,11 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         </div>
       </div>
 
+      {/* Drive-vs-tow is the safety call — PRODUCT.md: "err urgent on safety,
+          calm on money." It leads right under the verdict, before cost or
+          cause detail, instead of being buried under a price table. */}
+      <ActionCards outcome={outcome} />
+
       <h3 class="chk-sect">Most likely</h3>
       <ul class="chk-causes">
         {outcome.likelyCauses.map((c) => (
@@ -331,8 +336,6 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
           </div>
         </>
       )}
-
-      <ActionCards outcome={outcome} />
 
       {showBrief && (
         <ShopBriefCard

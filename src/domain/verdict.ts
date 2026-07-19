@@ -42,17 +42,21 @@ export const VERDICT_BAND_LABELS: Record<VerdictBand, string> = {
 }
 
 /**
- * True when the reminder engine's output rests on at least one real data point
- * for this vehicle: a logged last-done (history) or a computable
- * miles-remaining (implies a current odometer estimate). When false, every
- * status in `reminders` is a data-free baseline — the verdict and health
- * layers exclude them rather than narrating them as knowledge.
+ * True when at least one tracked reminder has a logged last-done date or
+ * mileage — i.e. this vehicle has real SERVICE HISTORY, not just a current
+ * odometer estimate. A bare odometer reading tells us where the car is, not
+ * what's been done to it, so it must not count here: every never-serviced
+ * rule projects a plausible-looking status from the factory schedule alone
+ * (see the `neverServiced` branch in reminderEngine.ts), and treating that
+ * projection as "real data" is exactly how a car with zero logged history
+ * used to earn a green "all clear" verdict — the Earned Green Rule violation
+ * this function exists to prevent. When false, every status in `reminders`
+ * is a data-free baseline — the verdict and health layers exclude them
+ * rather than narrating them as knowledge.
  */
 export function hasRealData(reminders: ComputedReminder[]): boolean {
   return reminders.some(
-    (r) =>
-      r.status !== 'not-applicable' &&
-      (r.lastDone.date != null || r.lastDone.miles != null || r.milesRemaining != null),
+    (r) => r.status !== 'not-applicable' && (r.lastDone.date != null || r.lastDone.miles != null),
   )
 }
 

@@ -123,11 +123,34 @@ describe('vehicleVerdict — band selection', () => {
     expect(v.rulerPin).toBeNull()
   })
 
-  it('an odometer reading alone counts as real data — projections replace not-set-up', () => {
+  it('an odometer reading alone is NOT real data — stays not-set-up (Earned Green Rule)', () => {
+    // A bare odometer reading tells us where the car is, not what's been done
+    // to it. Counting it as "real data" here is exactly how a car with zero
+    // logged service history used to earn a green all-clear verdict.
     const rules = [makeRule({ lastDoneDate: null, lastDoneMiles: null })]
     const v = verdictFor(rules, inputsAt('2026-07-01', 46200))
+    expect(v.band).toBe('not-set-up')
+    expect(v.rulerPin).toBeNull()
+  })
+
+  it('a real logged history entry on at least one rule IS real data — not not-set-up', () => {
+    const rules = [
+      makeRule(), // has lastDoneDate/lastDoneMiles from the default fixture
+      makeRule({ lastDoneDate: null, lastDoneMiles: null, category: 'tire-rotation' }),
+    ]
+    const v = verdictFor(rules, inputsAt('2026-07-01', 46200))
     expect(v.band).not.toBe('not-set-up')
-    expect(v.rulerPin).not.toBeNull()
+  })
+
+  it('a never-serviced item never projects to all-clear/completed, however far out', () => {
+    // Regression for the Earned Green Rule violation: a never-serviced item
+    // whose projected next occurrence is far in the future used to classify
+    // as 'completed', which could make an entire never-serviced vehicle read
+    // as green "all clear". It must read as watch-next ("can coast") at most.
+    const rules = [makeRule({ lastDoneDate: null, lastDoneMiles: null, customIntervalMiles: 105000 })]
+    const reminders = computeVehicleReminders(rules, [], inputsAt('2026-07-01', 200))
+    expect(reminders[0].status).toBe('watch-next')
+    expect(reminders[0].status).not.toBe('completed')
   })
 
   it('a concern on an unknown vehicle drives the verdict; baseline reminders stay excluded', () => {

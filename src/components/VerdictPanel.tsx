@@ -1,6 +1,5 @@
 import type { SignalBand, VehicleVerdict, VerdictBand } from '../domain/verdict'
 import { BAND_LABELS, VERDICT_BAND_LABELS } from '../domain/verdict'
-import type { VehicleHealth } from '../domain/health'
 
 // Coast verdict instruments (Stage 1, design/COAST-PLAN.md): the road-sign
 // VerdictPanel and the four-zone UrgencyRuler. Pure presentation over a
@@ -16,14 +15,25 @@ const BAND_CLASS: Record<VerdictBand, string> = {
   'not-set-up': 'cv-slate',
 }
 
-export function VerdictPanel({ verdict, tag = 'Today' }: { verdict: VehicleVerdict; tag?: string }) {
+export function VerdictPanel({
+  verdict,
+  tag = 'Today',
+  headingLevel: Heading = 'h3',
+}: {
+  verdict: VehicleVerdict
+  tag?: string
+  /** Defaults to h3 (a page-level h2 title precedes it on VehicleDetail/Check).
+   * Dashboard's TodayCard passes 'h4' — its own per-vehicle name is already an
+   * h3, so this headline is a subsection of THAT, not a sibling of it. */
+  headingLevel?: 'h2' | 'h3' | 'h4'
+}) {
   return (
     <div class={`cv-panel ${BAND_CLASS[verdict.band]}`}>
       <div class="cv-inner">
         <div class="cv-tag">
           {tag} · {VERDICT_BAND_LABELS[verdict.band]}
         </div>
-        <h3 class="cv-headline">{verdict.headline}</h3>
+        <Heading class="cv-headline">{verdict.headline}</Heading>
         <p class="cv-sentence">{verdict.sentence}</p>
       </div>
     </div>
@@ -59,25 +69,6 @@ export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
         ))}
       </div>
       {note && <p class="cv-ruler-note">{note}</p>}
-    </div>
-  )
-}
-
-// Stage 5B: a single honest read on a vehicle — a compact meter colored by
-// band (worst-wins across reminders + open concerns, domain/health.ts). Never
-// a ranking input, purely a summary readout.
-export function HealthMeter({ health }: { health: VehicleHealth }) {
-  // Null score = 'not-set-up' — no data means no meter, not an empty track
-  // reserving space for one. The not-set-up verdict card right below already
-  // says "not set up yet" in full; an invisible bar repeating the same two
-  // words here is dead space, not a second instrument.
-  if (health.score == null) return null
-  return (
-    <div class={`vh-meter ${BAND_CLASS[health.band]}`}>
-      <div class="vh-track">
-        <div class="vh-fill" style={`width:${health.score}%`} />
-      </div>
-      <span class="vh-label">{health.reasons.join(' · ')}</span>
     </div>
   )
 }
