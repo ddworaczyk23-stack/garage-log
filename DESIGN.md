@@ -14,6 +14,7 @@ colors:
   asphalt-ink: "#23272b"
   muted-slate: "#6b7076"
   hairline: "#23272b21"
+  guide-sign-blue-tint: "rgba(27, 95, 170, 0.11)"
 typography:
   display:
     fontFamily: "Overpass, system-ui, sans-serif"
@@ -53,6 +54,13 @@ components:
     padding: "12px 18px"
   button-primary-hover:
     backgroundColor: "{colors.guide-sign-blue-deep}"
+  button-secondary:
+    backgroundColor: "{colors.guide-sign-blue-tint}"
+    textColor: "{colors.guide-sign-blue}"
+    rounded: "{rounded.control}"
+    padding: "12px 18px"
+  button-secondary-hover:
+    backgroundColor: "color-mix(in srgb, {colors.guide-sign-blue} 18%, transparent)"
   button-danger:
     backgroundColor: "{colors.signal-red}"
     textColor: "{colors.sign-face-white}"
@@ -140,8 +148,8 @@ Matter-of-fact and sturdy: solid fills, 10px control radius, no ornamentation. C
 - **Shape:** Modest rounding (10px, `--radius-control`).
 - **Primary (`.btn`):** Solid Guide-Sign Blue fill, white text, 12px 18px padding, weight 600. Hover deepens to #164e8c; active dims via brightness; disabled at 0.55 opacity.
 - **Danger:** Signal Red fill, same geometry.
+- **Secondary (`.btn.btn-secondary`):** Tinted Guide-Sign Blue fill (`--accent-tint`) with Guide-Sign Blue text, same geometry as primary. Demotes the second action in a stacked pair (e.g. Check's "Make my shop brief", the shop brief's "Print it") so only one solid fill reads as primary per group.
 - **Text actions (`.btn-link`):** Plain accent-colored text links for inline row actions.
-- **Known gap:** there is no visual secondary/tinted button variant — `.btn` alone is the filled style, so stacked actions currently all read as primary. When two actions share a row, demote the second (tinted `--accent-tint` fill or outline) rather than shipping two solid fills.
 
 ### Cards / Containers
 - **Corner Style:** 16px.
