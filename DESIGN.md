@@ -125,6 +125,20 @@ A restrained daylight palette under four saturated signal colors that carry all 
 - **Prose / Verdict sentence** (400, 15.5px, 1.45): The serif explanation voice (Newsreader). Any sentence that explains, reassures, or advises is set in serif.
 - **Label / Kicker** (500–600, 10.5–11px, +0.16–0.2em, UPPERCASE): Overpass Mono eyebrows, tags, and data labels.
 
+### Type Scale
+The five named voices above (Display/Title/Body/Prose/Label) are the *semantic* tokens — what to reach for when writing new UI. In practice, dense list rows, meta lines, and compact chips across the app need finer steps between them, so the scale is a graduated ramp rather than five isolated sizes. Any size below is in-scale; a new size outside this ramp is the signal to round to the nearest step instead of inventing one:
+
+- **Micro** (9.5–10.5px): Ultra-compact meta (row timestamps, tiny counters).
+- **Caption** (11–12.5px): Labels, chips, secondary meta — overlaps the Label voice's 10.5–11px.
+- **Small** (13–14.5px): Secondary body text, list-row subtext, form hints.
+- **Body** (15–15.5px / ~0.95rem): Primary UI copy and the Prose voice.
+- **Subhead** (16.5–18.5px / 1.02–1.15rem): Title voice and card headings.
+- **Emphasis** (20.5–23px / 1.3–1.4rem): Section totals, standout numerals.
+- **Display** (24–26px): Verdict headline territory.
+- **Hero** (28–38.5px / 1.7–2.4rem): Dashboard hero numerals, empty-state glyphs.
+
+Half-pixel steps (e.g. 13.5px, 14.5px) are expected within the Small/Caption bands — they're used to hairline-tune vertical rhythm inside dense rows and are as valid as their whole-pixel neighbors.
+
 ### Named Rules
 **The Three Voices Rule.** Signage (Overpass), explanation (Newsreader serif), data (Overpass Mono) — every text element belongs to exactly one voice. Numbers never render in the serif; verdicts never render in the mono.
 
@@ -169,6 +183,21 @@ Matter-of-fact and sturdy: solid fills, 10px control radius, no ornamentation. C
 
 ### The Verdict Panel (signature)
 The road sign itself: a saturated signal-color slab (band color as full background), rounded 16px, containing an Overpass Mono uppercase tag ("VERDICT · FIX NOW"), the 24px/800 Overpass headline, and a 15.5px Newsreader sentence — all in white. Beneath it, the **Urgency Ruler**: a 9px four-zone track (red/amber/blue/green segments) with a pin marking position within the band. These two components are the brand; reuse them (`.cv-panel`, `.cv-ruler`) rather than inventing new status displays.
+
+### Radius Scale
+`--radius-control` (10px) and `--radius`/card (16px) are the two semantic tokens for controls and top-level cards. Nested and one-off surfaces step between them rather than picking arbitrary values:
+
+- **Chip** (2–6px): Tiny badges, dots, and inline indicator marks.
+- **Inset** (8–9px): Sub-surfaces nested inside a card (wells, thumbnails).
+- **Control** (10px, `--radius-control`): Buttons, inputs, chips that need to look tappable.
+- **Nested card** (12–14px): Cards nested one level below the top-level card grid.
+- **Card** (16px, `--radius`): Top-level cards and the Verdict Panel.
+- **Feature** (18px): Oversized feature surfaces (hero cards, the Check button's slab).
+- **Pill** (999px): Fully-rounded chips, tags, and status badges.
+- **Circle** (50%): Avatars, icon roundels, and dot indicators.
+
+### Motion
+Progress and health meters (`.health-fill`, `.vh-fill`) animate via `transition: width` rather than `transform: scaleX`, since their fill sits inside a fixed-radius rounded track and a scale transform would distort the corner radius at partial fill. This is an intentional, narrow exception to "animate transform/opacity" — reserved for literal fill-bar meters only, never for cards, panels, or anything that moves/resizes as a whole.
 
 ## 6. Do's and Don'ts
 

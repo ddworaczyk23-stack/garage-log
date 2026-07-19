@@ -148,13 +148,6 @@ button contrast, the standalone shop brief's Share (filled) vs Print (tinted)
 buttons, and the "Coast · The service record, kept honest" colophon on
 Vehicle Detail.
 
-## OPEN DECISION (user)
-
-The impeccable design hook flags ~50 pre-existing app.css findings —
-font sizes/radii not in DESIGN.md's documented ramp, plus 3 width-transition
-meters. Either extend DESIGN.md's typography/rounded scales to match the real
-CSS, or `/impeccable hooks ignore-file "src/styles/app.css"`.
-
 ## STANDING RULES
 
 - npm test + npm run typecheck gate every session.
