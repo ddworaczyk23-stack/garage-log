@@ -1918,9 +1918,14 @@ iframe.preview-media {
 }
 /* The odometer gauge is a solid accent-colored plate, so its own CTA reads
    inverted (white fill, accent text) rather than the usual solid-accent
-   primary — a same-color button here would nearly vanish into the plate. */
+   primary — a same-color button here would nearly vanish into the plate.
+   It also stands in for the number when there's no reading yet — the empty
+   state's hero content is the action, not a "—" placeholder. */
 .odo-cta {
-  margin-top: 12px;
+  display: block;
+  width: 100%;
+  text-align: center;
+  margin-top: 8px;
   background: var(--bg-card);
   color: var(--accent);
 }

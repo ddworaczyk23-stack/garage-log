@@ -323,13 +323,10 @@ export function VehicleDetail({ id }: Props) {
         ) : (
           <div class="instrument">
             <span class="kicker">Odometer</span>
-            <div class="odo">
-              <span class="num">—</span>
-            </div>
-            <div class="odo-foot">No readings yet.</div>
             <button type="button" class="btn odo-cta" onClick={() => openForm('odometer')}>
               + Add odometer reading
             </button>
+            <div class="odo-foot">No readings yet.</div>
           </div>
         )}
 
