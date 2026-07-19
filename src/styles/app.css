@@ -2852,7 +2852,7 @@ a.list-row:hover {
 .vh-meter.cv-amber .vh-fill { background: var(--sig-amber); }
 .vh-meter.cv-blue .vh-fill { background: var(--sig-blue); }
 .vh-meter.cv-green .vh-fill { background: var(--sig-green); }
-/* not-set-up renders no fill (see HealthMeter) — the empty track is the point. */
+/* not-set-up renders nothing at all (see HealthMeter) — no cv-slate variant needed. */
 
 /* --- Today card (dashboard): panel + ruler + coast list per vehicle --- */
 .cv-card { display: block; }

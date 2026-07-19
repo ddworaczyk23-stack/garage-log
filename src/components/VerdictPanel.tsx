@@ -67,11 +67,15 @@ export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
 // band (worst-wins across reminders + open concerns, domain/health.ts). Never
 // a ranking input, purely a summary readout.
 export function HealthMeter({ health }: { health: VehicleHealth }) {
+  // Null score = 'not-set-up' — no data means no meter, not an empty track
+  // reserving space for one. The not-set-up verdict card right below already
+  // says "not set up yet" in full; an invisible bar repeating the same two
+  // words here is dead space, not a second instrument.
+  if (health.score == null) return null
   return (
     <div class={`vh-meter ${BAND_CLASS[health.band]}`}>
       <div class="vh-track">
-        {/* Null score = 'not-set-up': an empty track, not a full green bar. */}
-        {health.score != null && <div class="vh-fill" style={`width:${health.score}%`} />}
+        <div class="vh-fill" style={`width:${health.score}%`} />
       </div>
       <span class="vh-label">{health.reasons.join(' · ')}</span>
     </div>
