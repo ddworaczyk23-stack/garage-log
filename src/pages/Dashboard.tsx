@@ -28,6 +28,49 @@ export function Dashboard() {
   ).length
   const notSetUp = summary.vehicles.filter((s) => s.health.band === 'not-set-up').length
 
+  // First run (deployed builds start genuinely empty — see db/seed.ts): one
+  // clear invitation instead of an empty dashboard shell. The comparison
+  // table, spend/backup tiles, and garage lamp all describe vehicles that
+  // don't exist yet, so none of them render until the first car is in.
+  if (summary.vehicles.length === 0) {
+    return (
+      <section class="page gb">
+        <header class="gb-top">
+          <span class="eyebrow">The Garage · Today</span>
+          <div class="gb-top-row">
+            <h2 class="gb-name">Your Garage</h2>
+          </div>
+          <hr class="rule-double" />
+        </header>
+
+        <div class="cv-card">
+          <div class="cv-panel cv-slate fr-hero">
+            <div class="cv-inner">
+              <div class="cv-tag">Welcome to Coast</div>
+              <h3 class="cv-headline">Plain-English answers about your car.</h3>
+              <p class="cv-sentence">
+                Add your car and Coast turns its maintenance schedule into verdicts you can act on —
+                what needs attention, what can wait, and what to say at the shop counter.
+              </p>
+            </div>
+          </div>
+
+          {/* A real 3-step sequence — this is the activation path, in order. */}
+          <ol class="fr-steps">
+            <li><b>Add your car</b> — year, make, and model is enough.</li>
+            <li><b>Log an odometer reading</b> — one number starts real tracking.</li>
+            <li><b>Get your verdict</b> — and a shop brief whenever something's up.</li>
+          </ol>
+
+          <div class="fr-actions">
+            <a class="btn btn-primary" href="#/add-vehicle">Add your car</a>
+            <span class="fr-note">Takes about a minute. Everything stays on this device unless you sign in to sync.</span>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section class="page gb">
       <header class="gb-top">
@@ -53,20 +96,19 @@ export function Dashboard() {
         <hr class="rule-double" />
       </header>
 
-      {summary.vehicles.length === 0 ? (
-        <p class="muted small">No vehicles yet — add one to get started.</p>
-      ) : (
-        // Stacks on mobile; a 2-up board on desktop (see .gb-today-grid, R2).
-        <div class="gb-today-grid">
-          {summary.vehicles.map((s) => (
-            <TodayCard key={s.vehicle.id} summary={s} year={summary.year} />
-          ))}
-        </div>
-      )}
+      {/* Stacks on mobile; a 2-up board on desktop (see .gb-today-grid, R2). */}
+      <div class="gb-today-grid">
+        {summary.vehicles.map((s) => (
+          <TodayCard key={s.vehicle.id} summary={s} year={summary.year} />
+        ))}
+      </div>
 
-      <Reveal>
-        <ComparisonCard vehicles={summary.vehicles} year={summary.year} />
-      </Reveal>
+      {/* A comparison of one vehicle compares nothing — needs at least two. */}
+      {summary.vehicles.length >= 2 && (
+        <Reveal>
+          <ComparisonCard vehicles={summary.vehicles} year={summary.year} />
+        </Reveal>
+      )}
 
       <div class="gb-util">
         <Reveal class="gb-u-wrap">
@@ -142,7 +184,8 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
         </div>
 
         <span class="open-link cv-open-row">
-          Open Service Record
+          {/* A not-set-up card's next step is setup, not reading a record. */}
+          {verdict.band === 'not-set-up' ? 'Set it up' : 'Open Service Record'}
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
         </span>
       </a>

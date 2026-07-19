@@ -2728,6 +2728,46 @@ a.list-row:hover {
 /* The honest unknown state — slate, deliberately outside the signal scale
    (white on #5c636b ≈ 5.9:1, AA at all sizes used on the panel). */
 .cv-panel.cv-slate { background: var(--c-stale); }
+
+/* --- First-run (empty garage) + not-set-up setup actions ------------------ */
+/* The activation path as a real ordered sequence (add car → odometer →
+   verdict); ::marker set in the data voice (mono), body in the UI voice. */
+.fr-steps {
+  margin: 16px 0 4px;
+  padding-left: 26px;
+  display: grid;
+  gap: 8px;
+}
+.fr-steps li {
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+.fr-steps li::marker {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  color: var(--accent);
+}
+.fr-actions {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.fr-note {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  max-width: 34ch;
+}
+/* Under a not-set-up verdict on VehicleDetail: the two setup actions. */
+.vd-setup {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
 .cv-inner {
   border: 2px solid rgba(255, 255, 255, 0.55);
   border-radius: 12px;

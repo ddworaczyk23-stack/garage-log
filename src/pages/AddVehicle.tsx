@@ -58,9 +58,13 @@ export function AddVehicle() {
     }
   }
 
+  // Year, make, and model are the only true requirements — trim (and engine/
+  // drivetrain below) are optional metadata a non-car-person often doesn't
+  // know. canonicalVehicleId normalizes an empty trim deterministically, and
+  // the vehicle name falls back to the model, so nothing downstream needs them.
   function manualIdentity(): VehicleIdentity | null {
     const y = Number(year)
-    if (!y || !make.trim() || !model.trim() || !trim.trim()) return null
+    if (!y || !make.trim() || !model.trim()) return null
     return {
       year: y,
       make: make.trim(),
@@ -74,9 +78,9 @@ export function AddVehicle() {
 
   async function submit(e: Event) {
     e.preventDefault()
-    if (submitting || !identity) return
-    if (!engine.trim() || !drivetrain.trim()) {
-      setSubmitError('Enter engine and drivetrain.')
+    if (submitting) return
+    if (!identity) {
+      setSubmitError('Enter the year, make, and model — the rest is optional.')
       return
     }
     setSubmitError('')
@@ -157,7 +161,7 @@ export function AddVehicle() {
       )}
 
       {mode === 'manual' && (
-        <div class="card admin-form">
+        <form class="card admin-form" onSubmit={submit}>
           <label class="admin-field">
             <span class="muted small">Year</span>
             <input
@@ -169,20 +173,54 @@ export function AddVehicle() {
           </label>
           <label class="admin-field">
             <span class="muted small">Make</span>
-            <input type="text" value={make} onInput={(e) => setMake((e.target as HTMLInputElement).value)} />
+            <input type="text" value={make} placeholder="e.g. Toyota" onInput={(e) => setMake((e.target as HTMLInputElement).value)} />
           </label>
           <label class="admin-field">
             <span class="muted small">Model</span>
-            <input type="text" value={model} onInput={(e) => setModel((e.target as HTMLInputElement).value)} />
+            <input type="text" value={model} placeholder="e.g. Camry" onInput={(e) => setModel((e.target as HTMLInputElement).value)} />
           </label>
           <label class="admin-field">
-            <span class="muted small">Trim</span>
-            <input type="text" value={trim} onInput={(e) => setTrim((e.target as HTMLInputElement).value)} />
+            <span class="muted small">Trim — optional</span>
+            <input
+              type="text"
+              value={trim}
+              placeholder="Not sure? Leave it blank"
+              onInput={(e) => setTrim((e.target as HTMLInputElement).value)}
+            />
           </label>
-        </div>
+          <label class="admin-field">
+            <span class="muted small">Engine — optional</span>
+            <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
+          </label>
+          <label class="admin-field">
+            <span class="muted small">Drivetrain — optional</span>
+            <input
+              type="text"
+              value={drivetrain}
+              placeholder="e.g. FWD, AWD"
+              onInput={(e) => setDrivetrain((e.target as HTMLInputElement).value)}
+            />
+          </label>
+          {submitError && (
+            <p class="notice notice-error" role="alert">
+              {submitError}
+            </p>
+          )}
+          {duplicate && (
+            <p class="notice" role="status">
+              {duplicate.label} is already in your garage — no duplicate was created.{' '}
+              <a href={`#/vehicle/${duplicate.id}`}>View it →</a>
+            </p>
+          )}
+          <div class="form-actions">
+            <button class="btn" type="submit" disabled={submitting}>
+              {submitting ? 'Adding…' : 'Add car'}
+            </button>
+          </div>
+        </form>
       )}
 
-      {identity && (
+      {mode === 'vin' && identity && (
         <Reveal>
         <form class="card admin-form" onSubmit={submit}>
           <p class="muted small">
@@ -190,11 +228,11 @@ export function AddVehicle() {
             {identity.vin ? ` · VIN ${identity.vin}` : ''}
           </p>
           <label class="admin-field">
-            <span class="muted small">Engine</span>
+            <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
           <label class="admin-field">
-            <span class="muted small">Drivetrain</span>
+            <span class="muted small">Drivetrain — optional</span>
             <input
               type="text"
               value={drivetrain}

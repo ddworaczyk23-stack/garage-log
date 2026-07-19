@@ -7,7 +7,7 @@ import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns } from '../db/concerns'
 import { reminderProgress } from '../domain/progress'
-import { vehicleVerdict } from '../domain/verdict'
+import { hasRealData, vehicleVerdict } from '../domain/verdict'
 import { vehicleHealth } from '../domain/health'
 import { VerdictPanel, UrgencyRuler, HealthMeter } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
@@ -172,6 +172,9 @@ export function VehicleDetail({ id }: Props) {
     },
     { overdue: 0, due: 0, ok: 0 },
   )
+  // False while the vehicle has no logged history and no odometer estimate —
+  // the schedule's baseline statuses aren't knowledge yet (see domain/verdict).
+  const known = reminders ? hasRealData(reminders) : true
   const stale = mileage
     ? (Date.now() - new Date(`${mileage.asOfDate}T00:00:00`).getTime()) / 86_400_000 > 45
     : false
@@ -294,14 +297,28 @@ export function VehicleDetail({ id }: Props) {
               <>
                 <VerdictPanel verdict={verdict} tag="This vehicle" />
                 <UrgencyRuler verdict={verdict} />
-                {/* The verdict names the ONE thing that matters; this says how
-                    many items sit behind it — the only fact the old focal gauge
-                    carried that the verdict doesn't. */}
-                <div class="vd-tally">
-                  <span class="tally"><span class="vd-lamp is-overdue" />{counts.overdue} overdue</span>
-                  <span class="tally"><span class="vd-lamp is-due" />{counts.due} due now</span>
-                  <span class="tally"><span class="vd-lamp is-ok" />{counts.ok} on track</span>
-                </div>
+                {verdict.band === 'not-set-up' ? (
+                  /* Setup, not statistics: the tally's "N on track" would be
+                     baseline noise for a car with no real data. These two
+                     actions are the whole activation path. */
+                  <div class="vd-setup">
+                    <button type="button" class="btn btn-primary" onClick={() => openForm('odometer')}>
+                      + Add odometer reading
+                    </button>
+                    <a class="btn-link" href={`#/import/${id}`}>
+                      Import service history →
+                    </a>
+                  </div>
+                ) : (
+                  /* The verdict names the ONE thing that matters; this says how
+                     many items sit behind it — the only fact the old focal gauge
+                     carried that the verdict doesn't. */
+                  <div class="vd-tally">
+                    <span class="tally"><span class="vd-lamp is-overdue" />{counts.overdue} overdue</span>
+                    <span class="tally"><span class="vd-lamp is-due" />{counts.due} due now</span>
+                    <span class="tally"><span class="vd-lamp is-ok" />{counts.ok} on track</span>
+                  </div>
+                )}
               </>
             )
           })()}
@@ -346,9 +363,9 @@ export function VehicleDetail({ id }: Props) {
           ) : (
             <>
               <dl class="vd-spec-table">
-                <div class="vd-spec-row"><dt>Engine</dt><dd>{vehicle.engine}</dd></div>
-                <div class="vd-spec-row"><dt>Drivetrain</dt><dd>{vehicle.drivetrain}</dd></div>
-                <div class="vd-spec-row"><dt>Trim</dt><dd>{vehicle.trim}</dd></div>
+                <div class="vd-spec-row"><dt>Engine</dt><dd>{vehicle.engine || 'Not set'}</dd></div>
+                <div class="vd-spec-row"><dt>Drivetrain</dt><dd>{vehicle.drivetrain || 'Not set'}</dd></div>
+                <div class="vd-spec-row"><dt>Trim</dt><dd>{vehicle.trim || 'Not set'}</dd></div>
                 <div class="vd-spec-row"><dt>VIN</dt><dd class="muted">{vehicle.vin ?? 'Not set'}</dd></div>
               </dl>
               <button type="button" class="btn-link" onClick={() => setEditingSpecs(true)}>
@@ -418,7 +435,11 @@ export function VehicleDetail({ id }: Props) {
         ) : (
           <>
             {actionable.length === 0 ? (
-              <p class="muted small">Nothing needs attention right now — nice.</p>
+              <p class="muted small">
+                {known
+                  ? 'Nothing needs attention right now — nice.'
+                  : 'These are general starting intervals. Add an odometer reading or log a service, and they start tracking this car for real.'}
+              </p>
             ) : (
               <ul class="vd-ledger">{actionable.map(renderRow)}</ul>
             )}
