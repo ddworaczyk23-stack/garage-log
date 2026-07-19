@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { useQuery } from '../db/useQuery'
 import { getGarageCostSummary, type VehicleCostSummary } from '../db/summary'
 import { formatMiles, formatMoney } from '../domain/format'
-import { vehicleLabel } from '../domain/vehicle'
+import { vehicleEmoji, vehicleLabel } from '../domain/vehicle'
 import { EmptyState, Loading } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { useCountUp, useIntroGate, useReducedMotion } from '../motion/hooks'
@@ -90,7 +90,7 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
     <section class="card">
       <div class="vehicle-card-head">
         <span class="vehicle-emoji" aria-hidden="true">
-          {vehicle.make === 'Ford' ? '🛻' : '🚙'}
+          {vehicleEmoji(vehicle)}
         </span>
         <div>
           <h3 class="card-title">{vehicleLabel(vehicle)}</h3>

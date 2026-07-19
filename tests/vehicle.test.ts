@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { vehicleLabel } from '../src/domain/vehicle'
+import { vehicleEmoji, vehicleLabel } from '../src/domain/vehicle'
 
 describe('vehicleLabel', () => {
   it('uses the seeded name when there is no nickname', () => {
@@ -18,5 +18,30 @@ describe('vehicleLabel', () => {
 
   it('trims a nickname with surrounding whitespace', () => {
     expect(vehicleLabel({ name: 'Rogue SL', nickname: '  Daily  ' })).toBe('Daily')
+  })
+})
+
+describe('vehicleEmoji', () => {
+  it('picks a truck for pickup models', () => {
+    expect(vehicleEmoji({ model: 'F-150' })).toBe('🛻')
+    expect(vehicleEmoji({ model: 'Tacoma' })).toBe('🛻')
+  })
+
+  it('picks an SUV for crossover/SUV models', () => {
+    expect(vehicleEmoji({ model: 'Rogue' })).toBe('🚙')
+    expect(vehicleEmoji({ model: 'RAV4' })).toBe('🚙')
+  })
+
+  it('picks a van for minivan models', () => {
+    expect(vehicleEmoji({ model: 'Odyssey' })).toBe('🚐')
+  })
+
+  it('falls back to a generic car for unrecognized models', () => {
+    expect(vehicleEmoji({ model: 'Camry' })).toBe('🚗')
+    expect(vehicleEmoji({ model: 'Civic' })).toBe('🚗')
+  })
+
+  it('is case-insensitive', () => {
+    expect(vehicleEmoji({ model: 'f-150' })).toBe('🛻')
   })
 })

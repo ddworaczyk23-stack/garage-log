@@ -1,7 +1,7 @@
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
-import { vehicleLabel } from '../domain/vehicle'
+import { vehicleEmoji, vehicleLabel } from '../domain/vehicle'
 import { bandFromStatus, hasRealData, VERDICT_BAND_LABELS, type VerdictBand } from '../domain/verdict'
 import { Loading } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
@@ -47,7 +47,7 @@ export function Vehicles() {
             <li key={v.id}>
               <a class="list-row" href={`#/vehicle/${v.id}`}>
                 <span class="vehicle-emoji" aria-hidden="true">
-                  🚗
+                  {vehicleEmoji(v)}
                 </span>
                 <span class="list-row-main">
                   <span class="list-row-title">{vehicleLabel(v)}</span>
