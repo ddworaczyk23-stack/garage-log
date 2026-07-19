@@ -102,32 +102,40 @@ export async function recordCompletedEvent(
   // open concern it addresses all happen atomically — a failure partway
   // through must not leave a logged event with its rule un-synced, or a
   // concern marked resolved while the event that resolved it never landed.
-  await db.transaction('rw', [db.events, db.reminderRules, db.concerns], async () => {
-    await db.events.add(event)
+  try {
+    await db.transaction('rw', [db.events, db.reminderRules, db.concerns], async () => {
+      await db.events.add(event)
 
-    // Sync every rule this visit touched (primary + additional categories). The
-    // optional rule override is a property of the PRIMARY item the user is
-    // logging, so it's applied only to the primary category's rule; the extras
-    // just adopt the last-done if this event is newer.
-    for (const category of effectiveCategories(event)) {
-      const rule = await db.reminderRules.get(`${input.vehicleId}:${category}`)
-      if (!rule) continue
-      const patch = applyEventToRule(rule, event)
-      await applyRulePatch(rule, patch, category === input.category ? ruleOverride : undefined)
-    }
-
-    // Auto-resolve open triage concerns this visit addressed: any open concern
-    // on this vehicle whose (best-guess) category matches one of the event's
-    // categories is marked handled, stamped with this event's id so deleting
-    // the event reopens it. Concerns without a category can't be matched —
-    // those stay on the list for a manual "Handled".
-    const categories = new Set<MaintenanceCategory>(effectiveCategories(event))
-    for (const concern of await getOpenConcerns(input.vehicleId)) {
-      if (concern.category && categories.has(concern.category)) {
-        await resolveConcern(concern.id, event.id)
+      // Sync every rule this visit touched (primary + additional categories). The
+      // optional rule override is a property of the PRIMARY item the user is
+      // logging, so it's applied only to the primary category's rule; the extras
+      // just adopt the last-done if this event is newer.
+      for (const category of effectiveCategories(event)) {
+        const rule = await db.reminderRules.get(`${input.vehicleId}:${category}`)
+        if (!rule) continue
+        const patch = applyEventToRule(rule, event)
+        await applyRulePatch(rule, patch, category === input.category ? ruleOverride : undefined)
       }
-    }
-  })
+
+      // Auto-resolve open triage concerns this visit addressed: any open concern
+      // on this vehicle whose (best-guess) category matches one of the event's
+      // categories is marked handled, stamped with this event's id so deleting
+      // the event reopens it. Concerns without a category can't be matched —
+      // those stay on the list for a manual "Handled".
+      const categories = new Set<MaintenanceCategory>(effectiveCategories(event))
+      for (const concern of await getOpenConcerns(input.vehicleId)) {
+        if (concern.category && categories.has(concern.category)) {
+          await resolveConcern(concern.id, event.id)
+        }
+      }
+    })
+  } catch (err) {
+    // Documents were attached BEFORE this transaction (compression work can't
+    // run inside Dexie's transaction zone), so a failed event write must clean
+    // them up or they orphan against an event id that never landed.
+    if (documentIds.length) await db.documents.bulkDelete(documentIds).catch(() => {})
+    throw err
+  }
 
   return event.id
 }

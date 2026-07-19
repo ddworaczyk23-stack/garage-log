@@ -260,7 +260,16 @@ export function VehicleDetail({ id }: Props) {
           <>
             <h2 class="vd-name">{vehicleLabel(vehicle)}</h2>
             <p class="vd-spec">
-              {[`${vehicle.year} ${vehicle.make} ${vehicle.name}`, vehicle.engine, vehicle.drivetrain]
+              {/* The name appears here only when the h2 is showing a nickname
+                  instead — otherwise the h2 IS the name and repeating it reads
+                  as a stutter ("Camry LE" over "2019 TOYOTA CAMRY LE"). */}
+              {[
+                vehicle.nickname
+                  ? `${vehicle.year} ${vehicle.make} ${vehicle.name}`
+                  : `${vehicle.year} ${vehicle.make}`,
+                vehicle.engine,
+                vehicle.drivetrain,
+              ]
                 .filter(Boolean)
                 .join(' · ')
                 .toUpperCase()}

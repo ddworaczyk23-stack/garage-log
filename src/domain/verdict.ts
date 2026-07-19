@@ -267,8 +267,9 @@ const CONCERN_AGE_THRESHOLD_DAYS = 14
 
 function concernAgeLabel(days: number): string | null {
   if (days < CONCERN_AGE_THRESHOLD_DAYS) return null
-  const weeks = Math.round(days / 7)
-  return weeks < 1 ? 'this week' : `${weeks} week${weeks === 1 ? '' : 's'} ago`
+  // Below the 14-day threshold we returned null above, so weeks is always >= 2
+  // and the plural is always correct.
+  return `${Math.round(days / 7)} weeks ago`
 }
 
 /** Concern-driven sentence: the driver flagged this themselves, so the copy
