@@ -193,7 +193,7 @@ export function ShopBriefPage({ id }: { id: string }) {
         <button type="button" class="btn btn-primary" onClick={share}>
           Share this brief
         </button>
-        <button type="button" class="btn" onClick={() => window.print()}>
+        <button type="button" class="btn btn-secondary" onClick={() => window.print()}>
           Print it
         </button>
       </div>

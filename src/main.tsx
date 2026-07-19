@@ -28,7 +28,7 @@ async function boot() {
     root.innerHTML = `
       <div class="empty-state">
         <span class="empty-icon" aria-hidden="true">⚠️</span>
-        <p class="empty-title">Garage Log couldn't start</p>
+        <p class="empty-title">Coast couldn't start</p>
         <p class="muted small">
           This browser's local storage may be unavailable (private browsing
           mode, or storage is full). Try a normal browsing window, or reload.

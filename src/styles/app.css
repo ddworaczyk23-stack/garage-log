@@ -514,7 +514,7 @@ a.list-row:active {
   text-align: center;
 }
 .btn.quick-add-btn:hover {
-  background: rgba(79, 91, 42, 0.18);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .event-form {
   display: flex;
@@ -1011,6 +1011,16 @@ input::placeholder {
 .btn[disabled] {
   opacity: 0.55;
   cursor: default;
+}
+/* Secondary actions: tinted, not filled, so a stacked pair (e.g. Check's
+ * "Add to my list" + "Make my shop brief", the brief's Share + Print) reads
+ * as one primary + one lesser action instead of two shouting primaries. */
+.btn.btn-secondary {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+.btn.btn-secondary:hover {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 .btn-danger,
 .btn.btn-danger:hover {

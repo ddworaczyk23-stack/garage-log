@@ -237,7 +237,9 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     return (
       <section class="page chk">
         <FlowTop onBack={back} steps={stepDots(playbook, answers)} />
-        <span class="eyebrow">{q.eyebrow}</span>
+        <span class="eyebrow">
+          Checking {vehicleLabel(vehicle)} · {q.eyebrow}
+        </span>
         <h2 class="chk-title">{q.text}</h2>
         {q.sub && <p class="chk-sub">{q.sub}</p>}
         <div class="chk-choices">
@@ -353,7 +355,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
             </button>
           )
         )}
-        <button type="button" class="btn" onClick={() => setShowBrief((s) => !s)}>
+        <button type="button" class="btn btn-secondary" onClick={() => setShowBrief((s) => !s)}>
           {showBrief ? 'Hide the shop brief' : 'Make my shop brief'}
         </button>
         <button type="button" class="btn-link" onClick={reset}>

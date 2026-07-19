@@ -593,7 +593,7 @@ export function VehicleDetail({ id }: Props) {
         </div>
       </Reveal>
 
-      <p class="colophon">Garage Log · The glovebox, kept honest</p>
+      <p class="colophon">Coast · The service record, kept honest</p>
       </div>
       </div>
 

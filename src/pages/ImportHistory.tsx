@@ -126,7 +126,7 @@ export function ImportHistory({ vehicleId }: Props) {
                 <strong>Copy</strong>.
               </li>
               <li>
-                Open Garage Log, tap the box below, <strong>Paste</strong>, then{' '}
+                Open Coast, tap the box below, <strong>Paste</strong>, then{' '}
                 <strong>Preview</strong>.
               </li>
             </ol>

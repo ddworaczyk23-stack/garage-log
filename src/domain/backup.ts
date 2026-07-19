@@ -102,7 +102,7 @@ export function validateBackup(raw: unknown, appSchemaVersion: number): Validati
   if (!isObject(raw)) return { ok: false, error: 'This file isn’t valid JSON or is empty.' }
 
   if (raw.format !== BACKUP_FORMAT) {
-    return { ok: false, error: 'This isn’t a Garage Log backup file.' }
+    return { ok: false, error: 'This isn’t a Coast backup file.' }
   }
   if (typeof raw.version !== 'number') {
     return { ok: false, error: 'Backup is missing a format version.' }
@@ -110,7 +110,7 @@ export function validateBackup(raw: unknown, appSchemaVersion: number): Validati
   if (raw.version > CURRENT_BACKUP_VERSION) {
     return {
       ok: false,
-      error: `This backup was made by a newer version of Garage Log (format v${raw.version}). Update the app, then restore.`,
+      error: `This backup was made by a newer version of Coast (format v${raw.version}). Update the app, then restore.`,
     }
   }
   if (typeof raw.appSchemaVersion === 'number' && raw.appSchemaVersion > appSchemaVersion) {
