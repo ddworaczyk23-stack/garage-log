@@ -67,12 +67,7 @@
   --radius: 16px; /* cards */
   --radius-control: 10px; /* inputs, small buttons */
   --gap: 16px;
-  /* 60px isn't quite tall enough for the raised .nav-check-disc (52px disc +
-     label content stacks to ~68px) — the disc's top few px were clipped by
-     .bottom-nav's overflow-y:hidden (needed for the 200% zoom horizontal-
-     scroll fix, so it can't just be turned off). 72px gives that content
-     room without clipping. */
-  --nav-height: 72px;
+  --nav-height: 60px;
 
   /* Type identity — the Coast trio (self-hosted, see styles/fonts.ts).
      Overpass = the road-sign voice (UI, headings, verdicts), Newsreader = the
@@ -1112,6 +1107,11 @@ code {
 }
 
 /* ---------- Bottom navigation ---------- */
+/* .bottom-nav itself stays overflow-visible (its default) so the raised
+   .nav-check disc can float above the bar's top edge instead of being
+   clipped by it — the horizontal-scroll safety net (below) lives on the
+   inner .nav-scroll instead, scoped to just the 4 flanking tabs, so it no
+   longer clips the disc vertically along with it. */
 .bottom-nav {
   position: fixed;
   bottom: 0;
@@ -1124,20 +1124,28 @@ code {
      An explicit width removes the ambiguity. */
   width: 100%;
   height: calc(var(--nav-height) + env(safe-area-inset-bottom));
-  padding-bottom: env(safe-area-inset-bottom);
-  display: flex;
-  justify-content: center;
   background: color-mix(in srgb, var(--bg-elevated) 84%, transparent);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   backdrop-filter: blur(20px) saturate(160%);
   border-top: 0.5px solid var(--border);
   z-index: 20;
+}
+.nav-scroll {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding-bottom: env(safe-area-inset-bottom);
   /* At 200% text zoom, 5 nav items' min-content floor (~293px) exceeds a
      375px viewport and used to overflow the whole page horizontally
      (WCAG 1.4.4). Contain the overflow to the nav bar itself instead — it
      scrolls, the page doesn't. */
   overflow-x: auto;
   overflow-y: hidden;
+}
+.nav-check-spacer {
+  flex: 0 1 120px;
+  min-width: 0;
 }
 .nav-item {
   flex: 0 1 120px;
@@ -3366,8 +3374,18 @@ a.list-row:hover {
 }
 
 /* --- nav raised center action --- */
+/* Absolutely positioned against .bottom-nav (not a flex sibling of
+   .nav-scroll's items) so the disc can float above the bar's top edge — see
+   the .bottom-nav/.nav-scroll split above. Its footprint is reserved in the
+   scrollable row by .nav-check-spacer so the flanking tabs don't collide
+   with it. */
 .nav-check {
-  flex: 0 1 120px;
+  position: absolute;
+  left: 50%;
+  bottom: env(safe-area-inset-bottom);
+  transform: translateX(-50%);
+  width: 70px;
+  height: var(--nav-height);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3461,6 +3479,23 @@ a.list-row:hover {
     backdrop-filter: none;
     overflow-y: auto;
   }
+  /* Mobile's .nav-scroll exists only to scope the horizontal-scroll safety
+     net around the 4 flanking tabs (so it doesn't also clip the floating
+     Check disc) — on desktop the rail is one plain vertical list, so this
+     just needs to un-become a scroll container. */
+  .nav-scroll {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    gap: 3px;
+    width: auto;
+    height: auto;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+  .nav-check-spacer {
+    display: none;
+  }
   .nav-item {
     flex: 0 0 auto;
     flex-direction: row;
@@ -3486,8 +3521,16 @@ a.list-row:hover {
   }
 
   /* Check: the raised FAB becomes a full-width primary button, pinned to the
-     top of the rail (order:-1) as the app's headline action. */
+     top of the rail (order:-1) as the app's headline action. Un-does the
+     mobile absolute-positioning (needed there to float the disc above the
+     bar) back to normal flow. */
   .nav-check {
+    position: static;
+    left: auto;
+    bottom: auto;
+    transform: none;
+    width: auto;
+    height: auto;
     order: -1;
     flex-direction: row;
     justify-content: center;

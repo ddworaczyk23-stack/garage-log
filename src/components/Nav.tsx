@@ -105,7 +105,13 @@ export function Nav({ route }: NavProps) {
 
   return (
     <nav class="bottom-nav">
-      {left.map(tab)}
+      <div class="nav-scroll">
+        {left.map(tab)}
+        {/* Reserves the gap the absolutely-positioned Check disc floats over,
+            so the two flanking tab groups stay evenly spaced. */}
+        <span class="nav-check-spacer" aria-hidden="true" />
+        {right.map(tab)}
+      </div>
       <a
         class={`nav-check${checkActive ? ' is-active' : ''}`}
         href="#/check"
@@ -117,7 +123,6 @@ export function Nav({ route }: NavProps) {
         </span>
         <span class="nav-label">Check</span>
       </a>
-      {right.map(tab)}
     </nav>
   )
 }
