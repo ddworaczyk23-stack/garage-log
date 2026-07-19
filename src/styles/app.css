@@ -67,7 +67,12 @@
   --radius: 16px; /* cards */
   --radius-control: 10px; /* inputs, small buttons */
   --gap: 16px;
-  --nav-height: 60px;
+  /* 60px isn't quite tall enough for the raised .nav-check-disc (52px disc +
+     label content stacks to ~68px) — the disc's top few px were clipped by
+     .bottom-nav's overflow-y:hidden (needed for the 200% zoom horizontal-
+     scroll fix, so it can't just be turned off). 72px gives that content
+     room without clipping. */
+  --nav-height: 72px;
 
   /* Type identity — the Coast trio (self-hosted, see styles/fonts.ts).
      Overpass = the road-sign voice (UI, headings, verdicts), Newsreader = the
