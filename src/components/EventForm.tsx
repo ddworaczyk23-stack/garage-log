@@ -101,6 +101,7 @@ export function EventForm({
   const remainingDocs = existingDocs.filter((d) => !removedDocIds.includes(d.id))
 
   function handleQuickFill() {
+    if (!quickEntryText.trim()) return
     const result = parseQuickEntry(quickEntryText)
     let expandMore = false
 
