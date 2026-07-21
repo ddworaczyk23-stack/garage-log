@@ -2,6 +2,7 @@ import { useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { recordCompletedEvent, updateEvent, type RuleOverrideInput } from '../db/events'
 import { localDateISO, parseNumberInput } from '../domain/format'
+import { parseQuickEntry } from '../domain/quickEntry'
 import {
   CATEGORY_LABELS,
   MAINTENANCE_CATEGORIES,
@@ -50,6 +51,8 @@ export function EventForm({
   const [odometerMiles, setOdometerMiles] = useState(
     existing?.odometerMiles?.toString() ?? (defaultOdometer != null ? String(defaultOdometer) : ''),
   )
+  const [quickEntryText, setQuickEntryText] = useState('')
+  const [quickEntryHint, setQuickEntryHint] = useState('')
   const [category, setCategory] = useState<MaintenanceCategory>(
     existing?.category ?? initialCategory ?? (kind === 'maintenance' ? 'oil-change' : 'other'),
   )
@@ -96,6 +99,30 @@ export function EventForm({
   const [saving, setSaving] = useState(false)
 
   const remainingDocs = existingDocs.filter((d) => !removedDocIds.includes(d.id))
+
+  function handleQuickFill() {
+    const result = parseQuickEntry(quickEntryText)
+    let expandMore = false
+
+    if (result.category) {
+      setCategory(result.category)
+      setAdditionalCategories(result.additionalCategories)
+      if (result.additionalCategories.length > 0) setShowAlso(true)
+    }
+    if (result.cost != null && !cost.trim()) {
+      setCost(String(result.cost))
+    }
+    if (result.vendor && !vendor.trim()) {
+      setVendor(result.vendor)
+      expandMore = true
+    }
+    if (!title.trim() && quickEntryText.trim()) {
+      setTitle(quickEntryText.trim())
+      expandMore = true
+    }
+    if (expandMore) setShowMore(true)
+    setQuickEntryHint(result.hadMatch ? '' : 'Couldn’t detect a category — pick one below.')
+  }
 
   async function submit(e: Event) {
     e.preventDefault()
@@ -167,6 +194,22 @@ export function EventForm({
       <h3 class="card-title">
         {existing ? 'Edit' : 'Log'} {kind === 'maintenance' ? 'service' : 'repair'}
       </h3>
+
+      <div class="admin-field quick-entry">
+        <span class="muted small">Quick fill (optional)</span>
+        <div class="quick-entry-row">
+          <input
+            type="text"
+            placeholder="e.g. Oil change at Jiffy Lube, $45.99"
+            value={quickEntryText}
+            onInput={(e) => setQuickEntryText((e.target as HTMLInputElement).value)}
+          />
+          <button type="button" class="btn-link" onClick={handleQuickFill}>
+            Fill in ↓
+          </button>
+        </div>
+        {quickEntryHint && <p class="muted small quick-entry-hint">{quickEntryHint}</p>}
+      </div>
 
       <div class="admin-when">
         <label class="admin-field">

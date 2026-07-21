@@ -569,6 +569,17 @@ a.list-row:active {
 .event-form .admin-field {
   gap: 5px;
 }
+.quick-entry-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.quick-entry-row input {
+  flex: 1;
+}
+.quick-entry-hint {
+  margin: 2px 0 0;
+}
 
 /* Form controls — styled globally so the Documents filters, Backup file
  * picker, and debug selects match the event forms (previously only inputs
