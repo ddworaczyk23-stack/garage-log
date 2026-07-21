@@ -78,11 +78,14 @@ export interface ShopBrief {
 
 /** Per-category brief content for schedule-driven items (briefFromReminder).
  * Categories without an entry fall back to GENERIC_* below — a brief is never
- * blocked on missing curation. */
+ * blocked on missing curation. Cost fields are 2025-2026 US independent-shop /
+ * DIY-parts-only ranges from design/perplexity-prompts.md Prompt 7 — a fair
+ * anchor, not the cheapest coupon price. Dealer figures from that research
+ * aren't stored here; nothing in the UI renders them yet. */
 const CATEGORY_BRIEFS: Partial<
   Record<
     MaintenanceCategory,
-    Pick<BriefFacts, 'request' | 'reasonableIfSuggested' | 'fineToDecline'>
+    Pick<BriefFacts, 'request' | 'reasonableIfSuggested' | 'fineToDecline' | 'costLow' | 'costHigh' | 'diyLow' | 'diyHigh'>
   >
 > = {
   'oil-change': {
@@ -90,60 +93,158 @@ const CATEGORY_BRIEFS: Partial<
       'Oil and filter change to the factory spec. Please note the oil weight used on the invoice.',
     reasonableIfSuggested: ['Tire rotation while it’s on the lift', 'Topping off washer fluid'],
     fineToDecline: ['Engine or injection “flush” services', 'Cabin air filter at shop markup — it’s a cheap DIY'],
+    costLow: 35,
+    costHigh: 130,
+    diyLow: 20,
+    diyHigh: 55,
   },
   'tire-rotation': {
     request: 'Rotate tires per the factory pattern. Please report tread depth per corner (in 32nds).',
     reasonableIfSuggested: ['Balancing if a vibration was noted'],
     fineToDecline: ['Alignment without a symptom (pulling, uneven wear)'],
+    costLow: 20,
+    costHigh: 50,
+    diyLow: 0,
+    diyHigh: 15,
+  },
+  'tire-replacement': {
+    costLow: 700,
+    costHigh: 1200,
+    diyLow: 500,
+    diyHigh: 900,
+  },
+  'wheel-alignment': {
+    costLow: 90,
+    costHigh: 140,
+    diyLow: 0,
+    diyHigh: 20,
   },
   'brake-inspection': {
     request:
       'Inspect pads and rotors on both axles. Please report pad thickness in millimeters and rotor condition before replacing anything.',
     reasonableIfSuggested: ['Brake fluid flush if it’s over 3 years old'],
     fineToDecline: ['Caliper replacement without evidence of sticking or uneven wear'],
+    costLow: 300,
+    costHigh: 700,
+    diyLow: 120,
+    diyHigh: 250,
   },
   'brake-fluid': {
     request: 'Flush and replace brake fluid to spec. Please confirm fluid type on the invoice.',
     reasonableIfSuggested: ['Brake inspection while the wheels are off'],
     fineToDecline: [],
+    costLow: 80,
+    costHigh: 180,
+    diyLow: 10,
+    diyHigh: 25,
   },
   coolant: {
     request: 'Drain and refill coolant to the factory spec. Please confirm the coolant type used.',
     reasonableIfSuggested: ['Pressure test if any loss or smell was noted'],
     fineToDecline: ['Additional “system flush” chemicals beyond the drain-and-fill'],
+    costLow: 120,
+    costHigh: 220,
+    diyLow: 20,
+    diyHigh: 60,
   },
   'cvt-fluid': {
     request:
       'CVT fluid drain and fill with the manufacturer-specified fluid only. Please confirm the exact fluid on the invoice.',
     reasonableIfSuggested: [],
     fineToDecline: ['A generic “transmission flush” — CVTs want a drain-and-fill with the exact spec fluid'],
+    costLow: 180,
+    costHigh: 350,
+    diyLow: 50,
+    diyHigh: 120,
   },
   'transmission-fluid': {
     request:
       'Transmission fluid service with the manufacturer-specified fluid. Please confirm the exact fluid on the invoice.',
     reasonableIfSuggested: [],
     fineToDecline: ['A pressure flush on an old, never-serviced transmission — ask for a drain-and-fill instead'],
+    costLow: 150,
+    costHigh: 300,
+    diyLow: 40,
+    diyHigh: 90,
   },
   'engine-air-filter': {
     request: 'Replace the engine air filter.',
     reasonableIfSuggested: [],
     fineToDecline: ['“While we’re in there” induction cleaning services'],
+    costLow: 35,
+    costHigh: 70,
+    diyLow: 15,
+    diyHigh: 35,
   },
   'cabin-air-filter': {
     request: 'Replace the cabin air filter.',
     reasonableIfSuggested: [],
     fineToDecline: [],
+    costLow: 30,
+    costHigh: 100,
+    diyLow: 15,
+    diyHigh: 50,
   },
   'spark-plugs': {
     request:
       'Replace spark plugs with the factory-specified plugs. Please note the plug part number on the invoice.',
     reasonableIfSuggested: ['Replacing boots/coils only if one shows a misfire or damage'],
     fineToDecline: ['A full coil set “preventively” with no misfire history'],
+    costLow: 120,
+    costHigh: 350,
+    diyLow: 25,
+    diyHigh: 120,
+  },
+  'timing-belt': {
+    costLow: 700,
+    costHigh: 1400,
+    diyLow: 100,
+    diyHigh: 350,
+  },
+  'serpentine-belt': {
+    costLow: 90,
+    costHigh: 180,
+    diyLow: 20,
+    diyHigh: 80,
+  },
+  'fuel-filter': {
+    costLow: 60,
+    costHigh: 180,
+    diyLow: 15,
+    diyHigh: 50,
+  },
+  'power-steering-fluid': {
+    costLow: 80,
+    costHigh: 160,
+    diyLow: 15,
+    diyHigh: 40,
+  },
+  'transfer-case-fluid': {
+    costLow: 100,
+    costHigh: 180,
+    diyLow: 20,
+    diyHigh: 50,
+  },
+  'differential-fluid': {
+    costLow: 90,
+    costHigh: 180,
+    diyLow: 20,
+    diyHigh: 60,
   },
   'battery-check': {
     request: 'Load-test the battery and check charging voltage. Please report the test numbers.',
     reasonableIfSuggested: ['Cleaning corroded terminals'],
     fineToDecline: ['Replacement if the load test passes'],
+    costLow: 140,
+    costHigh: 280,
+    diyLow: 90,
+    diyHigh: 180,
+  },
+  'wiper-blades': {
+    costLow: 40,
+    costHigh: 90,
+    diyLow: 20,
+    diyHigh: 50,
   },
 }
 
@@ -274,6 +375,10 @@ export function briefFromReminder(
       request: curated?.request,
       reasonableIfSuggested: curated?.reasonableIfSuggested,
       fineToDecline: curated?.fineToDecline,
+      costLow: curated?.costLow,
+      costHigh: curated?.costHigh,
+      diyLow: curated?.diyLow,
+      diyHigh: curated?.diyHigh,
     },
     { known, lastDoneDate: r.lastDone.date, lastDoneMiles: r.lastDone.miles },
     preparedDate,

@@ -140,4 +140,13 @@ describe('briefFromReminder (schedule-driven, real engine output)', () => {
     const b = briefFromReminder(vehicle, 46200, r, '2026-07-01')
     expect(b.request).toContain('confirm this service is actually needed')
   })
+
+  it('a scheduled oil change carries a real fair-price anchor, not "amount not checked"', () => {
+    const [r] = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 46200))
+    const b = briefFromReminder(vehicle, 46200, r, '2026-07-01')
+    expect(b.fairRange).toBe('$35–130 at an independent shop')
+    expect(b.fairLow).toBe(35)
+    expect(b.fairHigh).toBe(130)
+    expect(b.diyNote).toContain('$20–55')
+  })
 })

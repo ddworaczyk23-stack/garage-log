@@ -1265,7 +1265,427 @@ const steeringVibration: Playbook = {
   },
 }
 
-export const PLAYBOOKS: Playbook[] = [warningLight, brakeNoise, otherNoise, leakSmell, carWontStart, steeringVibration]
+// ===========================================================================
+// 7. AC / CLIMATE CONTROL  (design/perplexity-prompts.md Prompt 8)
+// ===========================================================================
+const acClimate: Playbook = {
+  id: 'ac-climate',
+  label: 'AC or heat isn’t working right',
+  blurb: 'Blows warm on AC, cold on heat, weak airflow, or one side is different from the other',
+  questions: [
+    {
+      id: 'symptom',
+      eyebrow: 'AC or heat',
+      text: 'What’s the main problem?',
+      sub: 'Pick the closest — you can describe more in a moment.',
+      options: [
+        { value: 'warm-ac', label: 'AC blows warm instead of cold' },
+        { value: 'cold-heat', label: 'Heat blows cold instead of warm' },
+        { value: 'weak', label: 'Airflow is weak on both settings' },
+        { value: 'uneven', label: 'One side or one vent is different from the rest' },
+      ],
+    },
+    {
+      id: 'acBehavior',
+      eyebrow: 'AC blowing warm',
+      text: 'What happens when you turn the AC on?',
+      sub: 'Listen for the compressor clutch clicking in.',
+      when: (a) => a.symptom === 'warm-ac',
+      options: [
+        { value: 'normalNoise', label: 'It clicks on normally, but a noise or smell shows up' },
+        { value: 'cycles', label: 'It clicks on and off repeatedly (short-cycles)' },
+        { value: 'noClick', label: 'It never seems to click on at all' },
+        { value: 'none', label: 'Nothing unusual — it just stays warm' },
+      ],
+    },
+    {
+      id: 'filterAge',
+      eyebrow: 'Weak airflow',
+      text: 'Has the cabin air filter been changed in the last year or so?',
+      when: (a) => a.symptom === 'weak',
+      options: [
+        { value: 'no', label: 'No, or not sure' },
+        { value: 'yes', label: 'Yes, it’s been done recently' },
+      ],
+    },
+  ],
+  outcomes: [
+    {
+      id: 'ac-smell-noise',
+      band: 'book-soon',
+      title: 'AC noise or smell — worth booking soon, skip the AC meanwhile',
+      explanation:
+        'A noise or smell right as the AC clutch engages — squealing, burning, or something acrid — usually means a slipping belt, a seizing compressor, or an electrical fault. Keep running it and you risk losing the belt, which on many vehicles also drives the alternator and power steering, not just the AC.',
+      likelyCauses: ['Most often a slipping or failing belt at the compressor clutch', 'Sometimes a seizing compressor', 'Occasionally an electrical short in the clutch circuit'],
+      cost: { diyLow: 20, diyHigh: 150, shopLow: 120, shopHigh: 500, dealerLow: 180, dealerHigh: 1000 },
+      escalation: ['The smell turns to smoke, or the belt squeal gets worse — stop using the AC and get it seen right away'],
+      symptomLine: 'Noise or smell when the AC compressor clutch engages.',
+      askShopTo: 'inspect the compressor clutch and belt, check for a seizing compressor, and test the clutch circuit before recharging or replacing anything.',
+      selfCheck: ['Turn the AC off and see if the noise stops immediately — if it does, it’s pointing squarely at the AC compressor/clutch rather than something else under the hood.'],
+      driveOrTow: {
+        verdict: 'drive-ok',
+        note: 'Fine to drive with the AC off. Just don’t run the AC until it’s looked at — a seizing compressor can throw or damage the drive belt.',
+      },
+      whatToBring: ['Note whether the noise happens only with the AC on, or all the time.'],
+      shopChoice: 'Any independent shop can check a compressor clutch and belt — routine work, no dealer premium needed.',
+      match: (a) => a.symptom === 'warm-ac' && a.acBehavior === 'normalNoise',
+    },
+    {
+      id: 'ac-cycling',
+      band: 'book-soon',
+      title: 'AC blows warm — likely low refrigerant',
+      explanation:
+        'AC that clicks on and off rapidly instead of running steadily is the classic sign of a low refrigerant charge — a sealed AC system doesn’t use up refrigerant over time, so low charge almost always means a leak somewhere. It’s not dangerous, just increasingly useless in hot weather.',
+      likelyCauses: ['Most often a refrigerant leak (hose, condenser, or a service port seal)', 'Sometimes a failing pressure switch reacting to the low charge'],
+      cost: { diyLow: 20, diyHigh: 60, shopLow: 120, shopHigh: 260, dealerLow: 180, dealerHigh: 350 },
+      escalation: ['The system stops engaging at all, or you notice oily residue anywhere in the engine bay — that often marks where the leak is'],
+      symptomLine: 'AC short-cycles (clicks on and off) instead of running steady — suspect low refrigerant.',
+      askShopTo: 'dye-test for a leak and confirm where it is before simply adding refrigerant — recharging a leaking system just empties out again.',
+      whatToBring: ['How long ago the AC last worked normally, if you remember.'],
+      shopChoice: 'Any independent shop with AC equipment can leak-test and recharge — no dealer needed unless the leak is at a component under warranty.',
+      match: (a) => a.symptom === 'warm-ac' && a.acBehavior === 'cycles',
+    },
+    {
+      id: 'ac-no-engage',
+      band: 'book-soon',
+      title: 'AC not engaging — compressor or a safety switch',
+      explanation:
+        'If the compressor never seems to click on at all, either a pressure switch is blocking it — often because the charge is already too low or too high to run safely — or the compressor clutch itself has failed. Worth a proper diagnosis before paying for parts, since the fix ranges from cheap to expensive depending on which it is.',
+      likelyCauses: ['Often a low-pressure safety switch preventing engagement', 'Sometimes a failed compressor clutch or relay', 'Occasionally a blown fuse or wiring fault'],
+      cost: { diyLow: 25, diyHigh: 120, shopLow: 120, shopHigh: 1500, dealerLow: 180, dealerHigh: 2000 },
+      escalation: ['You hear a loud bang or grinding when trying to engage the AC — stop trying to run it'],
+      symptomLine: 'AC compressor doesn’t engage at all when turned on.',
+      askShopTo: 'check the AC system pressures and the pressure-switch reading before condemning the compressor — a low-charge shutoff looks identical to a dead clutch from the driver’s seat but costs far less to fix.',
+      whatToBring: ['Whether it worked at all this season, or never has.'],
+      shopChoice: 'Any independent shop can test pressures and the clutch circuit. Get that test result before authorizing a compressor — it’s the expensive guess here.',
+      match: (a) => a.symptom === 'warm-ac' && a.acBehavior === 'noClick',
+    },
+    {
+      id: 'ac-warm-generic',
+      band: 'book-soon',
+      title: 'AC blows warm — worth a proper diagnosis',
+      explanation:
+        'AC that’s just warm, with nothing else unusual, still needs a real diagnosis — refrigerant charge, a pressure switch, and the expansion valve all look the same from the driver’s seat. A shop with gauges can usually sort it out in one visit.',
+      likelyCauses: ['A pressure/charge check will point at a leak, a switch, or the compressor'],
+      cost: { shopLow: 120, shopHigh: 260, dealerLow: 180, dealerHigh: 350 },
+      escalation: ['A noise or smell shows up, or the compressor stops engaging at all — treat those as more urgent'],
+      symptomLine: 'AC blows warm, no other symptoms noticed.',
+      askShopTo: 'check system pressures and dye-test for a leak before recommending a recharge or any parts.',
+      match: (a) => a.symptom === 'warm-ac' && a.acBehavior === 'none',
+    },
+    {
+      id: 'no-heat',
+      band: 'book-soon',
+      title: 'No cabin heat — likely coolant, thermostat, or blend door',
+      explanation:
+        'Heat that blows cold usually traces to one of three things: the coolant level is low (the heater core runs dry even if the engine drives fine), the thermostat is stuck open (the engine never gets hot enough), or the blend door isn’t routing air through the heater core. None of these are usually urgent by themselves — sort it before it gets cold outside.',
+      likelyCauses: ['Most often low coolant or air trapped in the system', 'Sometimes a thermostat stuck open', 'Sometimes a blend-door or actuator fault', 'Less often a clogged heater core'],
+      cost: { diyLow: 0, diyHigh: 80, shopLow: 80, shopHigh: 500, dealerLow: 120, dealerHigh: 700 },
+      escalation: ['The temperature gauge climbs, you see steam, or you smell coolant — that’s an overheating concern, treat it as fix-now instead'],
+      symptomLine: 'No or weak cabin heat; engine otherwise running normally.',
+      askShopTo: 'check the coolant level, test the thermostat, and check blend-door operation and heater-core flow before replacing any parts.',
+      category: 'coolant',
+      selfCheck: ['With the engine COLD, check the coolant reservoir against the min/max lines — low coolant is the cheapest and most common cause here.'],
+      whatToBring: ['Whether it’s cold all the time or fades in after a while, and any coolant top-ups you’ve done recently.'],
+      shopChoice: 'Any independent shop handles coolant, thermostats, and blend doors routinely — no dealer premium needed unless it turns out to be a heater core buried deep in the dash.',
+      match: (a) => a.symptom === 'cold-heat',
+    },
+    {
+      id: 'weak-filter',
+      band: 'coast',
+      title: 'Weak airflow — probably just the cabin air filter',
+      explanation:
+        'A clogged cabin air filter is the single most common cause of weak airflow on both heat and AC, and it’s a cheap, quick fix. Worth doing before assuming anything more expensive is wrong.',
+      likelyCauses: ['Most often a clogged cabin air filter'],
+      cost: { diyLow: 15, diyHigh: 50, shopLow: 40, shopHigh: 100, dealerLow: 60, dealerHigh: 120 },
+      escalation: ['Airflow stays weak after a fresh filter, or you notice a burning smell — treat that as book-soon instead'],
+      symptomLine: 'Weak airflow on both heat and AC settings.',
+      askShopTo: 'check and replace the cabin air filter, and confirm airflow improves before looking at the blower motor.',
+      category: 'cabin-air-filter',
+      match: (a) => a.symptom === 'weak' && a.filterAge !== 'yes',
+    },
+    {
+      id: 'weak-blower',
+      band: 'book-soon',
+      title: 'Weak airflow — likely the blower motor or a blockage',
+      explanation:
+        'With a recently-changed cabin filter ruled out, weak airflow more likely points at the blower motor losing strength, its resistor/control module, or a blocked evaporator drain. Book a proper look — it usually needs the dash opened up rather than a DIY fix.',
+      likelyCauses: ['Most often a weakening blower motor or its resistor/module', 'Sometimes a blocked evaporator or drain path'],
+      cost: { diyLow: 20, diyHigh: 200, shopLow: 150, shopHigh: 500, dealerLow: 250, dealerHigh: 700 },
+      escalation: ['A burning smell shows up, or the fan stops completely — treat that as more urgent, especially in hot weather'],
+      symptomLine: 'Weak airflow on both heat and AC, cabin filter already recently replaced.',
+      askShopTo: 'test blower motor current draw, check the resistor/control module, and inspect the evaporator drain before recommending a repair.',
+      match: (a) => a.symptom === 'weak' && a.filterAge === 'yes',
+    },
+    {
+      id: 'uneven-temp',
+      band: 'book-soon',
+      title: 'Uneven temperature — likely a blend-door actuator',
+      explanation:
+        'One side or vent running a different temperature than the rest is almost always a blend-door actuator not moving where it’s told, especially on dual-zone systems. Not urgent, but worth booking since it usually won’t fix itself.',
+      likelyCauses: ['Most often a blend-door actuator fault', 'Sometimes an HVAC module/calibration issue', 'Occasionally restricted airflow to one side'],
+      cost: { diyLow: 30, diyHigh: 150, shopLow: 180, shopHigh: 500, dealerLow: 250, dealerHigh: 700 },
+      escalation: ['A burning smell or electrical smell shows up, or the whole system shuts down — treat that as fix-now'],
+      symptomLine: 'Temperature mismatch between sides or vents.',
+      askShopTo: 'check blend-door actuator operation and commanded-vs-actual position, and confirm vent temperature split before recommending a fix.',
+      match: (a) => a.symptom === 'uneven',
+    },
+  ],
+  fallback: {
+    id: 'ac-generic',
+    band: 'book-soon',
+    title: 'Worth having the AC/heat system looked at',
+    explanation:
+      'Climate-control issues are hard to pin down without gauges and a proper inspection. Book a diagnosis soon — describing exactly what you’re noticing (which you’ve just done) saves the shop time.',
+    likelyCauses: ['A pressure and airflow check will localize the cause'],
+    cost: { shopLow: 100, shopHigh: 300 },
+    escalation: ['A burning smell, smoke, or sudden total loss of climate control — treat that as fix-now'],
+    symptomLine: 'An AC or heat problem that needs diagnosis.',
+    askShopTo: 'check system pressures, airflow, and blend-door operation, and report what they find before quoting a repair.',
+  },
+}
+
+// ===========================================================================
+// 8. TRANSMISSION / DRIVETRAIN FEEL  (design/perplexity-prompts.md Prompt 9)
+// ===========================================================================
+const transmissionFeel: Playbook = {
+  id: 'transmission-feel',
+  label: 'The transmission feels off',
+  blurb: 'Slipping, hard or late shifts, a shudder at speed, or hesitation from a stop',
+  questions: [
+    {
+      id: 'feel',
+      eyebrow: 'Transmission / drivetrain feel',
+      text: 'What does it feel like?',
+      sub: 'A feel, not a noise — how the car actually moves.',
+      options: [
+        { value: 'slip', label: 'Slips — the engine revs but the car doesn’t speed up to match' },
+        { value: 'hardShift', label: 'Hard or late shifts', hint: 'A bang, jerk, or a long pause between gears' },
+        { value: 'shudder', label: 'A shudder or shake at a steady speed' },
+        { value: 'hesitation', label: 'A hesitation or pause pulling away from a stop' },
+      ],
+    },
+    {
+      id: 'light',
+      eyebrow: 'Transmission / drivetrain feel',
+      text: 'Any warning light with it?',
+      sub: 'This changes how urgent it is.',
+      options: [
+        { value: 'none', label: 'No warning light' },
+        { value: 'cel', label: 'A general check-engine light' },
+        { value: 'transWarning', label: 'A transmission, "AT", or CVT-specific warning' },
+      ],
+    },
+    {
+      id: 'transType',
+      eyebrow: 'Transmission / drivetrain feel',
+      text: 'Automatic or CVT?',
+      sub: 'Check your owner’s manual if you’re not sure — CVTs are less forgiving of this.',
+      when: (a) => a.feel === 'shudder' || a.feel === 'hesitation',
+      options: [
+        { value: 'automatic', label: 'Conventional automatic' },
+        { value: 'cvt', label: 'CVT (continuously variable)' },
+        { value: 'notSure', label: 'Not sure' },
+      ],
+    },
+  ],
+  outcomes: [
+    {
+      id: 'slip-warning',
+      band: 'fix-now',
+      title: 'Slipping with a transmission warning light — stop and get it checked',
+      explanation:
+        'Slip paired with a transmission-specific warning light usually means the heat and wear have already gone past a simple fluid fix — burned clutch material or internal damage is a real possibility, and every mile of continued slipping generates more heat and makes it worse.',
+      likelyCauses: ['Most often burned clutch packs or advanced internal wear', 'Sometimes a failing torque converter'],
+      cost: { shopLow: 2500, shopHigh: 4500, dealerLow: 3500, dealerHigh: 6500 },
+      escalation: ['The car refuses to move in gear, or you smell burning — stop and arrange a tow'],
+      symptomLine: 'Transmission slips (engine revs, no matching acceleration) with a transmission warning light on.',
+      askShopTo:
+        'scan for transmission codes, check fluid condition and pan debris, and confirm whether this is internal wear before quoting a fluid service alone.',
+      selfCheck: ['Avoid highway driving and long trips until it’s looked at — heat is what turns this into a bigger repair.'],
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Keep it to short, local trips only — every mile of continued slipping adds heat and wear. Skip the highway entirely, and if it gets worse or refuses to engage, stop and arrange a tow instead.',
+      },
+      whatToBring: ['Any transmission fluid service receipts and roughly when the slipping started.'],
+      shopChoice:
+        'A transmission specialist or dealer is worth it here — get the codes and a fluid/pan inspection before authorizing a rebuild anywhere.',
+      category: 'transmission-fluid',
+      match: (a) => a.feel === 'slip' && a.light === 'transWarning',
+    },
+    {
+      id: 'slip-generic',
+      band: 'book-soon',
+      title: 'Transmission slipping — worth diagnosing before it gets worse',
+      explanation:
+        'Slip — the engine revving without the car speeding up to match — is the one drivetrain feel worth taking seriously even without a warning light, because heat makes it worse and a service-level fix now can prevent an expensive one later. Low or dirty fluid is the most common and cheapest cause; a solenoid, valve body, or torque converter issue are the next most likely.',
+      likelyCauses: ['Most often low or degraded transmission fluid', 'Sometimes a solenoid or valve-body issue', 'Sometimes a torque converter problem'],
+      cost: { diyLow: 0, diyHigh: 120, shopLow: 80, shopHigh: 1800, dealerLow: 150, dealerHigh: 2500 },
+      escalation: ['The slipping gets stronger, a warning light comes on, or you smell burning — treat it as fix-now'],
+      symptomLine: 'Transmission slips — engine revs without a matching increase in speed.',
+      askShopTo:
+        'check fluid level and condition first (report if it smells burned or the pan shows debris), then scan for codes and check line pressure before recommending a fluid service or teardown.',
+      whatToBring: ['Any past transmission fluid service receipts, and how the slipping has changed over time.'],
+      shopChoice: 'Any independent shop can check fluid and pull codes. Get that result before agreeing to solenoid, valve-body, or torque-converter work.',
+      category: 'transmission-fluid',
+      match: (a) => a.feel === 'slip' && has(a, 'light'),
+    },
+    {
+      id: 'hard-shift-warning',
+      band: 'fix-now',
+      title: 'Hard shifting with a warning light — get it looked at now',
+      explanation:
+        'Hard or banging shifts together with a transmission warning light are more than an adaptive-learning quirk — the control system has flagged a real fault. Keep driving on it and a shift-quality problem can turn into a stuck gear or a stranding.',
+      likelyCauses: ['Most often a solenoid or valve-body fault', 'Sometimes advanced internal wear'],
+      cost: { diyLow: 0, diyHigh: 120, shopLow: 300, shopHigh: 2200, dealerLow: 450, dealerHigh: 3000 },
+      escalation: ['A specific gear stops working, or the shifts get more violent — stop and arrange a tow'],
+      symptomLine: 'Hard or late shifts with a transmission warning light on.',
+      askShopTo: 'pull the transmission codes, road-test with live shift data, and report commanded vs. actual shift behavior before quoting parts.',
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Fine for a short, local drive to the shop — skip the highway. If a gear stops engaging or the shifts get more violent, stop and have it towed instead.',
+      },
+      whatToBring: ['When the light first came on relative to the hard shifting.'],
+      shopChoice: 'An independent transmission shop or dealer can pull the codes — get those before authorizing valve-body or solenoid work.',
+      category: 'transmission-fluid',
+      match: (a) => a.feel === 'hardShift' && a.light === 'transWarning',
+    },
+    {
+      id: 'hard-shift-generic',
+      band: 'book-soon',
+      title: 'Hard or late shifts — worth a proper look',
+      explanation:
+        'Hard, late, or banging shifts usually trace to fluid condition, a shift solenoid, or occasionally the computer needing a relearn after a battery event. It’s not usually urgent by itself, but it’s worth booking before it changes into something a warning light flags.',
+      likelyCauses: ['Most often fluid condition or the wrong fluid spec', 'Often a shift solenoid or pressure-control issue', 'Sometimes a valve-body fault', 'Occasionally a control-module relearn is all it needs'],
+      cost: { diyLow: 0, diyHigh: 120, shopLow: 80, shopHigh: 1500, dealerLow: 150, dealerHigh: 2200 },
+      escalation: ['A warning light comes on, a specific gear stops working, or the car suddenly bangs hard into gear after driving normally — treat those as fix-now'],
+      symptomLine: 'Hard, late, or banging shifts, no warning light.',
+      askShopTo: 'check fluid spec and condition, scan for stored/pending codes, and road-test with live data before recommending valve-body or solenoid work.',
+      category: 'transmission-fluid',
+      match: (a) => a.feel === 'hardShift' && has(a, 'light'),
+    },
+    {
+      id: 'shudder-warning',
+      band: 'fix-now',
+      title: 'Shudder with a warning light — treat as urgent',
+      explanation:
+        'A steady-speed shudder together with a transmission or CVT warning light is a real red flag, especially on a CVT, where it often means belt/pulley slip or fluid that’s already overheated. Continued driving accelerates the damage rather than just being uncomfortable.',
+      likelyCauses: ['On a CVT, most often belt/pulley slip or overheated fluid', 'On a conventional automatic, most often advanced torque-converter or internal wear'],
+      cost: { shopLow: 2500, shopHigh: 5000, dealerLow: 3500, dealerHigh: 7000 },
+      escalation: ['The shudder gets stronger, you get an overheating message, or you smell burning — stop and arrange a tow'],
+      symptomLine: 'Steady-speed shudder with a transmission/CVT warning light on.',
+      askShopTo:
+        'check fluid level, condition, and temperature history, scan for codes, and confirm whether this is torque-converter- or belt/pulley-related before any fluid exchange.',
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Keep it short and local — no highway. On a CVT especially, this combination doesn’t improve by driving through it; if the shudder worsens or a temperature warning appears, stop and have it towed.',
+      },
+      whatToBring: ['Whether this is a CVT or conventional automatic, and any recent fluid service history.'],
+      shopChoice: 'A transmission specialist or dealer — get fluid condition and codes documented before agreeing to any belt, pulley, or torque-converter work.',
+      category: 'cvt-fluid',
+      match: (a) => a.feel === 'shudder' && a.light === 'transWarning',
+    },
+    {
+      id: 'shudder-cvt',
+      band: 'book-soon',
+      title: 'CVT shudder — don’t let this sit',
+      explanation:
+        'A shudder at steady speed on a CVT is a more pointed warning than the same feel on a conventional automatic — it can mean the belt and pulleys are starting to slip, or the fluid has begun breaking down from heat. Book it soon rather than waiting for a light to confirm it.',
+      likelyCauses: ['Most often CVT fluid degradation from heat', 'Sometimes early belt/pulley slip'],
+      cost: { diyLow: 50, diyHigh: 120, shopLow: 150, shopHigh: 500, dealerLow: 250, dealerHigh: 700 },
+      escalation: ['A CVT/transmission warning light appears, or the shudder gets stronger — treat it as fix-now'],
+      symptomLine: 'Steady-speed shudder on a CVT, no warning light yet.',
+      askShopTo: 'check CVT fluid condition and temperature history and confirm whether the shudder is fluid-related or early belt/pulley wear before recommending a fluid exchange.',
+      category: 'cvt-fluid',
+      match: (a) => a.feel === 'shudder' && a.transType === 'cvt',
+    },
+    {
+      id: 'shudder-auto',
+      band: 'book-soon',
+      title: 'Shudder at speed — likely the torque converter',
+      explanation:
+        'On a conventional automatic, a shudder that shows up at a steady speed is the classic sign of the torque converter clutch engaging roughly, sometimes alongside fluid condition. Not usually urgent, but worth booking before it progresses.',
+      likelyCauses: ['Most often torque-converter clutch shudder', 'Sometimes fluid condition contributing to it'],
+      cost: { diyLow: 30, diyHigh: 120, shopLow: 150, shopHigh: 900, dealerLow: 250, dealerHigh: 1400 },
+      escalation: ['A warning light appears or the shudder gets stronger — treat it as fix-now'],
+      symptomLine: 'Steady-speed shudder on a conventional automatic, no warning light.',
+      askShopTo: 'check fluid condition, scan for codes, and confirm whether the shudder is torque-converter-related before recommending a fluid service.',
+      category: 'transmission-fluid',
+      match: (a) => a.feel === 'shudder' && has(a, 'transType'),
+    },
+    {
+      id: 'hesitation-warning',
+      band: 'fix-now',
+      title: 'Hesitation with a warning light — get it checked now',
+      explanation:
+        'A pause pulling away combined with a transmission warning light suggests the unit isn’t transmitting torque cleanly — on a CVT this can mean belt/pulley wear or overheating, on a conventional automatic it can mean the torque converter or internal wear. Both get worse with continued driving.',
+      likelyCauses: ['On a CVT, often belt/pulley wear or overheating', 'On a conventional automatic, often torque-converter or internal wear'],
+      cost: { shopLow: 2500, shopHigh: 5000, dealerLow: 3500, dealerHigh: 7000 },
+      escalation: ['The car won’t engage a gear at all, or you smell burning — stop and arrange a tow'],
+      symptomLine: 'Hesitation pulling away from a stop, with a transmission warning light on.',
+      askShopTo: 'check fluid level and condition, scan for codes, and verify line pressure and clutch/belt engagement before recommending a rebuild.',
+      driveOrTow: {
+        verdict: 'short-trip-only',
+        note: 'Keep it short and local — no highway. If it stops engaging a gear at all, don’t keep trying; have it towed instead.',
+      },
+      whatToBring: ['Whether this is a CVT or conventional automatic, and how long the pause lasts.'],
+      shopChoice: 'A transmission specialist or dealer — get pressure, codes, and fluid condition documented before authorizing a rebuild.',
+      category: 'transmission-fluid',
+      match: (a) => a.feel === 'hesitation' && a.light === 'transWarning',
+    },
+    {
+      id: 'hesitation-cvt',
+      band: 'book-soon',
+      title: 'Hesitation from a stop — check the CVT soon',
+      explanation:
+        'A pause before the car takes off is worth booking soon on any transmission, but on a CVT specifically it’s worth not letting it drag on — it can be an early sign of belt/pulley wear rather than just fluid needing attention.',
+      likelyCauses: ['Most often low or degraded CVT fluid', 'Sometimes early belt/pulley wear'],
+      cost: { diyLow: 0, diyHigh: 50, shopLow: 150, shopHigh: 600, dealerLow: 250, dealerHigh: 900 },
+      escalation: ['A CVT/transmission warning light appears, or the car won’t engage a gear — treat it as fix-now'],
+      symptomLine: 'Hesitation pulling away from a stop on a CVT, no warning light.',
+      askShopTo: 'check CVT fluid level and condition and confirm whether the hesitation is fluid-related or early belt/pulley wear.',
+      category: 'cvt-fluid',
+      match: (a) => a.feel === 'hesitation' && a.transType === 'cvt',
+    },
+    {
+      id: 'hesitation-auto',
+      band: 'book-soon',
+      title: 'Hesitation from a stop — likely fluid or a valve-body issue',
+      explanation:
+        'A pause before the car takes off usually points at low or degraded fluid, or a valve body/solenoid not building pressure quickly enough. Book it soon — this is normally a service-level fix if caught early.',
+      likelyCauses: ['Most often low or degraded transmission fluid', 'Sometimes a valve-body or solenoid issue', 'Occasionally torque-converter wear'],
+      cost: { diyLow: 0, diyHigh: 120, shopLow: 80, shopHigh: 1500, dealerLow: 150, dealerHigh: 2200 },
+      escalation: ['A warning light comes on, the pause gets longer, or the car won’t engage a gear — treat it as fix-now'],
+      symptomLine: 'Hesitation pulling away from a stop, no warning light.',
+      askShopTo: 'check fluid level and condition, scan for codes, and verify line pressure and clutch engagement timing before recommending a repair.',
+      category: 'transmission-fluid',
+      match: (a) => a.feel === 'hesitation' && has(a, 'transType'),
+    },
+  ],
+  fallback: {
+    id: 'transmission-generic',
+    band: 'book-soon',
+    title: 'Worth having the transmission looked at',
+    explanation:
+      'Drivetrain feel issues are hard to pin down without a road test and a scan. Book a diagnosis soon — describing exactly what you felt (which you’ve just done) saves the shop time.',
+    likelyCauses: ['A road test with live data will localize the cause'],
+    cost: { shopLow: 100, shopHigh: 300 },
+    escalation: ['A warning light appears, the car won’t engage a gear, or you smell burning — treat it as fix-now'],
+    symptomLine: 'A transmission/drivetrain feel issue that needs diagnosis.',
+    askShopTo: 'check fluid level and condition, scan for codes, and road-test with live data before recommending any repair.',
+  },
+}
+
+export const PLAYBOOKS: Playbook[] = [
+  warningLight,
+  brakeNoise,
+  otherNoise,
+  leakSmell,
+  carWontStart,
+  steeringVibration,
+  acClimate,
+  transmissionFeel,
+]
 
 export function getPlaybook(id: string): Playbook | undefined {
   return PLAYBOOKS.find((p) => p.id === id)

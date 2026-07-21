@@ -133,3 +133,70 @@ For each, tell me:
 
 No referral/affiliate framing — this is on the owner's side of the counter. Cite sources.
 Structured markdown.
+
+---
+
+## Prompt 7 — Cost ranges for scheduled maintenance
+
+I'm building a car-maintenance app that shows drivers a fair-price anchor before they pay a shop,
+for routine scheduled services (not diagnosed problems — normal wear-interval maintenance).
+Mainstream US vehicles (F-150, Rogue, Camry, Civic, CR-V and similar), 2025-2026.
+
+For each of these services, give me real cost ranges: DIY parts-only, independent shop
+(labor+parts), dealer (labor+parts):
+oil change (conventional & full synthetic), tire rotation, tire replacement (set of 4, mid-tier),
+wheel alignment, engine air filter, cabin air filter, brake fluid flush, brake pad+rotor service
+(per axle), coolant flush, transmission fluid service, CVT fluid service, spark plug replacement,
+timing belt, serpentine belt, fuel filter, power steering fluid, transfer case fluid, differential
+fluid (front & rear), battery replacement, wiper blades.
+
+For each: typical interval assumed (so I can sanity-check against factory/consensus intervals I
+already have), the three cost tiers, and one line on what commonly inflates the price (e.g.
+"ceramic pads add $X", "synthetic CVT fluid must be OEM-spec"). Cite sources. Structured markdown,
+one row/section per service, consistent format.
+
+---
+
+## Prompt 8 — AC / climate control playbook
+
+Same app as before (a driver answers 2-3 plain-language questions and gets a verdict). This time:
+the AC/heat isn't working right. Mainstream US vehicles.
+
+Decision tree:
+1. Follow-up questions in order (blows warm on AC vs blows cold on heat vs weak airflow either
+   setting vs. only one side/vent; any noise/smell when the AC clicks on; blows warm right away vs
+   after a while), with answer options.
+2. For each terminal branch: ranked likely causes with likelihood, urgency band (fix-now /
+   book-soon / can-coast / all-clear — climate issues are rarely fix-now unless there's a burning
+   smell/smoke), and why.
+3. Real cost ranges (2025-2026, US): DIY parts-only, independent shop, dealer.
+4. Escalation triggers that bump the band up (burning smell, smoke, sudden total failure while
+   driving).
+5. Shop-brief: symptom translated for a mechanic + what to ask them to check/report before
+   authorizing repair (e.g. "check refrigerant pressure and dye-test for a leak before recharging").
+
+Cite sources for costs and likelihood. Structured markdown, consistent format.
+
+---
+
+## Prompt 9 — Transmission/drivetrain feel playbook
+
+Same app, same format. This time: the transmission/drivetrain feels off while driving — not a
+noise, a *feel* (slipping, hesitation, harsh or delayed shifts, shuddering). Mainstream US
+vehicles, both conventional automatic and CVT.
+
+Decision tree:
+1. Follow-up questions in order (what it feels like — slips/revs without accelerating, hard/late
+   shifts, shudder at steady speed, hesitation from a stop; automatic or CVT if the driver knows;
+   any warning light with it), with answer options.
+2. For each terminal branch: ranked likely causes with likelihood, urgency band, and why — be
+   explicit about which CVT symptoms (shudder, overheating warning) are more urgent than they'd be
+   on a conventional automatic.
+3. Real cost ranges (2025-2026, US): DIY (fluid service only — most of this isn't DIY), independent
+   shop, dealer, and flag when a case likely means a rebuild/replacement rather than a service.
+4. Escalation triggers that bump the band to fix-now (burning smell, won't engage a gear, warning
+   light + shudder together).
+5. Shop-brief: symptom translated for a mechanic + what to ask them to check/report first (e.g.
+   fluid condition/level before any fluid service is authorized).
+
+Cite sources. Structured markdown, consistent format.

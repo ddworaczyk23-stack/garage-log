@@ -28,9 +28,18 @@ function run(pb: Playbook, answers: Answers) {
 }
 
 describe('playbook data integrity', () => {
-  it('has the six expected playbooks', () => {
+  it('has the eight expected playbooks', () => {
     expect(PLAYBOOKS.map((p) => p.id).sort()).toEqual(
-      ['brake-noise', 'car-wont-start', 'leak-smell', 'other-noise', 'steering-vibration', 'warning-light'].sort(),
+      [
+        'ac-climate',
+        'brake-noise',
+        'car-wont-start',
+        'leak-smell',
+        'other-noise',
+        'steering-vibration',
+        'transmission-feel',
+        'warning-light',
+      ].sort(),
     )
   })
 
@@ -255,6 +264,130 @@ describe('resolver — steering / vibration', () => {
   it('a clunk when turning matches regardless of the "when" answer', () => {
     const o = run(pb, { when: 'turning', feel: 'noise' })
     expect(o.id).toBe('clunk-turning')
+  })
+})
+
+describe('resolver — AC / climate', () => {
+  const pb = getPlaybook('ac-climate')!
+
+  it('starts by asking the main symptom', () => {
+    const step = resolveStep(pb, {})
+    expect(step.kind).toBe('question')
+    if (step.kind === 'question') expect(step.question.id).toBe('symptom')
+  })
+
+  it('a noise/smell on AC engage is book-soon, with a drive-ok verdict (AC off)', () => {
+    const o = run(pb, { symptom: 'warm-ac', acBehavior: 'normalNoise' })
+    expect(o.id).toBe('ac-smell-noise')
+    expect(o.band).toBe('book-soon')
+    expect(o.driveOrTow?.verdict).toBe('drive-ok')
+  })
+
+  it('short-cycling AC points at low refrigerant, book-soon', () => {
+    const o = run(pb, { symptom: 'warm-ac', acBehavior: 'cycles' })
+    expect(o.id).toBe('ac-cycling')
+    expect(o.band).toBe('book-soon')
+  })
+
+  it('AC never engaging points at a switch or compressor', () => {
+    const o = run(pb, { symptom: 'warm-ac', acBehavior: 'noClick' })
+    expect(o.id).toBe('ac-no-engage')
+  })
+
+  it('no heat resolves without a follow-up question', () => {
+    const o = run(pb, { symptom: 'cold-heat' })
+    expect(o.id).toBe('no-heat')
+    expect(o.band).toBe('book-soon')
+    expect(o.category).toBe('coolant')
+  })
+
+  it('weak airflow with an old/unknown filter suggests the cabin filter first (can-coast)', () => {
+    const o = run(pb, { symptom: 'weak', filterAge: 'no' })
+    expect(o.id).toBe('weak-filter')
+    expect(o.band).toBe('coast')
+    expect(o.category).toBe('cabin-air-filter')
+  })
+
+  it('weak airflow with a recent filter change points further (book-soon)', () => {
+    const o = run(pb, { symptom: 'weak', filterAge: 'yes' })
+    expect(o.id).toBe('weak-blower')
+    expect(o.band).toBe('book-soon')
+  })
+
+  it('uneven temperature points at the blend door', () => {
+    const o = run(pb, { symptom: 'uneven' })
+    expect(o.id).toBe('uneven-temp')
+  })
+})
+
+describe('resolver — transmission / drivetrain feel', () => {
+  const pb = getPlaybook('transmission-feel')!
+
+  it('starts by asking what it feels like', () => {
+    const step = resolveStep(pb, {})
+    expect(step.kind).toBe('question')
+    if (step.kind === 'question') expect(step.question.id).toBe('feel')
+  })
+
+  it('does not resolve prematurely — asks about a warning light before any generic outcome', () => {
+    for (const feel of ['slip', 'hardShift', 'shudder', 'hesitation']) {
+      const step = resolveStep(pb, { feel })
+      expect(step.kind, feel).toBe('question')
+      if (step.kind === 'question') expect(step.question.id, feel).toBe('light')
+    }
+  })
+
+  it('slip + a transmission warning light is fix-now', () => {
+    const o = run(pb, { feel: 'slip', light: 'transWarning' })
+    expect(o.id).toBe('slip-warning')
+    expect(o.band).toBe('fix-now')
+    expect(o.driveOrTow).toBeDefined()
+  })
+
+  it('slip with no light is book-soon, not fix-now', () => {
+    const o = run(pb, { feel: 'slip', light: 'none' })
+    expect(o.id).toBe('slip-generic')
+    expect(o.band).toBe('book-soon')
+  })
+
+  it('hard shifting with a warning light is fix-now', () => {
+    const o = run(pb, { feel: 'hardShift', light: 'transWarning' })
+    expect(o.id).toBe('hard-shift-warning')
+    expect(o.band).toBe('fix-now')
+  })
+
+  it('hard shifting with no light is book-soon', () => {
+    const o = run(pb, { feel: 'hardShift', light: 'cel' })
+    expect(o.id).toBe('hard-shift-generic')
+    expect(o.band).toBe('book-soon')
+  })
+
+  it('a CVT shudder is treated more urgently than an automatic in copy, both book-soon absent a light', () => {
+    const cvt = run(pb, { feel: 'shudder', light: 'none', transType: 'cvt' })
+    expect(cvt.id).toBe('shudder-cvt')
+    expect(cvt.band).toBe('book-soon')
+    const auto = run(pb, { feel: 'shudder', light: 'none', transType: 'automatic' })
+    expect(auto.id).toBe('shudder-auto')
+    expect(auto.band).toBe('book-soon')
+  })
+
+  it('a shudder with a warning light is fix-now regardless of transmission type', () => {
+    const o = run(pb, { feel: 'shudder', light: 'transWarning', transType: 'cvt' })
+    expect(o.id).toBe('shudder-warning')
+    expect(o.band).toBe('fix-now')
+  })
+
+  it('hesitation on a CVT vs automatic resolve to different outcomes, both book-soon absent a light', () => {
+    const cvt = run(pb, { feel: 'hesitation', light: 'none', transType: 'cvt' })
+    expect(cvt.id).toBe('hesitation-cvt')
+    const auto = run(pb, { feel: 'hesitation', light: 'none', transType: 'notSure' })
+    expect(auto.id).toBe('hesitation-auto')
+  })
+
+  it('hesitation with a warning light is fix-now', () => {
+    const o = run(pb, { feel: 'hesitation', light: 'transWarning', transType: 'automatic' })
+    expect(o.id).toBe('hesitation-warning')
+    expect(o.band).toBe('fix-now')
   })
 })
 
