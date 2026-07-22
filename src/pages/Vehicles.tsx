@@ -3,7 +3,7 @@ import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
 import { vehicleEmoji, vehicleLabel } from '../domain/vehicle'
 import { bandFromStatus, hasRealData, VERDICT_BAND_LABELS, type VerdictBand } from '../domain/verdict'
-import { Loading } from '../components/ui'
+import { Skel } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 
 async function loadVehiclesWithStatus() {
@@ -30,7 +30,17 @@ async function loadVehiclesWithStatus() {
 export function Vehicles() {
   const rows = useQuery(loadVehiclesWithStatus)
 
-  if (!rows) return <Loading />
+  if (!rows) {
+    return (
+      <section class="page" role="status" aria-live="polite" aria-label="Loading vehicles">
+        <Skel class="skel-title" />
+        <div class="skel-list">
+          <Skel class="skel-row" />
+          <Skel class="skel-row" />
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section class="page">

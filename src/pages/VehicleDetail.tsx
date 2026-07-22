@@ -22,7 +22,7 @@ import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
-import { Loading, EmptyState, ConfirmButton } from '../components/ui'
+import { Loading, Skel, EmptyState, ConfirmButton } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
 import { Instrument } from '../components/motion/Instrument'
@@ -135,7 +135,19 @@ export function VehicleDetail({ id }: Props) {
     return () => io.disconnect()
   }, [vehicleReady])
 
-  if (vehicle === undefined) return <Loading />
+  if (vehicle === undefined) {
+    return (
+      <section class="page" role="status" aria-live="polite" aria-label="Loading vehicle">
+        <Skel class="skel-title" />
+        <Skel class="skel-row" style="height: 140px; margin-bottom: 16px" />
+        <div class="skel-list">
+          <Skel class="skel-row" />
+          <Skel class="skel-row" />
+          <Skel class="skel-row" />
+        </div>
+      </section>
+    )
+  }
   if (vehicle === null) {
     return (
       <section class="page">

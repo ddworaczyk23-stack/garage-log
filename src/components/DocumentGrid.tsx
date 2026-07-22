@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { formatBytes } from '../domain/documents'
+import { Tooltip } from './ui'
 import type { VehicleDocument } from '../types'
 
 interface Props {
@@ -71,7 +72,6 @@ export function DocumentGrid({ documents, onRemove }: Props) {
                   <button
                     type="button"
                     class="doc-confirm-yes"
-                    title="Confirm delete"
                     onClick={() => {
                       setConfirmingId(null)
                       onRemove(doc.id)
@@ -79,26 +79,28 @@ export function DocumentGrid({ documents, onRemove }: Props) {
                   >
                     Delete
                   </button>
+                  <Tooltip label="Cancel">
+                    <button
+                      type="button"
+                      class="doc-confirm-no"
+                      aria-label="Cancel delete"
+                      onClick={() => setConfirmingId(null)}
+                    >
+                      ✕
+                    </button>
+                  </Tooltip>
+                </span>
+              ) : (
+                <Tooltip label="Delete document">
                   <button
                     type="button"
-                    class="doc-confirm-no"
-                    title="Cancel"
-                    aria-label="Cancel delete"
-                    onClick={() => setConfirmingId(null)}
+                    class="doc-remove-btn"
+                    aria-label={`Delete ${doc.filename}`}
+                    onClick={() => setConfirmingId(doc.id)}
                   >
                     ✕
                   </button>
-                </span>
-              ) : (
-                <button
-                  type="button"
-                  class="doc-remove-btn"
-                  title="Delete document"
-                  aria-label={`Delete ${doc.filename}`}
-                  onClick={() => setConfirmingId(doc.id)}
-                >
-                  ✕
-                </button>
+                </Tooltip>
               ))}
           </div>
         )

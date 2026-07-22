@@ -3,7 +3,7 @@ import { getGarageSummary, type VehicleSummary } from '../db/summary'
 import { formatMiles, formatMoney, localDateISO } from '../domain/format'
 import { vehicleVerdict } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
-import { Loading } from '../components/ui'
+import { Skel } from '../components/ui'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
 
@@ -16,7 +16,19 @@ import { Reveal } from '../components/motion/Reveal'
 export function Dashboard() {
   const summary = useQuery(getGarageSummary)
 
-  if (!summary) return <Loading />
+  if (!summary) {
+    return (
+      <section class="page gb" role="status" aria-live="polite" aria-label="Loading your garage">
+        <header class="gb-top">
+          <Skel class="skel-title" />
+        </header>
+        <div class="gb-today-grid">
+          <Skel class="skel-row" style="height: 220px" />
+          <Skel class="skel-row" style="height: 220px" />
+        </div>
+      </section>
+    )
+  }
 
   // Health band (worst-wins across reminders AND open concerns) drives the
   // garage lamp, so a fix-now concern can't sit under a green "All caught up"

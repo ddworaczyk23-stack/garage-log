@@ -15,6 +15,45 @@ export function Loading({ label = 'Loading…' }: { label?: string }) {
   )
 }
 
+/** One shimmering placeholder block. Compose into page-shaped skeletons. */
+export function Skel({ class: className = '', style }: { class?: string; style?: string }) {
+  return <span class={`skel ${className}`} style={style} aria-hidden="true" />
+}
+
+/**
+ * Generic page skeleton for routes with no bespoke shape — a title bar plus
+ * a few list rows. Used as the fallback so every `<Loading/>` full-page spot
+ * still reads as "content is coming" instead of a bare spinner, without
+ * hand-building a layout per page.
+ */
+export function SkeletonPage({ rows = 4 }: { rows?: number }) {
+  return (
+    <section class="page" role="status" aria-live="polite" aria-label="Loading">
+      <Skel class="skel-title" />
+      <div class="skel-list">
+        {Array.from({ length: rows }, (_, i) => (
+          <Skel key={i} class="skel-row" />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+/**
+ * Styled tooltip for icon-only controls. Wraps a single focusable child and
+ * shows `label` on hover/focus via CSS only (no JS, no library) — see
+ * `.tooltip` in app.css. `hover`-media-gated so it's inert on touch, where
+ * there's no hover to trigger it; the child's own `aria-label`/`title` stays
+ * the accessible name.
+ */
+export function Tooltip({ label, children }: { label: string; children: ComponentChildren }) {
+  return (
+    <span class="tooltip" data-tip={label}>
+      {children}
+    </span>
+  )
+}
+
 /** Consistent empty state: icon + headline + optional hint/action. */
 export function EmptyState({
   icon,

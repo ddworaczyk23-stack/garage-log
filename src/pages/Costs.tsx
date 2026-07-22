@@ -3,7 +3,7 @@ import { useQuery } from '../db/useQuery'
 import { getGarageCostSummary, type VehicleCostSummary } from '../db/summary'
 import { formatMiles, formatMoney } from '../domain/format'
 import { vehicleEmoji, vehicleLabel } from '../domain/vehicle'
-import { EmptyState, Loading } from '../components/ui'
+import { EmptyState, SkeletonPage } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { useCountUp, useIntroGate, useReducedMotion } from '../motion/hooks'
 import type { CategoryCost, CostBreakdown } from '../domain/cost'
@@ -22,7 +22,7 @@ export function Costs() {
   const [range, setRange] = useState<Range>('all')
   const grandCounted = useCountUp(summary?.grandTotal ?? 0, { active: intro, reduced })
 
-  if (!summary) return <Loading />
+  if (!summary) return <SkeletonPage rows={3} />
 
   const hasAnySpend = summary.grandTotal > 0
 

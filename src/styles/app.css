@@ -1503,6 +1503,84 @@ iframe.preview-media {
   }
 }
 
+/* ---------- Skeleton loaders ---------- */
+.skel {
+  display: block;
+  background: linear-gradient(90deg, var(--hairline) 25%, rgba(35, 39, 43, 0.1) 37%, var(--hairline) 63%);
+  background-size: 400% 100%;
+  border-radius: var(--radius-control);
+  animation: skel-shimmer 1.4s ease infinite;
+}
+@keyframes skel-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skel {
+    animation: none;
+    background: var(--hairline);
+  }
+}
+.skel-title {
+  width: 40%;
+  height: 1.4rem;
+  margin-bottom: 20px;
+}
+.skel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.skel-row {
+  height: 60px;
+  border-radius: var(--radius);
+}
+
+/* ---------- Tooltip (icon-only controls; hover/focus, CSS-only) ---------- */
+/* Gated on (hover: hover) so touch never shows it — no hover to trigger it
+   there, and the child's aria-label/title already carries the accessible
+   name for touch/screen-reader users. */
+@media (hover: hover) {
+  .tooltip {
+    position: relative;
+    display: inline-flex;
+  }
+  .tooltip::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: var(--ink);
+    color: var(--sign-face-white, #fff);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 5px 9px;
+    border-radius: 6px;
+    pointer-events: none;
+    opacity: 0;
+    z-index: 110;
+    transition:
+      opacity 0.12s ease-out,
+      transform 0.12s ease-out;
+  }
+  .tooltip:hover::after,
+  .tooltip:focus-within::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tooltip::after {
+      transition: none;
+    }
+  }
+}
+
 .empty-state {
   display: flex;
   flex-direction: column;

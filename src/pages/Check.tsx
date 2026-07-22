@@ -21,7 +21,7 @@ import { composeBrief } from '../domain/shopBrief'
 import type { SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { formatShortDate } from '../domain/format'
-import { Loading, EmptyState, ConfirmButton } from '../components/ui'
+import { Loading, SkeletonPage, EmptyState, ConfirmButton, Tooltip } from '../components/ui'
 import type { Vehicle, Concern, MaintenanceCategory } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -61,7 +61,7 @@ export function Check({ vehicleId }: { vehicleId?: string }) {
 
 function CheckPicker() {
   const vehicles = useQuery(() => db.vehicles.orderBy('name').toArray(), [])
-  if (!vehicles) return <Loading />
+  if (!vehicles) return <SkeletonPage rows={2} />
 
   // With a single vehicle there's nothing to choose — go straight in.
   if (vehicles.length === 1) {
@@ -148,7 +148,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   // also unlocks the link to the standalone shareable brief page).
   const [addedId, setAddedId] = useState<string | null>(null)
 
-  if (!data) return <Loading />
+  if (!data) return <SkeletonPage rows={3} />
   if (!data.vehicle) {
     return (
       <section class="page">
@@ -528,11 +528,13 @@ function CostRow({ what, amt, strong }: { what: string; amt: string; strong?: bo
 function FlowTop({ onBack, steps }: { onBack: () => void; steps?: boolean[] }) {
   return (
     <div class="chk-flowtop">
-      <button type="button" class="chk-back" onClick={onBack} aria-label="Back">
-        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12.5 4 6.5 10l6 6" />
-        </svg>
-      </button>
+      <Tooltip label="Back">
+        <button type="button" class="chk-back" onClick={onBack} aria-label="Back">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12.5 4 6.5 10l6 6" />
+          </svg>
+        </button>
+      </Tooltip>
       {steps && (
         <div class="chk-steps" aria-hidden="true">
           {steps.map((done, i) => (

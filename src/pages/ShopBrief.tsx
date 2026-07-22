@@ -13,7 +13,7 @@ import {
   type QuoteRating,
 } from '../domain/quoteCheck'
 import { parseNumberInput } from '../domain/format'
-import { Loading, EmptyState } from '../components/ui'
+import { SkeletonPage, EmptyState } from '../components/ui'
 import type { Vehicle } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -75,7 +75,7 @@ export function ShopBriefPage({ id }: { id: string }) {
   const [shared, setShared] = useState<string | null>(null)
   const [shareError, setShareError] = useState<string | null>(null)
 
-  if (data === undefined) return <Loading />
+  if (data === undefined) return <SkeletonPage rows={3} />
   if (data === null) {
     return (
       <section class="page">

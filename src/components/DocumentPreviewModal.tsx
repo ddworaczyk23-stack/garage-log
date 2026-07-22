@@ -9,7 +9,7 @@ import {
 import { formatBytes } from '../domain/documents'
 import { CATEGORY_LABELS, type VehicleDocument } from '../types'
 import type { DocumentIndexEntry } from '../domain/documents'
-import { ConfirmButton } from './ui'
+import { ConfirmButton, Tooltip } from './ui'
 
 interface Props {
   entry: DocumentIndexEntry
@@ -75,9 +75,11 @@ export function DocumentPreviewModal({ entry, onClose }: Props) {
           <h3 id="doc-modal-title" class="modal-title" title={doc.filename}>
             {doc.filename}
           </h3>
-          <button type="button" class="modal-close" aria-label="Close" onClick={onClose}>
-            ✕
-          </button>
+          <Tooltip label="Close">
+            <button type="button" class="modal-close" aria-label="Close" onClick={onClose}>
+              ✕
+            </button>
+          </Tooltip>
         </div>
 
         <div class="modal-preview">

@@ -10,7 +10,7 @@ import {
 } from '../domain/importHistory'
 import { formatMiles, formatShortDate } from '../domain/format'
 import { vehicleLabel } from '../domain/vehicle'
-import { Loading } from '../components/ui'
+import { SkeletonPage } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
 import {
@@ -39,7 +39,7 @@ export function ImportHistory({ vehicleId }: Props) {
   const [importing, setImporting] = useState(false)
   const [done, setDone] = useState<{ count: number; rows: number; categories: string[] } | null>(null)
 
-  if (vehicle === undefined) return <Loading />
+  if (vehicle === undefined) return <SkeletonPage rows={2} />
   if (vehicle === null) {
     return (
       <section class="page">
