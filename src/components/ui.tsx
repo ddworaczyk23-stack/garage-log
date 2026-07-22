@@ -1,5 +1,5 @@
 import { Component, type ComponentChildren } from 'preact'
-import { useState } from 'preact/hooks'
+import { useEffect, useId, useRef, useState } from 'preact/hooks'
 
 // Small shared presentational primitives introduced in Milestone 9 so loading,
 // empty, and destructive-action UI look and behave the same everywhere. No data
@@ -50,6 +50,57 @@ export function Tooltip({ label, children }: { label: string; children: Componen
   return (
     <span class="tooltip" data-tip={label}>
       {children}
+    </span>
+  )
+}
+
+/**
+ * A small circled "?" that reveals an explanatory sentence — for the
+ * "how does this number work" context that's too long for a hover-only
+ * `Tooltip` and doesn't need to sit inline as permanent body text. Hover or
+ * focus opens it on desktop (CSS `:hover`/`:focus-within`); a click toggles
+ * it open/closed on any device, since touch has no hover. Closes on outside
+ * click or Escape.
+ */
+export function InfoTip({ label = 'More info', children }: { label?: string; children: ComponentChildren }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLSpanElement>(null)
+  const id = useId()
+
+  useEffect(() => {
+    if (!open) return
+    function onDocClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('click', onDocClick)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('click', onDocClick)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  return (
+    <span class={`infotip${open ? ' is-open' : ''}`} ref={ref}>
+      <button
+        type="button"
+        class="infotip-btn"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label={label}
+        onClick={(e) => {
+          e.stopPropagation()
+          setOpen((o) => !o)
+        }}
+      >
+        ?
+      </button>
+      <span id={id} role="tooltip" class="infotip-pop">
+        {children}
+      </span>
     </span>
   )
 }

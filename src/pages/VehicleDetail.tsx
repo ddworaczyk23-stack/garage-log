@@ -22,7 +22,7 @@ import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
-import { Loading, Skel, EmptyState, ConfirmButton } from '../components/ui'
+import { Loading, Skel, EmptyState, ConfirmButton, InfoTip } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
 import { Instrument } from '../components/motion/Instrument'
@@ -361,15 +361,17 @@ export function VehicleDetail({ id }: Props) {
           track) doesn't force a long scroll to reach history below it */}
       <section class="card vd-schedule">
         <div class="card-title-row">
-          <h3 class="card-title">Service schedule</h3>
+          <h3 class="card-title">
+            Service schedule
+            <InfoTip label="About this schedule">
+              Personalized from mechanic-consensus intervals + this vehicle's logged history. Ranked
+              most urgent first. Dates below are estimated from your average mileage.
+            </InfoTip>
+          </h3>
           <a class="btn-link" href={`#/import/${id}`}>
             Import history →
           </a>
         </div>
-        <p class="muted small">
-          Personalized from mechanic-consensus intervals + this vehicle's logged history. Ranked most
-          urgent first. Dates below are estimated from your average mileage.
-        </p>
 
         <AnnualMileageEditor vehicleId={id} />
 
