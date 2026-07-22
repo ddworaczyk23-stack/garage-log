@@ -1555,8 +1555,8 @@ iframe.preview-media {
     bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%) translateY(4px);
-    background: var(--ink);
-    color: var(--sign-face-white, #fff);
+    background: var(--text);
+    color: #fff;
     font-size: 0.75rem;
     font-weight: 500;
     white-space: nowrap;
@@ -1578,6 +1578,78 @@ iframe.preview-media {
     .tooltip::after {
       transition: none;
     }
+  }
+}
+
+/* ---------- InfoTip (circled "?", click-toggle + desktop hover) ---------- */
+.infotip {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+.infotip-btn {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1.4px solid var(--text-muted);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-muted);
+  font-family: var(--font-sans);
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.infotip-btn:hover,
+.infotip-btn:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.infotip-pop {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 110;
+  width: max-content;
+  max-width: 260px;
+  background: var(--bg-card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  box-shadow: var(--shadow-raised);
+  padding: 10px 12px;
+  font-size: 0.85rem;
+  font-weight: 400;
+  line-height: 1.4;
+  opacity: 0;
+  transform: translateY(4px);
+  pointer-events: none;
+  transition:
+    opacity 0.12s ease-out,
+    transform 0.12s ease-out;
+}
+.infotip.is-open .infotip-pop {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+@media (hover: hover) {
+  .infotip:hover .infotip-pop,
+  .infotip:focus-within .infotip-pop {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .infotip-pop {
+    transition: none;
   }
 }
 
@@ -2380,9 +2452,8 @@ iframe.preview-media {
   margin: 0 -18px;
   padding-left: 18px;
   padding-right: 18px;
-  /* Full-bleed diagonal wash between two overdue tints — not anchored to one
-     edge fading to transparent, so it reads as emphasis, not a side stripe. */
-  background: linear-gradient(120deg, var(--c-overdue-bg), rgba(179, 64, 46, 0.22));
+  /* Heavy red on the left, fading to the card's white on the right. */
+  background: linear-gradient(90deg, rgba(179, 64, 46, 0.28), transparent 65%);
   border-top-color: transparent;
 }
 .vd-row.is-overdue + .vd-row {
