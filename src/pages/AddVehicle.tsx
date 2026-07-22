@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks'
-import { addVehicle, hydrateVehicleExternalData } from '../db/vehicleOnboarding'
+import { addVehicle } from '../db/vehicleOnboarding'
 import { decodeVin } from '../services/vinDecode'
 import { canonicalVehicleId } from '../domain/vehicleIdentity'
 import { Reveal } from '../components/motion/Reveal'
@@ -7,11 +7,9 @@ import type { VehicleIdentity } from '../types'
 
 type Mode = 'vin' | 'manual'
 
-// "Add Car" (route #/add-vehicle, linked from Vehicles). Creates the vehicle
-// record immediately, then kicks off (without awaiting) the factory-
-// maintenance + consensus hydration in the background — the user lands on
-// Vehicle Detail right away and watches those two sections fill in via
-// liveQuery, per db/vehicleOnboarding.ts's design.
+// "Add Car" (route #/add-vehicle, linked from Vehicles). VIN decode (real
+// NHTSA lookup) or manual entry resolve a VehicleIdentity, then addVehicle()
+// creates the record (deduped) and its generic maintenance schedule.
 export function AddVehicle() {
   const [mode, setMode] = useState<Mode>('vin')
 
@@ -92,7 +90,6 @@ export function AddVehicle() {
         engine: engine.trim(),
         drivetrain: drivetrain.trim(),
       })
-      void hydrateVehicleExternalData(identity)
       if (created) {
         window.location.hash = `#/vehicle/${vehicle.id}`
       } else {
@@ -113,9 +110,7 @@ export function AddVehicle() {
       </a>
       <h2 class="page-title">Add a car</h2>
       <p class="muted small">
-        Enter a VIN to decode its identity, or fill in the details manually. Once
-        added, we'll fetch its factory maintenance schedule and consensus/common-
-        issues info in the background.
+        Enter a VIN to decode its identity, or fill in the details manually.
       </p>
 
       <div class="seg" role="group" aria-label="Add car mode">

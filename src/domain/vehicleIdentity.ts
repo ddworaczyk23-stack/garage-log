@@ -1,4 +1,4 @@
-import type { Vehicle, VehicleIdentity } from '../types'
+import type { Vehicle } from '../types'
 
 // Pure helpers for the vehicle-onboarding flow: turning a resolved
 // year/make/model/trim into a stable cache key, and deciding whether a
@@ -17,9 +17,8 @@ function normalize(s: string): string {
 }
 
 /**
- * Deterministic key for one year/make/model/trim, used to cache/reuse fetched
- * factory-maintenance and consensus data across any vehicle records that
- * share the same identity (see FactoryMaintenanceData/ConsensusData).
+ * Deterministic key for one year/make/model/trim — lets `matchesExistingVehicle`
+ * recognize two records as the same physical car without a VIN.
  */
 export function canonicalVehicleId(identity: IdentityFields): string {
   return [identity.year, normalize(identity.make), normalize(identity.model), normalize(identity.trim)].join('|')
@@ -42,22 +41,4 @@ export function matchesExistingVehicle(
   }
   const key = canonicalVehicleId(input)
   return existing.find((v) => canonicalVehicleId(v) === key) ?? null
-}
-
-/**
- * Rebuilds a VehicleIdentity from a stored Vehicle row (which has no `style`)
- * — used to retry/re-hydrate external data for a vehicle that already exists,
- * without needing to re-decode its VIN.
- */
-export function identityFromVehicle(
-  vehicle: Pick<Vehicle, 'vin' | 'year' | 'make' | 'model' | 'trim' | 'canonicalVehicleId'>,
-): VehicleIdentity {
-  return {
-    vin: vehicle.vin,
-    year: vehicle.year,
-    make: vehicle.make,
-    model: vehicle.model,
-    trim: vehicle.trim,
-    canonicalVehicleId: vehicle.canonicalVehicleId ?? canonicalVehicleId(vehicle),
-  }
 }

@@ -1,6 +1,5 @@
 import { db } from './db'
-import { canonicalVehicleId, identityFromVehicle } from '../domain/vehicleIdentity'
-import { hydrateVehicleExternalData } from './vehicleOnboarding'
+import { canonicalVehicleId } from '../domain/vehicleIdentity'
 import type { Vehicle } from '../types'
 
 // Persist a vehicle's nickname. Stored trimmed; a blank value clears it, and the
@@ -36,10 +35,10 @@ export interface VehicleSpecsPatch {
 /**
  * Update a vehicle's specs after creation. For a vehicle onboarded via "Add
  * Car" (one with a canonicalVehicleId), if the identity fields change we
- * recompute that key so the cached factory/consensus/cost datasets stay
- * consistent, and kick off a background re-hydrate for the new identity. The
- * two hand-seeded vehicles have no canonicalVehicleId and are left without one.
- * Reminder rules are untouched — they reference vehicleId + a fixed templateKey.
+ * recompute that key so future dedup checks (matchesExistingVehicle) still
+ * treat it as the same car. The two hand-seeded vehicles have no
+ * canonicalVehicleId and are left without one. Reminder rules are untouched
+ * — they reference vehicleId + a fixed templateKey.
  */
 export async function setVehicleSpecs(id: string, patch: VehicleSpecsPatch): Promise<void> {
   const existing = await db.vehicles.get(id)
@@ -55,36 +54,23 @@ export async function setVehicleSpecs(id: string, patch: VehicleSpecsPatch): Pro
     vin: patch.vin?.trim() || undefined,
   }
 
-  let rehydrateFor: Vehicle | null = null
   if (existing.canonicalVehicleId) {
-    const nextCanonical = canonicalVehicleId({
+    update.canonicalVehicleId = canonicalVehicleId({
       year: patch.year,
       make: patch.make,
       model: patch.model,
       trim: patch.trim,
     })
-    if (nextCanonical !== existing.canonicalVehicleId) {
-      update.canonicalVehicleId = nextCanonical
-      rehydrateFor = { ...existing, ...update } as Vehicle
-    }
   }
 
   await db.vehicles.update(id, update)
-
-  if (rehydrateFor) {
-    // Fire-and-forget: cached by canonicalVehicleId, reactive via liveQuery.
-    void hydrateVehicleExternalData(identityFromVehicle(rehydrateFor))
-  }
 }
 
 /**
  * Delete a vehicle and everything scoped to it: events (+ their attached
  * documents), odometer readings, reminder rules, and glovebox documents — all
  * inside one transaction, so a failure partway through leaves nothing
- * half-deleted. Deliberately does NOT touch factoryMaintenanceData/
- * consensusData: those are cached by canonicalVehicleId (see
- * db/vehicleOnboarding.ts), not vehicle id, and another vehicle sharing the
- * same year/make/model/trim may still be relying on that cached fetch.
+ * half-deleted.
  */
 export async function deleteVehicle(id: string): Promise<void> {
   await db.transaction(

@@ -1,16 +1,13 @@
-import type { ComponentChildren } from 'preact'
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
-import { formatInterval, formatShortDate, localDateISO } from '../domain/format'
+import { formatShortDate, localDateISO } from '../domain/format'
 import { getVehicleReminders } from '../db/summary'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getOpenConcerns } from '../db/concerns'
 import { hasRealData, vehicleVerdict } from '../domain/verdict'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
-import { identityFromVehicle } from '../domain/vehicleIdentity'
-import { hydrateFactoryMaintenance, hydrateConsensusData } from '../db/vehicleOnboarding'
 import { deleteVehicle } from '../db/vehicles'
 import { EventForm } from '../components/EventForm'
 import { OdometerForm } from '../components/OdometerForm'
@@ -22,18 +19,13 @@ import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
-import { Loading, Skel, EmptyState, ConfirmButton, InfoTip } from '../components/ui'
+import { Loading, Skel, ConfirmButton, InfoTip } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
 import { Instrument } from '../components/motion/Instrument'
 import { useIntroGate, useReducedMotion } from '../motion/hooks'
 import { vehicleLabel } from '../domain/vehicle'
-import type {
-  ConsensusData,
-  FactoryMaintenanceData,
-  MaintenanceCategory,
-  VehicleDocument,
-} from '../types'
+import type { MaintenanceCategory, VehicleDocument } from '../types'
 
 interface Props {
   id: string
@@ -94,16 +86,6 @@ export function VehicleDetail({ id }: Props) {
     () => loadVehicleDocuments((events ?? []).map((e) => e.id)),
     [id, events?.map((e) => e.id).join(',')],
   )
-  const canonicalId = vehicle ? vehicle.canonicalVehicleId : undefined
-  const factoryData = useQuery<FactoryMaintenanceData | null>(
-    () => (canonicalId ? db.factoryMaintenanceData.get(canonicalId).then((r) => r ?? null) : Promise.resolve(null)),
-    [canonicalId],
-  )
-  const consensusData = useQuery<ConsensusData | null>(
-    () => (canonicalId ? db.consensusData.get(canonicalId).then((r) => r ?? null) : Promise.resolve(null)),
-    [canonicalId],
-  )
-
   // Miles driven this calendar year: current estimate minus the odometer at the
   // first data point of the year ("miles since the first entry this year").
   const ytdMiles = useMemo(() => {
@@ -403,60 +385,6 @@ export function VehicleDetail({ id }: Props) {
         )}
       </section>
 
-      {vehicle.canonicalVehicleId && (
-        <>
-          <Reveal>
-            <ExternalDataCard
-              title="Factory maintenance (reference)"
-              data={factoryData}
-              onRetry={() => hydrateFactoryMaintenance(identityFromVehicle(vehicle))}
-              renderOk={(d) =>
-                d.items.length === 0 ? (
-                  <p class="muted small">No items returned.</p>
-                ) : (
-                  <ul class="schedule-list">
-                    {d.items.map((item) => (
-                      <li key={item.category} class="schedule-row">
-                        <div class="schedule-main">
-                          <span class="schedule-label">{item.label}</span>
-                          <span class="muted small">
-                            {formatInterval(item.interval.miles, item.interval.months, item.interval.conditionBased)}
-                          </span>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )
-              }
-            />
-          </Reveal>
-
-          <Reveal>
-            <ExternalDataCard
-              title="Consensus & common issues"
-              data={consensusData}
-              onRetry={() => hydrateConsensusData(identityFromVehicle(vehicle))}
-              renderOk={(d) => (
-                <>
-                  <p class="small">{d.summary}</p>
-                  {d.commonIssues.length > 0 && (
-                    <ul class="list">
-                      {d.commonIssues.map((issue) => (
-                        <li key={issue.title}>
-                          <strong>{issue.title}</strong>
-                          <p class="muted small">{issue.description}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </>
-              )}
-            />
-          </Reveal>
-
-        </>
-      )}
-
       <Reveal>
         <section class="card">
           <Collapsible title="Maintenance log" count={`${maintenanceEvents.length} ${maintenanceEvents.length === 1 ? 'entry' : 'entries'}`}>
@@ -551,54 +479,6 @@ export function VehicleDetail({ id }: Props) {
           </svg>
           Log service
         </button>
-      )}
-    </section>
-  )
-}
-
-interface ExternalDatasetShape {
-  status: 'loading' | 'ok' | 'error'
-  source: string
-  fetchedAt: string | null
-  error?: string
-}
-
-// Shared shell for the two "hydrated after Add Car" cards: loading, retry-able
-// error, and — once loaded — the caller's rendering plus a source/updated line.
-function ExternalDataCard<T extends ExternalDatasetShape>({
-  title,
-  data,
-  onRetry,
-  renderOk,
-}: {
-  title: string
-  data: T | null | undefined
-  onRetry: () => void
-  renderOk: (data: T) => ComponentChildren
-}) {
-  return (
-    <section class="card">
-      <h3 class="card-title">{title}</h3>
-      {!data || data.status === 'loading' ? (
-        <Loading label="Fetching…" />
-      ) : data.status === 'error' ? (
-        <EmptyState
-          icon="⚠️"
-          title="Couldn't load this data"
-          hint={data.error ?? 'Something went wrong.'}
-          action={
-            <button type="button" class="btn-link" onClick={onRetry}>
-              Retry
-            </button>
-          }
-        />
-      ) : (
-        <>
-          {renderOk(data)}
-          <p class="muted small">
-            {data.source} · Updated {formatShortDate(data.fetchedAt)}
-          </p>
-        </>
       )}
     </section>
   )

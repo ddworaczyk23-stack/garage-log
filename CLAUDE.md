@@ -46,19 +46,21 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
 - **`src/types.ts`** — the full data model. One shared `category` vocabulary
   (`MaintenanceCategory`) ties `MaintenanceEvent` to `ReminderRule`.
 - **`src/db/db.ts`** — single Dexie DB with the `dexieCloud` addon attached,
-  schema at **version 3**, nine tables: `vehicles, odometerReadings, events,
-  documents, reminderRules, appMeta, factoryMaintenanceData, consensusData,
-  costEstimateData`. Index strings list only indexed keys. **`orderBy(field)`
-  requires `field` indexed** (this bit us once; `vehicles: 'id, name'` exists so
-  lists sort by name). Change schema only by adding a new `.version(n).stores()`
-  block — never edit an existing version. Adding a NON-indexed field (e.g.
-  `ReminderRule.templateKey`, `VehicleDocument.tags`) needs no bump — seed.ts
-  backfills those.
+  schema at **version 6**, seven tables: `vehicles, odometerReadings, events,
+  documents, reminderRules, appMeta, concerns`. Index strings list only indexed
+  keys. **`orderBy(field)` requires `field` indexed** (this bit us once;
+  `vehicles: 'id, name'` exists so lists sort by name). Change schema only by
+  adding a new `.version(n).stores()` block — never edit an existing version.
+  Adding a NON-indexed field (e.g. `ReminderRule.templateKey`,
+  `VehicleDocument.tags`) needs no bump — seed.ts backfills those. Three onboarding
+  "reference" cache tables (`factoryMaintenanceData`, `consensusData`,
+  `costEstimateData`) were added and later removed (see git history) — all three
+  only ever held sample/mock data with no feasible free real source, and showing
+  fabricated-looking placeholders was misleading rather than useful.
 - **`src/db/cloud.ts`** — Dexie Cloud config + auth glue. `db.cloud.configure()`
   runs only when `VITE_DEXIE_CLOUD_URL` is set. `login()`/`logout()`/
-  `useCloudUser()`. `appMeta`/`factoryMaintenanceData`/`consensusData`/
-  `costEstimateData` are `unsyncedTables` (local-only: bookkeeping or
-  refetchable reference data, deterministic keys).
+  `useCloudUser()`. `appMeta` is the one `unsyncedTables` entry (local-only
+  bookkeeping, deterministic key).
 - **`src/db/seed.ts`** — seeds the two vehicles on a fresh DB only
   (`seedIfEmpty`). Vehicle ids are fresh `veh-<uuid>` (globally unique — required
   for Dexie Cloud; the old `f150-2020`/`rogue-2020` would collide across users).
@@ -90,11 +92,9 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   this query shape), `getGarageSummary()` (per-vehicle `VehicleSummary` + capped
   `AttentionItem[]` feed), `getGarageCostSummary()`. Reads every table inside the
   caller's liveQuery so the dashboard recomputes on any write.
-- **`src/db/vehicleOnboarding.ts`** — `addVehicle()` (dedup-checked) +
-  `hydrateVehicleExternalData()` → three independent `Promise.allSettled` fetches
-  (factory maintenance, consensus, cost estimates), each writing a
-  `loading`/`ok`/`error` row keyed by `canonicalVehicleId`, retry-once, skip if
-  already cached `ok`.
+- **`src/db/vehicleOnboarding.ts`** — `addVehicle()` (dedup-checked via
+  `matchesExistingVehicle`; creates the vehicle + its generic maintenance
+  schedule in one transaction).
 - **`src/domain/`** — PURE logic, all unit-tested:
   - `reminderEngine.ts` — `computeReminder(rule, inputs)` + `computeVehicleReminders`.
   - `reminderStatus.ts` — `resolveInterval(rule)`, `resolveLastDone()`.
@@ -103,9 +103,8 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
     `vehicleIdentity.ts`, `importHistory.ts`, `practicalTiming.ts`,
     `costHeuristics.ts`.
 - **`src/services/`** — `vinDecode.ts` (REAL NHTSA vPIC `decodevinvalues` call,
-  no key), `maintenanceProvider.ts` / `costProvider.ts` (adapter + mock; no free
-  public API exists, so these return clearly-labeled sample data — swap the one
-  export to go live).
+  no key). The onboarding "reference data" adapters that used to live here
+  (`maintenanceProvider.ts`, mock-only) were removed — see git history.
 - **`src/components/`** — `EventForm` (shared maintenance+repair, add+edit via
   `kind`/`existing`; owns attachment picker + next-due override), `OdometerForm`,
   `EventListItem`/`OdometerListItem`, `DocumentGrid`, `DocumentPreviewModal`,
@@ -139,12 +138,10 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
 - **Dates are TZ-safe:** use `localDateISO()` (not `toISOString().slice(0,10)`,
   which reads the UTC date). `addMonths()` clamps month-end (Jan 31 +1mo = Feb 28,
   not Mar 3). Number inputs use `parseNumberInput()` → null, never NaN.
-- **Scope boundary (deliberate):** the three onboarding datasets (factory
-  maintenance, consensus, cost estimates) are **NOT** wired into `ReminderRule`
-  or the engine. The engine runs only on curated templates + logged history.
-  Mixing sample/mock data into real overdue tracking would mislead. These cards
-  render only for vehicles with a `canonicalVehicleId` (added via onboarding);
-  the two hand-seeded vehicles show none of them.
+- **Scope boundary:** the engine runs only on curated templates (`scheduleTemplates.ts`)
+  + logged history — never on sample/mock data. (The three onboarding "reference"
+  cards that used to sit outside this boundary — factory maintenance, consensus,
+  cost estimates — were removed entirely rather than kept mock; see git history.)
 - **Backup = full REPLACE** in one Dexie transaction (rolls back on failure).
   Records keep ids so all relationships survive. Templates are NOT exported
   (code-derived; `seedIfEmpty` forward-fills on next boot).

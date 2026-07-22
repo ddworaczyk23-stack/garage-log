@@ -15,10 +15,10 @@ if (databaseUrl) {
     // Optional login: the app must stay fully usable offline/local-only with
     // no account, per the migration plan. Logging in only adds sync on top.
     requireAuth: false,
-    // These three tables are local-only (see db/db.ts's constructor comment
-    // for why: their primary keys are deterministic, not globally unique
-    // across users, and none hold user-entered data worth syncing).
-    unsyncedTables: ['appMeta', 'factoryMaintenanceData', 'consensusData'],
+    // This table is local-only (see db/db.ts's constructor comment for why:
+    // its primary keys are deterministic, not globally unique across users,
+    // and it holds no user-entered data worth syncing).
+    unsyncedTables: ['appMeta'],
   })
 }
 

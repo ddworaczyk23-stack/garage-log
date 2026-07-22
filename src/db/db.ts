@@ -7,8 +7,6 @@ import type {
   VehicleDocument,
   ReminderRule,
   AppMetaRecord,
-  FactoryMaintenanceData,
-  ConsensusData,
   Concern,
 } from '../types'
 
@@ -24,11 +22,6 @@ export class GarageDB extends Dexie {
   documents!: Table<VehicleDocument, string>
   reminderRules!: Table<ReminderRule, string>
   appMeta!: Table<AppMetaRecord, string>
-  // Keyed by Vehicle.canonicalVehicleId (NOT vehicle id) so two vehicle
-  // records that resolve to the same year/make/model/trim share one cached
-  // fetch instead of duplicating it. See db/vehicleOnboarding.ts.
-  factoryMaintenanceData!: Table<FactoryMaintenanceData, string>
-  consensusData!: Table<ConsensusData, string>
   // Coast triage concerns (Stage 2). USER DATA — synced, globally-unique
   // `concern-<uuid>` primary keys (see db/concerns.ts).
   concerns!: Table<Concern, string>
@@ -82,14 +75,23 @@ export class GarageDB extends Dexie {
       costEstimateData: null,
     })
 
+    // The factory-maintenance and consensus/common-issues "reference" cards
+    // were removed too (see git history) — both only ever held sample data
+    // (no feasible free source for either), so showing fabricated-looking
+    // placeholders was misleading rather than useful. Same rationale as
+    // costEstimateData above; no user data is lost.
+    this.version(6).stores({
+      factoryMaintenanceData: null,
+      consensusData: null,
+    })
+
     // Dexie Cloud: every table above still works with its existing plain
     // string primary keys (no '@id' rewrite needed — see db/cloud.ts for why
     // seed.ts now generates random ids instead of the old hardcoded
     // 'f150-2020'/'rogue-2020', which Dexie Cloud requires to be globally
-    // unique). `appMeta`/`factoryMaintenanceData`/`consensusData` are kept
-    // local-only (unsyncedTables in db/cloud.ts) since their primary keys are
-    // deterministic, not globally unique, and none of them hold user-entered
-    // data worth syncing.
+    // unique). `appMeta` is kept local-only (unsyncedTables in db/cloud.ts)
+    // since its primary keys are deterministic, not globally unique, and it
+    // holds no user-entered data worth syncing.
   }
 }
 

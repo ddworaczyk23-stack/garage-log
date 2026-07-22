@@ -2,9 +2,7 @@ import { canonicalVehicleId } from '../domain/vehicleIdentity'
 import type { VehicleIdentity } from '../types'
 
 // VIN -> vehicle identity, via NHTSA's free vPIC "decodevinvalues" API. Real
-// network call (no key, CORS-enabled), unlike the maintenance/consensus
-// providers below which have no free public equivalent — see
-// services/maintenanceProvider.ts. NOTE: this endpoint's `Results` is a
+// network call (no key, CORS-enabled). NOTE: this endpoint's `Results` is a
 // single flat object with named fields (Make/Model/ModelYear/Trim/...) — not
 // the `{Variable, Value}[]` shape used by vPIC's plain `/decodevin/` endpoint.
 interface VpicDecodedVehicle {

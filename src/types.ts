@@ -44,46 +44,6 @@ export interface VehicleIdentity {
   canonicalVehicleId: string
 }
 
-// Settled fetch outcome for one external dataset. 'loading' is written to the
-// DB immediately (before the network call resolves) so the UI reacts without
-// any extra in-memory reactive plumbing on top of Dexie's liveQuery.
-export type ExternalDataStatus = 'loading' | 'ok' | 'error'
-
-export interface FactoryMaintenanceItem {
-  category: MaintenanceCategory
-  label: string
-  interval: Interval
-}
-
-// Cached per canonicalVehicleId (primary key) — NOT per vehicle row, so two
-// vehicles that resolve to the same identity reuse one fetch. This is
-// reference/sample data only; it is never wired into ReminderRule/the
-// reminders engine (see db/vehicleOnboarding.ts header).
-export interface FactoryMaintenanceData {
-  canonicalVehicleId: string
-  status: ExternalDataStatus
-  items: FactoryMaintenanceItem[]
-  source: string
-  fetchedAt: string | null // ISO timestamp of last successful fetch
-  error?: string
-}
-
-export interface ConsensusIssue {
-  title: string
-  description: string
-}
-
-// Cached per canonicalVehicleId, same reuse rationale as FactoryMaintenanceData.
-export interface ConsensusData {
-  canonicalVehicleId: string
-  status: ExternalDataStatus
-  summary: string
-  commonIssues: ConsensusIssue[]
-  source: string
-  fetchedAt: string | null
-  error?: string
-}
-
 export interface OdometerReading {
   id: string
   vehicleId: string

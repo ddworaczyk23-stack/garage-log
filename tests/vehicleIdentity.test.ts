@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { canonicalVehicleId, matchesExistingVehicle, identityFromVehicle } from '../src/domain/vehicleIdentity'
+import { canonicalVehicleId, matchesExistingVehicle } from '../src/domain/vehicleIdentity'
 import type { Vehicle } from '../src/types'
 
 function vehicle(overrides: Partial<Vehicle> = {}): Vehicle {
@@ -78,19 +78,5 @@ describe('matchesExistingVehicle', () => {
       existing,
     )
     expect(match).toBe(existing[0])
-  })
-})
-
-describe('identityFromVehicle', () => {
-  it('uses the stored canonicalVehicleId when present', () => {
-    const v = vehicle({ canonicalVehicleId: 'custom-key' })
-    expect(identityFromVehicle(v).canonicalVehicleId).toBe('custom-key')
-  })
-
-  it('recomputes a canonicalVehicleId when missing (legacy/seeded vehicles)', () => {
-    const v = vehicle()
-    expect(identityFromVehicle(v).canonicalVehicleId).toBe(
-      canonicalVehicleId({ year: v.year, make: v.make, model: v.model, trim: v.trim }),
-    )
   })
 })
