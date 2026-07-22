@@ -59,7 +59,10 @@ export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
             <i key={z} class={BAND_CLASS[z]} />
           ))}
         </div>
-        <div class="cv-ruler-pin" style={`left:${verdict.rulerPin}%`} />
+        <div
+          class={`cv-ruler-pin${verdict.band === 'fix-now' ? ' is-fix-now' : ''}`}
+          style={`left:${verdict.rulerPin}%`}
+        />
       </div>
       <div class="cv-ruler-labels">
         {ZONES.map((z) => (

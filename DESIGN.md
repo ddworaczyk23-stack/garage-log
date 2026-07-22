@@ -78,7 +78,7 @@ components:
 
 Coast's interface is built on the visual grammar of US highway signage: one message per sign, instantly legible at a glance, calm authority with zero decoration. Verdict panels are literal signs — saturated signal-color slabs (red, amber, guide-sign blue, green) carrying one declarative headline in the signage face (Overpass, descended from Highway Gothic) and one humane serif sentence beneath it (Newsreader). Everything else is the roadside: a daylight-concrete canvas, white sign-face cards, asphalt-ink text, and mono data set like mile markers. The system serves a driver in a stressful moment; it must read from arm's length, in sunlight, in one glance.
 
-The system explicitly rejects the generic SaaS dashboard (stat-tile grids, gradients, density for its own sake), parts-store upsell energy (banners, urgency theater), and the fear-mongering car app (red-alert overload, jargon). Red is spent only on genuinely-stop-now; every other band stays proportionate — the four-signal scale exists so that urgency always reads the same, everywhere.
+The system explicitly rejects the generic SaaS dashboard (stat-tile grids, density for its own sake), parts-store upsell energy (banners, urgency theater), and the fear-mongering car app (red-alert overload, jargon). A restrained gradient used as deliberate emphasis (e.g. the overdue schedule row) is not this — decoration-for-its-own-sake is the target, not the technique. Red is spent only on genuinely-stop-now; every other band stays proportionate — the four-signal scale exists so that urgency always reads the same, everywhere.
 
 **Key Characteristics:**
 - One verdict per surface, set as signage; depth lives one tap below.
@@ -209,7 +209,7 @@ Progress and health meters (`.health-fill`, `.vh-fill`) animate via `transition:
 - **Do** hold text contrast at WCAG 2.1 AA (≥4.5:1); Muted Slate (#6b7076) is the lightest allowed text color.
 
 ### Don't:
-- **Don't** build "the generic SaaS dashboard" — no stat-tile grids, no gradients, no density for its own sake (PRODUCT.md anti-reference, verbatim).
+- **Don't** build "the generic SaaS dashboard" — no stat-tile grids, no density for its own sake (PRODUCT.md anti-reference, verbatim). A restrained gradient is allowed as a deliberate emphasis device (e.g. overdue rows) — the ban is on decoration-for-its-own-sake, not the technique itself.
 - **Don't** add "parts-store / service-lane upsell energy" — no banners, badges, or urgency theater that monetizes uncertainty (PRODUCT.md anti-reference).
 - **Don't** be "the fear-mongering car app" — Signal Red only for genuinely-stop-now; never dramatize a book-soon into red (PRODUCT.md anti-reference).
 - **Don't** show all-clear green for a vehicle without real logged history (The Earned Green Rule).

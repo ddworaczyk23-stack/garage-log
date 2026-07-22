@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import { bandFromStatus, BAND_LABELS } from '../domain/verdict'
 import { formatInterval, formatShortDate } from '../domain/format'
 import { reminderProgress } from '../domain/progress'
@@ -32,8 +32,27 @@ export function ScheduleRow({ reminder: r, onLog, animate, reduced }: Props) {
   const prog = reminderProgress(r)
   const band = bandFromStatus(r.status)
 
+  // Log payoff: a row that JUST resolved (was overdue/due-next, now completed)
+  // gets a one-time flash instead of silently snapping to its new state — the
+  // BulletTrack fill already animates via CSS transition; this calls out the
+  // moment on the row itself. prevStatus starts as the current status so a
+  // fresh mount (e.g. navigating to the page) never flashes.
+  const prevStatus = useRef(r.status)
+  const [justResolved, setJustResolved] = useState(false)
+  useEffect(() => {
+    const was = prevStatus.current
+    prevStatus.current = r.status
+    if (r.status === 'completed' && (was === 'overdue' || was === 'due-next')) {
+      setJustResolved(true)
+      const id = setTimeout(() => setJustResolved(false), 900)
+      return () => clearTimeout(id)
+    }
+  }, [r.status])
+
   return (
-    <li class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}`}>
+    <li
+      class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}${justResolved ? ' vd-row-resolved' : ''}`}
+    >
       <div class="vd-row-main">
         <div class="vd-svc">{r.rule.label}</div>
         <div class="vd-svc-meta">

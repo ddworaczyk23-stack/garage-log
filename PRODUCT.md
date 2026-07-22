@@ -26,7 +26,7 @@ Calm, straight-talking, on-your-side. The voice of the interface is US road sign
 
 ## Anti-references
 
-- **The generic SaaS dashboard.** Stat-tile grids, gradient accents, density for its own sake, dashboard-shaped screens that answer no question a driver asked.
+- **The generic SaaS dashboard.** Stat-tile grids, density for its own sake, dashboard-shaped screens that answer no question a driver asked. (A restrained gradient used as deliberate emphasis — e.g. the overdue schedule row — is not this; decoration-for-its-own-sake is the anti-reference, not the technique.)
 - **Parts-store / service-lane upsell energy.** Coupons, urgency banners, cross-sells, anything that monetizes the driver's uncertainty. Coast never sells parts, shops, or referrals.
 - **The fear-mongering car app.** Red-alert overload, mechanic jargon that makes non-mechanics feel stupid, or scare-framing that pushes action through anxiety. Red is reserved for genuinely-stop-now.
 

@@ -2224,6 +2224,18 @@ iframe.preview-media {
   .vd-sticky {
     animation: none;
   }
+  .vd-lamp.is-overdue {
+    animation: none;
+  }
+  .cv-ruler-pin {
+    transition: none;
+  }
+  .cv-ruler-pin.is-fix-now {
+    animation: none;
+  }
+  .vd-row-resolved {
+    animation: none;
+  }
 }
 
 /* ============================================================
@@ -2321,6 +2333,16 @@ iframe.preview-media {
 .vd-lamp.is-overdue {
   background: var(--c-overdue);
   box-shadow: 0 0 0 3px var(--c-overdue-bg);
+  animation: lamp-pulse-overdue 2.4s ease-in-out infinite;
+}
+@keyframes lamp-pulse-overdue {
+  0%,
+  100% {
+    box-shadow: 0 0 0 3px var(--c-overdue-bg);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(179, 64, 46, 0.22);
+  }
 }
 .vd-lamp.is-due {
   background: var(--c-due);
@@ -2358,14 +2380,24 @@ iframe.preview-media {
   margin: 0 -18px;
   padding-left: 18px;
   padding-right: 18px;
-  /* was a left-anchored gradient fading to transparent — reads as a side
-     stripe (banned) implemented via a gradient (also banned). A flat tint
-     across the row carries the same emphasis without either. */
-  background: var(--c-overdue-bg);
+  /* Full-bleed diagonal wash between two overdue tints — not anchored to one
+     edge fading to transparent, so it reads as emphasis, not a side stripe. */
+  background: linear-gradient(120deg, var(--c-overdue-bg), rgba(179, 64, 46, 0.22));
   border-top-color: transparent;
 }
 .vd-row.is-overdue + .vd-row {
   border-top-color: transparent;
+}
+.vd-row-resolved {
+  animation: vd-row-resolved-flash 0.9s var(--ease-paper);
+}
+@keyframes vd-row-resolved-flash {
+  0% {
+    background: var(--c-ok-bg);
+  }
+  100% {
+    background: transparent;
+  }
 }
 /* Editing mode: the row becomes a plain block so RuleOverrideEditor spans
    full width instead of being squeezed into the 1fr label column. */
@@ -2993,6 +3025,19 @@ a.list-row:hover {
   border-radius: 2px;
   transform: translateX(-50%);
   box-shadow: 0 0 0 2.5px var(--bg-card);
+  transition: left 0.3s var(--ease-snap);
+}
+.cv-ruler-pin.is-fix-now {
+  animation: ruler-pin-pulse 2.4s ease-in-out infinite;
+}
+@keyframes ruler-pin-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 2.5px var(--bg-card);
+  }
+  50% {
+    box-shadow: 0 0 0 2.5px var(--bg-card), 0 0 7px 2px var(--sig-red);
+  }
 }
 .cv-ruler-labels { display: flex; margin-top: 5px; }
 .cv-ruler-labels span {
