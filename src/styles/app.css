@@ -3901,6 +3901,14 @@ a.list-row:hover {
   .card {
     padding: 18px 20px;
   }
+  /* Keep the overdue row's edge-to-edge bleed matched to the wider desktop
+     card padding above — otherwise a sliver of card background shows past
+     the gradient before it reaches the card edge. */
+  .vd-row.is-overdue {
+    margin: 0 -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+  }
 
   /* The triage flow stays linear and narrow on EVERY surface: a decision is one
      question at a time, and a 3-option chooser stretched across 900px is harder
