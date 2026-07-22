@@ -91,6 +91,11 @@ export function AddVehicle() {
         drivetrain: drivetrain.trim(),
       })
       if (created) {
+        try {
+          sessionStorage.setItem('gl_just_added_vehicle', vehicle.id)
+        } catch {
+          // sessionStorage unavailable (private browsing) — banner just won't show
+        }
         window.location.hash = `#/vehicle/${vehicle.id}`
       } else {
         setDuplicate({ id: vehicle.id, label: `${vehicle.year} ${vehicle.make} ${vehicle.model}` })
@@ -108,10 +113,18 @@ export function AddVehicle() {
       <a class="back-link" href="#/vehicles">
         ‹ Vehicles
       </a>
-      <h2 class="page-title">Add a car</h2>
-      <p class="muted small">
-        Enter a VIN to decode its identity, or fill in the details manually.
-      </p>
+
+      <div class="cv-card">
+        <div class="cv-panel cv-slate">
+          <div class="cv-inner">
+            <div class="cv-tag">Add a car</div>
+            <h3 class="cv-headline">Two minutes, then Coast knows your car.</h3>
+            <p class="cv-sentence">
+              Enter a VIN and Coast decodes the rest, or fill in year, make, and model by hand.
+            </p>
+          </div>
+        </div>
+      </div>
 
       <div class="seg" role="group" aria-label="Add car mode">
         <button
@@ -131,6 +144,7 @@ export function AddVehicle() {
       </div>
 
       {mode === 'vin' && (
+        <Reveal>
         <form class="card admin-form" onSubmit={runDecode}>
           <label class="admin-field">
             <span class="muted small">VIN</span>
@@ -153,9 +167,11 @@ export function AddVehicle() {
             </button>
           </div>
         </form>
+        </Reveal>
       )}
 
       {mode === 'manual' && (
+        <Reveal>
         <form class="card admin-form" onSubmit={submit}>
           <label class="admin-field">
             <span class="muted small">Year</span>
@@ -213,6 +229,7 @@ export function AddVehicle() {
             </button>
           </div>
         </form>
+        </Reveal>
       )}
 
       {mode === 'vin' && identity && (

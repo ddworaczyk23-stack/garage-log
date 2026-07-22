@@ -59,6 +59,19 @@ export function VehicleDetail({ id }: Props) {
   const formRef = useRef<HTMLDivElement>(null)
   const quickAddRef = useRef<HTMLDivElement>(null)
   const [showSticky, setShowSticky] = useState(false)
+  // One-shot flag set by AddVehicle right before redirecting here on a fresh
+  // creation. Consumed (removed) immediately so the welcome banner below can
+  // only ever show once, even across a reload of this same page.
+  const [justAdded] = useState(() => {
+    if (typeof sessionStorage === 'undefined') return false
+    try {
+      if (sessionStorage.getItem('gl_just_added_vehicle') !== id) return false
+      sessionStorage.removeItem('gl_just_added_vehicle')
+      return true
+    } catch {
+      return false
+    }
+  })
 
   const vehicle = useQuery(async () => (await db.vehicles.get(id)) ?? null, [id])
   const reminders = useQuery(() => getVehicleReminders(id), [id])
@@ -231,26 +244,42 @@ export function VehicleDetail({ id }: Props) {
       {/* Coast verdict: the one-sentence answer for this vehicle (Stage 1,
           design/COAST-PLAN.md) — pure re-narration of the ranked reminders,
           merged with any open triage concerns (Stage 2). */}
-      {reminders && reminders.length > 0 && (
-        <div class="cv-card">
-          {(() => {
-            const verdict = vehicleVerdict(reminders, openConcerns ?? [], localDateISO(new Date()))
-            return (
-              <>
-                <VerdictPanel verdict={verdict} tag="This vehicle" />
-                <UrgencyRuler verdict={verdict} />
-                {verdict.band === 'not-set-up' && (
-                  <div class="vd-setup">
-                    <a class="btn-link" href={`#/import/${id}`}>
-                      Import service history →
-                    </a>
+      {reminders && reminders.length > 0 && (() => {
+        const verdict = vehicleVerdict(reminders, openConcerns ?? [], localDateISO(new Date()))
+        return (
+          <>
+            {justAdded && verdict.band === 'not-set-up' && (
+              <Reveal class="cv-card">
+                <div class="cv-panel cv-slate">
+                  <div class="cv-inner">
+                    <div class="cv-tag">You're in</div>
+                    <h3 class="cv-headline">{vehicleLabel(vehicle)} is in your garage.</h3>
+                    <p class="cv-sentence">
+                      Log a mileage reading and Coast gives you a real verdict.
+                    </p>
+                    <div class="fr-actions">
+                      <button type="button" class="btn btn-primary" onClick={() => openForm('odometer')}>
+                        Log mileage
+                      </button>
+                    </div>
                   </div>
-                )}
-              </>
-            )
-          })()}
-        </div>
-      )}
+                </div>
+              </Reveal>
+            )}
+            <div class="cv-card">
+              <VerdictPanel verdict={verdict} tag="This vehicle" />
+              <UrgencyRuler verdict={verdict} />
+              {verdict.band === 'not-set-up' && (
+                <div class="vd-setup">
+                  <a class="btn-link" href={`#/import/${id}`}>
+                    Import service history →
+                  </a>
+                </div>
+              )}
+            </div>
+          </>
+        )
+      })()}
 
       {/* odometer instrument + specifications */}
       <section class="card vd-cover">
