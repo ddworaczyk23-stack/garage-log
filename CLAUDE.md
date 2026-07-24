@@ -185,4 +185,18 @@ sync activates only when `VITE_DEXIE_CLOUD_URL` is present at build time.
   PowerShell execution-policy block), or `Set-ExecutionPolicy -Scope Process
   -ExecutionPolicy Bypass` for the session.
 
+## Working with Codex
+
+This repo is worked on with both Claude Code and Codex. `AGENTS.md` is
+Codex's entry point (thin pointer to this file, not a duplicate).
+`docs/handoffs/active.md` is shared state — current task, done/next — both
+agents read before starting and update when they finish.
+
+## Next up
+
+A design spec for onboarding polish (AddVehicle restyle to match the app's
+editorial visual language + a first-vehicle welcome banner on VehicleDetail)
+is written but **not yet implemented**:
+`docs/superpowers/specs/2026-07-22-onboarding-polish-design.md`.
+
 Do NOT invent new feature milestones unless asked.
