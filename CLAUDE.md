@@ -189,8 +189,9 @@ sync activates only when `VITE_DEXIE_CLOUD_URL` is present at build time.
 
 This repo is worked on with both Claude Code and Codex. `AGENTS.md` is
 Codex's entry point (thin pointer to this file, not a duplicate).
-`docs/handoffs/active.md` is shared state — current task, done/next — both
-agents read before starting and update when they finish.
+`docs/handoffs/active.md` is shared state — current task, done/next.
+**Before starting any task, read `docs/handoffs/active.md` first** — update
+it when you finish instead of leaving progress only in chat.
 
 ## Next up
 
