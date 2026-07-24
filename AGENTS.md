@@ -18,6 +18,10 @@ mechanical refactors, multi-file edits. Architecture and logic decisions
 turns out to need one of those, stop and flag it in `docs/handoffs/active.md`
 rather than improvising.
 
+When a task calls for Claude's planning, architecture, or cross-file
+orchestration role, proactively tell David that switching back to Claude is
+recommended rather than continuing in Codex for convenience.
+
 ## Non-negotiables (repeated here, not just in CLAUDE.md)
 
 - Dexie schema changes: only add a new `.version(n).stores()` block — never
