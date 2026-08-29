@@ -11,4 +11,6 @@ rule goes in `CLAUDE.md`, and the story goes in git history / a changelog if
 this project keeps one. This file is not the permanent record. Prune
 aggressively, every time.
 
-Nothing open right now.
+Nothing open right now. The onboarding-polish work (AddVehicle restyle +
+first-vehicle welcome banner) is implemented — see commit history for
+details.
