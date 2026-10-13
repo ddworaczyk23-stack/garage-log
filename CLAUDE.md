@@ -164,8 +164,12 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   (code-derived; `seedIfEmpty` forward-fills on next boot).
 - **Ranking is pure/lexicographic;** the attention feed caps each vehicle at 3
   items (`ATTENTION_MAX_PER_VEHICLE`) so one vehicle can't crowd out the other.
-- Known limitation: a fresh/unlogged vehicle shows every rule as baseline
-  "due-next"; self-resolves once history is logged.
+- **Never-logged items are "Unknown"** (`knownReminders()` in `verdict.ts`):
+  their engine status is a factory projection, so they never count toward the
+  verdict, health, counts, ranking or attention feed, and the UI shows a gray
+  "Unknown" pill with no date. A car with no history at all is "Not set up"
+  (rows show "Estimated"). All-clear with untracked items reads "All clear on
+  what's logged", never "Just drive".
 
 ## Deployment
 

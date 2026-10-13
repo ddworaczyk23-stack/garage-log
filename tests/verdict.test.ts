@@ -300,3 +300,34 @@ describe('vehicleVerdict — ruler, coast list, confidence', () => {
     expect(noOdo.confidenceNote).toContain('No odometer on file')
   })
 })
+
+describe('vehicleVerdict — never-logged items are Unknown, not urgent', () => {
+  // One real oil change, plus a never-logged item whose factory projection
+  // lands inside the due window (45,000 mi with the car at 44,800).
+  const logged = () => makeRule({ label: 'Engine oil & filter', lastDoneDate: '2026-06-20', lastDoneMiles: 44700 })
+  const unknown = () =>
+    makeRule({ label: 'Tire rotation', category: 'tire-rotation', lastDoneDate: null, lastDoneMiles: null })
+
+  it('a projected-due item with no history never drives the band or the headline', () => {
+    const v = verdictFor([logged(), unknown()], inputsAt('2026-07-01', 44800))
+    expect(v.band).toBe('all-clear')
+    expect(v.actionItems).toEqual([])
+    expect(v.unknownCount).toBe(1)
+    expect(v.headline).toBe('All clear on what’s logged.')
+    expect(v.sentence).toMatch(/^Nothing you’ve logged is due\./)
+  })
+
+  it('actionItems lists the logged items behind the headline, worst first', () => {
+    const overdue = makeRule({ label: 'Engine oil & filter', lastDoneMiles: 39000, lastDoneDate: '2026-01-01' })
+    const v = verdictFor([overdue, unknown()], inputsAt('2026-07-01', 44800))
+    expect(v.band).toBe('fix-now')
+    expect(v.actionItems.map((i) => i.label)).toEqual(['Engine oil & filter'])
+    expect(v.unknownCount).toBe(1)
+  })
+
+  it('a car with no history at all stays not-set-up with unknownCount 0', () => {
+    const v = verdictFor([unknown()], inputsAt('2026-07-01', 44800))
+    expect(v.band).toBe('not-set-up')
+    expect(v.unknownCount).toBe(0)
+  })
+})

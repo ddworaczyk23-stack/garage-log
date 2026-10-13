@@ -1,5 +1,5 @@
 import type { ComputedReminder } from './reminderEngine'
-import { bandFromStatus, hasRealData, type SignalBand, type VerdictBand } from './verdict'
+import { bandFromStatus, hasRealData, knownReminders, type SignalBand, type VerdictBand } from './verdict'
 
 // ---------------------------------------------------------------------------
 // Coast vehicle health score (Stage 5B — design/COAST-PLAN-STAGE5.md).
@@ -74,7 +74,8 @@ export function vehicleHealth(
     }
   }
 
-  const tracked = reminders.filter((r) => r.status !== 'not-applicable')
+  // Never-logged items are projections, not knowledge — see knownReminders.
+  const tracked = knownReminders(reminders)
   const overdueCount = tracked.filter((r) => r.status === 'overdue').length
   const dueSoonCount = tracked.filter((r) => r.status === 'due-next').length
   const watchCount = tracked.filter((r) => r.status === 'watch-next').length

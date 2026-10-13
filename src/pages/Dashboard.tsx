@@ -38,6 +38,7 @@ export function Dashboard() {
     (s) => s.health.band === 'fix-now' || s.health.band === 'book-soon',
   ).length
   const notSetUp = summary.vehicles.filter((s) => s.health.band === 'not-set-up').length
+  const fixNowCount = summary.vehicles.filter((s) => s.health.band === 'fix-now').length
   const hasHistory = summary.vehicles.some((s) => hasRealData(s.reminders))
 
   // First run (deployed builds start genuinely empty — see db/seed.ts): one
@@ -85,7 +86,9 @@ export function Dashboard() {
         meta={
           <span class="gb-status">
             <span
-              class={`vd-lamp ${needsAttention > 0 ? 'is-overdue' : notSetUp > 0 ? 'is-na' : 'is-ok'}`}
+              class={`vd-lamp ${
+                fixNowCount > 0 ? 'is-overdue' : needsAttention > 0 ? 'is-due' : notSetUp > 0 ? 'is-na' : 'is-ok'
+              }`}
             />
             {needsAttention > 0 ? (
               <b>
@@ -148,6 +151,7 @@ export function Dashboard() {
 function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number }) {
   const v = s.vehicle
   const verdict = vehicleVerdict(s.reminders, s.openConcerns, localDateISO(new Date()))
+  const coastShown = verdict.coastItems.slice(0, Math.max(0, 4 - verdict.actionItems.length))
 
   return (
     <Reveal class="cv-card">
@@ -167,9 +171,29 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
           <VerdictPanel verdict={verdict} headingLevel="h4" />
           <UrgencyRuler verdict={verdict} />
 
-          {verdict.coastItems.length > 0 && (
+          {verdict.unknownCount > 0 && (
+            <p class="cv-unknown-note">
+              {verdict.unknownCount} {verdict.unknownCount === 1 ? 'service' : 'services'} not tracked yet.
+            </p>
+          )}
+
+          {/* The items behind the headline come first, so the list explains
+              the sign above it; "can coast" items follow under their label. */}
+          {(verdict.actionItems.length > 0 || coastShown.length > 0) && (
             <div class="cv-coast-list">
-              {verdict.coastItems.map((item) => (
+              {verdict.actionItems.map((item) => (
+                <div key={item.label} class={`cv-coast-item is-${verdict.band}`}>
+                  <span class="cv-coast-dot" />
+                  <span>
+                    <b>{item.label}</b>
+                    <span class="cv-win">{item.window}</span>
+                  </span>
+                </div>
+              ))}
+              {coastShown.length > 0 && verdict.actionItems.length > 0 && (
+                <div class="cv-coast-label">Can coast</div>
+              )}
+              {coastShown.map((item) => (
                 <div key={item.label} class="cv-coast-item">
                   <span class="cv-coast-dot" />
                   <span>

@@ -135,3 +135,26 @@ export function projectMileage(
     annualMileage,
   }
 }
+
+function later(a: MileagePoint, b: MileagePoint): MileagePoint {
+  return b.date > a.date || (b.date === a.date && b.miles > a.miles) ? b : a
+}
+function earlier(a: MileagePoint, b: MileagePoint): MileagePoint {
+  return b.date < a.date || (b.date === a.date && b.miles < a.miles) ? b : a
+}
+
+/** Best-effort estimate of miles driven so far this calendar year: current
+ * mileage minus the mileage as-of the start of the year (last reading before
+ * Jan 1). If there's no pre-year reading we fall back to the earliest reading
+ * this year, i.e. "miles logged since the first entry this year". null when
+ * there aren't enough distinct points to compute a delta. */
+export function milesThisYear(points: MileagePoint[], year: number): number | null {
+  if (points.length < 2) return null
+  const latest = points.reduce(later)
+  const yearStart = `${year}-01-01`
+  const preYear = points.filter((p) => p.date < yearStart)
+  const baseline = preYear.length ? preYear.reduce(later) : points.reduce(earlier)
+  if (baseline === latest) return null
+  const driven = latest.miles - baseline.miles
+  return driven >= 0 ? driven : null
+}

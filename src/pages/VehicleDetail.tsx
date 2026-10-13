@@ -3,9 +3,10 @@ import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { formatMiles, formatShortDate, localDateISO } from '../domain/format'
 import { getProjectedMileage, getVehicleReminders } from '../db/summary'
+import { milesThisYear } from '../domain/mileage'
 import { STALE_ODOMETER_DAYS } from '../domain/reminderEngine'
 import { getOpenConcerns } from '../db/concerns'
-import { vehicleVerdict } from '../domain/verdict'
+import { hasHistory, unknownReminders, vehicleVerdict } from '../domain/verdict'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
 import { deleteVehicle } from '../db/vehicles'
@@ -98,21 +99,18 @@ export function VehicleDetail({ id }: Props) {
     () => loadVehicleDocuments((events ?? []).map((e) => e.id)),
     [id, events?.map((e) => e.id).join(',')],
   )
-  // Miles driven this calendar year: current estimate minus the odometer at the
-  // first data point of the year ("miles since the first entry this year").
+  // Miles driven this calendar year — the same helper the dashboard uses, so
+  // the two screens can never disagree.
   const ytdMiles = useMemo(() => {
-    const current = mileage?.miles
-    if (current == null) return null
-    const year = new Date().getFullYear()
-    const points = [
-      ...(odometerReadings ?? []).map((r) => ({ date: r.date, miles: r.miles })),
-      ...(events ?? []).map((e) => ({ date: e.date, miles: e.odometerMiles })),
-    ]
-      .filter((p) => p.date >= `${year}-01-01`)
-      .sort((a, b) => (a.date < b.date ? -1 : 1))
-    if (!points.length) return null
-    return Math.max(0, current - points[0].miles)
-  }, [mileage?.miles, odometerReadings, events])
+    if (!odometerReadings || !events) return null
+    return milesThisYear(
+      [
+        ...odometerReadings.map((r) => ({ date: r.date, miles: r.miles })),
+        ...events.map((e) => ({ date: e.date, miles: e.odometerMiles })),
+      ],
+      new Date().getFullYear(),
+    )
+  }, [odometerReadings, events])
 
   // The log menu closes on Escape or a tap anywhere outside it (or its button).
   useEffect(() => {
@@ -178,8 +176,13 @@ export function VehicleDetail({ id }: Props) {
   // by default; everything on-track or not-applicable folds behind a single
   // Collapsible — the full list was previously always shown in one long
   // stack, forcing a scroll past everything just to reach history below it.
-  const actionable = list.filter((r) => r.status === 'overdue' || r.status === 'due-next')
-  const onTrack = list.filter((r) => r.status !== 'overdue' && r.status !== 'due-next')
+  // On a set-up car, never-logged items get their own "Unknown" group: their
+  // status is a factory projection, so they never sit in "needs attention".
+  // (A not-set-up car has no history at all; every row there is "Estimated".)
+  const unknownItems = notSetUp ? [] : unknownReminders(list)
+  const isActionable = (r: ComputedReminder) => r.status === 'overdue' || r.status === 'due-next'
+  const actionable = list.filter((r) => isActionable(r) && (notSetUp || hasHistory(r)))
+  const onTrack = list.filter((r) => !actionable.includes(r) && !unknownItems.includes(r))
 
   function closeForm() {
     setActiveForm(null)
@@ -306,10 +309,23 @@ export function VehicleDetail({ id }: Props) {
           <div class="cv-card">
             <VerdictPanel verdict={verdict} tag="This vehicle" />
             <UrgencyRuler verdict={verdict} />
+            {verdict.unknownCount > 0 && (
+              <p class="cv-unknown-note">
+                {verdict.unknownCount} {verdict.unknownCount === 1 ? 'service' : 'services'} not tracked
+                yet. They're listed under Unknown below.
+              </p>
+            )}
             {verdict.band === 'not-set-up' && !justAdded && (
-              <div class="vd-setup">
+              <div class="vd-setup fr-actions">
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  onClick={() => openForm('service', 'oil-change')}
+                >
+                  Log last oil change
+                </button>
                 <a class="btn-link" href={`#/import/${id}`}>
-                  Import service history →
+                  Import service history
                 </a>
               </div>
             )}
@@ -419,7 +435,7 @@ export function VehicleDetail({ id }: Props) {
           <h3 class="card-title">
             Service schedule
             <InfoTip label="About this schedule">
-              Personalized from mechanic-consensus intervals + this vehicle's logged history. Ranked
+              Based on the factory schedule, adjusted when you set your own interval or log a service. Ranked
               most urgent first. Dates below are estimated from your average mileage.
             </InfoTip>
           </h3>
@@ -448,6 +464,21 @@ export function VehicleDetail({ id }: Props) {
               !notSetUp && <p class="muted small">Nothing needs attention right now — nice.</p>
             ) : (
               <ul class="vd-ledger">{actionable.map(renderRow)}</ul>
+            )}
+
+            {unknownItems.length > 0 && (
+              <>
+                <p class="muted small vd-schedule-note">
+                  {unknownItems.length} {unknownItems.length === 1 ? 'service' : 'services'} we don't have
+                  dates for yet. Open one and log when you last did it.
+                </p>
+                <Collapsible
+                  title="Unknown"
+                  count={`${unknownItems.length} item${unknownItems.length === 1 ? '' : 's'}`}
+                >
+                  <ul class="vd-ledger">{unknownItems.map(renderRow)}</ul>
+                </Collapsible>
+              </>
             )}
 
             {onTrack.length > 0 && (
