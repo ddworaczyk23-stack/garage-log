@@ -115,6 +115,7 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
     (`components/CalendarExport.tsx`, on Dashboard + schedule card). No server:
     the phone's Calendar delivers the alerts (one alert, 9am on the due day). One
     event per car per day; never-logged items excluded; 12-month horizon.
+    Verified on iPhone 2026-10-13 (open the .ics, tap "Add All").
   - `documents.ts`, `cost.ts`, `backup.ts`, `format.ts`, `vehicle.ts`,
     `vehicleIdentity.ts`, `importHistory.ts`, `practicalTiming.ts`.
 - **`src/services/`** — `vinDecode.ts` (REAL NHTSA vPIC `decodevinvalues` call,
