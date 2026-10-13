@@ -13,14 +13,14 @@ aggressively, every time.
 
 ## Open
 
-- **Mobile redesign, phases 3-4.** Plan: `docs/superpowers/plans/2026-10-13-mobile-redesign.md`
+- **Mobile redesign, phase 4.** Plan: `docs/superpowers/plans/2026-10-13-mobile-redesign.md`
   (from the 2026-10-13 design review, `.impeccable/critique/2026-10-13T19-44-04Z__src.md`).
-  Quick wins = PR #7, Phase 1 (setup asks for last oil change) = PR #9, both merged and live.
-  Phase 2 (composed vehicle page) is implemented on `codex/mobile-redesign-phase-2`, with
-  393 tests + typecheck passing and the full interaction flow verified at 375px. Await its
-  review/merge, then start Phase 3 from the updated `main`. Phase 4 also lists two Phase 1
-  review follow-ups.
-  One PR per phase off `main`; verify each at 375px.
+  Quick wins = PR #7, Phase 1 = PR #9, and Phase 2 = PR #11; all are merged. Phase 3 is
+  implemented on `codex/mobile-redesign-phase-3`: shared page headers, the documented type
+  roles, stroke SVG icons, standardized “Add a car”/money wording, and the simplified Costs
+  summary. It has 388 tests + typecheck passing and all target routes were verified without
+  horizontal overflow at 375px. Await its review/merge, then start Phase 4 from updated
+  `main`; Phase 4 also lists two Phase 1 review follow-ups. One PR per phase off `main`.
 
 - **Verify calendar export on a real iPhone.** "Add reminders to Calendar"
   downloads `car-maintenance.ics`; expected flow is open file → "Add All".

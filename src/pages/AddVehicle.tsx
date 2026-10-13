@@ -3,6 +3,7 @@ import { addVehicle } from '../db/vehicleOnboarding'
 import { decodeVin } from '../services/vinDecode'
 import { canonicalVehicleId } from '../domain/vehicleIdentity'
 import { Reveal } from '../components/motion/Reveal'
+import { PageHeader } from '../components/ui'
 import type { VehicleIdentity } from '../types'
 
 type Mode = 'vin' | 'manual'
@@ -114,10 +115,12 @@ export function AddVehicle() {
         ‹ Vehicles
       </a>
 
+      <PageHeader eyebrow="The Garage" title="Add a car" />
+
       <div class="cv-card">
         <div class="cv-panel cv-slate">
           <div class="cv-inner">
-            <div class="cv-tag">Add a car</div>
+            <div class="cv-tag">Quick setup</div>
             <h3 class="cv-headline">Two minutes, then Coast knows your car.</h3>
             <p class="cv-sentence">
               Enter a VIN and Coast decodes the rest, or fill in year, make, and model by hand.
@@ -126,7 +129,7 @@ export function AddVehicle() {
         </div>
       </div>
 
-      <div class="seg" role="group" aria-label="Add car mode">
+      <div class="seg" role="group" aria-label="Add a car mode">
         <button
           type="button"
           class={`seg-btn${mode === 'vin' ? ' is-active' : ''}`}
@@ -225,7 +228,7 @@ export function AddVehicle() {
           )}
           <div class="form-actions">
             <button class="btn" type="submit" disabled={submitting}>
-              {submitting ? 'Adding…' : 'Add car'}
+              {submitting ? 'Adding…' : 'Add a car'}
             </button>
           </div>
         </form>
@@ -264,7 +267,7 @@ export function AddVehicle() {
           )}
           <div class="form-actions">
             <button class="btn" type="submit" disabled={submitting}>
-              {submitting ? 'Adding…' : 'Add car'}
+              {submitting ? 'Adding…' : 'Add a car'}
             </button>
           </div>
         </form>

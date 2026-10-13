@@ -2,8 +2,9 @@ import { useState } from 'preact/hooks'
 import { useQuery } from '../db/useQuery'
 import { getGarageCostSummary, type VehicleCostSummary } from '../db/summary'
 import { formatMiles, formatMoney } from '../domain/format'
-import { vehicleEmoji, vehicleLabel } from '../domain/vehicle'
-import { EmptyState, SkeletonPage } from '../components/ui'
+import { vehicleLabel } from '../domain/vehicle'
+import { EmptyState, PageHeader, SkeletonPage } from '../components/ui'
+import { VehicleIcon } from '../components/icons'
 import { Reveal } from '../components/motion/Reveal'
 import { useCountUp, useIntroGate, useReducedMotion } from '../motion/hooks'
 import type { CategoryCost, CostBreakdown } from '../domain/cost'
@@ -28,17 +29,16 @@ export function Costs() {
 
   return (
     <section class="page">
-      <h2 class="page-title">Costs</h2>
-      <p class="muted">Where your maintenance money goes, per vehicle.</p>
+      <PageHeader eyebrow="The Garage" title="Costs">
+        <p class="page-header-prose">Where your maintenance money goes, per vehicle.</p>
+      </PageHeader>
 
-      <section class="card">
-        <h3 class="card-title">Total invested</h3>
-        <p class="cost-grand">{formatMoney(grandCounted)}</p>
-        <p class="muted small">
-          All maintenance and repairs logged across {summary.vehicles.length} vehicles. A
-          documented service history like this also helps at resale time.
+      {hasAnySpend && (
+        <p class="cost-summary">
+          Total spent: <span class="cost-grand">{formatMoney(grandCounted)}</span> on maintenance and
+          repairs across {summary.vehicles.length} {summary.vehicles.length === 1 ? 'car' : 'cars'}.
         </p>
-      </section>
+      )}
 
       {hasAnySpend && (
         <div class="seg" role="group" aria-label="Time range">
@@ -90,37 +90,21 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
     <section class="card">
       <div class="vehicle-card-head">
         <span class="vehicle-emoji" aria-hidden="true">
-          {vehicleEmoji(vehicle)}
+          <VehicleIcon />
         </span>
         <div>
-          <h3 class="card-title">{vehicleLabel(vehicle)}</h3>
+          <h3 class="card-title vehicle-name">{vehicleLabel(vehicle)}</h3>
           <p class="muted small">
             {vehicle.year} {vehicle.make} · {vehicle.model}
           </p>
         </div>
       </div>
 
-      <dl class="stat-row cost-stats">
-        <div class="stat">
-          <dt>Total ({rangeLabel})</dt>
-          <dd>{formatMoney(breakdown.total)}</dd>
-        </div>
-        <div class="stat">
-          <dt>Cost / mile</dt>
-          <dd>{summary.costPerMile != null ? `$${summary.costPerMile.toFixed(2)}` : '—'}</dd>
-        </div>
-      </dl>
-
-      <dl class="stat-row cost-stats">
-        <div class="stat">
-          <dt>Maintenance</dt>
-          <dd>{formatMoney(breakdown.maintenanceTotal)}</dd>
-        </div>
-        <div class="stat">
-          <dt>Repairs</dt>
-          <dd>{formatMoney(breakdown.repairTotal)}</dd>
-        </div>
-      </dl>
+      <p class="cost-vehicle-summary">
+        <span>{formatMoney(breakdown.total)}</span> spent {rangeLabel}:{' '}
+        <span>{formatMoney(breakdown.maintenanceTotal)}</span> on maintenance and{' '}
+        <span>{formatMoney(breakdown.repairTotal)}</span> on repairs.
+      </p>
 
       {breakdown.byCategory.length === 0 ? (
         <p class="muted small cost-empty">No costs logged {rangeLabel}.</p>

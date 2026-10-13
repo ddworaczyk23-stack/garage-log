@@ -26,6 +26,7 @@ import {
 import { buildCostBreakdown, costPerMile, filterByYear, type CostBreakdown } from '../domain/cost'
 import { vehicleHealth, type VehicleHealth } from '../domain/health'
 import { vehicleLabel } from '../domain/vehicle'
+import { formatMoney } from '../domain/format'
 import { getOpenConcerns } from './concerns'
 import type { Concern, MaintenanceEvent, Vehicle } from '../types'
 
@@ -309,7 +310,7 @@ function buildAttentionFeed(summaries: VehicleSummary[]): AttentionItem[] {
         vehicleName: vehicleLabel(s.vehicle),
         tone: 'cost',
         title: rep.title,
-        detail: `$${rep.cost.toFixed(2)} · ${rep.date}`,
+        detail: `${formatMoney(rep.cost)} · ${rep.date}`,
       })
     }
 

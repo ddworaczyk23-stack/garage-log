@@ -229,6 +229,43 @@ body {
   letter-spacing: -0.022em;
   margin: 2px 0 4px;
 }
+.page-header {
+  margin-bottom: 18px;
+}
+.page-header > .eyebrow {
+  display: block;
+  margin-bottom: 8px;
+}
+.page-header-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.page-header-meta {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+}
+.page-header-prose {
+  max-width: 62ch;
+  margin: 9px 0 0;
+  color: var(--text-muted);
+  font-family: var(--font-serif);
+  font-size: 15.5px;
+  line-height: 1.45;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 .muted {
   color: var(--text-muted);
 }
@@ -276,10 +313,8 @@ body {
   margin-bottom: 14px;
 }
 
-/* Vehicle glyphs sit in a tinted rounded square so they read as deliberate
- * iconography rather than loose emoji. */
+/* Vehicle icons sit in a tinted rounded square as part of the shared stroke set. */
 .vehicle-emoji {
-  font-size: 1.5rem;
   width: 44px;
   height: 44px;
   display: inline-flex;
@@ -288,6 +323,10 @@ body {
   background: var(--bg-inset);
   border-radius: 12px;
   flex-shrink: 0;
+}
+.vehicle-emoji svg {
+  width: 26px;
+  height: 26px;
 }
 .vehicle-emoji.lg {
   font-size: 1.9rem;
@@ -1295,9 +1334,8 @@ code {
 .doc-result:active {
   transform: scale(0.99);
 }
-/* File-type glyph in a tinted squircle so rows scan as a tidy icon column. */
+/* File-type icon in a tinted squircle so rows scan as a tidy icon column. */
 .doc-result-icon {
-  font-size: 1.15rem;
   width: 40px;
   height: 40px;
   display: inline-flex;
@@ -1306,6 +1344,12 @@ code {
   background: var(--bg-inset);
   border-radius: 10px;
   flex-shrink: 0;
+}
+.doc-result-icon svg,
+.doc-thumb-icon svg,
+.empty-icon svg {
+  width: 24px;
+  height: 24px;
 }
 .doc-result-main {
   display: flex;
@@ -1822,6 +1866,31 @@ iframe.preview-media {
   letter-spacing: -0.022em;
   margin: 0 0 6px;
   font-variant-numeric: tabular-nums;
+}
+.cost-summary {
+  margin: 0 0 var(--gap);
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  line-height: 1.5;
+}
+.cost-summary .cost-grand {
+  display: inline;
+  margin: 0;
+  font-size: 1.35rem;
+}
+.cost-vehicle-summary {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.cost-vehicle-summary span,
+.cost-vehicle-summary + .cost-cat-list {
+  font-variant-numeric: tabular-nums;
+}
+.cost-vehicle-summary span {
+  font-family: var(--font-mono);
+  font-weight: 600;
 }
 
 /* iOS-style segmented control for the All-time / year toggle. */
@@ -2371,6 +2440,10 @@ iframe.preview-media {
 .vd-masthead {
   margin-bottom: 18px;
 }
+.vd-masthead .page-title {
+  font-size: 34px;
+  line-height: 1.03;
+}
 .vd-masthead .eyebrow {
   display: block;
   margin-bottom: 9px;
@@ -2575,7 +2648,7 @@ iframe.preview-media {
   line-height: 1.2;
 }
 .vd-svc-meta {
-  font-family: var(--font-mono);
+  font-family: var(--font-sans);
   font-size: 11px;
   letter-spacing: 0.02em;
   color: var(--text-muted);
@@ -2585,7 +2658,23 @@ iframe.preview-media {
   gap: 4px 8px;
 }
 .vd-svc-meta .interval {
+  font-family: var(--font-mono);
   color: var(--text);
+}
+.vd-row-reason {
+  font-family: var(--font-serif);
+  font-size: 12.5px;
+  letter-spacing: 0;
+}
+.warning-mark {
+  display: inline-flex;
+  margin-left: 4px;
+  color: var(--c-due);
+  vertical-align: -2px;
+}
+.warning-mark svg {
+  width: 14px;
+  height: 14px;
 }
 .vd-svc-meta .sep {
   opacity: 0.5;
@@ -2760,7 +2849,8 @@ iframe.preview-media {
 }
 
 @media (max-width: 430px) {
-  .vd-name {
+  .vd-name,
+  .vd-masthead .page-title {
     font-size: 28px;
   }
 }
@@ -2769,7 +2859,7 @@ iframe.preview-media {
    Premium polish pass — depth, editorial type, snappy 150ms
    micro-interactions. Layout & logic unchanged.
    ============================================================ */
-/* Headings & vehicle names in Newsreader (the explanation serif voice) */
+/* Page titles and vehicle names use Newsreader; card titles stay signage. */
 .page-title {
   font-family: var(--font-serif);
   font-weight: 700;
@@ -2777,8 +2867,15 @@ iframe.preview-media {
 }
 .card-title,
 .attention-title,
-.list-row-title,
 .reminder-line-title {
+  font-family: var(--font-signal);
+}
+.list-row-title,
+.vehicle-name,
+.cv-veh-name {
+  font-family: var(--font-serif);
+}
+p.muted {
   font-family: var(--font-serif);
 }
 .card-title {
@@ -3271,7 +3368,7 @@ a.list-row:hover {
   margin-bottom: 10px;
 }
 .cv-veh-name {
-  font-family: var(--font-signal);
+  font-family: var(--font-serif);
   font-weight: 700;
   font-size: 17px;
   letter-spacing: -0.005em;

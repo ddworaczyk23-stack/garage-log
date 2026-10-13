@@ -4,6 +4,7 @@ import { formatInterval, formatShortDate } from '../domain/format'
 import { reminderProgress } from '../domain/progress'
 import { BulletTrack } from './motion/BulletTrack'
 import { RuleOverrideEditor } from './RuleOverrideEditor'
+import { WarningIcon } from './icons'
 import type { ComputedReminder } from '../domain/reminderEngine'
 
 interface Props {
@@ -68,9 +69,14 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
           {hasHistory && (
             <>
               <span class="sep">·</span>
-              <span>
+              <span class="vd-row-reason">
                 {r.reason}
-                {r.odometerStale ? ' ⚠️' : ''}
+                {r.odometerStale && (
+                  <span class="warning-mark" title="Odometer reading may be stale">
+                    <WarningIcon />
+                    <span class="sr-only">Odometer reading may be stale</span>
+                  </span>
+                )}
               </span>
             </>
           )}

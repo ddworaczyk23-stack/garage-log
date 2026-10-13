@@ -11,7 +11,8 @@ import {
   type DocumentIndexEntry,
 } from '../domain/documents'
 import { DocumentPreviewModal } from '../components/DocumentPreviewModal'
-import { EmptyState, Loading } from '../components/ui'
+import { EmptyState, Loading, PageHeader } from '../components/ui'
+import { DocumentIcon } from '../components/icons'
 import { Reveal } from '../components/motion/Reveal'
 import { vehicleLabel } from '../domain/vehicle'
 
@@ -71,10 +72,11 @@ export function Documents({ initialVehicleId }: Props) {
 
   return (
     <section class="page">
-      <h2 class="page-title">Documents</h2>
-      <p class="muted">
-        {total === 0 ? 'No documents yet.' : `${results.length} of ${total} shown`}
-      </p>
+      <PageHeader
+        eyebrow="The Garage"
+        title="Documents"
+        meta={total === 0 ? 'No documents yet' : `${results.length} of ${total} shown`}
+      />
 
       <div class="doc-filters card">
         <input
@@ -129,7 +131,7 @@ export function Documents({ initialVehicleId }: Props) {
         <Loading />
       ) : results.length === 0 ? (
         <EmptyState
-          icon="📄"
+          icon={<DocumentIcon type="pdf" />}
           title={total === 0 ? 'No documents yet' : 'No documents match these filters'}
           hint={
             total === 0
@@ -160,12 +162,11 @@ function DocumentResultRow({
   onOpen: () => void
 }) {
   const { doc } = entry
-  const icon = entry.fileType === 'pdf' ? '📄' : entry.fileType === 'image' ? '🖼️' : '📎'
   return (
     <li>
       <button type="button" class="doc-result" onClick={onOpen}>
         <span class="doc-result-icon" aria-hidden="true">
-          {icon}
+          <DocumentIcon type={entry.fileType} />
         </span>
         <span class="doc-result-main">
           <span class="doc-result-name">{doc.filename}</span>

@@ -8,7 +8,7 @@ import {
   serializeBackupToJson,
 } from '../db/backup'
 import { backupFilename, summarizeBackup, validateBackup, type BackupFile } from '../domain/backup'
-import { ConfirmButton } from '../components/ui'
+import { ConfirmButton, PageHeader } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 
 type Notice = { kind: 'success' | 'error'; text: string } | null
@@ -89,11 +89,12 @@ export function Backup() {
 
   return (
     <section class="page">
-      <h2 class="page-title">Backup &amp; restore</h2>
-      <p class="muted">
-        Everything is stored only on this device. Export a backup before clearing
-        browser data or switching phones — then restore it on the new device.
-      </p>
+      <PageHeader eyebrow="Your data" title="Backup & restore">
+        <p class="page-header-prose">
+          Everything is stored only on this device. Export a backup before clearing
+          browser data or switching phones — then restore it on the new device.
+        </p>
+      </PageHeader>
 
       <Reveal>
         <section class="card">

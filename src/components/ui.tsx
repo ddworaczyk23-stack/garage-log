@@ -5,6 +5,33 @@ import { useEffect, useId, useRef, useState } from 'preact/hooks'
 // empty, and destructive-action UI look and behave the same everywhere. No data
 // logic lives here.
 
+/** Shared editorial page masthead used by every primary destination. */
+export function PageHeader({
+  eyebrow,
+  title,
+  meta,
+  children,
+  class: className = '',
+}: {
+  eyebrow: ComponentChildren
+  title: ComponentChildren
+  meta?: ComponentChildren
+  children?: ComponentChildren
+  class?: string
+}) {
+  return (
+    <header class={`page-header${className ? ` ${className}` : ''}`}>
+      <span class="eyebrow">{eyebrow}</span>
+      <div class="page-header-row">
+        <h2 class="page-title">{title}</h2>
+        {meta && <div class="page-header-meta">{meta}</div>}
+      </div>
+      {children}
+      <hr class="rule-double" />
+    </header>
+  )
+}
+
 /** Consistent loading indicator (spinner + polite live-region text). */
 export function Loading({ label = 'Loading…' }: { label?: string }) {
   return (
@@ -145,7 +172,7 @@ export function EmptyState({
   hint,
   action,
 }: {
-  icon?: string
+  icon?: ComponentChildren
   title: string
   hint?: string
   action?: ComponentChildren
