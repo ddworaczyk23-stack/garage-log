@@ -13,10 +13,12 @@ aggressively, every time.
 
 ## Open
 
-- **Mobile redesign, rounds 2-4.** Plan: `docs/superpowers/plans/2026-10-13-mobile-redesign.md`
+- **Mobile redesign, phases 2-4.** Plan: `docs/superpowers/plans/2026-10-13-mobile-redesign.md`
   (from the 2026-10-13 design review, `.impeccable/critique/2026-10-13T19-44-04Z__src.md`).
-  Round 1 quick wins = PR #7. Next: Phase 1 (setup asks for last oil change).
-  One PR per phase off `main`; verify at 375px.
+  Round 1 quick wins = PR #7. Phase 1 (setup asks for last oil change) is implemented on
+  `codex/mobile-redesign-phase-1`, with 393 tests + typecheck passing and the full flow verified
+  at 375px. Await its review/merge, then start Phase 2 from the updated `main`.
+  One PR per phase off `main`; verify each at 375px.
 
 - **Verify calendar export on a real iPhone.** "Add reminders to Calendar"
   downloads `car-maintenance.ics`; expected flow is open file → "Add All".

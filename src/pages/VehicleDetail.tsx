@@ -5,12 +5,12 @@ import { formatMiles, formatShortDate, localDateISO } from '../domain/format'
 import { getProjectedMileage, getVehicleReminders } from '../db/summary'
 import { STALE_ODOMETER_DAYS } from '../domain/reminderEngine'
 import { getOpenConcerns } from '../db/concerns'
-import { hasRealData, vehicleVerdict } from '../domain/verdict'
+import { vehicleVerdict } from '../domain/verdict'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
 import { deleteVehicle } from '../db/vehicles'
-import { EventForm } from '../components/EventForm'
-import { OdometerForm } from '../components/OdometerForm'
+import { EventForm, type EventFormSaveResult } from '../components/EventForm'
+import { OdometerForm, type OdometerFormSaveResult } from '../components/OdometerForm'
 import { EventListItem } from '../components/EventListItem'
 import { ScheduleRow } from '../components/ScheduleRow'
 import { MilestoneCard } from '../components/MilestoneCard'
@@ -21,13 +21,13 @@ import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
-import { Loading, Skel, ConfirmButton, InfoTip } from '../components/ui'
+import { Loading, Skel, ConfirmButton, InfoTip, Toast } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
 import { Instrument } from '../components/motion/Instrument'
 import { useIntroGate, useReducedMotion } from '../motion/hooks'
 import { vehicleLabel } from '../domain/vehicle'
-import type { MaintenanceCategory, VehicleDocument } from '../types'
+import { CATEGORY_LABELS, type MaintenanceCategory, type VehicleDocument } from '../types'
 
 interface Props {
   id: string
@@ -58,6 +58,7 @@ export function VehicleDetail({ id }: Props) {
   const [editingName, setEditingName] = useState(false)
   const [editingSpecs, setEditingSpecs] = useState(false)
   const [serviceCategory, setServiceCategory] = useState<MaintenanceCategory | undefined>(undefined)
+  const [toast, setToast] = useState<{ id: number; message: string } | null>(null)
   const formRef = useRef<HTMLDivElement>(null)
   const quickAddRef = useRef<HTMLDivElement>(null)
   const [showSticky, setShowSticky] = useState(false)
@@ -160,9 +161,10 @@ export function VehicleDetail({ id }: Props) {
   const repairEvents = (events ?? []).filter((e) => e.kind === 'repair')
 
   const list = reminders ?? []
-  // False while the vehicle has no logged history and no odometer estimate —
-  // the schedule's baseline statuses aren't knowledge yet (see domain/verdict).
-  const known = reminders ? hasRealData(reminders) : true
+  const verdict = reminders
+    ? vehicleVerdict(reminders, openConcerns ?? [], localDateISO(new Date()))
+    : null
+  const notSetUp = verdict?.band === 'not-set-up'
   const stale = mileage
     ? (Date.now() - new Date(`${mileage.lastActual.asOfDate}T00:00:00`).getTime()) / 86_400_000 >
       STALE_ODOMETER_DAYS
@@ -193,6 +195,33 @@ export function VehicleDetail({ id }: Props) {
     else openForm(form)
   }
 
+  async function handleEventSaved(result: EventFormSaveResult) {
+    closeForm()
+    let message =
+      result.kind === 'maintenance'
+        ? `${CATEGORY_LABELS[result.category]} ${result.editing ? 'updated' : 'logged'}`
+        : `Repair ${result.editing ? 'updated' : 'logged'}`
+
+    if (result.kind === 'maintenance') {
+      try {
+        const updated = await getVehicleReminders(id)
+        const item = updated.find((r) => r.rule.category === result.category)
+        if (item?.dueAtMiles != null) message += ` · next due ${formatMiles(item.dueAtMiles)}`
+      } catch (err) {
+        console.error('[VehicleDetail toast]', err)
+      }
+    }
+    setToast({ id: Date.now(), message })
+  }
+
+  function handleOdometerSaved(result: OdometerFormSaveResult) {
+    closeForm()
+    setToast({
+      id: Date.now(),
+      message: `Odometer ${result.editing ? 'updated' : 'logged'} · ${formatMiles(result.miles)}`,
+    })
+  }
+
   function renderRow(r: ComputedReminder) {
     return (
       <ScheduleRow
@@ -201,6 +230,7 @@ export function VehicleDetail({ id }: Props) {
         onLog={(category) => openForm('service', category)}
         animate={intro}
         reduced={reduced}
+        estimated={notSetUp}
       />
     )
   }
@@ -247,42 +277,46 @@ export function VehicleDetail({ id }: Props) {
       {/* Coast verdict: the one-sentence answer for this vehicle (Stage 1,
           design/COAST-PLAN.md) — pure re-narration of the ranked reminders,
           merged with any open triage concerns (Stage 2). */}
-      {reminders && reminders.length > 0 && (() => {
-        const verdict = vehicleVerdict(reminders, openConcerns ?? [], localDateISO(new Date()))
-        return (
-          <>
-            {justAdded && verdict.band === 'not-set-up' && (
-              <Reveal class="cv-card">
-                <div class="cv-panel cv-slate">
-                  <div class="cv-inner">
-                    <div class="cv-tag">You're in</div>
-                    <h3 class="cv-headline">{vehicleLabel(vehicle)} is in your garage.</h3>
-                    <p class="cv-sentence">
-                      Log a mileage reading and Coast gives you a real verdict.
-                    </p>
-                    <div class="fr-actions">
-                      <button type="button" class="btn btn-primary" onClick={() => openForm('odometer')}>
-                        Log mileage
-                      </button>
-                    </div>
+      {verdict && reminders && reminders.length > 0 && (
+        <>
+          {justAdded && verdict.band === 'not-set-up' && (
+            <Reveal class="cv-card">
+              <div class="cv-panel cv-slate">
+                <div class="cv-inner">
+                  <div class="cv-tag">You're in</div>
+                  <h3 class="cv-headline">{vehicleLabel(vehicle)} is in your garage.</h3>
+                  <p class="cv-sentence">
+                    When was its last oil change? That one entry gives you a real verdict.
+                  </p>
+                  <div class="fr-actions">
+                    <button
+                      type="button"
+                      class="btn btn-primary"
+                      onClick={() => openForm('service', 'oil-change')}
+                    >
+                      Log last oil change
+                    </button>
+                    <a class="btn-link" href={`#/import/${id}`}>
+                      Import service history
+                    </a>
                   </div>
                 </div>
-              </Reveal>
+              </div>
+            </Reveal>
+          )}
+          <div class="cv-card">
+            <VerdictPanel verdict={verdict} tag="This vehicle" />
+            <UrgencyRuler verdict={verdict} />
+            {verdict.band === 'not-set-up' && !justAdded && (
+              <div class="vd-setup">
+                <a class="btn-link" href={`#/import/${id}`}>
+                  Import service history →
+                </a>
+              </div>
             )}
-            <div class="cv-card">
-              <VerdictPanel verdict={verdict} tag="This vehicle" />
-              <UrgencyRuler verdict={verdict} />
-              {verdict.band === 'not-set-up' && (
-                <div class="vd-setup">
-                  <a class="btn-link" href={`#/import/${id}`}>
-                    Import service history →
-                  </a>
-                </div>
-              )}
-            </div>
-          </>
-        )
-      })()}
+          </div>
+        </>
+      )}
 
       {/* odometer instrument + specifications */}
       <section class="card vd-cover">
@@ -359,15 +393,21 @@ export function VehicleDetail({ id }: Props) {
             kind="maintenance"
             initialCategory={serviceCategory}
             defaultOdometer={mileage?.lastActual.miles}
-            onDone={closeForm}
+            onDone={handleEventSaved}
             onCancel={closeForm}
           />
         )}
         {activeForm === 'repair' && (
-          <EventForm vehicleId={id} kind="repair" defaultOdometer={mileage?.lastActual.miles} onDone={closeForm} onCancel={closeForm} />
+          <EventForm
+            vehicleId={id}
+            kind="repair"
+            defaultOdometer={mileage?.lastActual.miles}
+            onDone={handleEventSaved}
+            onCancel={closeForm}
+          />
         )}
         {activeForm === 'odometer' && (
-          <OdometerForm vehicleId={id} onDone={closeForm} onCancel={closeForm} />
+          <OdometerForm vehicleId={id} onDone={handleOdometerSaved} onCancel={closeForm} />
         )}
       </div>
       </div>
@@ -392,6 +432,12 @@ export function VehicleDetail({ id }: Props) {
 
         <AnnualMileageEditor vehicleId={id} />
 
+        {notSetUp && (
+          <p class="muted small vd-schedule-note">
+            No history yet — estimates use the factory schedule. Log your last service to personalize them.
+          </p>
+        )}
+
         {!reminders ? (
           <Loading />
         ) : list.length === 0 ? (
@@ -399,11 +445,7 @@ export function VehicleDetail({ id }: Props) {
         ) : (
           <>
             {actionable.length === 0 ? (
-              <p class="muted small">
-                {known
-                  ? 'Nothing needs attention right now — nice.'
-                  : 'These are general starting intervals. Add an odometer reading or log a service, and they start tracking this car for real.'}
-              </p>
+              <p class="muted small">Nothing needs attention right now — nice.</p>
             ) : (
               <ul class="vd-ledger">{actionable.map(renderRow)}</ul>
             )}
@@ -521,6 +563,7 @@ export function VehicleDetail({ id }: Props) {
           Log service
         </button>
       )}
+      {toast && <Toast key={toast.id} message={toast.message} onDismiss={() => setToast(null)} />}
     </section>
   )
 }

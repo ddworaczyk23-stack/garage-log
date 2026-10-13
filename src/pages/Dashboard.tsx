@@ -69,7 +69,7 @@ export function Dashboard() {
           {/* A real 3-step sequence — this is the activation path, in order. */}
           <ol class="fr-steps">
             <li><b>Add your car</b> — year, make, and model is enough.</li>
-            <li><b>Log an odometer reading</b> — one number starts real tracking.</li>
+            <li><b>Log your last oil change</b>: the date and mileage are enough.</li>
             <li><b>Get your verdict</b> — and a shop brief whenever something's up.</li>
           </ol>
 

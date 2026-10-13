@@ -109,6 +109,9 @@ describe('vehicleVerdict — band selection', () => {
     const v = vehicleVerdict([], [], '2026-07-01')
     expect(v.band).toBe('not-set-up')
     expect(v.headline).toBe('Not set up yet.')
+    expect(v.sentence).toBe(
+      "Coast doesn't know this car yet. Log your last oil change (or import your service history) and real verdicts start.",
+    )
     expect(v.rulerPin).toBeNull()
     expect(v.coastItems).toEqual([])
   })

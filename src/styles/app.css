@@ -953,6 +953,39 @@ input::placeholder {
   background: var(--bg-inset);
   color: var(--text-muted);
 }
+.status-estimated {
+  background: var(--c-stale-bg);
+  color: var(--c-stale);
+}
+
+/* One small save confirmation, clear of the bottom navigation and sticky CTA. */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-height) + 72px + env(safe-area-inset-bottom));
+  z-index: 50;
+  max-width: min(34rem, calc(100vw - 32px));
+  transform: translateX(-50%);
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--text);
+  color: var(--bg-card);
+  box-shadow: var(--shadow-raised);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: center;
+  animation: toast-in 0.2s var(--ease-paper);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
 
 /* Band-vocabulary pill variants (Vehicles.tsx) — same four-signal tokens as
  * every other status readout, keyed by VerdictBand instead of the engine's
