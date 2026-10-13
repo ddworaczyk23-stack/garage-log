@@ -15,9 +15,8 @@ aggressively, every time.
 
 - **Mobile redesign, phases 2-4.** Plan: `docs/superpowers/plans/2026-10-13-mobile-redesign.md`
   (from the 2026-10-13 design review, `.impeccable/critique/2026-10-13T19-44-04Z__src.md`).
-  Round 1 quick wins = PR #7. Phase 1 (setup asks for last oil change) is implemented on
-  `codex/mobile-redesign-phase-1`, with 393 tests + typecheck passing and the full flow verified
-  at 375px. Await its review/merge, then start Phase 2 from the updated `main`.
+  Quick wins = PR #7, Phase 1 (setup asks for last oil change) = PR #9, both merged and live.
+  Next: Phase 2 (vehicle page). Phase 4 now also lists two Phase 1 review follow-ups.
   One PR per phase off `main`; verify each at 375px.
 
 - **Verify calendar export on a real iPhone.** "Add reminders to Calendar"
