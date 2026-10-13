@@ -75,6 +75,14 @@ export function InfoTip({ label = 'More info', children }: { label?: string; chi
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setOpen(false)
     }
+    // Keep the popover on screen: it anchors left of the "?", which near the
+    // right edge of a phone pushes it past the viewport.
+    const pop = ref.current?.querySelector<HTMLElement>('.infotip-pop')
+    if (pop) {
+      pop.style.translate = ''
+      const overflow = pop.getBoundingClientRect().right - (window.innerWidth - 16)
+      if (overflow > 0) pop.style.translate = `${-overflow}px 0`
+    }
     document.addEventListener('click', onDocClick)
     window.addEventListener('keydown', onKey)
     return () => {

@@ -294,6 +294,8 @@ export function EventForm({
         <input
           type="number"
           inputMode="decimal"
+          step="0.01"
+          min="0"
           value={cost}
           onInput={(e) => setCost((e.target as HTMLInputElement).value)}
         />
