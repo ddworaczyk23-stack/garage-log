@@ -153,7 +153,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
           <div class="cv-veh-row">
             <h3 class="cv-veh-name">{vehicleLabel(v)}</h3>
             <span class="cv-veh-meta">
-              {s.mileage ? formatMiles(s.mileage.miles) : '— mi'}
+              {s.mileage ? `${s.mileage.projected ? '~' : ''}${formatMiles(s.mileage.miles)}` : '— mi'}
               {s.spendThisYear > 0 && <> · {formatMoney(s.spendThisYear)} in {year}</>}
             </span>
           </div>

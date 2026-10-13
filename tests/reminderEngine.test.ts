@@ -186,7 +186,7 @@ describe('computeReminder — stale odometer', () => {
       asOf: new Date('2026-01-01T00:00:00'),
     })
     expect(r.odometerStale).toBe(true)
-    expect(r.reason).toMatch(/stale/)
+    expect(r.reason).toMatch(/mileage is estimated/)
   })
 
   it('does not flag a recent reading', () => {

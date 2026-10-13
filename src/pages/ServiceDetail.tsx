@@ -1,8 +1,7 @@
 import { useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
-import { getVehicleReminders } from '../db/summary'
-import { getCurrentMileageEstimate } from '../db/events'
+import { getProjectedMileage, getVehicleReminders } from '../db/summary'
 import { bandFromStatus, BAND_LABELS } from '../domain/verdict'
 import { formatInterval, formatMiles, formatMoney, formatShortDate } from '../domain/format'
 import { reminderProgress } from '../domain/progress'
@@ -30,7 +29,7 @@ async function loadService(id: string) {
   const [reminders, events, mileage] = await Promise.all([
     getVehicleReminders(vehicle.id),
     db.events.where('vehicleId').equals(vehicle.id).toArray(),
-    getCurrentMileageEstimate(vehicle.id),
+    getProjectedMileage(vehicle.id),
   ])
   return {
     vehicle,
@@ -146,7 +145,9 @@ export function ServiceDetail({ id }: { id: string }) {
 
           {mileage && (
             <p class="muted small sd-odo">
-              Odometer {formatMiles(mileage.miles)} as of {formatShortDate(mileage.asOfDate)}
+              {mileage.isProjected
+                ? `Odometer ~${formatMiles(mileage.miles)} (estimated) · last reading ${formatMiles(mileage.lastActual.miles)} on ${formatShortDate(mileage.lastActual.asOfDate)}`
+                : `Odometer ${formatMiles(mileage.miles)} as of ${formatShortDate(mileage.asOfDate)}`}
             </p>
           )}
         </section>
@@ -167,7 +168,7 @@ export function ServiceDetail({ id }: { id: string }) {
           vehicleId={vehicle.id}
           kind={kind}
           initialCategory={category}
-          defaultOdometer={mileage?.miles}
+          defaultOdometer={mileage?.lastActual.miles}
           onDone={() => setLogging(false)}
           onCancel={() => setLogging(false)}
         />

@@ -32,8 +32,11 @@ export const DUE_LEAD_DAYS = 30
 export const WATCH_LEAD_MILES = 1500
 export const WATCH_LEAD_DAYS = 90
 
-/** An odometer reading older than this many days is flagged as stale. */
-export const STALE_ODOMETER_DAYS = 45
+/** A last REAL odometer reading older than this many days is flagged as stale.
+ * Between real readings the current mileage is projected from the average
+ * miles/year (db/summary getProjectedMileage), so this is a gentle "confirm
+ * your mileage" nudge, not a sign the status has frozen. */
+export const STALE_ODOMETER_DAYS = 90
 
 /**
  * Assumed annual mileage, used ONLY to convert a mileage-remaining figure into
@@ -326,7 +329,7 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
     reasonParts.push(
       inputs.currentMiles == null
         ? 'no odometer reading logged — mileage-based due status unknown'
-        : 'odometer reading is stale — mileage estimate may be off',
+        : 'mileage is estimated — log an odometer reading to confirm',
     )
   }
   if (rule.override?.kind === 'dealer-performed') reasonParts.push('dealer performed')

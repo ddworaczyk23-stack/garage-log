@@ -97,3 +97,41 @@ export function projectDueDate(
   d.setDate(d.getDate() + Math.round(days))
   return localDateISO(d)
 }
+
+/** A mileage figure rolled forward to today from the last real reading. */
+export interface ProjectedMileage {
+  /** Best estimate of the odometer today. */
+  miles: number
+  /** Today (local date) — the date `miles` is estimated for. */
+  asOfDate: string
+  /** True when `miles` includes projected driving, not just a logged reading. */
+  isProjected: boolean
+  /** The newest real reading the projection starts from. */
+  lastActual: { miles: number; asOfDate: string }
+  /** The miles/year rate used for the projection. */
+  annualMileage: number
+}
+
+/**
+ * Roll the last real odometer reading forward to `asOf` at `annualMileage`
+ * miles/year, so the odometer (and the reminders it drives) keep moving
+ * between visits instead of freezing at the last logged number. A reading
+ * dated today or later is used as-is. Real readings always win: the moment one
+ * is logged it becomes the new `lastActual` and the projection restarts. Pure.
+ */
+export function projectMileage(
+  lastActual: { miles: number; asOfDate: string },
+  annualMileage: number,
+  asOf: Date,
+): ProjectedMileage {
+  const today = localDateISO(asOf)
+  const days = Math.max(0, Math.round((parseDay(today) - parseDay(lastActual.asOfDate)) / 86_400_000))
+  const added = annualMileage > 0 ? Math.round((annualMileage * days) / DAYS_PER_YEAR) : 0
+  return {
+    miles: lastActual.miles + added,
+    asOfDate: today,
+    isProjected: added > 0,
+    lastActual,
+    annualMileage,
+  }
+}
