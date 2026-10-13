@@ -148,6 +148,76 @@ button contrast, the standalone shop brief's Share (filled) vs Print (tinted)
 buttons, and the "Coast · The service record, kept honest" colophon on
 Vehicle Detail.
 
+## TODO — Session D: dark mode (scoped, not started)
+
+Raised 2026-07-31 in a design review against the `taste-skill` checklist
+(its section 6.C treats dark mode as mandatory for consumer-facing UI).
+Coast is currently light-only *on purpose* — DESIGN.md's "daylight road
+signage" north star, `color-scheme: light` in `:root`, and no
+`prefers-color-scheme` query anywhere in the app. That reasoning holds at
+noon. The counter-case is that this installs to a phone and gets opened in
+a dark garage, in a car at night, or in bed, where a full-screen `#efefea`
+canvas is genuinely unpleasant. Deferred, not rejected. Do NOT start this
+without deciding the brand question in step 1 first.
+
+**1. Brand decision (do this before any code).** The four signal colors are
+the brand and they are tuned for ink-on-light. Decide up front: do the bands
+keep the same hues at dark-adjusted lightness, or do they shift? The
+non-negotiables that must survive the flip are DESIGN.md's Signal Budget
+Rule (signal colors carry status meaning only, never decoration), the
+Earned Green Rule, and "same hue, same meaning" across the two modes. A dark
+mode where amber-on-dark reads as a different band than amber-on-light is
+worse than no dark mode.
+
+**2. Token inventory (measured, not estimated).** In `src/styles/app.css`:
+- **46 custom properties** in the `:root` block (lines 10-87), essentially
+  all of which need a dark counterpart: surfaces (`--bg`, `--bg-elevated`,
+  `--bg-card`, `--bg-inset`), ink (`--text`, `--text-muted`), `--border`,
+  `--accent` + `--accent-hover`/`--accent-tint`/`--accent-text`, `--danger`
+  + tint, the twelve `--c-*` status hue/tint pairs, the seven `--sig-*`
+  panel tones, and all three `--shadow-*` values (cool-tinted shadows read
+  as nothing on a dark canvas; dark elevation wants lighter borders, not
+  bigger shadows).
+- **36 distinct hardcoded color literals below the `:root` block** that
+  bypass the token layer and will not flip on their own. The clusters:
+  `rgba(35, 39, 43, …)` at ~10 alphas (asphalt ink used directly for
+  borders/shadows/scrims), `rgba(238, 240, 234, …)` at ~7 alphas (the
+  concrete canvas used as an on-dark-panel overlay), `#fff` ×7 (mostly
+  text-on-signal-slab, which stays correct), `rgba(0, 0, 0, 0.4-0.55)`
+  modal scrims. (Two `#8fb37a` hits also match a naive grep; both are
+  comment text at lines 2242 and 2258 documenting a removed pre-M12 olive
+  value, not live rules. Nothing to change there.)
+- **27 `color-mix()` calls** — these mostly track `var(--accent)` already,
+  so they should follow the tokens for free. Spot-check the ones mixing
+  against a literal.
+- **8 `backdrop-filter` rules** (frosted header + bottom nav). The frosted
+  layer is `--bg-elevated` at 82% alpha; on dark it needs its own alpha,
+  not the same number, or the nav turns to mud.
+
+**3. Out-of-CSS surfaces.** `index.html`'s `<meta name="theme-color"
+content="#efefea">` and `vite.config.ts`'s PWA manifest `theme_color`
+both hardcode the light canvas — a dark-mode install shows a light status
+bar chrome without these. Decide whether to ship a `media`-scoped pair.
+
+**4. Strategy.** Prefer `@media (prefers-color-scheme: dark)` overriding
+the same custom properties (one block, no per-component `dark:` variants)
+plus `color-scheme: light dark`, so form controls and scrollbars follow.
+A manual toggle is a separate question; system-only is the cheaper first
+cut and probably right for this app.
+
+**5. Verification gate.** Re-run the contrast audit in BOTH modes, not just
+dark. The floor is AA 4.5:1 for body text on the *darkest* surface the text
+lands on (this is what the light theme got wrong once already — see the
+`--text-muted` note below). Check `--text-muted`, every `--c-*` ink on its
+own tint, and white-on-signal-slab at the 24px/800 verdict size.
+
+Related, already fixed 2026-07-31: DESIGN.md documented Muted Slate as
+`#6b7076` in three places while `app.css` had long since deepened
+`--text-muted` to `#5a6167`, because `#6b7076` measured 4.33:1 on the
+concrete canvas and 4.37:1 in inset wells (AA-passing only on white cards).
+The spec was teaching the failing value. `#5a6167` measures 5.45 / 5.50 /
+6.01 / 6.29 across canvas / well / elevated paper / card white.
+
 ## STANDING RULES
 
 - npm test + npm run typecheck gate every session.

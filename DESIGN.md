@@ -12,7 +12,7 @@ colors:
   sign-face-white: "#ffffff"
   concrete-well: "#f0f0eb"
   asphalt-ink: "#23272b"
-  muted-slate: "#6b7076"
+  muted-slate: "#5a6167"
   hairline: "#23272b21"
   guide-sign-blue-tint: "rgba(27, 95, 170, 0.11)"
 typography:
@@ -102,7 +102,7 @@ A restrained daylight palette under four saturated signal colors that carry all 
 ### Neutral
 - **Daylight Concrete** (#efefea): The app canvas. Cool, matte, never warm-tinted.
 - **Sign-Face White** (#ffffff): Card and sign surfaces. **Elevated Paper** (#fafaf7) for the frosted header/nav layer; **Concrete Well** (#f0f0eb) for inset wells inside cards.
-- **Asphalt Ink** (#23272b): All body text. **Muted Slate** (#6b7076) for secondary text — never lighter than this.
+- **Asphalt Ink** (#23272b): All body text. **Muted Slate** (#5a6167) for secondary text — never lighter than this. (Was #6b7076, which measured 4.33:1 on the concrete canvas and 4.37:1 in inset wells; it passed AA only on white cards, so it is not a safe floor.)
 - **Hairline** (rgba(35,39,43,0.13)): Borders and dividers, 0.5–1px.
 
 ### Named Rules
@@ -206,7 +206,7 @@ Progress and health meters (`.health-fill`, `.vh-fill`) animate via `transition:
 - **Do** use the four-signal bands for all status everywhere — same hue, same meaning, no new status colors.
 - **Do** set explanatory sentences in Newsreader serif and all numbers in Overpass Mono with tabular figures.
 - **Do** keep controls sturdy and plain: solid fills, 10px radius, 42px touch targets, visible focus ring.
-- **Do** hold text contrast at WCAG 2.1 AA (≥4.5:1); Muted Slate (#6b7076) is the lightest allowed text color.
+- **Do** hold text contrast at WCAG 2.1 AA (≥4.5:1); Muted Slate (#5a6167) is the lightest allowed text color, and it must clear 4.5:1 on the *darkest* surface it lands on (the concrete canvas and inset wells, not just white cards).
 
 ### Don't:
 - **Don't** build "the generic SaaS dashboard" — no stat-tile grids, no density for its own sake (PRODUCT.md anti-reference, verbatim). A restrained gradient is allowed as a deliberate emphasis device (e.g. overdue rows) — the ban is on decoration-for-its-own-sake, not the technique itself.
