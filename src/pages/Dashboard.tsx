@@ -1,7 +1,7 @@
 import { useQuery } from '../db/useQuery'
 import { getGarageSummary, type VehicleSummary } from '../db/summary'
 import { formatMiles, formatMoney, localDateISO } from '../domain/format'
-import { vehicleVerdict } from '../domain/verdict'
+import { hasRealData, vehicleVerdict } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { PageHeader, Skel } from '../components/ui'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
@@ -38,6 +38,7 @@ export function Dashboard() {
     (s) => s.health.band === 'fix-now' || s.health.band === 'book-soon',
   ).length
   const notSetUp = summary.vehicles.filter((s) => s.health.band === 'not-set-up').length
+  const hasHistory = summary.vehicles.some((s) => hasRealData(s.reminders))
 
   // First run (deployed builds start genuinely empty — see db/seed.ts): one
   // clear invitation instead of an empty dashboard shell. The comparison
@@ -108,21 +109,23 @@ export function Dashboard() {
       </div>
 
       {/* A comparison of one vehicle compares nothing — needs at least two. */}
-      {summary.vehicles.length >= 2 && (
+      {hasHistory && summary.vehicles.length >= 2 && (
         <Reveal>
           <ComparisonCard vehicles={summary.vehicles} year={summary.year} />
         </Reveal>
       )}
 
-      <Reveal>
-        <section class="card">
-          <h3 class="card-title">Reminders</h3>
-          <p class="muted small cal-export-lead">
-            Get alerts for every vehicle in your phone's Calendar, dated from each car's estimated mileage.
-          </p>
-          <CalendarExport />
-        </section>
-      </Reveal>
+      {hasHistory && (
+        <Reveal>
+          <section class="card">
+            <h3 class="card-title">Reminders</h3>
+            <p class="muted small cal-export-lead">
+              Get alerts for every vehicle in your phone's Calendar, dated from each car's estimated mileage.
+            </p>
+            <CalendarExport />
+          </section>
+        </Reveal>
+      )}
 
       <div class="gb-links">
         <a class="gb-link" href="#/costs">
@@ -196,7 +199,7 @@ function ComparisonCard({ vehicles, year }: { vehicles: VehicleSummary[]; year: 
       value: (s) => (s.milesThisYear != null ? formatMiles(s.milesThisYear) : '—'),
     },
     { label: `Spent this year`, value: (s) => (s.spendThisYear > 0 ? formatMoney(s.spendThisYear) : '—') },
-    { label: 'Overdue items', value: (s) => String(s.counts.overdue) },
+    { label: 'Overdue items', value: (s) => (hasRealData(s.reminders) ? String(s.counts.overdue) : '—') },
     { label: 'Completed items', value: (s) => String(s.counts.completed) },
     { label: 'Documents', value: (s) => String(s.documentCount) },
   ]

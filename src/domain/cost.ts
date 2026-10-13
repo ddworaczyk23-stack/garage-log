@@ -29,6 +29,18 @@ export interface CostBreakdown {
   lastDate: string | null
 }
 
+/**
+ * A deliberately personal sanity check, not a market-price estimate. Warn only
+ * when this amount is more than 3× the highest positive amount the owner has
+ * previously logged for the same vehicle + category. With no usable history,
+ * Coast has no basis for a warning.
+ */
+export function costLooksOff(cost: number, priorCosts: number[]): boolean {
+  const positive = priorCosts.filter((value) => Number.isFinite(value) && value > 0)
+  if (!Number.isFinite(cost) || cost <= 0 || positive.length === 0) return false
+  return cost > Math.max(...positive) * 3
+}
+
 /** Events within a calendar year, or all events when `year` is null (all-time).
  * Dates are `YYYY-MM-DD`, so a string prefix match is exact and TZ-free. */
 export function filterByYear(events: MaintenanceEvent[], year: number | null): MaintenanceEvent[] {

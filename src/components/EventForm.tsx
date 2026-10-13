@@ -1,7 +1,9 @@
 import { useState } from 'preact/hooks'
 import { db } from '../db/db'
+import { useQuery } from '../db/useQuery'
 import { recordCompletedEvent, updateEvent, type RuleOverrideInput } from '../db/events'
-import { localDateISO, parseNumberInput } from '../domain/format'
+import { formatMoney, localDateISO, parseNumberInput } from '../domain/format'
+import { costLooksOff } from '../domain/cost'
 import { parseQuickEntry } from '../domain/quickEntry'
 import {
   CATEGORY_LABELS,
@@ -106,6 +108,22 @@ export function EventForm({
   const [saving, setSaving] = useState(false)
 
   const remainingDocs = existingDocs.filter((d) => !removedDocIds.includes(d.id))
+  const priorCosts = useQuery(
+    () =>
+      db.events
+        .where('vehicleId')
+        .equals(vehicleId)
+        .toArray()
+        .then((events) =>
+          events
+            .filter((event) => event.id !== existing?.id && event.category === category && event.cost > 0)
+            .map((event) => event.cost),
+        ),
+    [vehicleId, category, existing?.id],
+  )
+  const parsedCost = parseNumberInput(cost)
+  const costLooksUnusual = parsedCost != null && costLooksOff(parsedCost, priorCosts ?? [])
+  const highestPriorCost = priorCosts?.length ? Math.max(...priorCosts) : null
 
   function handleQuickFill() {
     if (!quickEntryText.trim()) return
@@ -203,21 +221,23 @@ export function EventForm({
         {existing ? 'Edit' : 'Log'} {kind === 'maintenance' ? 'service' : 'repair'}
       </h3>
 
-      <div class="admin-field quick-entry">
-        <span class="muted small">Quick fill (optional)</span>
-        <div class="quick-entry-row">
-          <input
-            type="text"
-            placeholder="e.g. Oil change at Jiffy Lube, $45.99"
-            value={quickEntryText}
-            onInput={(e) => setQuickEntryText((e.target as HTMLInputElement).value)}
-          />
-          <button type="button" class="btn-link" onClick={handleQuickFill}>
-            Fill in ↓
-          </button>
+      {!existing && (
+        <div class="admin-field quick-entry">
+          <span class="muted small">Quick fill (optional)</span>
+          <div class="quick-entry-row">
+            <input
+              type="text"
+              placeholder="e.g. Oil change at Jiffy Lube, $45.99"
+              value={quickEntryText}
+              onInput={(e) => setQuickEntryText((e.target as HTMLInputElement).value)}
+            />
+            <button type="button" class="btn-link" onClick={handleQuickFill}>
+              Fill in ↓
+            </button>
+          </div>
+          {quickEntryHint && <p class="muted small quick-entry-hint">{quickEntryHint}</p>}
         </div>
-        {quickEntryHint && <p class="muted small quick-entry-hint">{quickEntryHint}</p>}
-      </div>
+      )}
 
       <div class="admin-when">
         <label class="admin-field">
@@ -304,8 +324,15 @@ export function EventForm({
           step="0.01"
           min="0"
           value={cost}
+          aria-describedby={costLooksUnusual ? 'cost-sanity-note' : undefined}
           onInput={(e) => setCost((e.target as HTMLInputElement).value)}
         />
+        {costLooksUnusual && highestPriorCost != null && (
+          <span id="cost-sanity-note" class="cost-sanity-note">
+            That’s much higher than you’ve paid before for this ({formatMoney(highestPriorCost)}).
+            Double-check the amount.
+          </span>
+        )}
       </label>
 
       <div class="override-section">
@@ -420,15 +447,24 @@ export function EventForm({
         )}
       </div>
 
-      <label class="admin-field">
+      <div class="admin-field">
         <span class="muted small">Attach photos / receipts / PDFs</span>
-        <input
-          type="file"
-          multiple
-          accept="image/*,application/pdf"
-          onChange={(e) => setNewFiles(Array.from((e.target as HTMLInputElement).files ?? []))}
-        />
-      </label>
+        <label class="file-picker">
+          <input
+            class="sr-only"
+            type="file"
+            multiple
+            accept="image/*,application/pdf"
+            onChange={(e) => setNewFiles(Array.from((e.target as HTMLInputElement).files ?? []))}
+          />
+          <span class="btn btn-secondary file-picker-button">Choose files</span>
+          <span class="file-picker-summary">
+            {newFiles.length === 0
+              ? 'No files selected'
+              : `${newFiles.length} ${newFiles.length === 1 ? 'file' : 'files'} selected`}
+          </span>
+        </label>
+      </div>
       {remainingDocs.length > 0 && (
         <ul class="doc-remove-list">
           {remainingDocs.map((d) => (

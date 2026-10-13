@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCostBreakdown, costPerMile, filterByYear } from '../src/domain/cost'
+import { buildCostBreakdown, costLooksOff, costPerMile, filterByYear } from '../src/domain/cost'
 import type { MaintenanceCategory, MaintenanceEvent } from '../src/types'
 
 let seq = 0
@@ -103,5 +103,30 @@ describe('costPerMile', () => {
     expect(costPerMile(400, null)).toBeNull()
     expect(costPerMile(400, 0)).toBeNull()
     expect(costPerMile(400, -50)).toBeNull()
+  })
+})
+
+describe('costLooksOff', () => {
+  it('warns only above three times the highest prior positive cost', () => {
+    expect(costLooksOff(151, [25, 50])).toBe(true)
+    expect(costLooksOff(150, [25, 50])).toBe(false)
+  })
+
+  it('never warns without usable prior history', () => {
+    expect(costLooksOff(500, [])).toBe(false)
+    expect(costLooksOff(500, [0, -20, Number.NaN])).toBe(false)
+  })
+
+  it('warns from a single prior cost', () => {
+    expect(costLooksOff(76, [25])).toBe(true)
+  })
+
+  it('uses the highest prior cost rather than a lower outlier', () => {
+    expect(costLooksOff(100, [5, 40, 10])).toBe(false)
+  })
+
+  it('ignores invalid current amounts', () => {
+    expect(costLooksOff(0, [25])).toBe(false)
+    expect(costLooksOff(Number.NaN, [25])).toBe(false)
   })
 })

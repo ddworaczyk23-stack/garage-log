@@ -7,6 +7,18 @@ import { PageHeader } from '../components/ui'
 import type { VehicleIdentity } from '../types'
 
 type Mode = 'vin' | 'manual'
+const CURRENT_YEAR = new Date().getFullYear()
+const VEHICLE_YEARS = Array.from({ length: 41 }, (_, index) => CURRENT_YEAR - index)
+const DRIVETRAINS = ['FWD', 'RWD', 'AWD', '4WD'] as const
+
+function normalizeDrivetrain(value: string): string {
+  const upper = value.toUpperCase()
+  if (upper.includes('4WD') || upper.includes('4X4') || upper.includes('4-WHEEL')) return '4WD'
+  if (upper.includes('AWD') || upper.includes('ALL-WHEEL')) return 'AWD'
+  if (upper.includes('FWD') || upper.includes('FRONT-WHEEL')) return 'FWD'
+  if (upper.includes('RWD') || upper.includes('REAR-WHEEL')) return 'RWD'
+  return ''
+}
 
 // "Add Car" (route #/add-vehicle, linked from Vehicles). VIN decode (real
 // NHTSA lookup) or manual entry resolve a VehicleIdentity, then addVehicle()
@@ -51,7 +63,7 @@ export function AddVehicle() {
       }
       setDecoded(result.identity)
       setEngine(result.suggestedEngine ?? '')
-      setDrivetrain(result.suggestedDrivetrain ?? '')
+      setDrivetrain(normalizeDrivetrain(result.suggestedDrivetrain ?? ''))
     } finally {
       setDecoding(false)
     }
@@ -118,10 +130,10 @@ export function AddVehicle() {
       <PageHeader eyebrow="The Garage" title="Add a car" />
 
       <div class="cv-card">
-        <div class="cv-panel cv-slate">
+        <div class="cv-panel cv-slate add-vehicle-intro">
           <div class="cv-inner">
             <div class="cv-tag">Quick setup</div>
-            <h3 class="cv-headline">Two minutes, then Coast knows your car.</h3>
+            <h3 class="cv-headline">About a minute, then Coast knows your car.</h3>
             <p class="cv-sentence">
               Enter a VIN and Coast decodes the rest, or fill in year, make, and model by hand.
             </p>
@@ -148,7 +160,7 @@ export function AddVehicle() {
 
       {mode === 'vin' && (
         <Reveal>
-        <form class="card admin-form" onSubmit={runDecode}>
+        <form class="card admin-form add-vehicle-form" onSubmit={runDecode}>
           <label class="admin-field">
             <span class="muted small">VIN</span>
             <input
@@ -158,6 +170,7 @@ export function AddVehicle() {
               onInput={(e) => setVin((e.target as HTMLInputElement).value.toUpperCase())}
               placeholder="17-character VIN"
             />
+            <span class="field-hint">Find it on the driver-side dashboard or your insurance card.</span>
           </label>
           {decodeError && (
             <p class="notice notice-error" role="alert">
@@ -175,15 +188,18 @@ export function AddVehicle() {
 
       {mode === 'manual' && (
         <Reveal>
-        <form class="card admin-form" onSubmit={submit}>
+        <form class="card admin-form add-vehicle-form" onSubmit={submit}>
           <label class="admin-field">
             <span class="muted small">Year</span>
-            <input
-              type="number"
-              inputMode="numeric"
+            <select
               value={year}
-              onInput={(e) => setYear((e.target as HTMLInputElement).value)}
-            />
+              onChange={(e) => setYear((e.target as HTMLSelectElement).value)}
+            >
+              <option value="">Choose year</option>
+              {VEHICLE_YEARS.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+            </select>
           </label>
           <label class="admin-field">
             <span class="muted small">Make</span>
@@ -206,15 +222,7 @@ export function AddVehicle() {
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
-          <label class="admin-field">
-            <span class="muted small">Drivetrain — optional</span>
-            <input
-              type="text"
-              value={drivetrain}
-              placeholder="e.g. FWD, AWD"
-              onInput={(e) => setDrivetrain((e.target as HTMLInputElement).value)}
-            />
-          </label>
+          <DrivetrainPicker value={drivetrain} onChange={setDrivetrain} />
           {submitError && (
             <p class="notice notice-error" role="alert">
               {submitError}
@@ -237,7 +245,7 @@ export function AddVehicle() {
 
       {mode === 'vin' && identity && (
         <Reveal>
-        <form class="card admin-form" onSubmit={submit}>
+        <form class="card admin-form add-vehicle-form" onSubmit={submit}>
           <p class="muted small">
             {identity.year} {identity.make} {identity.model} {identity.trim}
             {identity.vin ? ` · VIN ${identity.vin}` : ''}
@@ -246,14 +254,7 @@ export function AddVehicle() {
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
-          <label class="admin-field">
-            <span class="muted small">Drivetrain — optional</span>
-            <input
-              type="text"
-              value={drivetrain}
-              onInput={(e) => setDrivetrain((e.target as HTMLInputElement).value)}
-            />
-          </label>
+          <DrivetrainPicker value={drivetrain} onChange={setDrivetrain} />
           {submitError && (
             <p class="notice notice-error" role="alert">
               {submitError}
@@ -274,5 +275,26 @@ export function AddVehicle() {
         </Reveal>
       )}
     </section>
+  )
+}
+
+function DrivetrainPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+  return (
+    <fieldset class="admin-field chip-field">
+      <legend class="muted small">Drivetrain — optional</legend>
+      <div class="choice-chips">
+        {DRIVETRAINS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            class={`choice-chip${value === option ? ' is-on' : ''}`}
+            aria-pressed={value === option}
+            onClick={() => onChange(value === option ? '' : option)}
+          >
+            {option}
+          </button>
+        ))}
+      </div>
+    </fieldset>
   )
 }

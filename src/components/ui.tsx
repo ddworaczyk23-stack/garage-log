@@ -56,14 +56,18 @@ export function Toast({
   dismissRef.current = onDismiss
 
   useEffect(() => {
+    if (!message) return
     const id = window.setTimeout(() => dismissRef.current(), duration)
     return () => window.clearTimeout(id)
   }, [message, duration])
 
   return (
-    <div class="toast" role="status" aria-live="polite">
-      {message}
-    </div>
+    <>
+      <span class="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {message}
+      </span>
+      {message && <div class="toast" aria-hidden="true">{message}</div>}
+    </>
   )
 }
 
