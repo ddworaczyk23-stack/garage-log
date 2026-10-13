@@ -8,8 +8,8 @@ import type { MilestoneView } from './milestones'
 // unit-tested in tests/calendar.test.ts.
 //
 // Each due date is an all-day event (the earlier of the engine's date-based due
-// date and the mileage projection), one per car per day, with two alerts: 9am
-// a week before and 9am the day before. Never-logged items are left out: they
+// date and the mileage projection), one per car per day, with one alert at 9am
+// on the due day. Never-logged items are left out: they
 // only have a baseline guess, not a real due date.
 
 export interface CalendarItem {
@@ -177,16 +177,11 @@ export function buildCalendar(items: CalendarItem[], asOf: Date): string {
       `DESCRIPTION:${escapeText(it.description)}`,
       ...(it.url ? [`URL:${it.url}`] : []),
       'TRANSP:TRANSPARENT',
-      // All-day events start at midnight: -6D15H = 9am a week before, -15H = 9am the day before.
+      // All-day events start at midnight: PT9H = 9am on the due day.
       'BEGIN:VALARM',
       'ACTION:DISPLAY',
       `DESCRIPTION:${escapeText(it.title)}`,
-      'TRIGGER:-P6DT15H',
-      'END:VALARM',
-      'BEGIN:VALARM',
-      'ACTION:DISPLAY',
-      `DESCRIPTION:${escapeText(it.title)}`,
-      'TRIGGER:-PT15H',
+      'TRIGGER:PT9H',
       'END:VALARM',
       'END:VEVENT',
     )

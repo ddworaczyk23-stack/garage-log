@@ -94,7 +94,8 @@ describe('buildCalendar', () => {
     expect(ics.endsWith('END:VCALENDAR\r\n')).toBe(true)
     expect(ics).toContain('DTSTART;VALUE=DATE:20261231\r\n')
     expect(ics).toContain('DTEND;VALUE=DATE:20270101\r\n')
-    expect(ics.match(/BEGIN:VALARM/g)).toHaveLength(2)
+    expect(ics.match(/BEGIN:VALARM/g)).toHaveLength(1)
+    expect(ics).toContain('TRIGGER:PT9H')
     expect(ics).not.toMatch(/[^\r]\n/)
   })
 

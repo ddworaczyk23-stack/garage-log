@@ -95,7 +95,7 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
         {last && <span class="muted small">Last added {formatShortDate(last)}</span>}
       </div>
       <p class="muted small cal-export-hint">
-        Alerts 1 week and 1 day before each due date. On iPhone, open the downloaded file and tap{' '}
+        One alert at 9am on each due date. On iPhone, open the downloaded file and tap{' '}
         <strong>Add All</strong>. Dates shift as your mileage estimate updates, so re-add every month or
         two.
       </p>
