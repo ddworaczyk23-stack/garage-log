@@ -11,6 +11,13 @@ rule goes in `CLAUDE.md`, and the story goes in git history / a changelog if
 this project keeps one. This file is not the permanent record. Prune
 aggressively, every time.
 
-Nothing open right now. The onboarding-polish work (AddVehicle restyle +
-first-vehicle welcome banner) is implemented — see commit history for
-details.
+## Open
+
+- **Verify calendar export on a real iPhone.** "Add reminders to Calendar"
+  downloads `car-maintenance.ics`; expected flow is open file → "Add All".
+  Untested on iOS (cloud env has Chromium only). If iOS duplicates events on
+  re-import, consider switching the per-day UID scheme in `domain/calendar.ts`.
+- **Possible follow-up (not started, user chose calendar for now):** true
+  push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
+  for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
+  the device, so confirm with the user before building.
