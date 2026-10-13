@@ -4387,3 +4387,27 @@ a.list-row:hover {
 .ms .admin-form {
   margin-top: 14px;
 }
+
+/* "Add reminders to Calendar" (CalendarExport) — Dashboard + schedule card. */
+.cal-export {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 0.5px solid var(--border);
+}
+.card > .cal-export-lead + .cal-export {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+.cal-export-lead {
+  margin: 4px 0 12px;
+}
+.cal-export-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+.cal-export-hint {
+  margin: 8px 0 0;
+}

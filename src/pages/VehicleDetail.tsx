@@ -14,6 +14,7 @@ import { OdometerForm } from '../components/OdometerForm'
 import { EventListItem } from '../components/EventListItem'
 import { ScheduleRow } from '../components/ScheduleRow'
 import { MilestoneCard } from '../components/MilestoneCard'
+import { CalendarExport } from '../components/CalendarExport'
 import { MileageHistory } from '../components/MileageHistory'
 import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
@@ -417,6 +418,8 @@ export function VehicleDetail({ id }: Props) {
             )}
           </>
         )}
+
+        <CalendarExport vehicleId={id} />
       </section>
 
       <Reveal>
