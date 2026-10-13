@@ -445,7 +445,9 @@ export function VehicleDetail({ id }: Props) {
         ) : (
           <>
             {actionable.length === 0 ? (
-              <p class="muted small">Nothing needs attention right now — nice.</p>
+              // Never reassure about a car Coast doesn't know yet (PRODUCT.md
+              // principle 1); the not-set-up note above already explains it.
+              !notSetUp && <p class="muted small">Nothing needs attention right now — nice.</p>
             ) : (
               <ul class="vd-ledger">{actionable.map(renderRow)}</ul>
             )}
