@@ -103,6 +103,15 @@ body {
   overflow-x: hidden;
 }
 
+/* Form controls don't inherit font by default; without this every <button>
+   falls back to the UA font (Arial / system-ui) instead of Overpass. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
 body {
   font-family: var(--font-sans);
   background: var(--bg);
@@ -814,6 +823,7 @@ input::placeholder {
 
 /* ---------- Detail view ---------- */
 .back-link {
+  position: relative;
   display: inline-block;
   color: var(--accent);
   font-weight: 500;
@@ -1457,12 +1467,12 @@ iframe.preview-media {
 }
 .notice-success {
   background: var(--c-ok-bg);
-  border-color: rgba(74, 115, 64, 0.35);
+  border-color: color-mix(in srgb, var(--c-ok) 35%, transparent);
   color: var(--c-ok);
 }
 .notice-error {
   background: var(--danger-tint);
-  border-color: rgba(168, 51, 38, 0.3);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
   color: var(--c-overdue);
 }
 .restore-preview {
@@ -1536,7 +1546,7 @@ iframe.preview-media {
 /* ---------- Skeleton loaders ---------- */
 .skel {
   display: block;
-  background: linear-gradient(90deg, var(--hairline) 25%, rgba(35, 39, 43, 0.1) 37%, var(--hairline) 63%);
+  background: linear-gradient(90deg, var(--border) 25%, rgba(35, 39, 43, 0.1) 37%, var(--border) 63%);
   background-size: 400% 100%;
   border-radius: var(--radius-control);
   animation: skel-shimmer 1.4s ease infinite;
@@ -1552,7 +1562,7 @@ iframe.preview-media {
 @media (prefers-reduced-motion: reduce) {
   .skel {
     animation: none;
-    background: var(--hairline);
+    background: var(--border);
   }
 }
 .skel-title {
@@ -1611,6 +1621,21 @@ iframe.preview-media {
   }
 }
 
+/* ---------- Touch hit areas ----------
+   Small inline controls keep their visual size but get an invisible ::after
+   that extends the tap area toward 44px, so rows don't grow taller. */
+.infotip-btn::after,
+.vd-interval-edit::after,
+.back-link::after,
+.gb-link::after {
+  content: '';
+  position: absolute;
+  inset: -14px -10px;
+}
+.infotip-btn::after {
+  inset: -15px;
+}
+
 /* ---------- InfoTip (circled "?", click-toggle + desktop hover) ---------- */
 .infotip {
   position: relative;
@@ -1626,10 +1651,11 @@ iframe.preview-media {
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1.3px solid rgba(35, 39, 43, 0.4);
+  border: 1.3px solid var(--text-muted);
   border-radius: 50%;
   background: transparent;
-  color: rgba(35, 39, 43, 0.4);
+  color: var(--text-muted);
+  position: relative;
   font-family: var(--font-sans);
   font-size: 0.58rem;
   font-weight: 700;
@@ -1647,7 +1673,7 @@ iframe.preview-media {
   left: 0;
   z-index: 110;
   width: max-content;
-  max-width: 260px;
+  max-width: min(260px, calc(100vw - 32px));
   background: var(--bg-card);
   color: var(--text);
   border: 1px solid var(--border);
@@ -1804,6 +1830,7 @@ iframe.preview-media {
   font: inherit;
   font-size: 0.88rem;
   font-weight: 600;
+  min-height: 44px;
   padding: 7px 10px;
   border-radius: 8px;
   cursor: pointer;
@@ -1859,7 +1886,7 @@ iframe.preview-media {
 }
 .cost-bar-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--c-cost);
   border-radius: 999px;
   transition: width 0.6s var(--ease-mech);
 }
@@ -2548,6 +2575,7 @@ iframe.preview-media {
    status-dependent action button, and it's unambiguous what "Edit" acts on
    when it's touching the interval text instead of floating at the row's end. */
 .vd-interval-edit {
+  position: relative;
   background: none;
   border: none;
   padding: 0;
@@ -2567,7 +2595,7 @@ iframe.preview-media {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 7px;
+  gap: 2px;
   text-align: right;
 }
 .vd-row .bullet {
@@ -2575,6 +2603,9 @@ iframe.preview-media {
   grid-row: 2;
 }
 .vd-log-btn {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   font-family: var(--font-mono);
   font-size: 10.5px;
   font-weight: 500;
@@ -2772,7 +2803,7 @@ a.list-row:hover {
   gap: 8px;
 }
 .gb-status b {
-  color: var(--c-overdue);
+  color: var(--text);
   font-weight: 600;
 }
 .gb-status b.tone-ok {
@@ -2959,10 +2990,11 @@ a.list-row:hover {
 .gb-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 22px;
+  gap: 18px 22px;
   margin-top: 4px;
 }
 .gb-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: 5px;
