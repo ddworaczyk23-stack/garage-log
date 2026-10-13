@@ -543,7 +543,7 @@ export function VehicleDetail({ id }: Props) {
           Log
         </button>
       )}
-      {toast && <Toast key={toast.id} message={toast.message} onDismiss={() => setToast(null)} />}
+      <Toast message={toast?.message ?? ''} onDismiss={() => setToast(null)} />
     </section>
   )
 }

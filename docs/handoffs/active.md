@@ -13,14 +13,15 @@ aggressively, every time.
 
 ## Open
 
-- **Mobile redesign, phase 4.** Plan: `docs/superpowers/plans/2026-10-13-mobile-redesign.md`
+- **Mobile redesign, phase 4 review/deploy.** Plan: `docs/superpowers/plans/2026-10-13-mobile-redesign.md`
   (from the 2026-10-13 design review, `.impeccable/critique/2026-10-13T19-44-04Z__src.md`).
-  Quick wins = PR #7, Phase 1 = PR #9, and Phase 2 = PR #11; all are merged. Phase 3 is
-  implemented on `codex/mobile-redesign-phase-3`: shared page headers, the documented type
-  roles, stroke SVG icons, standardized “Add a car”/money wording, and the simplified Costs
-  summary. It has 388 tests + typecheck passing and all target routes were verified without
-  horizontal overflow at 375px. Await its review/merge, then start Phase 4 from updated
-  `main`; Phase 4 also lists two Phase 1 review follow-ups. One PR per phase off `main`.
+  Quick wins = PR #7, Phase 1 = PR #9, Phase 2 = PR #11, and Phase 3 = PR #12; all are
+  merged. Phase 4 is implemented on `codex/mobile-redesign-phase-4`: polished EventForm and
+  AddVehicle controls, owner-history cost sanity warnings, history-gated dashboard utilities,
+  narrow document filters, “No history” schedule cues, and a persistent toast live region.
+  It has 393 tests + typecheck passing, the save/warning flow was exercised end to end, and
+  target routes were verified at 375px and 390px with no overflow or console errors. Await
+  review/merge and an iPhone check; this completes the four-phase implementation plan.
 
 - **Verify calendar export on a real iPhone.** "Add reminders to Calendar"
   downloads `car-maintenance.ics`; expected flow is open file → "Add All".

@@ -171,12 +171,6 @@ export function Backup() {
           )}
         </section>
       </Reveal>
-
-      <p class="page-footer-link">
-        <a class="btn-link" href="#/debug">
-          Developer &amp; debug tools →
-        </a>
-      </p>
     </section>
   )
 }

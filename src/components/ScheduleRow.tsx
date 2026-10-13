@@ -80,6 +80,12 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
               </span>
             </>
           )}
+          {!hasHistory && !estimated && (
+            <>
+              <span class="sep">·</span>
+              <span class="vd-row-no-history">No history</span>
+            </>
+          )}
           {r.projectedDueDate && (
             <>
               <span class="sep">·</span>

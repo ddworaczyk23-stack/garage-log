@@ -94,8 +94,14 @@ Today ~12 sections and 7+ ways to add something. Target order:
    styled file button instead of native "Choose Files", hide "Quick fill"
    on edit, Year as a select (current year back 40), Drivetrain as chips
    (FWD / RWD / AWD / 4WD).
-2. Cost sanity check: warn (not block) when a cost is over ~3x the typical
-   range for the category (`domain/costHeuristics.ts` already has ranges).
+2. Cost sanity check, from the owner's OWN history only (no typical-price
+   ranges: `costHeuristics.ts` was removed in 2cabb95 because sample prices
+   misled). New pure helper in `domain/cost.ts`, unit-tested:
+   `costLooksOff(cost, priorCosts)` returns true when there is at least one
+   prior cost > 0 for the same vehicle + category and `cost` is more than 3x
+   the highest of them. No prior cost -> never warn. EventForm shows a
+   non-blocking inline note under Cost ("That's much higher than you've paid
+   before for this ($25). Double-check the amount.") and still saves.
 3. AddVehicle: one time promise ("about a minute") to match the welcome.
    VIN mode: hint "Find it on the driver-side dashboard or your insurance
    card". Keep the slate hero but drop the double border; it is a page
