@@ -13,12 +13,6 @@ aggressively, every time.
 
 ## Open
 
-- **Round 2: logic + bugs.** Plan: `docs/superpowers/plans/2026-10-13-round-2-logic.md`
-  (from `.impeccable/critique/2026-10-13T21-08-48Z__src.md`). Mobile redesign phases 1-4
-  are merged and live (PRs #9, #11, #12, #13). Round 2 was built by Claude as PR #14
-  (awaiting merge). Next after it: a finish round (tap targets on .btn-link and
-  .list-row-link, Three Voices drift, service page verdict slab) from the same critique.
-
 - **Verify calendar export on a real iPhone.** "Add reminders to Calendar"
   downloads `car-maintenance.ics`; expected flow is open file → "Add All".
   Untested on iOS (cloud env has Chromium only). If iOS duplicates events on
