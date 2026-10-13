@@ -2,7 +2,7 @@ import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
 import { vehicleLabel } from '../domain/vehicle'
-import { bandFromStatus, hasRealData, VERDICT_BAND_LABELS, type VerdictBand } from '../domain/verdict'
+import { hasRealData, knownReminders, itemBand, VERDICT_BAND_LABELS, type VerdictBand } from '../domain/verdict'
 import { PageHeader, Skel } from '../components/ui'
 import { VehicleIcon } from '../components/icons'
 import { Reveal } from '../components/motion/Reveal'
@@ -19,8 +19,10 @@ async function loadVehiclesWithStatus() {
       const known = hasRealData(reminders)
       // rankReminders (via getVehicleReminders) already sorts worst-first, so
       // the first non-not-applicable entry is this vehicle's worst band.
-      const top = known ? (reminders.find((r) => r.status !== 'not-applicable') ?? null) : null
-      const band: VerdictBand = known ? (top ? (bandFromStatus(top.status) ?? 'all-clear') : 'all-clear') : 'not-set-up'
+      // Worst band among LOGGED items (never-logged ones are Unknown).
+      const bands = knownReminders(reminders).map(itemBand)
+      const worst = (['fix-now', 'book-soon', 'coast', 'all-clear'] as const).find((b) => bands.includes(b))
+      const band: VerdictBand = known ? (worst ?? 'all-clear') : 'not-set-up'
       return { vehicle: v, band }
     }),
   )

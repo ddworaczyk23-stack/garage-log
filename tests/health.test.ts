@@ -40,12 +40,18 @@ describe('vehicleHealth — worst-wins band', () => {
     expect(health.reasons).toEqual(['all caught up'])
   })
 
-  it('an overdue reminder makes the band fix-now regardless of concerns', () => {
+  it('an overdue safety reminder makes the band fix-now regardless of concerns', () => {
     // Way past the 5000mi interval -> overdue.
-    const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-01-10', 46000))
+    const rule = makeRule({ label: 'Brake inspection', category: 'brake-inspection' })
+    const reminders = computeVehicleReminders([rule], [], inputsAt('2026-01-10', 46000))
     const health = vehicleHealth(reminders, [], false)
     expect(health.band).toBe('fix-now')
     expect(health.reasons).toContain('1 overdue')
+  })
+
+  it('an overdue routine reminder is book-soon, not fix-now', () => {
+    const reminders = computeVehicleReminders([makeRule()], [], inputsAt('2026-01-10', 46000))
+    expect(vehicleHealth(reminders, [], false).band).toBe('book-soon')
   })
 
   it('a fix-now open concern outranks an otherwise all-clear reminder set', () => {

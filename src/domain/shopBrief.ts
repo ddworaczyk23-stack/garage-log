@@ -1,7 +1,7 @@
 import type { ComputedReminder } from './reminderEngine'
 import type { MaintenanceCategory, Vehicle } from '../types'
 import type { SignalBand } from './verdict'
-import { bandFromStatus } from './verdict'
+import { itemBand } from './verdict'
 import { formatMiles, formatMoney, formatShortDate, localDateISO } from './format'
 
 // ---------------------------------------------------------------------------
@@ -348,7 +348,7 @@ export function briefFromReminder(
   r: ComputedReminder,
   preparedDate: string = localDateISO(new Date()),
 ): ShopBrief {
-  const band = bandFromStatus(r.status) ?? 'coast'
+  const band = itemBand(r) ?? 'coast'
   const curated = CATEGORY_BRIEFS[r.rule.category]
 
   const dueBits: string[] = []

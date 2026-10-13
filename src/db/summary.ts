@@ -25,7 +25,7 @@ import {
 } from '../domain/vehicleRanking'
 import { buildCostBreakdown, costPerMile, filterByYear, type CostBreakdown } from '../domain/cost'
 import { vehicleHealth, type VehicleHealth } from '../domain/health'
-import { hasHistory } from '../domain/verdict'
+import { hasHistory, itemBand } from '../domain/verdict'
 import { milesThisYear } from '../domain/mileage'
 import { vehicleLabel } from '../domain/vehicle'
 import { formatMoney } from '../domain/format'
@@ -264,7 +264,9 @@ function buildAttentionFeed(summaries: VehicleSummary[]): AttentionItem[] {
     const vItems: AttentionItem[] = []
     for (const r of s.reminders) {
       if (!hasHistory(r)) continue
-      if (r.status === 'overdue') vItems.push(reminderItem(0, 'overdue', s, r, 0))
+      // Routine overdue items read amber ("due"), like the verdict (itemBand).
+      if (r.status === 'overdue' && itemBand(r) === 'fix-now') vItems.push(reminderItem(0, 'overdue', s, r, 0))
+      else if (r.status === 'overdue') vItems.push(reminderItem(0, 'due', s, r, 0))
       else if (r.status === 'due-next') vItems.push(reminderItem(1, 'due', s, r, 0))
       else if (r.status === 'watch-next') vItems.push(reminderItem(3, 'watch', s, r, 0))
     }

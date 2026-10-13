@@ -146,6 +146,11 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   rules take whichever axis is more urgent. `STALE_ODOMETER_DAYS` = 90 (age of
   the last REAL reading; a gentle "confirm mileage" nudge).
   `DEFAULT_ANNUAL_MILEAGE` = 12000 (only for ranking mileage- vs date-based items).
+- **Red is for safety only** (`itemBand()` / `SAFETY_CATEGORIES` in
+  `verdict.ts`): an overdue brake, tire-replacement/inspection or timing-belt
+  item is red "fix now"; any other overdue item is amber "book soon". Use
+  `itemBand(r)`, not `bandFromStatus(r.status)`, for anything shown (user
+  decision 2026-10-13).
 - **5 states** (`MaintenanceStatus`): completed, watch-next, due-next, overdue,
   not-applicable. "watch/due soon" → `watch-next`; "due now/next" → `due-next`.
 - **Interval selection order:** `custom ?? consensus ?? factory`. Custom is the
