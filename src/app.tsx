@@ -7,6 +7,7 @@ import { Vehicles } from './pages/Vehicles'
 import { AddVehicle } from './pages/AddVehicle'
 import { VehicleDetail } from './pages/VehicleDetail'
 import { ServiceDetail } from './pages/ServiceDetail'
+import { MilestoneDetail } from './pages/MilestoneDetail'
 import { Check } from './pages/Check'
 import { ShopBriefPage } from './pages/ShopBrief'
 import { Documents } from './pages/Documents'
@@ -27,6 +28,7 @@ import { ReminderDebug } from './pages/ReminderDebug'
 //   #/add-vehicle           -> Add a new car (VIN or manual entry)
 //   #/vehicle/<id>          -> Vehicle detail
 //   #/service/<vehicleId:category> -> One service item: overview + its logged history
+//   #/milestone/<vehicleId>/<miles> -> One milestone checkup (30k/60k/100k…) checklist
 //   #/check                 -> Start a triage check (pick a vehicle)
 //   #/check/<id>            -> …the triage flow for one vehicle
 //   #/brief/<id>            -> Shop brief (id = concern id OR reminder-rule id)
@@ -56,7 +58,10 @@ export function App() {
     page = <VehicleDetail id={route.slice('/vehicle/'.length)} />
   else if (route.startsWith('/service/'))
     page = <ServiceDetail id={decodeURIComponent(route.slice('/service/'.length))} />
-  else if (route === '/check') page = <Check />
+  else if (route.startsWith('/milestone/')) {
+    const [vehicleId, miles] = route.slice('/milestone/'.length).split('/')
+    page = <MilestoneDetail vehicleId={decodeURIComponent(vehicleId ?? '')} miles={Number(miles)} />
+  } else if (route === '/check') page = <Check />
   else if (route.startsWith('/check/')) page = <Check vehicleId={route.slice('/check/'.length)} />
   else if (route.startsWith('/brief/')) page = <ShopBriefPage id={route.slice('/brief/'.length)} />
   else if (route === '/documents') page = <Documents />

@@ -96,6 +96,10 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   this query shape), `getGarageSummary()` (per-vehicle `VehicleSummary` + capped
   `AttentionItem[]` feed), `getGarageCostSummary()`. Reads every table inside the
   caller's liveQuery so the dashboard recomputes on any write.
+- **`src/db/milestones.ts`** — milestone checkup writes (check item, notes,
+  complete, skip, reopen) + `getMilestoneContext()`. Progress lives on
+  `Vehicle.milestones` (non-indexed, no schema bump, syncs/backs up with the
+  vehicle). **Deliberately independent of reminder rules** — never touches them.
 - **`src/db/vehicleOnboarding.ts`** — `addVehicle()` (dedup-checked via
   `matchesExistingVehicle`; creates the vehicle + its generic maintenance
   schedule in one transaction).
@@ -103,6 +107,10 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   - `reminderEngine.ts` — `computeReminder(rule, inputs)` + `computeVehicleReminders`.
   - `reminderStatus.ts` — `resolveInterval(rule)`, `resolveLastDone()`.
   - `vehicleRanking.ts` — lexicographic `compareVehicleUrgency` + `vehicleBadges`.
+  - `milestones.ts` — 30k/60k/90k/100k/120k/150k (+every 30k) checklists,
+    tailored by `componentProfile()` (turbo/4WD/CVT/etc. inferred from engine,
+    drivetrain and the vehicle's schedule categories). General guidance only.
+  - `serviceHistory.ts` — per-service history/stats for `#/service/<id>`.
   - `documents.ts`, `cost.ts`, `backup.ts`, `format.ts`, `vehicle.ts`,
     `vehicleIdentity.ts`, `importHistory.ts`, `practicalTiming.ts`,
     `costHeuristics.ts`.
@@ -115,7 +123,8 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   `VehicleDocuments` (Glovebox), `NicknameEditor`, `AccountBar`, `ui.tsx`
   (`Loading`, `EmptyState`, `ConfirmButton`, `ErrorBoundary`).
 - **`src/app.tsx`** — shell + a tiny **hash router** (`#/`, `#/vehicles`,
-  `#/vehicle/<id>`, `#/documents`, `#/costs`, `#/backup`, `#/add-vehicle`,
+  `#/vehicle/<id>`, `#/service/<vehicleId:category>`,
+  `#/milestone/<vehicleId>/<miles>`, `#/documents`, `#/costs`, `#/backup`, `#/add-vehicle`,
   `#/import/<id>`, `#/debug`, `#/template`, `#/reminders-debug`). Hash routing is
   deliberate — deep-links on static hosts with no 404-rewrite, survives
   `base: './'`. Don't swap in a History-API router without a Pages fallback.
