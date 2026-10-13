@@ -20,6 +20,13 @@
 :root {
   /* Palette — daylight concrete + asphalt, signed in guide-sign blue. */
   --bg: #efefea; /* daylight concrete canvas */
+  /* Night-road navy frame (header, page title band, nav). Chrome, not
+     status: it never means "can coast" — signal colors stay inside cards. */
+  --frame: #0f2a44;
+  --frame-line: rgba(255, 255, 255, 0.12);
+  --on-frame: #ffffff;
+  --on-frame-muted: rgba(255, 255, 255, 0.74); /* 8.6:1 on --frame */
+  --on-frame-accent: #9cc3f0; /* links, eyebrows, active tab: 8.2:1 */
   --bg-elevated: #fafaf7;
   --bg-card: #ffffff; /* sign-face white */
   --bg-inset: #f0f0eb; /* concrete wells inside cards */
@@ -592,6 +599,11 @@ a.list-row:active {
   gap: 8px;
   flex-shrink: 0;
 }
+/* Edit / Delete: 44px-wide targets, not just tall ones. */
+.row-actions .btn-link {
+  min-width: 44px;
+  text-align: center;
+}
 .btn-link-danger {
   color: var(--danger);
 }
@@ -699,6 +711,11 @@ input[type='file'] {
   font-size: 0.92rem;
   font-family: inherit;
   width: 100%;
+  min-height: 42px;
+}
+input[type='number'] {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
 }
 select:focus,
 textarea:focus,
@@ -1177,6 +1194,10 @@ input::placeholder {
 .btn-link:hover {
   background: var(--accent-tint);
 }
+/* Beats .btn-link's accent color (same specificity, declared later). */
+.btn-link.btn-link-danger {
+  color: var(--danger);
+}
 .btn-link-danger:hover,
 .btn-link.danger:hover {
   background: var(--danger-tint);
@@ -1187,6 +1208,10 @@ input::placeholder {
   gap: 8px;
   border-top: 0.5px solid var(--border);
   padding-top: 10px;
+}
+/* As a standalone card (Add a car), keep the card's 16px top padding. */
+.card.admin-form {
+  padding-top: 16px;
 }
 .admin-when {
   display: flex;
@@ -2646,7 +2671,7 @@ iframe.preview-media {
 .vd-lamp.is-overdue {
   background: var(--c-overdue);
   box-shadow: 0 0 0 3px var(--c-overdue-bg);
-  animation: lamp-pulse-overdue 2.4s ease-in-out infinite;
+  animation: lamp-pulse-overdue 2.4s ease-in-out 2;
 }
 @keyframes lamp-pulse-overdue {
   0%,
@@ -2927,7 +2952,8 @@ iframe.preview-media {
 .vd-layout {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 14px;
+  /* Cards carry their own 16px margin; a row gap on top made 30px. */
+  gap: 0;
 }
 .vd-rail,
 .vd-main {
@@ -3335,13 +3361,6 @@ a.list-row:hover {
 /* The honest unknown state — slate, deliberately outside the signal scale
    (white on #5c636b ≈ 5.9:1, AA at all sizes used on the panel). */
 .cv-panel.cv-slate { background: var(--c-stale); }
-.add-vehicle-intro {
-  padding: 0;
-}
-.add-vehicle-intro .cv-inner {
-  border: 0;
-  padding: 18px;
-}
 
 /* --- First-run (empty garage) + not-set-up setup actions ------------------ */
 /* The activation path as a real ordered sequence (add car → odometer →
@@ -3447,7 +3466,9 @@ a.list-row:hover {
   transition: left 0.3s var(--ease-snap);
 }
 .cv-ruler-pin.is-fix-now {
-  animation: ruler-pin-pulse 2.4s ease-in-out infinite;
+  /* Two pulses to draw the eye, then still: no endless alarm (DESIGN.md
+     Ambient-Only Rule, PRODUCT.md anti-reference "fear-mongering car app"). */
+  animation: ruler-pin-pulse 2.4s ease-in-out 2;
 }
 @keyframes ruler-pin-pulse {
   0%,
@@ -3551,7 +3572,7 @@ a.list-row:hover {
 }
 .cv-coast-label + .cv-coast-item { border-top: 0; }
 .cv-unknown-note {
-  margin: 10px 2px 0;
+  margin: 10px 0 0;
   font-size: 13px;
   color: var(--text-muted);
 }
@@ -4625,6 +4646,24 @@ a.list-row:hover {
   font-size: 0.92rem;
   overflow-wrap: anywhere;
 }
+/* Values are data: miles, dates, intervals (DESIGN.md: numbers in mono). */
+.sd-facts dd {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+}
+.sd-facts dd .btn-link {
+  font-family: var(--font-sans);
+}
+.sd-stats-line {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+/* The service sign sits on the canvas like the vehicle verdict, not nested
+   inside the overview card. */
+.sd-sign {
+  margin-bottom: 16px;
+}
 .sd-facts-wide {
   grid-column: 1 / -1;
 }
@@ -4763,4 +4802,154 @@ a.list-row:hover {
 }
 .cal-export-hint {
   margin: 8px 0 0;
+}
+
+/* =========================================================================
+   NAVY FRAME (2026-10-13). The app's chrome — top bar, each page's title
+   band, bottom nav (desktop: the left rail) — is deep night-road navy, so
+   the screen isn't all grey and white. Cards stay white on concrete, so the
+   four signal colors keep their meaning and still stand out.
+   ========================================================================= */
+.app-header {
+  background: var(--frame);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-bottom: 0;
+}
+.app-mark {
+  color: var(--on-frame-accent);
+}
+.app-title {
+  color: var(--on-frame);
+}
+
+/* Title band: the first block(s) of a page continue the header's navy and
+   bleed to both screen edges (box-shadow + clip-path extend it past the
+   centered 700px column on wide screens). */
+.page > .back-link:first-child,
+.page-header,
+.vd-masthead {
+  background: var(--frame);
+  color: var(--on-frame);
+  margin-inline: -16px;
+  padding-inline: 16px;
+  box-shadow: 0 0 0 100vmax var(--frame);
+  clip-path: inset(0 -100vmax);
+}
+/* Pull the band up under the header (cancels .app-main's 20px top pad). */
+.page > .back-link:first-child,
+.page > .page-header:first-child,
+.page > .vd-masthead:first-child,
+.page > .vd-rail:first-child > .vd-masthead:first-child {
+  margin-top: -20px;
+  padding-top: 18px;
+}
+.page > .back-link:first-child {
+  display: block;
+  margin-bottom: 0;
+  padding-bottom: 6px;
+  color: var(--on-frame-accent);
+}
+.page > .back-link:first-child + .vd-layout > .vd-rail:first-child > .vd-masthead:first-child,
+.page > .back-link:first-child + .page-header,
+.page > .back-link:first-child + * > .vd-masthead:first-child,
+.page > .back-link:first-child + .vd-masthead {
+  margin-top: 0;
+  padding-top: 4px;
+}
+.page-header,
+.vd-masthead {
+  padding-bottom: 22px;
+  margin-bottom: 20px;
+}
+.page-header .rule-double,
+.vd-masthead .rule-double {
+  display: none;
+}
+.page-header .page-title,
+.vd-masthead .page-title,
+.vd-masthead .vd-name {
+  color: var(--on-frame);
+}
+.page-header .eyebrow,
+.vd-masthead .eyebrow {
+  color: var(--on-frame-accent);
+}
+.page-header-meta,
+.page-header-prose,
+.page-header .muted,
+.vd-masthead .muted,
+.vd-masthead .vd-spec,
+.page-header .gb-status,
+.page-header .gb-status b {
+  color: var(--on-frame-muted);
+}
+.page-header .btn-link,
+.vd-masthead .btn-link,
+.page-header a:not(.btn) {
+  color: var(--on-frame-accent);
+}
+
+/* Bottom nav */
+.bottom-nav {
+  background: var(--frame);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  border-top: 0;
+}
+.nav-item,
+.nav-check {
+  color: var(--on-frame-muted);
+}
+.nav-item.is-active,
+.nav-check.is-active {
+  color: var(--on-frame);
+}
+.nav-item.is-active .nav-icon {
+  color: var(--on-frame-accent);
+}
+/* The raised Check disc keeps guide-sign blue; a navy ring separates it from
+   the bar instead of the old blue glow. */
+.nav-check-disc {
+  box-shadow: 0 0 0 4px var(--frame), inset 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+@media (min-width: 1024px) {
+  .app-header,
+  .bottom-nav,
+  .account-bar {
+    background: var(--frame);
+    border-right: 0;
+  }
+  .account-bar,
+  .account-status {
+    color: var(--on-frame-muted);
+  }
+  .account-bar .btn-link {
+    color: var(--on-frame-accent);
+  }
+  .nav-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--on-frame);
+  }
+  .nav-item.is-active {
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--on-frame);
+  }
+  /* The band only bleeds into the content column, not under the rail. */
+  .page > .back-link:first-child,
+  .page-header,
+  .vd-masthead {
+    clip-path: inset(0 -100vmax 0 -16px);
+  }
+}
+
+/* Two-column vehicle page: the masthead's navy bleed would paint over the
+   schedule column (clip-path makes the band its own layer). Lift the main
+   column above it so its first card overlaps the band, hero-style. */
+@media (min-width: 900px) and (max-width: 1023px), (min-width: 1200px) {
+  .vd-main {
+    position: relative;
+    z-index: 1;
+  }
 }

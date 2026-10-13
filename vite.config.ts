@@ -20,7 +20,7 @@ export default defineConfig({
         name: 'Coast',
         short_name: 'Coast',
         description: 'Plain answers about your cars — what needs attention, what can wait, and what it should cost.',
-        theme_color: '#efefea',
+        theme_color: '#0f2a44',
         background_color: '#efefea',
         display: 'standalone',
         orientation: 'portrait',

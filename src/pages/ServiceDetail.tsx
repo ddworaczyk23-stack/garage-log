@@ -81,9 +81,14 @@ export function ServiceDetail({ id }: { id: string }) {
       <PageHeader eyebrow={`Service · ${vehicleLabel(vehicle)}`} title={label} />
 
       {r && (
-        <section class="card sd-overview">
-          {/* The same road sign as the vehicle verdict, for this one service. */}
+        // The same road sign as the vehicle verdict, for this one service.
+        <div class="cv-card sd-sign">
           <VerdictPanel verdict={serviceVerdict(r)} tag="This service" />
+        </div>
+      )}
+
+      {r && (
+        <section class="card sd-overview">
           {prog && <BulletTrack pct={prog.pct} zone={prog.zone} reduced={reduced} />}
           {r.odometerStale && (
             <p class="muted small sd-stale">

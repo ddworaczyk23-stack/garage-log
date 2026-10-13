@@ -461,13 +461,17 @@ export function serviceVerdict(r: ComputedReminder): VerdictSign {
     }
   }
   const when = windowText(r)
+  // The headline already says when; the sentence adds the anchor it's from.
+  const sentence = r.lastDone.date
+    ? `Last done ${formatShortDate(r.lastDone.date)}${r.lastDone.miles != null ? ` at ${formatMiles(r.lastDone.miles)}` : ''}.`
+    : r.reason
   switch (r.status) {
     case 'overdue':
-      return { band: 'fix-now', headline: `${capitalize(overdueText(r))}.`, sentence: r.reason }
+      return { band: 'fix-now', headline: `${capitalize(overdueText(r))}.`, sentence }
     case 'due-next':
-      return { band: 'book-soon', headline: when ? `Due ${when}.` : 'Due soon.', sentence: r.reason }
+      return { band: 'book-soon', headline: when ? `Due ${when}.` : 'Due soon.', sentence }
     case 'watch-next':
-      return { band: 'coast', headline: when ? `Coming up ${when}.` : 'Coming up.', sentence: r.reason }
+      return { band: 'coast', headline: when ? `Coming up ${when}.` : 'Coming up.', sentence }
     default:
       return {
         band: 'all-clear',
@@ -475,7 +479,7 @@ export function serviceVerdict(r: ComputedReminder): VerdictSign {
           r.milesRemaining != null && r.milesRemaining > 0
             ? `All clear for ~${formatMiles(r.milesRemaining)}.`
             : 'All clear.',
-        sentence: r.reason,
+        sentence,
       }
   }
 }
