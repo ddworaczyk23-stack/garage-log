@@ -440,3 +440,46 @@ export function vehicleVerdict(
       : null,
   }
 }
+
+/** The sign fields a VerdictPanel renders. */
+export type VerdictSign = Pick<VehicleVerdict, 'band' | 'headline' | 'sentence'>
+
+/**
+ * The road sign for ONE service (the service page). Same bands as the vehicle
+ * verdict; a never-logged item is slate "Not logged yet", never a projected
+ * urgency (see knownReminders).
+ */
+export function serviceVerdict(r: ComputedReminder): VerdictSign {
+  if (r.status === 'not-applicable') {
+    return { band: 'not-set-up', headline: 'Not tracked.', sentence: r.reason }
+  }
+  if (!hasHistory(r)) {
+    return {
+      band: 'not-set-up',
+      headline: 'Not logged yet.',
+      sentence: 'Log when you last did this and Coast tracks it from there.',
+    }
+  }
+  const when = windowText(r)
+  switch (r.status) {
+    case 'overdue':
+      return { band: 'fix-now', headline: `${capitalize(overdueText(r))}.`, sentence: r.reason }
+    case 'due-next':
+      return { band: 'book-soon', headline: when ? `Due ${when}.` : 'Due soon.', sentence: r.reason }
+    case 'watch-next':
+      return { band: 'coast', headline: when ? `Coming up ${when}.` : 'Coming up.', sentence: r.reason }
+    default:
+      return {
+        band: 'all-clear',
+        headline:
+          r.milesRemaining != null && r.milesRemaining > 0
+            ? `All clear for ~${formatMiles(r.milesRemaining)}.`
+            : 'All clear.',
+        sentence: r.reason,
+      }
+  }
+}
+
+function capitalize(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1)
+}

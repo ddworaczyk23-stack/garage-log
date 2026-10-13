@@ -7,6 +7,16 @@
  * status pill anywhere in the app and a verdict panel on Today speak the same
  * language. All class names predate this pass — only presentation changed. */
 
+/* Overpass draws the middle dot (U+00B7, our " · " separator) with zero
+   advance width, so it collides with the next word ("2026 ·89,500"). This
+   face supplies ONLY that character from a system font; everything else
+   still renders in Overpass. */
+@font-face {
+  font-family: 'Coast Dot';
+  src: local('Helvetica Neue'), local('Helvetica'), local('Arial'), local('Roboto');
+  unicode-range: U+00B7;
+}
+
 :root {
   /* Palette — daylight concrete + asphalt, signed in guide-sign blue. */
   --bg: #efefea; /* daylight concrete canvas */
@@ -56,7 +66,7 @@
   --sig-blue-deep: var(--c-watch);
   --sig-green: var(--c-ok);
   --sig-green-ink: #1a6a3c; /* text-on-tint green — --sig-green itself measured 4.40:1 on its own 14% tint, just under 4.5:1 */
-  --font-signal: 'Overpass', var(--font-sans);
+  --font-signal: var(--font-sans);
 
   /* Elevation — cool-tinted, soft */
   --shadow-card: 0 1px 2px rgba(35, 39, 43, 0.05), 0 10px 26px -14px rgba(35, 39, 43, 0.18);
@@ -69,13 +79,13 @@
   --gap: 16px;
   --nav-height: 60px;
 
-  /* Type identity — the Coast trio (self-hosted, see styles/fonts.ts).
-     Overpass = the road-sign voice (UI, headings, verdicts), Newsreader = the
-     human explanation voice (serif prose), Overpass Mono = the data spine. */
+  /* Type identity — two fonts (self-hosted, see styles/fonts.ts).
+     Overpass = every word (UI, headings, verdicts, explanations),
+     Overpass Mono = the data spine (money, miles, dates). The Newsreader serif
+     was dropped 2026-10-13: three fonts read as inconsistent on a phone. */
   --font-sans:
-    'Overpass', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI',
+    'Coast Dot', 'Overpass', -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI',
     Roboto, Helvetica, Arial, sans-serif;
-  --font-serif: 'Newsreader', Georgia, 'Times New Roman', serif;
   --font-mono: 'Overpass Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
   /* Motion vocabulary — one coherent physics across the app. */
@@ -251,7 +261,7 @@ body {
   max-width: 62ch;
   margin: 9px 0 0;
   color: var(--text-muted);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 15.5px;
   line-height: 1.45;
 }
@@ -611,13 +621,13 @@ a.list-row:active {
 }
 .field-hint {
   color: var(--text-muted);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 0.82rem;
   line-height: 1.35;
 }
 .cost-sanity-note {
   color: var(--c-due);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 0.85rem;
   line-height: 1.4;
 }
@@ -892,7 +902,7 @@ input::placeholder {
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(23, 27, 32, 0.5);
   color: #fff;
   font-size: 0.72rem;
   line-height: 1;
@@ -1155,6 +1165,14 @@ input::placeholder {
   cursor: pointer;
   align-self: flex-start;
   border-radius: 6px;
+  position: relative;
+}
+/* 33px visual -> 45px tap height without moving anything. Vertical only, so
+   side-by-side pairs (Edit · Delete) never steal each other's taps. */
+.btn-link::after {
+  content: '';
+  position: absolute;
+  inset: -6px 0;
 }
 .btn-link:hover {
   background: var(--accent-tint);
@@ -1476,7 +1494,7 @@ code {
   position: fixed;
   inset: 0;
   z-index: 100;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(23, 27, 32, 0.4);
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1774,6 +1792,13 @@ iframe.preview-media {
 .infotip-btn::after {
   inset: -15px;
 }
+.gb-link::after {
+  inset: -13px -10px;
+}
+/* Room under the last card so the floating "+ Log" never covers it. */
+.page.vd {
+  padding-bottom: 64px;
+}
 
 /* ---------- InfoTip (circled "?", click-toggle + desktop hover) ---------- */
 .infotip {
@@ -1822,29 +1847,30 @@ iframe.preview-media {
   font-size: 0.85rem;
   font-weight: 400;
   line-height: 1.4;
-  opacity: 0;
-  transform: translateY(4px);
-  pointer-events: none;
-  transition:
-    opacity 0.12s ease-out,
-    transform 0.12s ease-out;
+  /* Closed tips take no space: an invisible 260px box anchored near the right
+     edge used to widen the page (masked only by html overflow-x: hidden). */
+  display: none;
 }
 .infotip.is-open .infotip-pop {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
+  display: block;
+  animation: infotip-in 0.12s ease-out;
 }
 @media (hover: hover) {
   .infotip:hover .infotip-pop,
   .infotip:focus-within .infotip-pop {
-    opacity: 1;
-    transform: translateY(0);
-    pointer-events: auto;
+    display: block;
+    animation: infotip-in 0.12s ease-out;
+  }
+}
+@keyframes infotip-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
 }
 @media (prefers-reduced-motion: reduce) {
   .infotip-pop {
-    transition: none;
+    animation: none !important;
   }
 }
 
@@ -1911,7 +1937,7 @@ iframe.preview-media {
   color: #fff;
 }
 .doc-confirm-no {
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(23, 27, 32, 0.55);
   color: #fff;
 }
 
@@ -1953,7 +1979,7 @@ iframe.preview-media {
 }
 .cost-summary {
   margin: 0 0 var(--gap);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.05rem;
   line-height: 1.5;
 }
@@ -1964,7 +1990,7 @@ iframe.preview-media {
 }
 .cost-vehicle-summary {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 0.95rem;
   line-height: 1.45;
 }
@@ -2176,9 +2202,6 @@ iframe.preview-media {
    ============================================================ */
 
 /* --- editorial type utilities --- */
-.font-serif {
-  font-family: var(--font-serif);
-}
 .num {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
@@ -2248,7 +2271,7 @@ iframe.preview-media {
   min-width: 0;
 }
 .fold-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 1.1rem;
   letter-spacing: -0.01em;
@@ -2539,7 +2562,7 @@ iframe.preview-media {
   margin-bottom: 9px;
 }
 .vd-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 34px;
   line-height: 1.03;
@@ -2731,7 +2754,7 @@ iframe.preview-media {
   min-width: 0;
 }
 .vd-svc {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 500;
   font-size: 17px;
   letter-spacing: -0.005em;
@@ -2752,7 +2775,7 @@ iframe.preview-media {
   color: var(--text);
 }
 .vd-row-reason {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 12.5px;
   letter-spacing: 0;
 }
@@ -2812,7 +2835,7 @@ iframe.preview-media {
   font-weight: 600;
   font-size: 14px;
   border: 0;
-  padding: 11px 20px;
+  padding: 13px 20px;
   border-radius: 999px;
   box-shadow: var(--shadow-raised);
   display: inline-flex;
@@ -2949,9 +2972,9 @@ iframe.preview-media {
    Premium polish pass — depth, editorial type, snappy 150ms
    micro-interactions. Layout & logic unchanged.
    ============================================================ */
-/* Page titles and vehicle names use Newsreader; card titles stay signage. */
+/* Page titles and vehicle names: Overpass display weight. */
 .page-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 700;
   letter-spacing: -0.01em;
 }
@@ -2963,10 +2986,10 @@ iframe.preview-media {
 .list-row-title,
 .vehicle-name,
 .cv-veh-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
 }
 p.muted {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
 }
 .card-title {
   font-size: 1.08rem;
@@ -3036,7 +3059,7 @@ a.list-row:hover {
   flex-wrap: wrap;
 }
 .gb-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 32px;
   letter-spacing: -0.015em;
@@ -3106,7 +3129,7 @@ a.list-row:hover {
   background: currentColor;
 }
 .gb-tile-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 23px;
   letter-spacing: -0.01em;
@@ -3240,7 +3263,8 @@ a.list-row:hover {
 .gb-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px 22px;
+  /* 26px row gap = two 13px hit-area overhangs, so wrapped links never overlap. */
+  gap: 26px 22px;
   margin-top: 4px;
 }
 .gb-link {
@@ -3291,8 +3315,8 @@ a.list-row:hover {
    UrgencyRuler. Signal tones (--sig-*) and --font-signal are declared in the
    main :root at the top of this file, alongside --c-* — see the comment
    there for why the two status-color families exist. Overpass (Highway
-   Gothic descendant) is the sign voice; Newsreader stays the explanation
-   voice; Overpass Mono stays the data spine.
+   Gothic descendant) is the voice for all words; Overpass Mono stays the
+   data spine.
    ========================================================================= */
 
 /* --- Verdict panel (the sign) --- */
@@ -3389,7 +3413,7 @@ a.list-row:hover {
   text-wrap: balance;
 }
 .cv-sentence {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 15.5px;
   line-height: 1.45;
   margin: 0;
@@ -3447,8 +3471,8 @@ a.list-row:hover {
 }
 .cv-ruler-labels span.on { color: var(--text); font-weight: 600; }
 .cv-ruler-note {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-sans);
+  font-style: normal;
   font-size: 13.5px;
   color: var(--text-muted);
   margin: 8px 0 0;
@@ -3471,7 +3495,7 @@ a.list-row:hover {
   margin-bottom: 10px;
 }
 .cv-veh-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 700;
   font-size: 17px;
   letter-spacing: -0.005em;
@@ -3553,8 +3577,8 @@ a.list-row:hover {
   text-wrap: balance;
 }
 .chk-sub {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-sans);
+  font-style: normal;
   font-size: 15px;
   color: var(--text-muted);
   margin: 0 0 16px;
@@ -3597,8 +3621,8 @@ a.list-row:hover {
   letter-spacing: -0.005em;
 }
 .chk-choice small {
-  font-family: var(--font-serif);
-  font-style: italic;
+  font-family: var(--font-sans);
+  font-style: normal;
   font-size: 13px;
   color: var(--text-muted);
   display: block;
@@ -3661,7 +3685,7 @@ a.list-row:hover {
   gap: 4px;
 }
 .chk-causes li {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.4;
   color: var(--text);
@@ -3676,7 +3700,7 @@ a.list-row:hover {
 }
 .chk-cost-row + .chk-cost-row { border-top: 1px dashed var(--border); }
 .chk-cost-what {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14.5px;
   color: var(--text-muted);
 }
@@ -3705,7 +3729,7 @@ a.list-row:hover {
 }
 .chk-escalate ul { margin: 0; padding-left: 18px; }
 .chk-escalate li {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--text);
@@ -3739,7 +3763,7 @@ a.list-row:hover {
   text-transform: uppercase;
 }
 .chk-drive-note {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--text);
@@ -3776,14 +3800,14 @@ a.list-row:hover {
 }
 .chk-action-list { margin: 0; padding-left: 18px; }
 .chk-action-list li {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--text);
 }
 .chk-action-list li + li { margin-top: 6px; }
 .chk-action-body {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--text);
@@ -3846,7 +3870,7 @@ a.list-row:hover {
   margin-bottom: 6px;
 }
 .chk-brief-sec p {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 15px;
   line-height: 1.5;
   margin: 0;
@@ -4336,7 +4360,7 @@ a.list-row:hover {
 .sb-no .sb-odl { color: var(--sig-red); }
 .sb-okdecline ul { margin: 0; padding-left: 16px; }
 .sb-okdecline li {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 13.5px;
   line-height: 1.45;
   color: var(--text-muted);
@@ -4417,7 +4441,7 @@ a.list-row:hover {
 }
 .qc-check + .qc-check { border-top: 1px solid var(--border, rgba(35, 39, 43, 0.1)); }
 .qc-check-label {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14.5px;
   line-height: 1.4;
   color: var(--text);
@@ -4487,7 +4511,7 @@ a.list-row:hover {
 .qc-flag .qc-rating { color: var(--sig-red); }
 .qc-flag .qc-dot { background: var(--sig-red); }
 .qc-reason {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14.5px;
   line-height: 1.5;
   color: var(--text);
@@ -4505,7 +4529,7 @@ a.list-row:hover {
 }
 .qc-script ul { margin: 0; padding-left: 18px; }
 .qc-script li {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
   color: var(--text);
@@ -4536,6 +4560,14 @@ a.list-row:hover {
   color: inherit;
   text-decoration: none;
 }
+.list-row-link {
+  position: relative;
+}
+.list-row-link::after {
+  content: '';
+  position: absolute;
+  inset: -14px -4px;
+}
 .vd-svc-link span,
 .list-row-link span {
   color: var(--accent);
@@ -4553,7 +4585,7 @@ a.list-row:hover {
   margin-bottom: 8px;
 }
 .sd-title {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 30px;
   line-height: 1.05;
@@ -4642,7 +4674,7 @@ a.list-row:hover {
   min-width: 0;
 }
 .ms-next-name {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
   font-size: 1.1rem;
 }
@@ -4656,6 +4688,7 @@ a.list-row:hover {
   grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 10px;
+  min-height: 44px;
   padding: 9px 0;
   border-bottom: 0.5px solid var(--border);
   color: inherit;

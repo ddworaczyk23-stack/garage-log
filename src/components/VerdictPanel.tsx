@@ -1,4 +1,4 @@
-import type { SignalBand, VehicleVerdict, VerdictBand } from '../domain/verdict'
+import type { SignalBand, VehicleVerdict, VerdictBand, VerdictSign } from '../domain/verdict'
 import { BAND_LABELS, VERDICT_BAND_LABELS } from '../domain/verdict'
 
 // Coast verdict instruments (Stage 1, design/COAST-PLAN.md): the road-sign
@@ -20,7 +20,7 @@ export function VerdictPanel({
   tag = 'Today',
   headingLevel: Heading = 'h3',
 }: {
-  verdict: VehicleVerdict
+  verdict: VerdictSign
   tag?: string
   /** Defaults to h3 (a page-level h2 title precedes it on VehicleDetail/Check).
    * Dashboard's TodayCard passes 'h4' — its own per-vehicle name is already an
