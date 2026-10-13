@@ -13,10 +13,6 @@ aggressively, every time.
 
 ## Open
 
-- **Verify calendar export on a real iPhone.** "Add reminders to Calendar"
-  downloads `car-maintenance.ics`; expected flow is open file → "Add All".
-  Untested on iOS (cloud env has Chromium only). If iOS duplicates events on
-  re-import, consider switching the per-day UID scheme in `domain/calendar.ts`.
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
