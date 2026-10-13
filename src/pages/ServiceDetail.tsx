@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getProjectedMileage, getVehicleReminders } from '../db/summary'
-import { bandFromStatus, BAND_LABELS } from '../domain/verdict'
+import { serviceVerdict } from '../domain/verdict'
 import { formatInterval, formatMiles, formatMoney, formatShortDate } from '../domain/format'
 import { reminderProgress } from '../domain/progress'
 import { buildServiceHistory, parseServiceId } from '../domain/serviceHistory'
@@ -11,7 +11,9 @@ import { BulletTrack } from '../components/motion/BulletTrack'
 import { EventForm } from '../components/EventForm'
 import { EventListItem } from '../components/EventListItem'
 import { RuleOverrideEditor } from '../components/RuleOverrideEditor'
-import { EmptyState, SkeletonPage } from '../components/ui'
+import { EmptyState, PageHeader, SkeletonPage } from '../components/ui'
+import { VerdictPanel } from '../components/VerdictPanel'
+import { WarningIcon } from '../components/icons'
 import { useReducedMotion } from '../motion/hooks'
 import { CATEGORY_LABELS, OVERRIDE_LABELS } from '../types'
 
@@ -66,8 +68,7 @@ export function ServiceDetail({ id }: { id: string }) {
 
   const { vehicle, category, reminder: r, history, mileage } = data
   const label = r?.rule.label ?? CATEGORY_LABELS[category] ?? category
-  const band = r ? bandFromStatus(r.status) : null
-  const prog = r ? reminderProgress(r) : null
+  const prog = r && (r.lastDone.date != null || r.lastDone.miles != null) ? reminderProgress(r) : null
   const actionable = r && (r.status === 'overdue' || r.status === 'due-next')
   const kind = history.events[0]?.kind ?? 'maintenance'
 
@@ -77,23 +78,21 @@ export function ServiceDetail({ id }: { id: string }) {
         ‹ {vehicleLabel(vehicle)}
       </a>
 
-      <header class="sd-head">
-        <span class="eyebrow">Service · {vehicleLabel(vehicle)}</span>
-        <h2 class="sd-title">{label}</h2>
-      </header>
+      <PageHeader eyebrow={`Service · ${vehicleLabel(vehicle)}`} title={label} />
 
       {r && (
         <section class="card sd-overview">
-          <div class="sd-status-row">
-            <span class={`status-pill status-${r.status}`}>
-              {band ? BAND_LABELS[band] : 'Not applicable'}
-            </span>
-            <span class="muted small">
-              {r.reason}
-              {r.odometerStale ? ' ⚠️' : ''}
-            </span>
-          </div>
+          {/* The same road sign as the vehicle verdict, for this one service. */}
+          <VerdictPanel verdict={serviceVerdict(r)} tag="This service" />
           {prog && <BulletTrack pct={prog.pct} zone={prog.zone} reduced={reduced} />}
+          {r.odometerStale && (
+            <p class="muted small sd-stale">
+              <span class="warning-mark" aria-hidden="true">
+                <WarningIcon />
+              </span>
+              Odometer reading may be out of date. Update it for a sharper estimate.
+            </p>
+          )}
 
           {editingInterval ? (
             <RuleOverrideEditor rule={r.rule} onDone={() => setEditingInterval(false)} />
@@ -176,32 +175,21 @@ export function ServiceDetail({ id }: { id: string }) {
 
       <section class="card">
         <h3 class="card-title">History</h3>
+        {/* One data line instead of a tile grid (PRODUCT.md anti-reference). */}
         {history.count > 0 && (
-          <dl class="sd-stats">
-            <div>
-              <dt>Times logged</dt>
-              <dd>{history.count}</dd>
-            </div>
-            <div>
-              <dt>Total spent</dt>
-              <dd>{formatMoney(history.totalCost)}</dd>
-            </div>
-            <div>
-              <dt>Avg cost</dt>
-              <dd>{history.avgCost != null ? formatMoney(history.avgCost) : '—'}</dd>
-            </div>
-            <div>
-              <dt>Avg between</dt>
-              <dd>
-                {[
-                  history.avgMilesBetween != null ? formatMiles(history.avgMilesBetween) : null,
-                  history.avgDaysBetween != null ? formatGapDays(history.avgDaysBetween) : null,
-                ]
-                  .filter(Boolean)
-                  .join(' · ') || '—'}
-              </dd>
-            </div>
-          </dl>
+          <p class="sd-stats-line">
+            {[
+              `${history.count} ${history.count === 1 ? 'time' : 'times'}`,
+              history.totalCost > 0 ? `${formatMoney(history.totalCost)} total` : null,
+              history.count > 1 && history.avgCost != null ? `avg ${formatMoney(history.avgCost)}` : null,
+              history.avgMilesBetween != null ? `every ~${formatMiles(history.avgMilesBetween)}` : null,
+              history.avgMilesBetween == null && history.avgDaysBetween != null
+                ? `every ${formatGapDays(history.avgDaysBetween)}`
+                : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
+          </p>
         )}
         {history.count === 0 ? (
           <p class="muted small">Nothing logged for this service yet.</p>

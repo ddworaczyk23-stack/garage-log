@@ -17,7 +17,7 @@ colors:
   guide-sign-blue-tint: "rgba(27, 95, 170, 0.11)"
 typography:
   page-title:
-    fontFamily: "Newsreader, Georgia, serif"
+    fontFamily: "Overpass, system-ui, sans-serif"
     fontSize: "28px"
     fontWeight: 700
     lineHeight: 1.05
@@ -38,7 +38,7 @@ typography:
     fontSize: "0.95rem"
     fontWeight: 400
   prose:
-    fontFamily: "Newsreader, Georgia, serif"
+    fontFamily: "Overpass, system-ui, sans-serif"
     fontSize: "15.5px"
     lineHeight: 1.45
   label:
@@ -82,7 +82,7 @@ components:
 
 **Creative North Star: "The Road Sign"**
 
-Coast's interface is built on the visual grammar of US highway signage: one message per sign, instantly legible at a glance, calm authority with zero decoration. Verdict panels are literal signs — saturated signal-color slabs (red, amber, guide-sign blue, green) carrying one declarative headline in the signage face (Overpass, descended from Highway Gothic) and one humane serif sentence beneath it (Newsreader). Everything else is the roadside: a daylight-concrete canvas, white sign-face cards, asphalt-ink text, and mono data set like mile markers. The system serves a driver in a stressful moment; it must read from arm's length, in sunlight, in one glance.
+Coast's interface is built on the visual grammar of US highway signage: one message per sign, instantly legible at a glance, calm authority with zero decoration. Verdict panels are literal signs — saturated signal-color slabs (red, amber, guide-sign blue, green) carrying one declarative headline in the signage face (Overpass, descended from Highway Gothic) and one plain explaining sentence beneath it, in lighter Overpass. Everything else is the roadside: a daylight-concrete canvas, white sign-face cards, asphalt-ink text, and mono data set like mile markers. The system serves a driver in a stressful moment; it must read from arm's length, in sunlight, in one glance.
 
 The system explicitly rejects the generic SaaS dashboard (stat-tile grids, density for its own sake), parts-store upsell energy (banners, urgency theater), and the fear-mongering car app (red-alert overload, jargon). A restrained gradient used as deliberate emphasis (e.g. the overdue schedule row) is not this — decoration-for-its-own-sake is the target, not the technique. Red is spent only on genuinely-stop-now; every other band stays proportionate — the four-signal scale exists so that urgency always reads the same, everywhere.
 
@@ -90,7 +90,7 @@ The system explicitly rejects the generic SaaS dashboard (stat-tile grids, densi
 - One verdict per surface, set as signage; depth lives one tap below.
 - Four-signal band vocabulary (fix-now red / book-soon amber / can-coast blue / all-clear green) is universal and never remapped.
 - Paper-on-concrete materiality: white cards, soft ambient shadows, hairline borders.
-- Three-voice typography: signage (Overpass), human explanation (Newsreader), data (Overpass Mono).
+- Two-font typography: every word in Overpass (weight and size carry hierarchy), every number in Overpass Mono.
 - Matter-of-fact, sturdy controls — dependable over expressive.
 
 ## 2. Colors
@@ -118,19 +118,18 @@ A restrained daylight palette under four saturated signal colors that carry all 
 
 ## 3. Typography
 
-**Page-title Font:** Newsreader (with Georgia fallback) — the editorial identity voice
 **Signage Font:** Overpass (with system-ui fallback) — verdicts, card titles, and controls
-**Body Font:** Overpass for UI; Newsreader for explanatory prose
+**Body Font:** Overpass for everything that is words — UI, headings, verdicts, and explanations
 **Label/Mono Font:** Overpass Mono — the data spine
 
-**Character:** A three-voice system with a strict division of labor: Newsreader names pages, vehicles, and calmly explains; Overpass speaks as the sign (verdicts, card titles, controls); Overpass Mono carries every number (money, miles, dates) with tabular authority.
+**Character:** Two fonts, strict division: Overpass for words (hierarchy comes from weight and size, not a second face), Overpass Mono for every number (money, miles, dates) with tabular authority. A Newsreader serif was used for titles and explanations until 2026-10-13; it was dropped because three faces read as an inconsistent mix on a phone.
 
 ### Hierarchy
-- **Page title / Vehicle name** (600–700, 28–34px): Newsreader editorial display type.
+- **Page title / Vehicle name** (700, 28–34px): Overpass display weight.
 - **Display / Verdict headline** (800, 24px, 1.1, -0.015em): Overpass for the sign's message. White on a signal-color slab; `text-wrap: balance`.
 - **Title / Card title** (600, ~1.02–1.08rem, -0.012em): Card and section headings in Overpass.
 - **Body** (400, ~0.95rem): UI copy in Overpass.
-- **Prose / Verdict sentence** (400, 15.5px, 1.45): The serif explanation voice (Newsreader). Any sentence that explains, reassures, or advises is set in serif.
+- **Prose / Verdict sentence** (400, 15.5px, 1.45): Overpass regular. Any sentence that explains, reassures, or advises uses this weight.
 - **Label / Kicker** (500–600, 10.5–11px, +0.16–0.2em, UPPERCASE): Overpass Mono eyebrows, tags, and data labels.
 
 ### Type Scale
@@ -148,7 +147,7 @@ The five named voices above (Display/Title/Body/Prose/Label) are the *semantic* 
 Half-pixel steps (e.g. 13.5px, 14.5px) are expected within the Small/Caption bands — they're used to hairline-tune vertical rhythm inside dense rows and are as valid as their whole-pixel neighbors.
 
 ### Named Rules
-**The Three Voices Rule.** Signage and card titles (Overpass), page identity and explanation (Newsreader serif), data (Overpass Mono) — every text element belongs to exactly one voice. Numbers never render in the serif; verdicts never render in the mono.
+**The Two Fonts Rule.** Words in Overpass, numbers in Overpass Mono. No third face, ever. Verdicts never render in the mono. Overpass's middle dot has zero width, so a `Coast Dot` @font-face supplies U+00B7 from a system font (app.css top).
 
 ## 4. Elevation
 
@@ -190,7 +189,7 @@ Matter-of-fact and sturdy: solid fills, 10px control radius, no ornamentation. C
 - **Desktop (≥1024px):** Left sidebar with the same items; Check as a prominent block.
 
 ### The Verdict Panel (signature)
-The road sign itself: a saturated signal-color slab (band color as full background), rounded 16px, containing an Overpass Mono uppercase tag ("VERDICT · FIX NOW"), the 24px/800 Overpass headline, and a 15.5px Newsreader sentence — all in white. Beneath it, the **Urgency Ruler**: a 9px four-zone track (red/amber/blue/green segments) with a pin marking position within the band. These two components are the brand; reuse them (`.cv-panel`, `.cv-ruler`) rather than inventing new status displays.
+The road sign itself: a saturated signal-color slab (band color as full background), rounded 16px, containing an Overpass Mono uppercase tag ("VERDICT · FIX NOW"), the 24px/800 Overpass headline, and a 15.5px Overpass sentence — all in white. Beneath it, the **Urgency Ruler**: a 9px four-zone track (red/amber/blue/green segments) with a pin marking position within the band. These two components are the brand; reuse them (`.cv-panel`, `.cv-ruler`) rather than inventing new status displays.
 
 ### Radius Scale
 `--radius-control` (10px) and `--radius`/card (16px) are the two semantic tokens for controls and top-level cards. Nested and one-off surfaces step between them rather than picking arbitrary values:
@@ -212,7 +211,7 @@ Progress and health meters (`.health-fill`, `.vh-fill`) animate via `transition:
 ### Do:
 - **Do** lead every surface with one verdict in signage voice; put detail one tap below.
 - **Do** use the four-signal bands for all status everywhere — same hue, same meaning, no new status colors.
-- **Do** set explanatory sentences in Newsreader serif and all numbers in Overpass Mono with tabular figures.
+- **Do** set explanatory sentences in regular Overpass and all numbers in Overpass Mono with tabular figures.
 - **Do** keep controls sturdy and plain: solid fills, 10px radius, 42px touch targets, visible focus ring.
 - **Do** hold text contrast at WCAG 2.1 AA (≥4.5:1); Muted Slate (#5a6167) is the lightest allowed text color, and it must clear 4.5:1 on the *darkest* surface it lands on (the concrete canvas and inset wells, not just white cards).
 
