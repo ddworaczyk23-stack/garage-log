@@ -2,16 +2,20 @@ import { useState } from 'preact/hooks'
 import { useQuery } from '../db/useQuery'
 import { attachVehicleDocument, deleteDocument, getVehicleLevelDocuments } from '../db/documents'
 import { DocumentGrid } from './DocumentGrid'
+import { Collapsible } from './motion/Collapsible'
+import type { VehicleDocument } from '../types'
 
 interface Props {
   vehicleId: string
+  eventDocuments?: VehicleDocument[]
+  embedded?: boolean
 }
 
 // Glovebox: documents attached to the vehicle itself (registration, insurance
 // card, owner's manual, title) rather than to a service/repair event. Uploads
 // run through the same compression path as event attachments (db/documents.ts);
 // the grid is reactive via liveQuery, so add/delete need no manual refresh.
-export function VehicleDocuments({ vehicleId }: Props) {
+export function VehicleDocuments({ vehicleId, eventDocuments = [], embedded = false }: Props) {
   const documents = useQuery(() => getVehicleLevelDocuments(vehicleId), [vehicleId])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -40,9 +44,8 @@ export function VehicleDocuments({ vehicleId }: Props) {
     }
   }
 
-  return (
-    <section class="card">
-      <h3 class="card-title">Glovebox ({documents?.length ?? 0})</h3>
+  const content = (
+    <>
       <p class="muted small">
         Registration, insurance, title, owner's manual — anything about the vehicle
         that isn't a specific service. Large photos are compressed automatically.
@@ -70,6 +73,33 @@ export function VehicleDocuments({ vehicleId }: Props) {
       ) : (
         <DocumentGrid documents={documents} onRemove={(id) => void deleteDocument(id)} />
       )}
+
+      <div class="vd-receipts">
+        <div class="card-title-row">
+          <h4 class="vd-subtitle">Service & repair receipts</h4>
+          <a class="btn-link" href={`#/documents/${vehicleId}`}>
+            Browse all →
+          </a>
+        </div>
+        <p class="muted small">Files attached to a logged service or repair.</p>
+        <DocumentGrid documents={eventDocuments} />
+      </div>
+    </>
+  )
+
+  if (embedded) {
+    const total = (documents?.length ?? 0) + eventDocuments.length
+    return (
+      <Collapsible title="Glovebox" count={`${total} ${total === 1 ? 'file' : 'files'}`}>
+        {content}
+      </Collapsible>
+    )
+  }
+
+  return (
+    <section class="card">
+      <h3 class="card-title">Glovebox ({documents?.length ?? 0})</h3>
+      {content}
     </section>
   )
 }

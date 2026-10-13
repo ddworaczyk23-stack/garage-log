@@ -547,29 +547,7 @@ a.list-row:active {
   color: var(--danger);
 }
 
-/* ---------- Quick add + event/odometer forms ---------- */
-.quick-add-bar {
-  display: flex;
-  gap: 8px;
-  margin: 4px 0 var(--gap);
-}
-/* Quick-add buttons are secondary actions: tinted, not filled, so the page
- * has one clear visual hierarchy instead of three shouting primaries. */
-.btn.quick-add-btn {
-  flex: 1;
-  /* Same flex-item content-width-floor bug as .account-bar (now fixed): with
-     no min-width, three un-shrinkable buttons force this row past the
-     viewport at 200% text zoom. min-width: 0 lets them actually shrink. */
-  min-width: 0;
-  background: var(--accent-tint);
-  color: var(--accent);
-  padding: 11px 8px;
-  font-size: 0.88rem;
-  text-align: center;
-}
-.btn.quick-add-btn:hover {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
-}
+/* ---------- Event/odometer forms ---------- */
 .event-form {
   display: flex;
   flex-direction: column;
@@ -2223,17 +2201,18 @@ iframe.preview-media {
   transform: translateX(-50%);
 }
 
-/* --- odometer instrument plate (Instrument.tsx) --- */
+/* --- quiet odometer row (Instrument.tsx) --- */
 .instrument {
-  background: var(--accent-hover); /* deepened guide-sign blue, matching the accent */
+  background: var(--bg-inset);
+  border: 1px solid var(--border);
   border-radius: var(--radius-control);
   padding: 15px 17px 14px;
-  color: #eef0ea;
+  color: var(--text);
   position: relative;
   overflow: hidden;
 }
 .instrument .kicker {
-  color: rgba(238, 240, 234, 0.72); /* was .6 (3.71:1) — needs 4.5:1 */
+  color: var(--text-muted);
 }
 .instr-top {
   display: flex;
@@ -2259,34 +2238,18 @@ iframe.preview-media {
 .odo .unit {
   font-size: 13px;
   letter-spacing: 0.18em;
-  color: rgba(238, 240, 234, 0.72); /* was .62 (3.85:1) — needs 4.5:1 */
+  color: var(--text-muted);
   font-weight: 500;
 }
 .odo-foot {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.05em;
-  color: rgba(238, 240, 234, 0.72); /* was .62 (3.85:1) — needs 4.5:1 */
+  color: var(--text-muted);
   margin: 9px 0 0;
   display: flex;
   align-items: center;
   gap: 8px;
-}
-/* The odometer gauge is a solid accent-colored plate, so its own CTA reads
-   inverted (white fill, accent text) rather than the usual solid-accent
-   primary — a same-color button here would nearly vanish into the plate.
-   It also stands in for the number when there's no reading yet — the empty
-   state's hero content is the action, not a "—" placeholder. */
-.odo-cta {
-  display: block;
-  width: 100%;
-  text-align: center;
-  margin-top: 8px;
-  background: var(--bg-card);
-  color: var(--accent);
-}
-.odo-cta:hover {
-  filter: brightness(0.96);
 }
 .instr-side {
   text-align: right;
@@ -2296,11 +2259,7 @@ iframe.preview-media {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.04em;
-  /* was #cfe0be, a pale off-palette green left over from the pre-M12 olive
-     theme — the Signal Budget Rule reserves color for status meaning, and
-     this is a plain data readout. Matches the rest of the plate's white-on-
-     blue text family instead. */
-  color: rgba(238, 240, 234, 0.9);
+  color: var(--text);
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -2315,7 +2274,7 @@ iframe.preview-media {
   font-size: 9.5px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(238, 240, 234, 0.78); /* was .5 (3.05:1) — the smallest text on the plate, needs 4.5:1 */
+  color: var(--text-muted);
   margin-top: 2px;
 }
 .mbars {
@@ -2329,10 +2288,7 @@ iframe.preview-media {
 .mbar {
   width: 16px;
   border-radius: 4px 4px 2px 2px;
-  /* was a pale green gradient (#8fb37a), leftover from the pre-M12 olive
-     theme — decorative, off-palette, and reads as a stray status color next
-     to the real signal greens. White-on-blue, like the rest of the plate. */
-  background: linear-gradient(180deg, rgba(238, 240, 234, 0.9), rgba(238, 240, 234, 0.35));
+  background: linear-gradient(180deg, var(--text), var(--border));
   transform: scaleY(0);
   transform-origin: bottom;
   transition: transform 0.55s var(--ease-mech);
@@ -2341,7 +2297,16 @@ iframe.preview-media {
   transform: scaleY(1);
 }
 .mbar.dim {
-  background: rgba(238, 240, 234, 0.16);
+  background: var(--border);
+}
+
+.instr-action {
+  margin-top: 8px;
+}
+.odo-update {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
 }
 
 /* --- live "current reading" dot --- */
@@ -2351,18 +2316,18 @@ iframe.preview-media {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: rgba(238, 240, 234, 0.9);
-  box-shadow: 0 0 0 3px rgba(238, 240, 234, 0.22);
+  background: var(--text-muted);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-muted) 18%, transparent);
   animation: breathe 3.4s ease-in-out infinite;
   flex-shrink: 0;
 }
 @keyframes breathe {
   0%,
   100% {
-    box-shadow: 0 0 0 3px rgba(238, 240, 234, 0.22);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-muted) 18%, transparent);
   }
   50% {
-    box-shadow: 0 0 0 5.5px rgba(238, 240, 234, 0.08);
+    box-shadow: 0 0 0 5.5px color-mix(in srgb, var(--text-muted) 8%, transparent);
   }
 }
 
@@ -2528,12 +2493,34 @@ iframe.preview-media {
   padding: 0;
 }
 .vd-row {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 7px 13px;
   align-items: start;
   padding: 15px 0;
   border-top: 1px solid var(--border);
+}
+.vd-row-hit {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: 8px;
+}
+.vd-row-hit:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.vd-row-main,
+.vd-row-end,
+.vd-row .bullet {
+  position: relative;
+  pointer-events: none;
+  z-index: 2;
+}
+.vd-row .vd-interval-edit {
+  pointer-events: auto;
+  z-index: 3;
 }
 .vd-row:first-child {
   border-top: 0;
@@ -2635,22 +2622,10 @@ iframe.preview-media {
   grid-column: 1 / -1;
   grid-row: 2;
 }
-.vd-log-btn {
-  min-height: 44px;
-  display: inline-flex;
-  align-items: center;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  font-weight: 500;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-/* sticky "+ Log" — docks above the real bottom nav; hidden when a form is open */
+/* One "+ Log" control, docked away from the raised centre Check disc. */
 .vd-sticky {
   position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
+  right: 16px;
   bottom: calc(var(--nav-height) + 14px + env(safe-area-inset-bottom));
   background: var(--accent);
   color: var(--accent-text);
@@ -2678,16 +2653,72 @@ iframe.preview-media {
 @keyframes stickyIn {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(14px);
+    transform: translateY(14px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
 }
 
+.vd-log-sheet {
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--nav-height) + 72px + env(safe-area-inset-bottom));
+  z-index: 39;
+  width: min(210px, calc(100vw - 32px));
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--bg-card);
+  box-shadow: var(--shadow-modal);
+  display: grid;
+  animation: stickyIn 0.2s var(--ease-paper);
+}
+.vd-log-sheet button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--text);
+  font: 600 0.92rem var(--font-sans);
+  text-align: left;
+  padding: 0 12px;
+  cursor: pointer;
+}
+.vd-log-sheet button:hover,
+.vd-log-sheet button:focus-visible {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.vd-history > .card-title {
+  margin-bottom: 8px;
+}
+.vd-history > .fold + .fold {
+  border-top: 1px solid var(--border);
+}
+.vd-receipts {
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+.vd-mileage-inline {
+  border-top: 1px solid var(--border);
+  margin-top: 18px;
+  padding-top: 16px;
+}
+.vd-subtitle {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.vd-delete {
+  padding: 4px 2px;
+}
+
 /* Desktop two-column split: a sticky "cockpit" rail (identity, odometer,
-   most-urgent gauge, quick-add) stays visible while the schedule/history
+   most-urgent gauge) stays visible while the schedule/history
    column scrolls independently — instead of one long stacked column where
    the whole ledger has to be scrolled past to reach anything below it.
    Mobile/tablet stay exactly as the single stacked column below. */
@@ -2700,9 +2731,8 @@ iframe.preview-media {
 .vd-main {
   /* Grid items default to min-width: auto — the same content-width floor
      that broke .account-bar at 200% text zoom, here on the two-column
-     VehicleDetail layout. Without this, an un-shrinkable child (e.g.
-     .quick-add-bar's buttons) can push this column past the 1fr track and
-     out past the viewport regardless of the grid's own constraint. */
+     VehicleDetail layout. Without this, an un-shrinkable child can push this
+     column past the 1fr track and out past the viewport. */
   min-width: 0;
 }
 /* VehicleDetail two-column rail. Two ranges (R2): 900–1023px is tablet with no
@@ -3127,8 +3157,7 @@ a.list-row:hover {
   max-width: 34ch;
 }
 /* Under a not-set-up verdict on VehicleDetail: the import-history setup
-   action. Adding an odometer reading now lives on the odometer instrument
-   itself (.odo-cta) instead of duplicating a second CTA up here. */
+   action. Odometer updates live in the quiet odometer row. */
 .vd-setup {
   margin-top: 12px;
   display: flex;
@@ -4027,6 +4056,10 @@ a.list-row:hover {
     transform: none;
     animation-name: stickyInDesktop;
   }
+  .vd-log-sheet {
+    right: 32px;
+    bottom: 78px;
+  }
 }
 
 @keyframes stickyInDesktop {
@@ -4048,6 +4081,9 @@ a.list-row:hover {
  * rather than relying on rule ordering to stay correct. */
 @media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
   .vd-sticky {
+    animation: none;
+  }
+  .vd-log-sheet {
     animation: none;
   }
 }

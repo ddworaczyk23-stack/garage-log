@@ -16,7 +16,6 @@ import { ScheduleRow } from '../components/ScheduleRow'
 import { MilestoneCard } from '../components/MilestoneCard'
 import { CalendarExport } from '../components/CalendarExport'
 import { MileageHistory } from '../components/MileageHistory'
-import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
@@ -44,12 +43,10 @@ async function loadVehicleDocuments(eventIds: string[]): Promise<VehicleDocument
 
 type ActiveForm = 'service' | 'repair' | 'odometer' | null
 
-// Vehicle detail: the editorial "Service Record" — identity, the odometer
-// instrument, the personalized maintenance schedule scored by the reminders
-// engine (with per-row progress), quick-add for service/
-// repair/odometer, collapsible history, documents, and delete. The reminders
-// engine is untouched — it's only fed by what gets logged, and logging updates
-// the gauge/tally live via Dexie liveQuery.
+// Vehicle detail: identity + verdict, quiet odometer row, personalized service
+// schedule, one log menu, consolidated history/documents, and delete. The
+// reminders engine is untouched — it's only fed by what gets logged, and
+// logging updates the page live via Dexie liveQuery.
 export function VehicleDetail({ id }: Props) {
   const reduced = useReducedMotion()
   const intro = useIntroGate(`gl_intro_vehicle_${id}`) && !reduced
@@ -58,10 +55,9 @@ export function VehicleDetail({ id }: Props) {
   const [editingName, setEditingName] = useState(false)
   const [editingSpecs, setEditingSpecs] = useState(false)
   const [serviceCategory, setServiceCategory] = useState<MaintenanceCategory | undefined>(undefined)
+  const [logSheetOpen, setLogSheetOpen] = useState(false)
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null)
   const formRef = useRef<HTMLDivElement>(null)
-  const quickAddRef = useRef<HTMLDivElement>(null)
-  const [showSticky, setShowSticky] = useState(false)
   // One-shot flag set by AddVehicle right before redirecting here on a fresh
   // creation. Consumed (removed) immediately so the welcome banner below can
   // only ever show once, even across a reload of this same page.
@@ -118,20 +114,23 @@ export function VehicleDetail({ id }: Props) {
     return Math.max(0, current - points[0].miles)
   }, [mileage?.miles, odometerReadings, events])
 
-  // Sticky "+ Log" appears once the quick-add bar scrolls above the viewport.
-  // Re-run when the vehicle finishes loading: on the first mount the page is
-  // still showing <Loading/>, so quickAddRef isn't attached yet.
-  const vehicleReady = !!vehicle
+  // The log menu closes on Escape or a tap anywhere outside it (or its button).
   useEffect(() => {
-    const el = quickAddRef.current
-    if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(
-      ([e]) => setShowSticky(!e.isIntersecting && e.boundingClientRect.top < 0),
-      { threshold: 0 },
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [vehicleReady])
+    if (!logSheetOpen) return
+    function onDocClick(e: MouseEvent) {
+      const t = e.target as Element | null
+      if (!t?.closest('.vd-log-sheet, .vd-sticky')) setLogSheetOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setLogSheetOpen(false)
+    }
+    document.addEventListener('click', onDocClick)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('click', onDocClick)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [logSheetOpen])
 
   if (vehicle === undefined) {
     return (
@@ -165,6 +164,11 @@ export function VehicleDetail({ id }: Props) {
     ? vehicleVerdict(reminders, openConcerns ?? [], localDateISO(new Date()))
     : null
   const notSetUp = verdict?.band === 'not-set-up'
+  const hasCalendarDates = list.some(
+    (r) =>
+      (r.lastDone.date != null || r.lastDone.miles != null) &&
+      (r.dueAtDate != null || r.projectedDueDate != null),
+  )
   const stale = mileage
     ? (Date.now() - new Date(`${mileage.lastActual.asOfDate}T00:00:00`).getTime()) / 86_400_000 >
       STALE_ODOMETER_DAYS
@@ -182,6 +186,7 @@ export function VehicleDetail({ id }: Props) {
     setServiceCategory(undefined)
   }
   function openForm(form: Exclude<ActiveForm, null>, category?: MaintenanceCategory) {
+    setLogSheetOpen(false)
     setServiceCategory(category)
     setActiveForm(form)
     requestAnimationFrame(() =>
@@ -190,11 +195,6 @@ export function VehicleDetail({ id }: Props) {
       ),
     )
   }
-  function toggleForm(form: Exclude<ActiveForm, null>) {
-    if (activeForm === form) closeForm()
-    else openForm(form)
-  }
-
   async function handleEventSaved(result: EventFormSaveResult) {
     closeForm()
     let message =
@@ -227,7 +227,6 @@ export function VehicleDetail({ id }: Props) {
       <ScheduleRow
         key={r.rule.id}
         reminder={r}
-        onLog={(category) => openForm('service', category)}
         animate={intro}
         reduced={reduced}
         estimated={notSetUp}
@@ -245,7 +244,7 @@ export function VehicleDetail({ id }: Props) {
       <div class="vd-rail">
       {/* masthead */}
       <header class="vd-masthead">
-        <span class="eyebrow">Service Record · {vehicle.year} {vehicle.make}</span>
+        <span class="eyebrow">Vehicle</span>
         {editingName ? (
           <NicknameEditor vehicle={vehicle} onDone={() => setEditingName(false)} />
         ) : (
@@ -342,14 +341,26 @@ export function VehicleDetail({ id }: Props) {
                 ? { delta: ytdMiles, deltaCaption: `in ${new Date().getFullYear()}`, bars: [] }
                 : undefined
             }
+            action={
+              <button type="button" class="btn-link odo-update" onClick={() => openForm('odometer')}>
+                Update
+              </button>
+            }
           />
         ) : (
           <div class="instrument">
-            <span class="kicker">Odometer</span>
-            <button type="button" class="btn odo-cta" onClick={() => openForm('odometer')}>
-              + Add odometer reading
-            </button>
-            <div class="odo-foot">No readings yet.</div>
+            <div class="instr-top">
+              <div>
+                <span class="kicker">Odometer</span>
+                <div class="odo"><span class="num">—</span><span class="unit">MI</span></div>
+                <div class="odo-foot">No readings yet.</div>
+              </div>
+              <div class="instr-side">
+                <button type="button" class="btn-link odo-update" onClick={() => openForm('odometer')}>
+                  Add reading
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -371,19 +382,6 @@ export function VehicleDetail({ id }: Props) {
           )}
         </Collapsible>
       </section>
-
-      {/* quick-add */}
-      <div class="quick-add-bar" ref={quickAddRef}>
-        <button class="btn quick-add-btn" onClick={() => toggleForm('service')}>
-          + Service
-        </button>
-        <button class="btn quick-add-btn" onClick={() => toggleForm('repair')}>
-          + Repair
-        </button>
-        <button class="btn quick-add-btn" onClick={() => toggleForm('odometer')}>
-          + Odometer
-        </button>
-      </div>
 
       <div ref={formRef}>
         {activeForm === 'service' && (
@@ -454,7 +452,8 @@ export function VehicleDetail({ id }: Props) {
 
             {onTrack.length > 0 && (
               <Collapsible
-                title="On track"
+                // Never call an unknown car "on track" (PRODUCT.md principle 1).
+                title={notSetUp ? 'Estimated schedule' : 'On track'}
                 count={`${onTrack.length} item${onTrack.length === 1 ? '' : 's'}`}
               >
                 <ul class="vd-ledger">{onTrack.map(renderRow)}</ul>
@@ -463,7 +462,7 @@ export function VehicleDetail({ id }: Props) {
           </>
         )}
 
-        <CalendarExport vehicleId={id} />
+        {hasCalendarDates && <CalendarExport vehicleId={id} />}
       </section>
 
       <Reveal>
@@ -471,12 +470,13 @@ export function VehicleDetail({ id }: Props) {
       </Reveal>
 
       <Reveal>
-        <section class="card">
+        <section class="card vd-history">
+          <h3 class="card-title">History &amp; documents</h3>
           <Collapsible title="Maintenance log" count={`${maintenanceEvents.length} ${maintenanceEvents.length === 1 ? 'entry' : 'entries'}`}>
             {!events ? (
               <Loading />
             ) : maintenanceEvents.length === 0 ? (
-              <p class="muted small">Nothing logged yet — tap "+ Service" above.</p>
+              <p class="muted small">Nothing logged yet — use + Log to add service.</p>
             ) : (
               <ul class="list">
                 {maintenanceEvents.map((e) => (
@@ -484,17 +484,13 @@ export function VehicleDetail({ id }: Props) {
                 ))}
               </ul>
             )}
+            <MileageHistory vehicleId={id} embedded />
           </Collapsible>
-        </section>
-      </Reveal>
-
-      <Reveal>
-        <section class="card">
           <Collapsible title="Repair log" count={`${repairEvents.length} ${repairEvents.length === 1 ? 'entry' : 'entries'}`}>
             {!events ? (
               <Loading />
             ) : repairEvents.length === 0 ? (
-              <p class="muted small">Nothing logged yet — tap "+ Repair" above.</p>
+              <p class="muted small">Nothing logged yet — use + Log to add a repair.</p>
             ) : (
               <ul class="list">
                 {repairEvents.map((e) => (
@@ -503,46 +499,15 @@ export function VehicleDetail({ id }: Props) {
               </ul>
             )}
           </Collapsible>
+          <VehicleDocuments vehicleId={id} eventDocuments={documents ?? []} embedded />
         </section>
       </Reveal>
 
       <Reveal>
-        <MileageHistory vehicleId={id} />
-      </Reveal>
-
-      <Reveal>
-        <VehicleDocuments vehicleId={id} />
-      </Reveal>
-
-      <Reveal>
-        <section class="card">
-          <Collapsible
-            title="Service & repair receipts"
-            count={`${documents?.length ?? 0} ${documents?.length === 1 ? 'file' : 'files'}`}
-          >
-            <div class="card-title-row" style="margin-bottom:6px">
-              <p class="muted small" style="margin:0">
-                Files attached to a logged service or repair.
-              </p>
-              <a class="btn-link" href={`#/documents/${id}`}>
-                Browse all →
-              </a>
-            </div>
-            {!documents ? <Loading /> : <DocumentGrid documents={documents} />}
-          </Collapsible>
-        </section>
-      </Reveal>
-
-      <Reveal>
-        <div class="card danger">
-          <h3 class="card-title">Delete vehicle</h3>
-          <p class="muted small">
-            Permanently deletes {vehicleLabel(vehicle)} and all of its logged service, repair,
-            odometer, and document history. This can't be undone.
-          </p>
+        <div class="vd-delete">
           <ConfirmButton
-            class="btn btn-danger"
-            label="Delete this vehicle"
+            class="btn-link btn-link-danger"
+            label="Delete vehicle"
             confirmLabel="Yes, delete everything"
             busyLabel="Deleting…"
             onConfirm={async () => {
@@ -557,12 +522,25 @@ export function VehicleDetail({ id }: Props) {
       </div>
       </div>
 
-      {showSticky && !activeForm && (
-        <button type="button" class="vd-sticky" onClick={() => openForm('service')}>
+      {!activeForm && logSheetOpen && (
+        <div class="vd-log-sheet" id="vd-log-sheet" role="group" aria-label="Choose what to log">
+          <button type="button" onClick={() => openForm('service')}>Service</button>
+          <button type="button" onClick={() => openForm('repair')}>Repair</button>
+          <button type="button" onClick={() => openForm('odometer')}>Odometer</button>
+        </div>
+      )}
+      {!activeForm && (
+        <button
+          type="button"
+          class="vd-sticky"
+          aria-expanded={logSheetOpen}
+          aria-controls={logSheetOpen ? 'vd-log-sheet' : undefined}
+          onClick={() => setLogSheetOpen((open) => !open)}
+        >
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          Log service
+          Log
         </button>
       )}
       {toast && <Toast key={toast.id} message={toast.message} onDismiss={() => setToast(null)} />}

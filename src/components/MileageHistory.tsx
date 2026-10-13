@@ -33,7 +33,7 @@ function mergeItems(readings: OdometerReading[], events: MaintenanceEvent[]): It
 // is a view over existing data — nothing is duplicated into the readings table,
 // so imported history (which lands as events) shows up here automatically and
 // feeds the average-mileage estimate.
-export function MileageHistory({ vehicleId }: { vehicleId: string }) {
+export function MileageHistory({ vehicleId, embedded = false }: { vehicleId: string; embedded?: boolean }) {
   const readings = useQuery(
     () => db.odometerReadings.where('vehicleId').equals(vehicleId).toArray(),
     [vehicleId],
@@ -43,36 +43,46 @@ export function MileageHistory({ vehicleId }: { vehicleId: string }) {
   const loading = !readings || !events
   const items = loading ? [] : mergeItems(readings, events)
 
+  const content = loading ? (
+    <Loading />
+  ) : items.length === 0 ? (
+    <p class="muted small">No mileage yet — use + Log to add an odometer reading, or log a service.</p>
+  ) : (
+    <ul class="list">
+      {items.map((it) =>
+        it.kind === 'reading' ? (
+          <OdometerListItem key={`r-${it.reading.id}`} vehicleId={vehicleId} reading={it.reading} />
+        ) : (
+          <li key={`e-${it.event.id}`} class="list-row">
+            <span class="list-row-main">
+              <span class="list-row-title">{formatMiles(it.miles)}</span>
+              <span class="muted small">
+                {formatShortDate(it.date)} · via {it.event.title || CATEGORY_LABELS[it.event.category]}
+              </span>
+            </span>
+            <span class="muted small mileage-src">service log</span>
+          </li>
+        ),
+      )}
+    </ul>
+  )
+
+  if (embedded) {
+    return (
+      <div class="vd-mileage-inline">
+        <div class="card-title-row">
+          <h4 class="vd-subtitle">Mileage readings</h4>
+          <span class="muted small">{items.length} {items.length === 1 ? 'point' : 'points'}</span>
+        </div>
+        {content}
+      </div>
+    )
+  }
+
   return (
     <section class="card">
-      <Collapsible
-        title="Mileage history"
-        count={`${items.length} ${items.length === 1 ? 'point' : 'points'}`}
-      >
-        {loading ? (
-          <Loading />
-        ) : items.length === 0 ? (
-          <p class="muted small">No mileage yet — tap "+ Odometer" above, or log a service.</p>
-        ) : (
-          <ul class="list">
-            {items.map((it) =>
-              it.kind === 'reading' ? (
-                <OdometerListItem key={`r-${it.reading.id}`} vehicleId={vehicleId} reading={it.reading} />
-              ) : (
-                <li key={`e-${it.event.id}`} class="list-row">
-                  <span class="list-row-main">
-                    <span class="list-row-title">{formatMiles(it.miles)}</span>
-                    <span class="muted small">
-                      {formatShortDate(it.date)} · via{' '}
-                      {it.event.title || CATEGORY_LABELS[it.event.category]}
-                    </span>
-                  </span>
-                  <span class="muted small mileage-src">service log</span>
-                </li>
-              ),
-            )}
-          </ul>
-        )}
+      <Collapsible title="Mileage history" count={`${items.length} ${items.length === 1 ? 'point' : 'points'}`}>
+        {content}
       </Collapsible>
     </section>
   )

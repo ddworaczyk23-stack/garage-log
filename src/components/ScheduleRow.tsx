@@ -5,11 +5,9 @@ import { reminderProgress } from '../domain/progress'
 import { BulletTrack } from './motion/BulletTrack'
 import { RuleOverrideEditor } from './RuleOverrideEditor'
 import type { ComputedReminder } from '../domain/reminderEngine'
-import type { MaintenanceCategory } from '../types'
 
 interface Props {
   reminder: ComputedReminder
-  onLog: (category: MaintenanceCategory) => void
   animate: boolean
   reduced: boolean
   estimated?: boolean
@@ -19,7 +17,7 @@ interface Props {
 // (pre-filled) for editing this item's interval or marking it not needed / DIY'd
 // / already handled — no onChanged plumbing needed, Dexie's liveQuery already
 // re-runs the reminders query whenever reminderRules changes.
-export function ScheduleRow({ reminder: r, onLog, animate, reduced, estimated = false }: Props) {
+export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }: Props) {
   const [editing, setEditing] = useState(false)
 
   if (editing) {
@@ -55,10 +53,11 @@ export function ScheduleRow({ reminder: r, onLog, animate, reduced, estimated = 
     <li
       class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}${justResolved ? ' vd-row-resolved' : ''}`}
     >
+      <a class="vd-row-hit" href={`#/service/${r.rule.id}`} aria-label={`Open ${r.rule.label}`} />
       <div class="vd-row-main">
-        <a class="vd-svc vd-svc-link" href={`#/service/${r.rule.id}`}>
+        <span class="vd-svc">
           {r.rule.label} <span aria-hidden="true">›</span>
-        </a>
+        </span>
         <div class="vd-svc-meta">
           <span class="interval">
             {formatInterval(r.interval.miles, r.interval.months, r.interval.conditionBased)}
@@ -89,18 +88,6 @@ export function ScheduleRow({ reminder: r, onLog, animate, reduced, estimated = 
               four-signal labels mean the same thing everywhere. */}
           {estimated ? 'Estimated' : band ? BAND_LABELS[band] : 'Not applicable'}
         </span>
-        {/* Actionable items get a one-tap shop brief (Stage 3) — the thing
-            you show at the counter when booking this service. */}
-        {(r.status === 'overdue' || r.status === 'due-next') && (
-          <a class="btn-link vd-log-btn" href={`#/brief/${r.rule.id}`}>
-            Brief
-          </a>
-        )}
-        {r.status !== 'not-applicable' && (
-          <button type="button" class="btn-link vd-log-btn" onClick={() => onLog(r.rule.category)}>
-            {r.rule.lastDoneDate ? 'Log' : 'Log first'}
-          </button>
-        )}
       </div>
       <BulletTrack pct={prog.pct} zone={prog.zone} animate={animate} reduced={reduced} />
     </li>

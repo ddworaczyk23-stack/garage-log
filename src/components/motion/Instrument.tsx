@@ -2,10 +2,9 @@ import type { ComponentChildren } from 'preact'
 import { useEffect, useRef, useState } from 'preact/hooks'
 import { useCountUp } from '../../motion/hooks'
 
-// The dark "instrument" plate — the odometer readout. The primary value counts
-// up on first view (from `countFrom`, e.g. this year's starting mileage, so the
-// count literally tells the year's story); an optional year-to-date block on the
-// right shows a counting delta + growing month bars.
+// Quiet odometer readout. The primary value counts up on first view (from
+// `countFrom`, e.g. this year's starting mileage); an optional year-to-date
+// block on the right shows a counting delta + growing month bars.
 
 export interface InstrumentYtd {
   delta: number
@@ -22,6 +21,7 @@ export function Instrument({
   footer,
   countFrom,
   ytd,
+  action,
   animate = false,
   reduced = false,
 }: {
@@ -31,6 +31,7 @@ export function Instrument({
   footer?: ComponentChildren
   countFrom?: number
   ytd?: InstrumentYtd
+  action?: ComponentChildren
   animate?: boolean
   reduced?: boolean
 }) {
@@ -60,25 +61,30 @@ export function Instrument({
           </div>
           {footer && <div class="odo-foot">{footer}</div>}
         </div>
-        {ytd && (
+        {(ytd || action) && (
           <div class="instr-side">
-            <span class="ytd">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M7 17L17 7M8 7h9v9" />
-              </svg>
-              +{Math.round(delta).toLocaleString('en-US')} mi
-            </span>
-            <div class="ytd-cap">{ytd.deltaCaption}</div>
-            <div class={`mbars${barsIn ? ' is-in' : ''}`}>
-              {ytd.bars.map((h, i) => (
-                <div
-                  key={i}
-                  class={`mbar${i < ytd.bars.length - 1 ? ' dim' : ''}`}
-                  style={`height:${Math.round(h * 100)}%`}
-                />
-              ))}
-            </div>
-            {ytd.barsCaption && <div class="ytd-cap" style="margin-top:5px">{ytd.barsCaption}</div>}
+            {ytd && (
+              <>
+                <span class="ytd">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <path d="M7 17L17 7M8 7h9v9" />
+                  </svg>
+                  +{Math.round(delta).toLocaleString('en-US')} mi
+                </span>
+                <div class="ytd-cap">{ytd.deltaCaption}</div>
+                <div class={`mbars${barsIn ? ' is-in' : ''}`}>
+                  {ytd.bars.map((h, i) => (
+                    <div
+                      key={i}
+                      class={`mbar${i < ytd.bars.length - 1 ? ' dim' : ''}`}
+                      style={`height:${Math.round(h * 100)}%`}
+                    />
+                  ))}
+                </div>
+                {ytd.barsCaption && <div class="ytd-cap" style="margin-top:5px">{ytd.barsCaption}</div>}
+              </>
+            )}
+            {action && <div class="instr-action">{action}</div>}
           </div>
         )}
       </div>
