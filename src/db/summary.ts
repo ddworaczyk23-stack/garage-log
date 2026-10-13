@@ -25,6 +25,8 @@ import {
 } from '../domain/vehicleRanking'
 import { buildCostBreakdown, costPerMile, filterByYear, type CostBreakdown } from '../domain/cost'
 import { vehicleHealth, type VehicleHealth } from '../domain/health'
+import { hasHistory } from '../domain/verdict'
+import { milesThisYear } from '../domain/mileage'
 import { vehicleLabel } from '../domain/vehicle'
 import { formatMoney } from '../domain/format'
 import { getOpenConcerns } from './concerns'
@@ -169,34 +171,6 @@ export interface GarageSummary {
   attention: AttentionItem[]
 }
 
-interface MilePoint {
-  date: string
-  miles: number
-}
-
-function later(a: MilePoint, b: MilePoint): MilePoint {
-  return b.date > a.date || (b.date === a.date && b.miles > a.miles) ? b : a
-}
-function earlier(a: MilePoint, b: MilePoint): MilePoint {
-  return b.date < a.date || (b.date === a.date && b.miles < a.miles) ? b : a
-}
-
-/** Best-effort estimate of miles driven so far this calendar year: current
- * mileage minus the mileage as-of the start of the year (last reading before
- * Jan 1). If there's no pre-year reading we fall back to the earliest reading
- * this year, i.e. "miles logged since the first entry this year". null when
- * there aren't enough distinct points to compute a delta. */
-function milesThisYear(points: MilePoint[], year: number): number | null {
-  if (points.length < 2) return null
-  const latest = points.reduce(later)
-  const yearStart = `${year}-01-01`
-  const preYear = points.filter((p) => p.date < yearStart)
-  const baseline = preYear.length ? preYear.reduce(later) : points.reduce(earlier)
-  if (baseline === latest) return null
-  const driven = latest.miles - baseline.miles
-  return driven >= 0 ? driven : null
-}
-
 function daysSince(isoDate: string, asOf: Date): number {
   const then = new Date(`${isoDate}T00:00:00`).getTime()
   return Math.round((asOf.getTime() - then) / 86_400_000)
@@ -224,18 +198,21 @@ async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): 
   }
   const recentRepairCost = recentHighCostRepair?.cost ?? 0
 
-  const counts = countByStatus(reminders)
+  // Counts, ranking and badges speak only for items with logged history (or
+  // explicitly not-applicable) — a never-logged item's status is a projection.
+  const known = reminders.filter((r) => r.status === 'not-applicable' || hasHistory(r))
+  const counts = countByStatus(known)
   const odometerStale = reminders[0]?.odometerStale ?? true
 
   const activityDates = [...events.map((e) => e.date), ...readings.map((r) => r.date)]
   const lastActivityDate = activityDates.length ? activityDates.reduce((m, d) => (d > m ? d : m)) : null
 
-  const points: MilePoint[] = [
+  const points: MileagePoint[] = [
     ...events.map((e) => ({ date: e.date, miles: e.odometerMiles })),
     ...readings.map((r) => ({ date: r.date, miles: r.miles })),
   ]
 
-  const actionable = reminders.filter((r) => ACTIONABLE.has(r.status))
+  const actionable = known.filter((r) => ACTIONABLE.has(r.status))
 
   const urgency: VehicleUrgency = {
     counts,
@@ -286,6 +263,7 @@ function buildAttentionFeed(summaries: VehicleSummary[]): AttentionItem[] {
     // few (by priority) so it can't crowd the other vehicle out of the feed.
     const vItems: AttentionItem[] = []
     for (const r of s.reminders) {
+      if (!hasHistory(r)) continue
       if (r.status === 'overdue') vItems.push(reminderItem(0, 'overdue', s, r, 0))
       else if (r.status === 'due-next') vItems.push(reminderItem(1, 'due', s, r, 0))
       else if (r.status === 'watch-next') vItems.push(reminderItem(3, 'watch', s, r, 0))

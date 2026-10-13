@@ -157,3 +157,15 @@ describe('vehicleHealth — not-set-up honesty', () => {
     expect(health.band).toBe('not-set-up')
   })
 })
+
+describe('vehicleHealth — never-logged items', () => {
+  it('a projected-due item with no history does not lower the band or score', () => {
+    const logged = makeRule({ lastDoneDate: '2026-06-20', lastDoneMiles: 44700 })
+    const unknown = makeRule({ label: 'Tire rotation', category: 'tire-rotation', lastDoneDate: null, lastDoneMiles: null })
+    const reminders = computeVehicleReminders([logged, unknown], [], inputsAt('2026-07-01', 44800))
+    expect(reminders.find((r) => r.rule.label === 'Tire rotation')?.status).toBe('due-next')
+    const health = vehicleHealth(reminders, [], false)
+    expect(health.band).toBe('all-clear')
+    expect(health.score).toBe(100)
+  })
+})

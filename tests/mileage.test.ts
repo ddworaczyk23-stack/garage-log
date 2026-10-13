@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  milesThisYear,
   estimateAnnualMileage,
   resolveAnnualMileage,
   projectDueDate,
@@ -103,5 +104,28 @@ describe('projectMileage', () => {
       miles: 1,
       isProjected: false,
     })
+  })
+})
+
+describe('milesThisYear', () => {
+  it('a same-day service and reading use the higher reading as latest (no false 0)', () => {
+    const points = [
+      { date: '2026-03-01', miles: 89500 },
+      { date: '2026-10-13', miles: 89500 },
+      { date: '2026-10-13', miles: 89620 },
+    ]
+    expect(milesThisYear(points, 2026)).toBe(120)
+  })
+
+  it('measures from the last reading before Jan 1 when there is one', () => {
+    const points = [
+      { date: '2025-12-20', miles: 80000 },
+      { date: '2026-06-01', miles: 86000 },
+    ]
+    expect(milesThisYear(points, 2026)).toBe(6000)
+  })
+
+  it('is null with fewer than two points', () => {
+    expect(milesThisYear([{ date: '2026-01-05', miles: 1000 }], 2026)).toBeNull()
   })
 })

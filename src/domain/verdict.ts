@@ -55,9 +55,27 @@ export const VERDICT_BAND_LABELS: Record<VerdictBand, string> = {
  * rather than narrating them as knowledge.
  */
 export function hasRealData(reminders: ComputedReminder[]): boolean {
-  return reminders.some(
-    (r) => r.status !== 'not-applicable' && (r.lastDone.date != null || r.lastDone.miles != null),
-  )
+  return reminders.some((r) => r.status !== 'not-applicable' && hasHistory(r))
+}
+
+/** True when this item has a logged last-done date or mileage. */
+export function hasHistory(r: ComputedReminder): boolean {
+  return r.lastDone.date != null || r.lastDone.miles != null
+}
+
+/**
+ * The reminders that may speak in a verdict, health score, or count: tracked
+ * items with logged history. A never-logged item's status is a projection from
+ * the factory schedule, not knowledge — on a car with SOME history it must not
+ * read as "book soon" any more than a car with none may read as "all clear".
+ */
+export function knownReminders(reminders: ComputedReminder[]): ComputedReminder[] {
+  return reminders.filter((r) => r.status !== 'not-applicable' && hasHistory(r))
+}
+
+/** Tracked items Coast has no history for (shown as "Unknown"). */
+export function unknownReminders(reminders: ComputedReminder[]): ComputedReminder[] {
+  return reminders.filter((r) => r.status !== 'not-applicable' && !hasHistory(r))
 }
 
 /** Band for a single engine status; null = excluded from verdicts. */
@@ -95,6 +113,10 @@ export interface VehicleVerdict {
   /** e.g. "Safe window: about 3 weeks of normal driving." null when n/a. */
   safeWindow: string | null
   coastItems: CoastItem[]
+  /** The fix-now / book-soon items behind the headline, worst first (max 3). */
+  actionItems: CoastItem[]
+  /** Tracked items with no logged history — "Unknown", never counted above. */
+  unknownCount: number
   /** Odometer caveat ("no reading on file" / "estimate is stale"), else null. */
   confidenceNote: string | null
 }
@@ -331,10 +353,12 @@ export function vehicleVerdict(
       rulerPin: null,
       safeWindow: null,
       coastItems: [],
+      actionItems: [],
+      unknownCount: 0,
       confidenceNote: null,
     }
   }
-  const tracked = known ? reminders.filter((r) => r.status !== 'not-applicable') : []
+  const tracked = knownReminders(reminders)
 
   const fixNow = tracked.filter((r) => r.status === 'overdue')
   const bookSoon = tracked.filter((r) => r.status === 'due-next')
@@ -379,13 +403,22 @@ export function vehicleVerdict(
       .map((r) => ({ label: r.rule.label, window: windowText(r) ?? 'a while out' })),
   ].slice(0, 4)
 
+  const untracked = known && unknownReminders(reminders).length > 0
   const stale = tracked.some((r) => r.odometerStale)
   const noOdometer = stale && tracked.every((r) => r.milesRemaining == null || r.interval.miles == null)
 
   return {
     band,
-    headline: headline(band, count),
-    sentence: sentenceConcern ? concernSentence(band, sentenceConcern, today) : sentence(band, top, runnerUp),
+    // "Just drive" would narrate the untracked items as fine (principle 1).
+    headline:
+      band === 'all-clear' && untracked
+        ? 'All clear on what’s logged.'
+        : headline(band, count),
+    sentence: sentenceConcern
+      ? concernSentence(band, sentenceConcern, today)
+      : band === 'all-clear' && untracked
+        ? sentence(band, top, runnerUp).replace(/^Nothing (on the schedule )?needs you( right now)?\./, 'Nothing you’ve logged is due.')
+        : sentence(band, top, runnerUp),
     rulerPin: sentenceConcern ? CONCERN_PIN[band] : rulerPin(band, top),
     safeWindow: sentenceConcern
       ? band === 'fix-now'
@@ -393,6 +426,13 @@ export function vehicleVerdict(
         : null
       : safeWindow(band, top),
     coastItems,
+    actionItems: [...fixNow, ...bookSoon]
+      .slice(0, 3)
+      .map((r) => ({
+        label: r.rule.label,
+        window: r.status === 'overdue' ? overdueText(r) : (windowText(r) ?? 'due now'),
+      })),
+    unknownCount: known ? unknownReminders(reminders).length : 0,
     confidenceNote: stale
       ? noOdometer
         ? 'No odometer on file — add a reading to tighten these windows.'

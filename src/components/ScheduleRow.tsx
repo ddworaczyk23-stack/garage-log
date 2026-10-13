@@ -32,6 +32,9 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
   const prog = reminderProgress(r)
   const band = bandFromStatus(r.status)
   const hasHistory = r.lastDone.date != null || r.lastDone.miles != null
+  // Set-up car, but nothing logged for THIS item: its status is a factory
+  // projection, so it reads "Unknown" with no date or progress, never urgency.
+  const unknown = !estimated && !hasHistory && r.status !== 'not-applicable'
 
   // Log payoff: a row that JUST resolved (was overdue/due-next, now completed)
   // gets a one-time flash instead of silently snapping to its new state — the
@@ -80,13 +83,7 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
               </span>
             </>
           )}
-          {!hasHistory && !estimated && (
-            <>
-              <span class="sep">·</span>
-              <span class="vd-row-no-history">No history</span>
-            </>
-          )}
-          {r.projectedDueDate && (
+          {r.projectedDueDate && !unknown && (
             <>
               <span class="sep">·</span>
               <span class="vd-eta">est. {formatShortDate(r.projectedDueDate)}</span>
@@ -95,13 +92,15 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
         </div>
       </div>
       <div class="vd-row-end">
-        <span class={`status-pill ${estimated ? 'status-estimated' : `status-${r.status}`}`}>
+        <span
+          class={`status-pill ${estimated || unknown ? 'status-estimated' : `status-${r.status}`}`}
+        >
           {/* Band vocabulary, not the raw engine status — DESIGN.md: the
               four-signal labels mean the same thing everywhere. */}
-          {estimated ? 'Estimated' : band ? BAND_LABELS[band] : 'Not applicable'}
+          {estimated ? 'Estimated' : unknown ? 'Unknown' : band ? BAND_LABELS[band] : 'Not applicable'}
         </span>
       </div>
-      <BulletTrack pct={prog.pct} zone={prog.zone} animate={animate} reduced={reduced} />
+      {!unknown && <BulletTrack pct={prog.pct} zone={prog.zone} animate={animate} reduced={reduced} />}
     </li>
   )
 }

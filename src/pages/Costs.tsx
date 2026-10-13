@@ -118,7 +118,8 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
 
       {summary.costPerMile != null && summary.milesTracked != null && (
         <p class="muted small cost-note">
-          Lifetime cost / mile over {formatMiles(summary.milesTracked)} tracked.
+          <span class="cost-per-mile">{formatMoney(summary.costPerMile)}/mi</span> lifetime, over{' '}
+          <span class="cost-per-mile">{formatMiles(summary.milesTracked)}</span> tracked.
         </p>
       )}
     </section>
