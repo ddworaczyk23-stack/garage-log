@@ -128,19 +128,12 @@ export function AddVehicle() {
         ‹ Vehicles
       </a>
 
-      <PageHeader eyebrow="The Garage" title="Add a car" />
-
-      <div class="cv-card">
-        <div class="cv-panel cv-slate add-vehicle-intro">
-          <div class="cv-inner">
-            <div class="cv-tag">Quick setup</div>
-            <h3 class="cv-headline">About a minute, then Coast knows your car.</h3>
-            <p class="cv-sentence">
-              Enter a VIN and Coast decodes the rest, or fill in year, make, and model by hand.
-            </p>
-          </div>
-        </div>
-      </div>
+      <PageHeader eyebrow="The Garage" title="Add a car">
+        <p class="page-header-prose">
+          About a minute. Enter a VIN and Coast decodes the rest, or fill in year, make, and model by
+          hand.
+        </p>
+      </PageHeader>
 
       <div class="seg" role="group" aria-label="Add a car mode">
         <button
