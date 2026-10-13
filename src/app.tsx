@@ -6,6 +6,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Vehicles } from './pages/Vehicles'
 import { AddVehicle } from './pages/AddVehicle'
 import { VehicleDetail } from './pages/VehicleDetail'
+import { ServiceDetail } from './pages/ServiceDetail'
 import { Check } from './pages/Check'
 import { ShopBriefPage } from './pages/ShopBrief'
 import { Documents } from './pages/Documents'
@@ -25,6 +26,7 @@ import { ReminderDebug } from './pages/ReminderDebug'
 //   #/vehicles              -> Vehicle list
 //   #/add-vehicle           -> Add a new car (VIN or manual entry)
 //   #/vehicle/<id>          -> Vehicle detail
+//   #/service/<vehicleId:category> -> One service item: overview + its logged history
 //   #/check                 -> Start a triage check (pick a vehicle)
 //   #/check/<id>            -> …the triage flow for one vehicle
 //   #/brief/<id>            -> Shop brief (id = concern id OR reminder-rule id)
@@ -52,6 +54,8 @@ export function App() {
   else if (route === '/add-vehicle') page = <AddVehicle />
   else if (route.startsWith('/vehicle/'))
     page = <VehicleDetail id={route.slice('/vehicle/'.length)} />
+  else if (route.startsWith('/service/'))
+    page = <ServiceDetail id={decodeURIComponent(route.slice('/service/'.length))} />
   else if (route === '/check') page = <Check />
   else if (route.startsWith('/check/')) page = <Check vehicleId={route.slice('/check/'.length)} />
   else if (route.startsWith('/brief/')) page = <ShopBriefPage id={route.slice('/brief/'.length)} />

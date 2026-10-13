@@ -4,18 +4,21 @@ import { deleteEvent } from '../db/events'
 import { formatMiles, formatMoney, formatShortDate } from '../domain/format'
 import { EventForm, loadEventDocs } from './EventForm'
 import { ConfirmButton } from './ui'
+import { serviceHref } from '../domain/serviceHistory'
 import { CATEGORY_LABELS, type MaintenanceEvent } from '../types'
 
 interface Props {
   vehicleId: string
   event: MaintenanceEvent
+  /** Title links to this event's service page. Off on that page itself. */
+  linkToService?: boolean
 }
 
 // One row in the maintenance/repair history list. Toggles into the shared
 // EventForm (pre-filled) for editing. No onChanged plumbing needed — Dexie's
 // liveQuery already re-runs every dependent query (history list, reminders,
 // documents) automatically whenever the underlying tables change.
-export function EventListItem({ vehicleId, event }: Props) {
+export function EventListItem({ vehicleId, event, linkToService = true }: Props) {
   const [editing, setEditing] = useState(false)
   const docs = useQuery(() => (editing ? loadEventDocs(event) : Promise.resolve([])), [editing, event.id])
 
@@ -35,7 +38,13 @@ export function EventListItem({ vehicleId, event }: Props) {
   return (
     <li class="list-row event-row">
       <span class="list-row-main">
-        <span class="list-row-title">{event.title}</span>
+        {linkToService ? (
+          <a class="list-row-title list-row-link" href={serviceHref(vehicleId, event.category)}>
+            {event.title} <span aria-hidden="true">›</span>
+          </a>
+        ) : (
+          <span class="list-row-title">{event.title}</span>
+        )}
         <span class="muted small">
           {formatShortDate(event.date)} · {formatMiles(event.odometerMiles)}
           {event.cost ? ` · ${formatMoney(event.cost)}` : ''}
