@@ -33,10 +33,12 @@ export function Costs() {
         <p class="page-header-prose">Where your maintenance money goes, per vehicle.</p>
       </PageHeader>
 
-      <p class="cost-summary">
-        Total spent: <span class="cost-grand">{formatMoney(grandCounted)}</span> on maintenance and
-        repairs across {summary.vehicles.length} {summary.vehicles.length === 1 ? 'car' : 'cars'}.
-      </p>
+      {hasAnySpend && (
+        <p class="cost-summary">
+          Total spent: <span class="cost-grand">{formatMoney(grandCounted)}</span> on maintenance and
+          repairs across {summary.vehicles.length} {summary.vehicles.length === 1 ? 'car' : 'cars'}.
+        </p>
+      )}
 
       {hasAnySpend && (
         <div class="seg" role="group" aria-label="Time range">
@@ -99,8 +101,9 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
       </div>
 
       <p class="cost-vehicle-summary">
-        <span>{formatMoney(breakdown.total)}</span> spent {rangeLabel}: {formatMoney(breakdown.maintenanceTotal)}
-        {' '}on maintenance and {formatMoney(breakdown.repairTotal)} on repairs.
+        <span>{formatMoney(breakdown.total)}</span> spent {rangeLabel}:{' '}
+        <span>{formatMoney(breakdown.maintenanceTotal)}</span> on maintenance and{' '}
+        <span>{formatMoney(breakdown.repairTotal)}</span> on repairs.
       </p>
 
       {breakdown.byCategory.length === 0 ? (
