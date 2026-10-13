@@ -608,6 +608,31 @@ input:focus {
 input[type='file'] {
   font-size: 0.82rem;
 }
+/* iOS Safari renders the date control natively: it ignores width: 100%, keeps
+   a wide min width, centers its text and sizes its height differently from the
+   text inputs beside it. Strip the native look so it behaves like the others. */
+input[type='date'] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  min-width: 0;
+  min-height: 2.6rem;
+}
+input[type='date']::-webkit-date-and-time-value {
+  text-align: left;
+}
+/* iOS zooms the page when a focused field's text is under 16px, which leaves
+   the form oversized and sliding under the fixed nav. Touch screens get 16px. */
+@media (pointer: coarse) {
+  select,
+  textarea,
+  input[type='text'],
+  input[type='search'],
+  input[type='number'],
+  input[type='date'] {
+    font-size: 16px;
+  }
+}
 input::placeholder {
   color: rgba(35, 39, 43, 0.65); /* was .4 (2.37:1) — placeholder text needs the same 4.5:1 as any other text */
 }
@@ -1018,7 +1043,12 @@ input::placeholder {
   display: flex;
   flex-direction: column;
   gap: 3px;
-  flex: 1;
+  /* flex-basis 0 + min-width 0: side-by-side fields split the row evenly and
+     can shrink below their control's intrinsic width. Without it, iOS Safari's
+     native date control (wide intrinsic min width) pushes the Date box into the
+     Odometer box on narrow phones. */
+  flex: 1 1 0;
+  min-width: 0;
 }
 .admin-form .btn {
   align-self: flex-start;

@@ -195,9 +195,8 @@ it when you finish instead of leaving progress only in chat.
 
 ## Next up
 
-A design spec for onboarding polish (AddVehicle restyle to match the app's
-editorial visual language + a first-vehicle welcome banner on VehicleDetail)
-is written but **not yet implemented**:
-`docs/superpowers/specs/2026-07-22-onboarding-polish-design.md`.
+Nothing open. Onboarding polish (AddVehicle restyle + first-vehicle welcome
+banner) is implemented; spec and plan are in `docs/superpowers/`. Check
+`docs/handoffs/active.md` for current shared state.
 
 Do NOT invent new feature milestones unless asked.
