@@ -8,7 +8,8 @@ import type { VehicleIdentity } from '../types'
 
 type Mode = 'vin' | 'manual'
 const CURRENT_YEAR = new Date().getFullYear()
-const VEHICLE_YEARS = Array.from({ length: 41 }, (_, index) => CURRENT_YEAR - index)
+// Next year's models go on sale in the fall, so the list starts one year ahead.
+const VEHICLE_YEARS = Array.from({ length: 42 }, (_, index) => CURRENT_YEAR + 1 - index)
 const DRIVETRAINS = ['FWD', 'RWD', 'AWD', '4WD'] as const
 
 function normalizeDrivetrain(value: string): string {
