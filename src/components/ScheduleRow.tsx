@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState } from 'preact/hooks'
-import { bandFromStatus, BAND_LABELS } from '../domain/verdict'
+import { itemBand, BAND_LABELS, type SignalBand } from '../domain/verdict'
 import { formatInterval, formatShortDate } from '../domain/format'
 import { reminderProgress } from '../domain/progress'
 import { BulletTrack } from './motion/BulletTrack'
 import { RuleOverrideEditor } from './RuleOverrideEditor'
 import { WarningIcon } from './icons'
 import type { ComputedReminder } from '../domain/reminderEngine'
+
+// Pill color follows the band, not the raw engine status: an overdue routine
+// item is amber "Book soon" (itemBand), so it takes the due-next style.
+const PILL_STATUS: Record<SignalBand, string> = {
+  'fix-now': 'overdue',
+  'book-soon': 'due-next',
+  coast: 'watch-next',
+  'all-clear': 'completed',
+}
 
 interface Props {
   reminder: ComputedReminder
@@ -30,7 +39,7 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
   }
 
   const prog = reminderProgress(r)
-  const band = bandFromStatus(r.status)
+  const band = itemBand(r)
   const hasHistory = r.lastDone.date != null || r.lastDone.miles != null
   // Set-up car, but nothing logged for THIS item: its status is a factory
   // projection, so it reads "Unknown" with no date or progress, never urgency.
@@ -55,7 +64,7 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
 
   return (
     <li
-      class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}${justResolved ? ' vd-row-resolved' : ''}`}
+      class={`vd-row${band === 'fix-now' ? ' is-overdue' : ''}${justResolved ? ' vd-row-resolved' : ''}`}
     >
       <a class="vd-row-hit" href={`#/service/${r.rule.id}`} aria-label={`Open ${r.rule.label}`} />
       <div class="vd-row-main">
@@ -93,7 +102,7 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
       </div>
       <div class="vd-row-end">
         <span
-          class={`status-pill ${estimated || unknown ? 'status-estimated' : `status-${r.status}`}`}
+          class={`status-pill ${estimated || unknown ? 'status-estimated' : `status-${band ? PILL_STATUS[band] : r.status}`}`}
         >
           {/* Band vocabulary, not the raw engine status — DESIGN.md: the
               four-signal labels mean the same thing everywhere. */}

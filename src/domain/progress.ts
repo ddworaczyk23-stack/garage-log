@@ -1,5 +1,6 @@
 import type { ComputedReminder } from './reminderEngine'
 import type { MaintenanceStatus } from '../types'
+import { itemBand } from './verdict'
 
 // Pure helper that turns a ComputedReminder into the numbers the visual
 // instruments need — the focal Gauge and the per-row BulletTrack introduced in
@@ -58,5 +59,7 @@ export function reminderProgress(r: ComputedReminder): ReminderProgress {
     pct = d; axis = 'date'
   }
   if (pct != null && pct < 0) pct = 0
-  return { pct, axis, zone: r.status }
+  // Bar color follows the band: an overdue ROUTINE item is amber, not red.
+  const zone = r.status === 'overdue' && itemBand(r) === 'book-soon' ? 'due-next' : r.status
+  return { pct, axis, zone }
 }

@@ -53,13 +53,24 @@ describe('bandFromStatus', () => {
 })
 
 describe('vehicleVerdict — band selection', () => {
-  it('an overdue item makes the vehicle fix-now, naming the item and the overshoot', () => {
-    const v = verdictFor([makeRule({ label: 'Engine oil & filter' })], inputsAt('2026-07-01', 46200))
+  it('an overdue SAFETY item makes the vehicle fix-now, naming the item and the overshoot', () => {
+    const v = verdictFor([makeRule({ label: 'Brake inspection', category: 'brake-inspection' })], inputsAt('2026-07-01', 46200))
     expect(v.band).toBe('fix-now')
     expect(v.headline).toBe('One thing needs attention now.')
-    expect(v.sentence).toContain('Engine oil & filter')
+    expect(v.sentence).toContain('Brake inspection')
     expect(v.sentence).toContain('1,200 mi past due')
     expect(v.safeWindow).toContain('this week')
+  })
+
+  it('an overdue ROUTINE item is amber book-soon, not red (calm on money)', () => {
+    const v = verdictFor([makeRule({ label: 'Engine oil & filter' })], inputsAt('2026-07-01', 46200))
+    expect(v.band).toBe('book-soon')
+    expect(v.headline).toBe('One thing to book soon.')
+    expect(v.sentence).toContain('1,200 mi past due')
+    expect(v.sentence).toContain('routine')
+    expect(v.rulerPin).toBeGreaterThanOrEqual(25)
+    expect(v.rulerPin).toBeLessThan(50)
+    expect(v.actionItems[0].window).toBe('1,200 mi past due')
   })
 
   it('due-next without any overdue reads book-soon with a mileage window', () => {
@@ -86,8 +97,8 @@ describe('vehicleVerdict — band selection', () => {
 
   it('counts plural actionable items in the headline and flags the runner-up', () => {
     const rules = [
-      makeRule({ label: 'Engine oil & filter', category: 'oil-change' }),
-      makeRule({ label: 'Tire rotation', category: 'tire-rotation', customIntervalMiles: 5100 }),
+      makeRule({ label: 'Brake inspection', category: 'brake-inspection' }),
+      makeRule({ label: 'Brake fluid', category: 'brake-fluid', customIntervalMiles: 5100 }),
     ]
     const v = verdictFor(rules, inputsAt('2026-07-01', 46200))
     expect(v.band).toBe('fix-now')
@@ -186,8 +197,8 @@ describe('vehicleVerdict — band selection', () => {
 
 describe('vehicleVerdict — ruler, coast list, confidence', () => {
   it('pins land inside their band zones and deeper overdue pins further left', () => {
-    const mild = verdictFor([makeRule()], inputsAt('2026-07-01', 45200))
-    const deep = verdictFor([makeRule()], inputsAt('2026-07-01', 48500))
+    const mild = verdictFor([makeRule({ label: 'Brake inspection', category: 'brake-inspection' })], inputsAt('2026-07-01', 45200))
+    const deep = verdictFor([makeRule({ label: 'Brake inspection', category: 'brake-inspection' })], inputsAt('2026-07-01', 48500))
     expect(mild.rulerPin).toBeGreaterThan(deep.rulerPin)
     expect(deep.rulerPin).toBeLessThan(25)
 
@@ -318,10 +329,10 @@ describe('vehicleVerdict — never-logged items are Unknown, not urgent', () => 
   })
 
   it('actionItems lists the logged items behind the headline, worst first', () => {
-    const overdue = makeRule({ label: 'Engine oil & filter', lastDoneMiles: 39000, lastDoneDate: '2026-01-01' })
+    const overdue = makeRule({ label: 'Brake inspection', category: 'brake-inspection', lastDoneMiles: 39000, lastDoneDate: '2026-01-01' })
     const v = verdictFor([overdue, unknown()], inputsAt('2026-07-01', 44800))
     expect(v.band).toBe('fix-now')
-    expect(v.actionItems.map((i) => i.label)).toEqual(['Engine oil & filter'])
+    expect(v.actionItems.map((i) => i.label)).toEqual(['Brake inspection'])
     expect(v.unknownCount).toBe(1)
   })
 

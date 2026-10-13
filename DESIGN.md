@@ -103,7 +103,7 @@ A restrained daylight palette under four saturated signal colors that carry all 
 - **Guide-Sign Blue** (#1b5faa): The brand signature — interstate guide-sign blue. Primary actions, active nav, links, focus, and the "can coast" band. Deepens to **Guide-Sign Blue Deep** (#164e8c) on hover and for readable text-on-tint.
 
 ### Secondary
-- **Signal Red** (#b3402e): Fix-now band, danger actions, overdue states. Reserved for genuinely-stop-now; never used for emphasis.
+- **Signal Red** (#b3402e): Fix-now band and danger actions. Reserved for genuinely-stop-now: an overdue SAFETY item (brakes, tires, timing belt). An overdue routine item (oil, rotation, filters) is amber book-soon, never red. Never used for emphasis.
 - **Signal Amber** (#d98a00): Book-soon band. Its text-on-tint ink deepens to #8a5800 for contrast.
 - **Signal Green** (#1e7a44): All-clear band, success. Highway guide green — earned by real history, never shown as a default.
 

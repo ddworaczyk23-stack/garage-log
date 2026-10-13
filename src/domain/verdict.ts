@@ -78,6 +78,26 @@ export function unknownReminders(reminders: ComputedReminder[]): ComputedReminde
   return reminders.filter((r) => r.status !== 'not-applicable' && !hasHistory(r))
 }
 
+/**
+ * Safety items: overdue means red "fix now". Everything else is routine
+ * maintenance, where overdue is amber "book soon" (PRODUCT.md principle 4:
+ * err urgent on safety, calm on money). User decision, 2026-10-13.
+ */
+export const SAFETY_CATEGORIES: ReadonlySet<string> = new Set([
+  'brake-inspection',
+  'brake-fluid',
+  'tire-replacement',
+  'tire-inspection',
+  'timing-belt',
+])
+
+/** The signal band for one reminder: like bandFromStatus, but an overdue
+ *  ROUTINE item is "book soon", not "fix now". Use this for anything shown. */
+export function itemBand(r: ComputedReminder): SignalBand | null {
+  if (r.status === 'overdue' && !SAFETY_CATEGORIES.has(r.rule.category)) return 'book-soon'
+  return bandFromStatus(r.status)
+}
+
 /** Band for a single engine status; null = excluded from verdicts. */
 export function bandFromStatus(s: MaintenanceStatus): SignalBand | null {
   switch (s) {
@@ -184,6 +204,8 @@ function rulerPin(band: SignalBand, top: ComputedReminder | null): number {
           : 0.5
     return clamp(21 - overBy * 17, 4, 21)
   }
+  // An overdue routine item sits at the urgent edge of the amber zone.
+  if (band === 'book-soon' && top.status === 'overdue') return 27
   // Upcoming bands: fraction of the lead window still remaining (1 = just
   // entered the band, 0 = about to cross into the next-worse band).
   const frac =
@@ -215,12 +237,15 @@ function headline(band: SignalBand, count: number): string {
 
 function sentence(band: SignalBand, top: ComputedReminder | null, next: ComputedReminder | null): string {
   if (band === 'fix-now' && top) {
-    const extra = next && bandFromStatus(next.status) === 'fix-now' ? ' Another item is past due too.' : ''
+    const extra = next && itemBand(next) === 'fix-now' ? ' Another item is past due too.' : ''
     return `${top.rule.label} is ${overdueText(top)} — sorting it soon keeps it a routine job.${extra}`
   }
   if (band === 'book-soon' && top) {
     const when = windowText(top)
-    const extra = next && bandFromStatus(next.status) === 'book-soon' ? ' One more is close behind.' : ''
+    const extra = next && itemBand(next) === 'book-soon' ? ' One more is close behind.' : ''
+    if (top.status === 'overdue') {
+      return `${top.rule.label} is ${overdueText(top)}. It's routine, so book it when it suits you.${extra}`
+    }
     return `${top.rule.label} comes due ${when ?? 'soon'}.${extra}`
   }
   if (band === 'coast' && top) {
@@ -239,6 +264,7 @@ function sentence(band: SignalBand, top: ComputedReminder | null, next: Computed
 function safeWindow(band: SignalBand, top: ComputedReminder | null): string | null {
   if (band === 'fix-now') return 'Don’t put this off — book it this week.'
   if (!top) return null
+  if (band === 'book-soon' && top.status === 'overdue') return 'Book it in the next few weeks.'
   if (band === 'book-soon') {
     if (top.milesRemaining != null && top.milesRemaining > 0) {
       return `Safe window: about ${formatMiles(top.milesRemaining)} of normal driving.`
@@ -360,8 +386,8 @@ export function vehicleVerdict(
   }
   const tracked = knownReminders(reminders)
 
-  const fixNow = tracked.filter((r) => r.status === 'overdue')
-  const bookSoon = tracked.filter((r) => r.status === 'due-next')
+  const fixNow = tracked.filter((r) => itemBand(r) === 'fix-now')
+  const bookSoon = tracked.filter((r) => itemBand(r) === 'book-soon')
   const watch = tracked.filter((r) => r.status === 'watch-next')
 
   const reminderBand: SignalBand = fixNow.length
@@ -384,7 +410,11 @@ export function vehicleVerdict(
   const top =
     reminderBand === 'all-clear'
       ? (tracked.find((r) => r.status === 'completed' && (r.milesRemaining != null || r.daysRemaining != null)) ?? null)
-      : firstIn(tracked, reminderBand === 'fix-now' ? ['overdue'] : reminderBand === 'book-soon' ? ['due-next'] : ['watch-next'])
+      : reminderBand === 'fix-now'
+        ? (fixNow[0] ?? null)
+        : reminderBand === 'book-soon'
+          ? (bookSoon[0] ?? null)
+          : firstIn(tracked, ['watch-next'])
   const reminderCount =
     band === 'fix-now' ? fixNow.length : band === 'book-soon' ? bookSoon.length : band === 'coast' ? watch.length : 0
   const count = reminderCount + (band === 'all-clear' ? 0 : bandConcerns.length)
@@ -467,7 +497,7 @@ export function serviceVerdict(r: ComputedReminder): VerdictSign {
     : r.reason
   switch (r.status) {
     case 'overdue':
-      return { band: 'fix-now', headline: `${capitalize(overdueText(r))}.`, sentence }
+      return { band: itemBand(r) ?? 'fix-now', headline: `${capitalize(overdueText(r))}.`, sentence }
     case 'due-next':
       return { band: 'book-soon', headline: when ? `Due ${when}.` : 'Due soon.', sentence }
     case 'watch-next':

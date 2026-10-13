@@ -1,5 +1,5 @@
 import type { ComputedReminder } from './reminderEngine'
-import { bandFromStatus, hasRealData, knownReminders, type SignalBand, type VerdictBand } from './verdict'
+import { hasRealData, knownReminders, itemBand, type SignalBand, type VerdictBand } from './verdict'
 
 // ---------------------------------------------------------------------------
 // Coast vehicle health score (Stage 5B — design/COAST-PLAN-STAGE5.md).
@@ -82,7 +82,7 @@ export function vehicleHealth(
 
   let band: SignalBand = 'all-clear'
   for (const r of tracked) {
-    const b = bandFromStatus(r.status)
+    const b = itemBand(r)
     if (b) band = moreUrgentBand(band, b)
   }
   for (const c of openConcerns) band = moreUrgentBand(band, c.band)

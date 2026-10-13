@@ -41,7 +41,8 @@ describe('reminderProgress', () => {
     // interval 5000, 1231 mi past due → 6231/5000 = 124.6%
     const p = reminderProgress(mk({ status: 'overdue', interval: { miles: 5000, months: null, conditionBased: false, source: 'custom' }, milesRemaining: -1231 }))
     expect(p.axis).toBe('miles')
-    expect(p.zone).toBe('overdue')
+    // The mk() rule is routine (not a safety item), so the bar is amber.
+    expect(p.zone).toBe('due-next')
     expect(Math.round(p.pct!)).toBe(125)
   })
 

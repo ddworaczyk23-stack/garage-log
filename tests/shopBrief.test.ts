@@ -119,7 +119,8 @@ describe('briefFromReminder (schedule-driven, real engine output)', () => {
     const [r] = computeVehicleReminders([makeRule()], [], inputsAt('2026-07-01', 46200))
     expect(r.status).toBe('overdue')
     const b = briefFromReminder(vehicle, 46200, r, '2026-07-01')
-    expect(b.band).toBe('fix-now')
+    // Routine item: overdue is amber, not red (verdict.ts itemBand).
+    expect(b.band).toBe('book-soon')
     expect(b.title).toBe('Engine oil & filter')
     expect(b.symptom).toBe('Scheduled maintenance — 1,200 mi past due.')
     expect(b.request).toContain('factory spec') // curated oil-change request
