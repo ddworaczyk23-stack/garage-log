@@ -21,7 +21,7 @@ import { composeBrief } from '../domain/shopBrief'
 import type { SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { formatShortDate } from '../domain/format'
-import { Loading, SkeletonPage, EmptyState, ConfirmButton, Tooltip } from '../components/ui'
+import { Loading, SkeletonPage, EmptyState, ConfirmButton, PageHeader, Tooltip } from '../components/ui'
 import type { Vehicle, Concern, MaintenanceCategory } from '../types'
 
 // ---------------------------------------------------------------------------
@@ -72,10 +72,11 @@ function CheckPicker() {
   if (vehicles.length === 0) {
     return (
       <section class="page">
+        <PageHeader eyebrow="Start a check" title="Which car?" />
         <EmptyState
           title="No vehicles yet"
-          hint="Add a vehicle first, then you can run a check on it."
-          action={<a class="btn btn-primary" href="#/add-vehicle">Add a vehicle</a>}
+          hint="Add a car first, then you can run a check on it."
+          action={<a class="btn btn-primary" href="#/add-vehicle">Add a car</a>}
         />
       </section>
     )
@@ -83,8 +84,7 @@ function CheckPicker() {
 
   return (
     <section class="page chk">
-      <span class="eyebrow">Start a check</span>
-      <h2 class="chk-title">Which vehicle?</h2>
+      <PageHeader eyebrow="Start a check" title="Which car?" />
       <div class="chk-choices">
         {vehicles.map((v) => (
           <a key={v.id} class="chk-choice" href={`#/check/${v.id}`}>
@@ -211,9 +211,9 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         {data.concerns.length > 0 && (
           <ConcernList vehicle={vehicle} concerns={data.concerns} />
         )}
-        <span class="eyebrow">Checking {vehicleLabel(vehicle)}</span>
-        <h2 class="chk-title">What’s going on?</h2>
-        <p class="chk-sub">Describe it like you’d tell a friend — no car words needed.</p>
+        <PageHeader eyebrow={`Checking ${vehicleLabel(vehicle)}`} title="What’s going on?">
+          <p class="page-header-prose">Describe it like you’d tell a friend — no car words needed.</p>
+        </PageHeader>
         <div class="chk-choices">
           {PLAYBOOKS.map((pb) => (
             <button key={pb.id} type="button" class="chk-choice" onClick={() => choosePlaybook(pb)}>
@@ -237,11 +237,9 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     return (
       <section class="page chk">
         <FlowTop onBack={back} steps={stepDots(playbook, answers)} />
-        <span class="eyebrow">
-          Checking {vehicleLabel(vehicle)} · {q.eyebrow}
-        </span>
-        <h2 class="chk-title">{q.text}</h2>
-        {q.sub && <p class="chk-sub">{q.sub}</p>}
+        <PageHeader eyebrow={`Checking ${vehicleLabel(vehicle)} · ${q.eyebrow}`} title={q.text}>
+          {q.sub && <p class="page-header-prose">{q.sub}</p>}
+        </PageHeader>
         <div class="chk-choices">
           {q.options.map((opt) => (
             <button key={opt.value} type="button" class="chk-choice" onClick={() => answer(q.id, opt.value)}>
@@ -272,6 +270,8 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   return (
     <section class="page chk">
       <FlowTop onBack={back} />
+
+      <PageHeader eyebrow={`Checking ${vehicleLabel(vehicle)}`} title="Your verdict" />
 
       <div class={`cv-panel ${tone.cls}`}>
         <div class="cv-inner">

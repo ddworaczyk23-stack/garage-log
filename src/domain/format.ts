@@ -24,9 +24,15 @@ export function formatMiles(n: number | null | undefined): string {
   return `${Math.round(n).toLocaleString()} mi`
 }
 
-/** Standard currency display: 65 -> "$65.00". */
+/** Standard currency display: whole dollars omit cents; other values keep two. */
 export function formatMoney(n: number | null | undefined): string {
-  return `$${(n ?? 0).toFixed(2)}`
+  const value = n ?? 0
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(value)
 }
 
 /**

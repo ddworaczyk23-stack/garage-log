@@ -20,7 +20,7 @@ import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
-import { Loading, Skel, ConfirmButton, InfoTip, Toast } from '../components/ui'
+import { Loading, Skel, ConfirmButton, InfoTip, PageHeader, Toast } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
 import { Instrument } from '../components/motion/Instrument'
@@ -242,14 +242,15 @@ export function VehicleDetail({ id }: Props) {
 
       <div class="vd-layout">
       <div class="vd-rail">
-      {/* masthead */}
-      <header class="vd-masthead">
-        <span class="eyebrow">Vehicle</span>
+      <PageHeader
+        eyebrow="Vehicle"
+        title={vehicleLabel(vehicle)}
+        class="vd-masthead"
+      >
         {editingName ? (
           <NicknameEditor vehicle={vehicle} onDone={() => setEditingName(false)} />
         ) : (
           <>
-            <h2 class="vd-name">{vehicleLabel(vehicle)}</h2>
             <p class="vd-spec">
               {/* The name appears here only when the h2 is showing a nickname
                   instead — otherwise the h2 IS the name and repeating it reads
@@ -270,8 +271,7 @@ export function VehicleDetail({ id }: Props) {
             </button>
           </>
         )}
-        <hr class="rule-double" />
-      </header>
+      </PageHeader>
 
       {/* Coast verdict: the one-sentence answer for this vehicle (Stage 1,
           design/COAST-PLAN.md) — pure re-narration of the ranked reminders,

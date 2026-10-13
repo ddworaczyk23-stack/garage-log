@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { formatBytes } from '../domain/documents'
 import { Tooltip } from './ui'
 import type { VehicleDocument } from '../types'
+import { DocumentIcon } from './icons'
 
 interface Props {
   documents: VehicleDocument[]
@@ -57,7 +58,7 @@ export function DocumentGrid({ documents, onRemove }: Props) {
                 <img src={url} alt={doc.filename} />
               ) : (
                 <span class="doc-thumb-icon" aria-hidden="true">
-                  {doc.mimeType === 'application/pdf' ? '📄' : '📎'}
+                  <DocumentIcon type={doc.mimeType === 'application/pdf' ? 'pdf' : 'other'} />
                 </span>
               )}
               <span class="doc-thumb-name">{doc.filename}</span>

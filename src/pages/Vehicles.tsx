@@ -1,9 +1,10 @@
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
-import { vehicleEmoji, vehicleLabel } from '../domain/vehicle'
+import { vehicleLabel } from '../domain/vehicle'
 import { bandFromStatus, hasRealData, VERDICT_BAND_LABELS, type VerdictBand } from '../domain/verdict'
-import { Skel } from '../components/ui'
+import { PageHeader, Skel } from '../components/ui'
+import { VehicleIcon } from '../components/icons'
 import { Reveal } from '../components/motion/Reveal'
 
 async function loadVehiclesWithStatus() {
@@ -44,12 +45,11 @@ export function Vehicles() {
 
   return (
     <section class="page">
-      <div class="card-title-row">
-        <h2 class="page-title">Vehicles</h2>
-        <a class="btn-link" href="#/add-vehicle">
-          + Add car
-        </a>
-      </div>
+      <PageHeader
+        eyebrow="The Garage"
+        title="Vehicles"
+        meta={<a class="btn-link" href="#/add-vehicle">Add a car</a>}
+      />
 
       <Reveal>
         <ul class="list">
@@ -57,7 +57,7 @@ export function Vehicles() {
             <li key={v.id}>
               <a class="list-row" href={`#/vehicle/${v.id}`}>
                 <span class="vehicle-emoji" aria-hidden="true">
-                  {vehicleEmoji(v)}
+                  <VehicleIcon />
                 </span>
                 <span class="list-row-main">
                   <span class="list-row-title">{vehicleLabel(v)}</span>

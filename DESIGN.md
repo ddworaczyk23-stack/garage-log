@@ -16,6 +16,12 @@ colors:
   hairline: "#23272b21"
   guide-sign-blue-tint: "rgba(27, 95, 170, 0.11)"
 typography:
+  page-title:
+    fontFamily: "Newsreader, Georgia, serif"
+    fontSize: "28px"
+    fontWeight: 700
+    lineHeight: 1.05
+    letterSpacing: "-0.01em"
   display:
     fontFamily: "Overpass, system-ui, sans-serif"
     fontSize: "24px"
@@ -112,14 +118,16 @@ A restrained daylight palette under four saturated signal colors that carry all 
 
 ## 3. Typography
 
-**Display Font:** Overpass (with system-ui fallback) — the signage voice
-**Body Font:** Overpass for UI; Newsreader (Georgia fallback) for explanatory prose
+**Page-title Font:** Newsreader (with Georgia fallback) — the editorial identity voice
+**Signage Font:** Overpass (with system-ui fallback) — verdicts, card titles, and controls
+**Body Font:** Overpass for UI; Newsreader for explanatory prose
 **Label/Mono Font:** Overpass Mono — the data spine
 
-**Character:** A three-voice system with a strict division of labor: Overpass speaks as the sign (verdicts, headings, controls), Newsreader speaks as the calm human explaining the sign, and Overpass Mono carries every number (money, miles, dates) with tabular authority.
+**Character:** A three-voice system with a strict division of labor: Newsreader names pages, vehicles, and calmly explains; Overpass speaks as the sign (verdicts, card titles, controls); Overpass Mono carries every number (money, miles, dates) with tabular authority.
 
 ### Hierarchy
-- **Display / Verdict headline** (800, 24px, 1.1, -0.015em): The sign's message. White on a signal-color slab; `text-wrap: balance`.
+- **Page title / Vehicle name** (600–700, 28–34px): Newsreader editorial display type.
+- **Display / Verdict headline** (800, 24px, 1.1, -0.015em): Overpass for the sign's message. White on a signal-color slab; `text-wrap: balance`.
 - **Title / Card title** (600, ~1.02–1.08rem, -0.012em): Card and section headings in Overpass.
 - **Body** (400, ~0.95rem): UI copy in Overpass.
 - **Prose / Verdict sentence** (400, 15.5px, 1.45): The serif explanation voice (Newsreader). Any sentence that explains, reassures, or advises is set in serif.
@@ -140,7 +148,7 @@ The five named voices above (Display/Title/Body/Prose/Label) are the *semantic* 
 Half-pixel steps (e.g. 13.5px, 14.5px) are expected within the Small/Caption bands — they're used to hairline-tune vertical rhythm inside dense rows and are as valid as their whole-pixel neighbors.
 
 ### Named Rules
-**The Three Voices Rule.** Signage (Overpass), explanation (Newsreader serif), data (Overpass Mono) — every text element belongs to exactly one voice. Numbers never render in the serif; verdicts never render in the mono.
+**The Three Voices Rule.** Signage and card titles (Overpass), page identity and explanation (Newsreader serif), data (Overpass Mono) — every text element belongs to exactly one voice. Numbers never render in the serif; verdicts never render in the mono.
 
 ## 4. Elevation
 

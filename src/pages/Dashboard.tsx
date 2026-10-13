@@ -3,7 +3,7 @@ import { getGarageSummary, type VehicleSummary } from '../db/summary'
 import { formatMiles, formatMoney, localDateISO } from '../domain/format'
 import { vehicleVerdict } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
-import { Skel } from '../components/ui'
+import { PageHeader, Skel } from '../components/ui'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
 import { CalendarExport } from '../components/CalendarExport'
@@ -46,13 +46,7 @@ export function Dashboard() {
   if (summary.vehicles.length === 0) {
     return (
       <section class="page gb">
-        <header class="gb-top">
-          <span class="eyebrow">The Garage · Today</span>
-          <div class="gb-top-row">
-            <h2 class="gb-name">Your Garage</h2>
-          </div>
-          <hr class="rule-double" />
-        </header>
+        <PageHeader eyebrow="The Garage · Today" title="Your Garage" />
 
         <div class="cv-card">
           <div class="cv-panel cv-slate fr-hero">
@@ -60,7 +54,7 @@ export function Dashboard() {
               <div class="cv-tag">Welcome to Coast</div>
               <h3 class="cv-headline">Plain-English answers about your car.</h3>
               <p class="cv-sentence">
-                Add your car and Coast turns its maintenance schedule into verdicts you can act on —
+                Add a car and Coast turns its maintenance schedule into verdicts you can act on —
                 what needs attention, what can wait, and what to say at the shop counter.
               </p>
             </div>
@@ -68,13 +62,13 @@ export function Dashboard() {
 
           {/* A real 3-step sequence — this is the activation path, in order. */}
           <ol class="fr-steps">
-            <li><b>Add your car</b> — year, make, and model is enough.</li>
+            <li><b>Add a car</b> — year, make, and model is enough.</li>
             <li><b>Log your last oil change</b>: the date and mileage are enough.</li>
             <li><b>Get your verdict</b> — and a shop brief whenever something's up.</li>
           </ol>
 
           <div class="fr-actions">
-            <a class="btn btn-primary" href="#/add-vehicle">Add your car</a>
+            <a class="btn btn-primary" href="#/add-vehicle">Add a car</a>
             <span class="fr-note">Takes about a minute. Everything stays on this device unless you sign in to sync.</span>
           </div>
         </div>
@@ -84,10 +78,10 @@ export function Dashboard() {
 
   return (
     <section class="page gb">
-      <header class="gb-top">
-        <span class="eyebrow">The Garage · Today</span>
-        <div class="gb-top-row">
-          <h2 class="gb-name">Your Garage</h2>
+      <PageHeader
+        eyebrow="The Garage · Today"
+        title="Your Garage"
+        meta={
           <span class="gb-status">
             <span
               class={`vd-lamp ${needsAttention > 0 ? 'is-overdue' : notSetUp > 0 ? 'is-na' : 'is-ok'}`}
@@ -103,9 +97,8 @@ export function Dashboard() {
             )}{' '}
             · {summary.vehicles.length} vehicle{summary.vehicles.length === 1 ? '' : 's'}
           </span>
-        </div>
-        <hr class="rule-double" />
-      </header>
+        }
+      />
 
       {/* Stacks on mobile; a 2-up board on desktop (see .gb-today-grid, R2). */}
       <div class="gb-today-grid">
@@ -141,7 +134,7 @@ export function Dashboard() {
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
         </a>
         <a class="gb-link" href="#/add-vehicle">
-          Add a vehicle
+          Add a car
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" /></svg>
         </a>
       </div>

@@ -48,14 +48,15 @@ describe('formatMiles', () => {
 })
 
 describe('formatMoney', () => {
-  it('always shows two decimals', () => {
-    expect(formatMoney(65)).toBe('$65.00')
+  it('uses separators and omits cents for whole dollars', () => {
+    expect(formatMoney(65)).toBe('$65')
+    expect(formatMoney(2721)).toBe('$2,721')
     expect(formatMoney(65.5)).toBe('$65.50')
   })
 
   it('treats null/undefined as zero', () => {
-    expect(formatMoney(null)).toBe('$0.00')
-    expect(formatMoney(undefined)).toBe('$0.00')
+    expect(formatMoney(null)).toBe('$0')
+    expect(formatMoney(undefined)).toBe('$0')
   })
 })
 
