@@ -15,6 +15,31 @@ export function Loading({ label = 'Loading…' }: { label?: string }) {
   )
 }
 
+/** Brief, non-blocking confirmation announced to assistive technology. */
+export function Toast({
+  message,
+  onDismiss,
+  duration = 3600,
+}: {
+  message: string
+  onDismiss: () => void
+  duration?: number
+}) {
+  const dismissRef = useRef(onDismiss)
+  dismissRef.current = onDismiss
+
+  useEffect(() => {
+    const id = window.setTimeout(() => dismissRef.current(), duration)
+    return () => window.clearTimeout(id)
+  }, [message, duration])
+
+  return (
+    <div class="toast" role="status" aria-live="polite">
+      {message}
+    </div>
+  )
+}
+
 /** One shimmering placeholder block. Compose into page-shaped skeletons. */
 export function Skel({ class: className = '', style }: { class?: string; style?: string }) {
   return <span class={`skel ${className}`} style={style} aria-hidden="true" />

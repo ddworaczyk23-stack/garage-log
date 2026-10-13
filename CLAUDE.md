@@ -113,7 +113,7 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   - `serviceHistory.ts` — per-service history/stats for `#/service/<id>`.
   - `calendar.ts` — .ics export for "Add reminders to Calendar"
     (`components/CalendarExport.tsx`, on Dashboard + schedule card). No server:
-    the phone's Calendar delivers the alerts (9am 1 week + 1 day before). One
+    the phone's Calendar delivers the alerts (one alert, 9am on the due day). One
     event per car per day; never-logged items excluded; 12-month horizon.
   - `documents.ts`, `cost.ts`, `backup.ts`, `format.ts`, `vehicle.ts`,
     `vehicleIdentity.ts`, `importHistory.ts`, `practicalTiming.ts`,

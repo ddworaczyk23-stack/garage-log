@@ -104,6 +104,12 @@ Today ~12 sections and 7+ ways to add something. Target order:
    has history; show "—" instead of "0 overdue" for unknown cars.
 5. Documents filters: stack under 400px so they don't truncate.
 6. Backup: move "Developer & debug tools" link to the Debug route only.
+7. From the Phase 1 review: on a set-up car, never-logged rows lost their
+   "no history" cue (ScheduleRow hides `reason` when there is no history).
+   Add a short "No history" meta or pill text for those rows.
+8. From the Phase 1 review: `Toast` mounts its `role="status"` region with
+   the message already inside, which some screen readers skip. Keep one
+   empty live region mounted and set its text on save.
 
 ## Done when
 

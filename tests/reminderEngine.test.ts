@@ -245,6 +245,7 @@ describe('computeReminder — never-serviced items are projected, never falsely 
     expect(r.status).not.toBe('overdue')
     expect(r.status).not.toBe('due-next')
     expect(r.status).not.toBe('completed')
+    expect(r.reason).toBe('Estimated from the factory schedule at ~105,000 mi.')
   })
 
   it('projects the next interval boundary and reads as watch-next when close', () => {
@@ -272,6 +273,7 @@ describe('computeReminder — never-serviced items are projected, never falsely 
     expect(r.dueAtMiles).toBeNull()
     expect(r.milesRemaining).toBeNull()
     expect(r.status).toBe('watch-next')
+    expect(r.reason).toBe('Estimated from the factory schedule.')
   })
 })
 

@@ -6,8 +6,13 @@ import type { OdometerReading } from '../types'
 interface Props {
   vehicleId: string
   existing?: OdometerReading
-  onDone: () => void
+  onDone: (result: OdometerFormSaveResult) => void
   onCancel: () => void
+}
+
+export interface OdometerFormSaveResult {
+  miles: number
+  editing: boolean
 }
 
 const todayISO = () => localDateISO(new Date())
@@ -34,7 +39,7 @@ export function OdometerForm({ vehicleId, existing, onDone, onCancel }: Props) {
       } else {
         await recordOdometerReading(vehicleId, parsedMiles, date)
       }
-      onDone()
+      onDone({ miles: parsedMiles, editing: !!existing })
     } catch (err) {
       console.error('[OdometerForm]', err)
       setError('Something went wrong saving this reading. Please try again.')

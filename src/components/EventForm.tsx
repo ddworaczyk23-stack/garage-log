@@ -27,8 +27,15 @@ interface Props {
   /** Prefills odometer with the vehicle's current mileage estimate on a fresh add. */
   defaultOdometer?: number
   existingDocs?: { id: string; filename: string }[]
-  onDone: () => void
+  onDone: (result: EventFormSaveResult) => void
   onCancel: () => void
+}
+
+export interface EventFormSaveResult {
+  kind: 'maintenance' | 'repair'
+  category: MaintenanceCategory
+  odometerMiles: number
+  editing: boolean
 }
 
 const todayISO = () => localDateISO(new Date())
@@ -181,7 +188,7 @@ export function EventForm({
       } else {
         await recordCompletedEvent(base, newFiles, ruleOverride)
       }
-      onDone()
+      onDone({ kind, category, odometerMiles: parsedOdometerMiles, editing: !!existing })
     } catch (err) {
       console.error('[EventForm]', err)
       setError('Something went wrong saving this entry. Please try again.')

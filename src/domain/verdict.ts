@@ -327,7 +327,7 @@ export function vehicleVerdict(
       band: 'not-set-up',
       headline: 'Not set up yet.',
       sentence:
-        'Coast doesn’t know this car yet — add an odometer reading, or log or import a service, and real verdicts start.',
+        "Coast doesn't know this car yet. Log your last oil change (or import your service history) and real verdicts start.",
       rulerPin: null,
       safeWindow: null,
       coastItems: [],

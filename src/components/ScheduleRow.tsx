@@ -12,13 +12,14 @@ interface Props {
   onLog: (category: MaintenanceCategory) => void
   animate: boolean
   reduced: boolean
+  estimated?: boolean
 }
 
 // One row in VehicleDetail's service schedule. Toggles into RuleOverrideEditor
 // (pre-filled) for editing this item's interval or marking it not needed / DIY'd
 // / already handled — no onChanged plumbing needed, Dexie's liveQuery already
 // re-runs the reminders query whenever reminderRules changes.
-export function ScheduleRow({ reminder: r, onLog, animate, reduced }: Props) {
+export function ScheduleRow({ reminder: r, onLog, animate, reduced, estimated = false }: Props) {
   const [editing, setEditing] = useState(false)
 
   if (editing) {
@@ -31,6 +32,7 @@ export function ScheduleRow({ reminder: r, onLog, animate, reduced }: Props) {
 
   const prog = reminderProgress(r)
   const band = bandFromStatus(r.status)
+  const hasHistory = r.lastDone.date != null || r.lastDone.miles != null
 
   // Log payoff: a row that JUST resolved (was overdue/due-next, now completed)
   // gets a one-time flash instead of silently snapping to its new state — the
@@ -64,24 +66,28 @@ export function ScheduleRow({ reminder: r, onLog, animate, reduced }: Props) {
           <button type="button" class="vd-interval-edit" onClick={() => setEditing(true)}>
             Edit
           </button>
-          <span class="sep">·</span>
-          <span>
-            {r.reason}
-            {r.odometerStale ? ' ⚠️' : ''}
-          </span>
+          {hasHistory && (
+            <>
+              <span class="sep">·</span>
+              <span>
+                {r.reason}
+                {r.odometerStale ? ' ⚠️' : ''}
+              </span>
+            </>
+          )}
           {r.projectedDueDate && (
             <>
               <span class="sep">·</span>
-              <span class="vd-eta">est. ~{formatShortDate(r.projectedDueDate)}</span>
+              <span class="vd-eta">est. {formatShortDate(r.projectedDueDate)}</span>
             </>
           )}
         </div>
       </div>
       <div class="vd-row-end">
-        <span class={`status-pill status-${r.status}`}>
+        <span class={`status-pill ${estimated ? 'status-estimated' : `status-${r.status}`}`}>
           {/* Band vocabulary, not the raw engine status — DESIGN.md: the
               four-signal labels mean the same thing everywhere. */}
-          {band ? BAND_LABELS[band] : 'Not applicable'}
+          {estimated ? 'Estimated' : band ? BAND_LABELS[band] : 'Not applicable'}
         </span>
         {/* Actionable items get a one-tap shop brief (Stage 3) — the thing
             you show at the counter when booking this service. */}

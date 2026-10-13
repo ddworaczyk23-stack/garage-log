@@ -267,8 +267,8 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
       ),
       reason:
         projectedDueMiles != null
-          ? `No history yet — projected next at ~${projectedDueMiles.toLocaleString()} mi from the factory schedule. Log your last service to personalize.`
-          : 'No history yet — log a service to start tracking this item.',
+          ? `Estimated from the factory schedule at ~${projectedDueMiles.toLocaleString()} mi.`
+          : 'Estimated from the factory schedule.',
     }
   }
 
