@@ -10,6 +10,7 @@ import {
   getCurrentMileageEstimate,
 } from '../src/db/events'
 import { openConcern, resolveConcern } from '../src/db/concerns'
+import { getProjectedMileage } from '../src/db/summary'
 import { getPlaybook } from '../src/domain/playbooks'
 import type { ReminderRule } from '../src/types'
 
@@ -441,5 +442,29 @@ describe('concern auto-resolve', () => {
     })
     await deleteEvent(eventId)
     expect((await db.concerns.get(concernId))?.status).toBe('resolved')
+  })
+})
+
+describe('getProjectedMileage', () => {
+  it('is null with no mileage data', async () => {
+    expect(await getProjectedMileage(VEHICLE_ID)).toBeNull()
+  })
+
+  it('projects from the history-derived rate', async () => {
+    // 6,000 mi over 182 days -> ~12,041 mi/yr
+    await recordOdometerReading(VEHICLE_ID, 30000, '2026-01-01')
+    await recordOdometerReading(VEHICLE_ID, 36000, '2026-07-02')
+    const p = await getProjectedMileage(VEHICLE_ID, new Date('2026-10-01T12:00:00'))
+    expect(p?.isProjected).toBe(true)
+    expect(p?.lastActual).toEqual({ miles: 36000, asOfDate: '2026-07-02' })
+    expect(p?.annualMileage).toBe(Math.round((6000 / 182) * 365.25))
+    expect(p!.miles).toBeGreaterThan(36000)
+  })
+
+  it('prefers the custom annual mileage over history', async () => {
+    await db.vehicles.add({ id: VEHICLE_ID, annualMileageOverride: 3652.5 } as never)
+    await recordOdometerReading(VEHICLE_ID, 10000, '2026-01-01')
+    const p = await getProjectedMileage(VEHICLE_ID, new Date('2026-01-11T12:00:00'))
+    expect(p?.miles).toBe(10100) // 10 days at 10 mi/day
   })
 })

@@ -3,6 +3,7 @@ import {
   estimateAnnualMileage,
   resolveAnnualMileage,
   projectDueDate,
+  projectMileage,
   MIN_ESTIMATE_DAYS,
 } from '../src/domain/mileage'
 
@@ -74,5 +75,33 @@ describe('projectDueDate', () => {
     expect(projectDueDate(-500, 12000, asOf)).toBeNull()
     expect(projectDueDate(null, 12000, asOf)).toBeNull()
     expect(projectDueDate(6000, 0, asOf)).toBeNull()
+  })
+})
+
+describe('projectMileage', () => {
+  const asOf = new Date('2026-07-01T12:00:00')
+
+  it('rolls the last real reading forward at the yearly rate', () => {
+    const p = projectMileage({ miles: 40000, asOfDate: '2026-01-01' }, 12000, asOf)
+    // 181 days at 12,000 mi/yr ≈ 5,947 mi
+    expect(p.miles).toBe(40000 + Math.round((12000 * 181) / 365.25))
+    expect(p.isProjected).toBe(true)
+    expect(p.asOfDate).toBe('2026-07-01')
+    expect(p.lastActual).toEqual({ miles: 40000, asOfDate: '2026-01-01' })
+  })
+
+  it('uses a reading from today (or the future) as-is', () => {
+    expect(projectMileage({ miles: 50000, asOfDate: '2026-07-01' }, 12000, asOf)).toMatchObject({
+      miles: 50000,
+      isProjected: false,
+    })
+    expect(projectMileage({ miles: 50000, asOfDate: '2026-08-01' }, 12000, asOf).miles).toBe(50000)
+  })
+
+  it('does not project with a non-positive rate', () => {
+    expect(projectMileage({ miles: 1, asOfDate: '2020-01-01' }, 0, asOf)).toMatchObject({
+      miles: 1,
+      isProjected: false,
+    })
   })
 })

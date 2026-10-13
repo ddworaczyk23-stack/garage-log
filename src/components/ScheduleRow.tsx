@@ -54,7 +54,9 @@ export function ScheduleRow({ reminder: r, onLog, animate, reduced }: Props) {
       class={`vd-row${r.status === 'overdue' ? ' is-overdue' : ''}${justResolved ? ' vd-row-resolved' : ''}`}
     >
       <div class="vd-row-main">
-        <div class="vd-svc">{r.rule.label}</div>
+        <a class="vd-svc vd-svc-link" href={`#/service/${r.rule.id}`}>
+          {r.rule.label} <span aria-hidden="true">›</span>
+        </a>
         <div class="vd-svc-meta">
           <span class="interval">
             {formatInterval(r.interval.miles, r.interval.months, r.interval.conditionBased)}

@@ -7,8 +7,10 @@ import {
 import { getCurrentMileageEstimate } from './events'
 import {
   estimateAnnualMileage,
+  projectMileage,
   resolveAnnualMileage,
   type MileagePoint,
+  type ProjectedMileage,
   type ResolvedAnnualMileage,
 } from '../domain/mileage'
 import {
@@ -31,24 +33,46 @@ import type { Concern, MaintenanceEvent, Vehicle } from '../types'
  * that needs it (Vehicle Detail, the reminders debug panel, list/dashboard
  * status badges) so there's one query shape instead of several copies. */
 export async function getVehicleReminders(vehicleId: string): Promise<ComputedReminder[]> {
-  const [rules, events, readings, mileage, vehicle] = await Promise.all([
+  const [rules, events, mileage] = await Promise.all([
     db.reminderRules.where('vehicleId').equals(vehicleId).toArray(),
     db.events.where('vehicleId').equals(vehicleId).toArray(),
-    db.odometerReadings.where('vehicleId').equals(vehicleId).toArray(),
-    getCurrentMileageEstimate(vehicleId),
-    db.vehicles.get(vehicleId),
+    getProjectedMileage(vehicleId),
   ])
+  return computeVehicleReminders(rules, events, {
+    // Projected-to-today mileage drives status, so items keep coming due
+    // between visits. Staleness still keys off the last REAL reading.
+    currentMiles: mileage?.miles ?? null,
+    odometerAsOfDate: mileage?.lastActual.asOfDate ?? null,
+    asOf: new Date(),
+    annualMileage: mileage?.annualMileage ?? DEFAULT_ANNUAL_MILEAGE,
+  })
+}
+
+/**
+ * The vehicle's odometer estimated for TODAY: its last real reading
+ * (getCurrentMileageEstimate) rolled forward at the effective miles/year
+ * (custom > history-derived > DEFAULT_ANNUAL_MILEAGE). The one source for
+ * "current mileage" everywhere it's shown or used for status. Null when the
+ * vehicle has no mileage data at all yet. Form defaults and cost-per-mile
+ * deliberately keep using the last real reading instead.
+ */
+export async function getProjectedMileage(
+  vehicleId: string,
+  asOf: Date = new Date(),
+): Promise<ProjectedMileage | null> {
+  const [events, readings, vehicle, last] = await Promise.all([
+    db.events.where('vehicleId').equals(vehicleId).toArray(),
+    db.odometerReadings.where('vehicleId').equals(vehicleId).toArray(),
+    db.vehicles.get(vehicleId),
+    getCurrentMileageEstimate(vehicleId),
+  ])
+  if (!last) return null
   const annual = resolveAnnualMileage(
     vehicle?.annualMileageOverride ?? null,
     estimateAnnualMileage(mileagePoints(events, readings))?.annual ?? null,
     DEFAULT_ANNUAL_MILEAGE,
   )
-  return computeVehicleReminders(rules, events, {
-    currentMiles: mileage?.miles ?? null,
-    odometerAsOfDate: mileage?.asOfDate ?? null,
-    asOf: new Date(),
-    annualMileage: annual.value,
-  })
+  return projectMileage(last, annual.value, asOf)
 }
 
 /** All odometer observations for a vehicle (readings + service events), as the
@@ -119,7 +143,8 @@ export interface VehicleSummary {
   recentServices: MaintenanceEvent[]
   recentRepairs: MaintenanceEvent[]
   recentHighCostRepair: MaintenanceEvent | null
-  mileage: { miles: number; asOfDate: string; stale: boolean } | null
+  /** miles = projected to today; asOfDate = the last REAL reading it was projected from. */
+  mileage: { miles: number; asOfDate: string; stale: boolean; projected: boolean } | null
   milesThisYear: number | null
   spendThisYear: number
   spendAllTime: number
@@ -181,7 +206,7 @@ async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): 
     getVehicleReminders(vehicle.id),
     db.events.where('vehicleId').equals(vehicle.id).toArray(),
     db.odometerReadings.where('vehicleId').equals(vehicle.id).toArray(),
-    getCurrentMileageEstimate(vehicle.id),
+    getProjectedMileage(vehicle.id, asOf),
     db.documents.where('[linkedTo.type+linkedTo.id]').equals(['vehicle', vehicle.id]).count(),
     getOpenConcerns(vehicle.id),
   ])
@@ -231,7 +256,14 @@ async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): 
     recentServices: services.slice(0, 2),
     recentRepairs: repairs.slice(0, 2),
     recentHighCostRepair: recentHighCostRepair && recentHighCostRepair.cost >= HIGH_COST_REPAIR ? recentHighCostRepair : null,
-    mileage: mileageEst ? { miles: mileageEst.miles, asOfDate: mileageEst.asOfDate, stale: odometerStale } : null,
+    mileage: mileageEst
+      ? {
+          miles: mileageEst.miles,
+          asOfDate: mileageEst.lastActual.asOfDate,
+          stale: odometerStale,
+          projected: mileageEst.isProjected,
+        }
+      : null,
     milesThisYear: milesThisYear(points, year),
     spendThisYear: events.filter((e) => e.date.startsWith(`${year}-`)).reduce((s, e) => s + (e.cost || 0), 0),
     spendAllTime: events.reduce((s, e) => s + (e.cost || 0), 0),

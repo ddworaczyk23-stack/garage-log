@@ -80,6 +80,10 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
     REGRESS the cache or null it. `deleteEvent` also bulk-deletes attached docs.
   - `getCurrentMileageEstimate()` — newest of odometer readings and service
     events; same-day ties go to HIGHER mileage (dates are day-only). Tested.
+    This is the last REAL reading. `getProjectedMileage()` (summary.ts) rolls it
+    forward to today at the effective mi/yr (custom > history > 12k default)
+    and is what reminders, the odometer gauge and the dashboard use. Form
+    defaults and cost-per-mile stay on the real reading.
 - **`src/db/documents.ts`** — the SINGLE attachment write path. `prepareDocument`
   re-encodes large raster images to downscaled JPEG via canvas, best-effort (any
   failure, or <10% smaller, stores the original). `attachEventDocument` /
@@ -87,11 +91,15 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   `buildDocumentIndex()` (joins docs×vehicles×events, reactive) /
   `reassignDocument` (moves ONLY attachment pointers — no reminder recompute) /
   `setDocumentTags`.
-- **`src/db/summary.ts`** — `getVehicleReminders()` (the ONE shared
+- **`src/db/summary.ts`** — `getProjectedMileage()`, `getVehicleReminders()` (the ONE shared
   rules+events+mileage → `computeVehicleReminders` composition; don't re-duplicate
   this query shape), `getGarageSummary()` (per-vehicle `VehicleSummary` + capped
   `AttentionItem[]` feed), `getGarageCostSummary()`. Reads every table inside the
   caller's liveQuery so the dashboard recomputes on any write.
+- **`src/db/milestones.ts`** — milestone checkup writes (check item, notes,
+  complete, skip, reopen) + `getMilestoneContext()`. Progress lives on
+  `Vehicle.milestones` (non-indexed, no schema bump, syncs/backs up with the
+  vehicle). **Deliberately independent of reminder rules** — never touches them.
 - **`src/db/vehicleOnboarding.ts`** — `addVehicle()` (dedup-checked via
   `matchesExistingVehicle`; creates the vehicle + its generic maintenance
   schedule in one transaction).
@@ -99,6 +107,14 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   - `reminderEngine.ts` — `computeReminder(rule, inputs)` + `computeVehicleReminders`.
   - `reminderStatus.ts` — `resolveInterval(rule)`, `resolveLastDone()`.
   - `vehicleRanking.ts` — lexicographic `compareVehicleUrgency` + `vehicleBadges`.
+  - `milestones.ts` — 30k/60k/90k/100k/120k/150k (+every 30k) checklists,
+    tailored by `componentProfile()` (turbo/4WD/CVT/etc. inferred from engine,
+    drivetrain and the vehicle's schedule categories). General guidance only.
+  - `serviceHistory.ts` — per-service history/stats for `#/service/<id>`.
+  - `calendar.ts` — .ics export for "Add reminders to Calendar"
+    (`components/CalendarExport.tsx`, on Dashboard + schedule card). No server:
+    the phone's Calendar delivers the alerts (9am 1 week + 1 day before). One
+    event per car per day; never-logged items excluded; 12-month horizon.
   - `documents.ts`, `cost.ts`, `backup.ts`, `format.ts`, `vehicle.ts`,
     `vehicleIdentity.ts`, `importHistory.ts`, `practicalTiming.ts`,
     `costHeuristics.ts`.
@@ -111,7 +127,8 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   `VehicleDocuments` (Glovebox), `NicknameEditor`, `AccountBar`, `ui.tsx`
   (`Loading`, `EmptyState`, `ConfirmButton`, `ErrorBoundary`).
 - **`src/app.tsx`** — shell + a tiny **hash router** (`#/`, `#/vehicles`,
-  `#/vehicle/<id>`, `#/documents`, `#/costs`, `#/backup`, `#/add-vehicle`,
+  `#/vehicle/<id>`, `#/service/<vehicleId:category>`,
+  `#/milestone/<vehicleId>/<miles>`, `#/documents`, `#/costs`, `#/backup`, `#/add-vehicle`,
   `#/import/<id>`, `#/debug`, `#/template`, `#/reminders-debug`). Hash routing is
   deliberate — deep-links on static hosts with no 404-rewrite, survives
   `base: './'`. Don't swap in a History-API router without a Pages fallback.
@@ -126,7 +143,8 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
 
 - **Thresholds** (`reminderEngine.ts`): `DUE_LEAD_MILES/DAYS` = 500mi/30d (inner
   "due-next"), `WATCH_LEAD_MILES/DAYS` = 1500mi/90d (outer "watch-next"). Hybrid
-  rules take whichever axis is more urgent. `STALE_ODOMETER_DAYS` = 45.
+  rules take whichever axis is more urgent. `STALE_ODOMETER_DAYS` = 90 (age of
+  the last REAL reading; a gentle "confirm mileage" nudge).
   `DEFAULT_ANNUAL_MILEAGE` = 12000 (only for ranking mileage- vs date-based items).
 - **5 states** (`MaintenanceStatus`): completed, watch-next, due-next, overdue,
   not-applicable. "watch/due soon" → `watch-next`; "due now/next" → `due-next`.

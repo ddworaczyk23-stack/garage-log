@@ -66,7 +66,7 @@ const ITEMS: {
     href: '#/vehicles',
     label: 'Vehicles',
     icon: CarIcon,
-    isActive: (r) => r === '/vehicles' || r.startsWith('/vehicle/'),
+    isActive: (r) => r === '/vehicles' || r.startsWith('/vehicle/') || r.startsWith('/service/') || r.startsWith('/milestone/'),
   },
   {
     href: '#/documents',

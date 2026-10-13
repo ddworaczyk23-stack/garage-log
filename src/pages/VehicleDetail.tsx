@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
-import { formatShortDate, localDateISO } from '../domain/format'
-import { getVehicleReminders } from '../db/summary'
-import { getCurrentMileageEstimate } from '../db/events'
+import { formatMiles, formatShortDate, localDateISO } from '../domain/format'
+import { getProjectedMileage, getVehicleReminders } from '../db/summary'
+import { STALE_ODOMETER_DAYS } from '../domain/reminderEngine'
 import { getOpenConcerns } from '../db/concerns'
 import { hasRealData, vehicleVerdict } from '../domain/verdict'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
@@ -13,6 +13,8 @@ import { EventForm } from '../components/EventForm'
 import { OdometerForm } from '../components/OdometerForm'
 import { EventListItem } from '../components/EventListItem'
 import { ScheduleRow } from '../components/ScheduleRow'
+import { MilestoneCard } from '../components/MilestoneCard'
+import { CalendarExport } from '../components/CalendarExport'
 import { MileageHistory } from '../components/MileageHistory'
 import { DocumentGrid } from '../components/DocumentGrid'
 import { VehicleDocuments } from '../components/VehicleDocuments'
@@ -76,7 +78,7 @@ export function VehicleDetail({ id }: Props) {
   const vehicle = useQuery(async () => (await db.vehicles.get(id)) ?? null, [id])
   const reminders = useQuery(() => getVehicleReminders(id), [id])
   const openConcerns = useQuery(() => getOpenConcerns(id), [id])
-  const mileage = useQuery(() => getCurrentMileageEstimate(id), [id])
+  const mileage = useQuery(() => getProjectedMileage(id), [id])
   const events = useQuery(
     () =>
       db.events
@@ -162,7 +164,8 @@ export function VehicleDetail({ id }: Props) {
   // the schedule's baseline statuses aren't knowledge yet (see domain/verdict).
   const known = reminders ? hasRealData(reminders) : true
   const stale = mileage
-    ? (Date.now() - new Date(`${mileage.asOfDate}T00:00:00`).getTime()) / 86_400_000 > 45
+    ? (Date.now() - new Date(`${mileage.lastActual.asOfDate}T00:00:00`).getTime()) / 86_400_000 >
+      STALE_ODOMETER_DAYS
     : false
 
   // Split the ranked ledger so only what actually needs attention is expanded
@@ -285,7 +288,7 @@ export function VehicleDetail({ id }: Props) {
       <section class="card vd-cover">
         {mileage ? (
           <Instrument
-            label="Odometer"
+            label={mileage.isProjected ? 'Odometer · estimated' : 'Odometer'}
             value={mileage.miles}
             unit="MI"
             animate={intro}
@@ -294,7 +297,10 @@ export function VehicleDetail({ id }: Props) {
             footer={
               <>
                 <span class="live-dot" aria-hidden="true" />
-                Last reading {formatShortDate(mileage.asOfDate)} · confidence {stale ? 'low' : 'high'}
+                {mileage.isProjected
+                  ? `Last read ${formatMiles(mileage.lastActual.miles)} · ${formatShortDate(mileage.lastActual.asOfDate)}`
+                  : `Last reading ${formatShortDate(mileage.lastActual.asOfDate)}`}
+                {stale ? ' · confirm mileage' : ''}
               </>
             }
             ytd={
@@ -352,13 +358,13 @@ export function VehicleDetail({ id }: Props) {
             vehicleId={id}
             kind="maintenance"
             initialCategory={serviceCategory}
-            defaultOdometer={mileage?.miles}
+            defaultOdometer={mileage?.lastActual.miles}
             onDone={closeForm}
             onCancel={closeForm}
           />
         )}
         {activeForm === 'repair' && (
-          <EventForm vehicleId={id} kind="repair" defaultOdometer={mileage?.miles} onDone={closeForm} onCancel={closeForm} />
+          <EventForm vehicleId={id} kind="repair" defaultOdometer={mileage?.lastActual.miles} onDone={closeForm} onCancel={closeForm} />
         )}
         {activeForm === 'odometer' && (
           <OdometerForm vehicleId={id} onDone={closeForm} onCancel={closeForm} />
@@ -412,7 +418,13 @@ export function VehicleDetail({ id }: Props) {
             )}
           </>
         )}
+
+        <CalendarExport vehicleId={id} />
       </section>
+
+      <Reveal>
+        <MilestoneCard vehicleId={id} />
+      </Reveal>
 
       <Reveal>
         <section class="card">

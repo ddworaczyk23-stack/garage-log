@@ -6,6 +6,7 @@ import { vehicleLabel } from '../domain/vehicle'
 import { Skel } from '../components/ui'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
+import { CalendarExport } from '../components/CalendarExport'
 
 // Home dashboard: Coast "Today" (Stage 1, design/COAST-PLAN.md). One verdict
 // per vehicle — a road-sign panel with a single plain-English sentence — with
@@ -120,6 +121,16 @@ export function Dashboard() {
         </Reveal>
       )}
 
+      <Reveal>
+        <section class="card">
+          <h3 class="card-title">Reminders</h3>
+          <p class="muted small cal-export-lead">
+            Get alerts for every vehicle in your phone's Calendar, dated from each car's estimated mileage.
+          </p>
+          <CalendarExport />
+        </section>
+      </Reveal>
+
       <div class="gb-links">
         <a class="gb-link" href="#/costs">
           Cost summary
@@ -153,7 +164,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
           <div class="cv-veh-row">
             <h3 class="cv-veh-name">{vehicleLabel(v)}</h3>
             <span class="cv-veh-meta">
-              {s.mileage ? formatMiles(s.mileage.miles) : '— mi'}
+              {s.mileage ? `${s.mileage.projected ? '~' : ''}${formatMiles(s.mileage.miles)}` : '— mi'}
               {s.spendThisYear > 0 && <> · {formatMoney(s.spendThisYear)} in {year}</>}
             </span>
           </div>

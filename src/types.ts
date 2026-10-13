@@ -26,7 +26,22 @@ export interface Vehicle {
   // use the calculated average (or a default when there isn't enough history).
   annualMileageOverride?: number
   photoId?: string // -> VehicleDocument.id (set in a later milestone)
+  // Milestone checkup progress (30k/60k/100k…, domain/milestones.ts), keyed by
+  // the milestone mileage as a string. Non-indexed/optional — no schema bump;
+  // syncs and backs up with the vehicle. Independent of reminder rules.
+  milestones?: Record<string, MilestoneRecord>
   createdAt: string // ISO timestamp
+}
+
+// Progress on one milestone checkup. `checked` holds MilestoneItem ids.
+// completedDate set = done; skipped = the user chose not to track it (e.g. it
+// happened before they owned the car).
+export interface MilestoneRecord {
+  checked: string[]
+  completedDate?: string
+  completedMiles?: number
+  skipped?: boolean
+  notes?: string
 }
 
 // The resolved identity of a specific year/make/model/trim, either decoded
