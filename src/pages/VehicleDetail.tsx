@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'preact/hooks'
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { formatMiles, formatShortDate, localDateISO } from '../domain/format'
@@ -113,6 +113,24 @@ export function VehicleDetail({ id }: Props) {
     if (!points.length) return null
     return Math.max(0, current - points[0].miles)
   }, [mileage?.miles, odometerReadings, events])
+
+  // The log menu closes on Escape or a tap anywhere outside it (or its button).
+  useEffect(() => {
+    if (!logSheetOpen) return
+    function onDocClick(e: MouseEvent) {
+      const t = e.target as Element | null
+      if (!t?.closest('.vd-log-sheet, .vd-sticky')) setLogSheetOpen(false)
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setLogSheetOpen(false)
+    }
+    document.addEventListener('click', onDocClick)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('click', onDocClick)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [logSheetOpen])
 
   if (vehicle === undefined) {
     return (
@@ -434,7 +452,8 @@ export function VehicleDetail({ id }: Props) {
 
             {onTrack.length > 0 && (
               <Collapsible
-                title="On track"
+                // Never call an unknown car "on track" (PRODUCT.md principle 1).
+                title={notSetUp ? 'Estimated schedule' : 'On track'}
                 count={`${onTrack.length} item${onTrack.length === 1 ? '' : 's'}`}
               >
                 <ul class="vd-ledger">{onTrack.map(renderRow)}</ul>
