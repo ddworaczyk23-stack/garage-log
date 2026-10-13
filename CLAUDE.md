@@ -213,8 +213,8 @@ it when you finish instead of leaving progress only in chat.
 
 ## Next up
 
-Nothing open. Onboarding polish (AddVehicle restyle + first-vehicle welcome
-banner) is implemented; spec and plan are in `docs/superpowers/`. Check
-`docs/handoffs/active.md` for current shared state.
+Mobile redesign from the 2026-10-13 design review. Plan with 4 phases:
+`docs/superpowers/plans/2026-10-13-mobile-redesign.md`. (The July onboarding
+polish spec is already built, commit 7dbc369.)
 
 Do NOT invent new feature milestones unless asked.
