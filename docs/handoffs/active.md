@@ -13,15 +13,10 @@ aggressively, every time.
 
 ## Open
 
-- **Mobile redesign, phase 4 review/deploy.** Plan: `docs/superpowers/plans/2026-10-13-mobile-redesign.md`
-  (from the 2026-10-13 design review, `.impeccable/critique/2026-10-13T19-44-04Z__src.md`).
-  Quick wins = PR #7, Phase 1 = PR #9, Phase 2 = PR #11, and Phase 3 = PR #12; all are
-  merged. Phase 4 is implemented on `codex/mobile-redesign-phase-4`: polished EventForm and
-  AddVehicle controls, owner-history cost sanity warnings, history-gated dashboard utilities,
-  narrow document filters, “No history” schedule cues, and a persistent toast live region.
-  It has 393 tests + typecheck passing, the save/warning flow was exercised end to end, and
-  target routes were verified at 375px and 390px with no overflow or console errors. Await
-  review/merge and an iPhone check; this completes the four-phase implementation plan.
+- **Round 2: logic + bugs.** Plan: `docs/superpowers/plans/2026-10-13-round-2-logic.md`
+  (from `.impeccable/critique/2026-10-13T21-08-48Z__src.md`). Mobile redesign phases 1-4
+  are merged and live (PRs #9, #11, #12, #13). Build round 2 on `codex/round-2-logic`,
+  one PR. Finish work (tap targets, fonts, service page) is a later round.
 
 - **Verify calendar export on a real iPhone.** "Add reminders to Calendar"
   downloads `car-maintenance.ics`; expected flow is open file → "Add All".
