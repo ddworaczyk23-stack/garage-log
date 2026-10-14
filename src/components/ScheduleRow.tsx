@@ -78,19 +78,16 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
           <button type="button" class="vd-interval-edit" onClick={() => setEditing(true)}>
             Edit
           </button>
-          {hasHistory && (
-            <>
-              <span class="sep">·</span>
-              <span class="vd-row-reason">
-                {r.reason}
-              </span>
-            </>
-          )}
-          {r.projectedDueDate && !unknown && (
-            <>
-              <span class="sep">·</span>
-              <span class="vd-eta">est. {formatShortDate(r.projectedDueDate)}</span>
-            </>
+          {(hasHistory || (r.projectedDueDate && !unknown)) && (
+            <span class="vd-row-reason">
+              {hasHistory && r.reason}
+              {r.projectedDueDate && !unknown && (
+                <>
+                  {hasHistory && <span class="sep"> · </span>}
+                  <span class="vd-eta">est. {formatShortDate(r.projectedDueDate)}</span>
+                </>
+              )}
+            </span>
           )}
         </div>
       </div>

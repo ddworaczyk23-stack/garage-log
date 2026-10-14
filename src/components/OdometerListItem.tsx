@@ -2,7 +2,7 @@ import { useState } from 'preact/hooks'
 import { deleteOdometerReading } from '../db/events'
 import { formatMiles, formatShortDate } from '../domain/format'
 import { OdometerForm } from './OdometerForm'
-import { ConfirmButton } from './ui'
+import { ConfirmButton, Sheet } from './ui'
 import type { OdometerReading } from '../types'
 
 interface Props {
@@ -12,17 +12,6 @@ interface Props {
 
 export function OdometerListItem({ vehicleId, reading }: Props) {
   const [editing, setEditing] = useState(false)
-
-  if (editing) {
-    return (
-      <OdometerForm
-        vehicleId={vehicleId}
-        existing={reading}
-        onDone={() => setEditing(false)}
-        onCancel={() => setEditing(false)}
-      />
-    )
-  }
 
   return (
     <li class="list-row">
@@ -42,6 +31,16 @@ export function OdometerListItem({ vehicleId, reading }: Props) {
           onConfirm={() => deleteOdometerReading(reading.id)}
         />
       </span>
+      {editing && (
+        <Sheet eyebrow={formatShortDate(reading.date)} title="Edit odometer reading" onClose={() => setEditing(false)}>
+          <OdometerForm
+            vehicleId={vehicleId}
+            existing={reading}
+            onDone={() => setEditing(false)}
+            onCancel={() => setEditing(false)}
+          />
+        </Sheet>
+      )}
     </li>
   )
 }
