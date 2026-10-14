@@ -237,8 +237,8 @@ it when you finish instead of leaving progress only in chat.
 
 ## Next up
 
-Mobile redesign from the 2026-10-13 design review. Plan with 4 phases:
-`docs/superpowers/plans/2026-10-13-mobile-redesign.md`. (The July onboarding
-polish spec is already built, commit 7dbc369.)
+Design work is paused (decided 2026-10-14). The mobile redesign is done
+(PRs #38-#47). David uses the app with real data for a few weeks; the next
+round of fixes should come from that use, not from more design review.
 
 Do NOT invent new feature milestones unless asked.
