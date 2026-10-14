@@ -13,6 +13,10 @@ aggressively, every time.
 
 ## Open
 
+- **Fewer words on every page.** Plan:
+  `docs/superpowers/plans/2026-10-14-fewer-words.md`. Codex builds on
+  `copy/fewer-words`, one PR, do not merge. Claude reviews.
+
 - **Next: re-run the design review** (`/impeccable critique src`) on the
   live site after PR #22 (Check flow + fuller Settings). Last score 27/40.
 
