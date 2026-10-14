@@ -21,6 +21,7 @@ import { VehicleDocuments } from '../components/VehicleDocuments'
 import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
+import { ConcernList } from '../components/ConcernList'
 import { Loading, Skel, ConfirmButton, InfoTip, PageHeader, Toast } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
@@ -307,6 +308,7 @@ export function VehicleDetail({ id }: Props) {
           <div class="cv-card">
             <VerdictPanel verdict={verdict} />
             <UrgencyRuler verdict={verdict} />
+            {openConcerns && <ConcernList vehicle={vehicle} concerns={openConcerns} />}
             {verdict.band === 'not-set-up' && !justAdded && (
               <div class="vd-setup fr-actions">
                 <button

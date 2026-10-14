@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getCurrentMileageEstimate } from '../db/events'
-import { getOpenConcerns, openConcern, resolveConcern, deleteConcern } from '../db/concerns'
+import { getOpenConcerns, openConcern } from '../db/concerns'
 import { getVehicleReminders } from '../db/summary'
 import {
   PLAYBOOKS,
@@ -17,17 +17,17 @@ import {
   type DriveVerdict,
   type TriageContext,
 } from '../domain/playbooks'
-import { composeBrief, type ShopBrief } from '../domain/shopBrief'
+import { composeBrief } from '../domain/shopBrief'
 import { knownReminders, type SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
-import { formatShortDate } from '../domain/format'
-import { Loading, SkeletonPage, EmptyState, ConfirmButton, PageHeader } from '../components/ui'
+import { Loading, SkeletonPage, EmptyState, PageHeader } from '../components/ui'
 import type { Vehicle, Concern, MaintenanceCategory } from '../types'
 import { VehicleRow } from '../components/VehicleRow'
 import { ChevronRightIcon } from '../components/icons'
 import { Collapsible } from '../components/motion/Collapsible'
 import { useReducedMotion } from '../motion/hooks'
-import { shareBrief } from '../components/briefShare'
+import { ConcernList } from '../components/ConcernList'
+import { ShopBriefView } from '../components/ShopBriefView'
 
 // ---------------------------------------------------------------------------
 // Coast "Start a check" triage flow (Stage 2 — see design/COAST-PLAN.md).
@@ -509,41 +509,6 @@ function OutcomeDetails({ outcome }: { outcome: PlaybookOutcome }) {
   )
 }
 
-function ConcernList({ vehicle, concerns }: { vehicle: Vehicle; concerns: Concern[] }) {
-  return (
-    <div class="card chk-onlist">
-      <h3 class="chk-onlist-title">On {vehicleLabel(vehicle)}’s list</h3>
-      {concerns.map((c) => {
-        const tone = BAND_TONE[c.band as SignalBand] ?? BAND_TONE['book-soon']
-        return (
-          <div key={c.id} class="chk-onlist-row">
-            <span class={`chk-dot ${tone.cls}`} aria-hidden="true" />
-            <span class="chk-onlist-main">
-              <b>{c.title}</b>
-              <small>
-                {tone.label} · raised {formatShortDate(c.createdDate)} · <a href={`#/brief/${c.id}`}>Shop brief</a>
-              </small>
-            </span>
-            <span class="chk-onlist-actions">
-              <ConfirmButton
-                label="Handled"
-                confirmLabel="Mark handled"
-                class="btn-link"
-                onConfirm={() => resolveConcern(c.id)}
-              />
-              <ConfirmButton
-                label="Dismiss"
-                confirmLabel="Remove"
-                onConfirm={() => deleteConcern(c.id)}
-              />
-            </span>
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
 function ShopBriefCard({
   vehicle,
   mileage,
@@ -562,59 +527,7 @@ function ShopBriefCard({
   const brief = composeBrief(vehicle, mileage, outcomeToBriefFacts(outcome), {
     known: historyKnown,
   })
-  return <InlineBrief brief={brief} headingRef={headingRef} />
-}
-
-function InlineBrief({ brief, headingRef }: { brief: ShopBrief; headingRef: { current: HTMLHeadingElement | null } }) {
-  const [shareStatus, setShareStatus] = useState<string | null>(null)
-  const [shareError, setShareError] = useState<string | null>(null)
-
-  async function onShare() {
-    setShareStatus(null)
-    setShareError(null)
-    const result = await shareBrief(brief)
-    if (result?.kind === 'copied') setShareStatus(result.message)
-    if (result?.kind === 'error') setShareError(result.message)
-  }
-
-  const stripped = brief.request.replace(/^please[,:]?\s*/i, '')
-  const request = stripped.charAt(0).toUpperCase() + stripped.slice(1)
-  return (
-    <div class="chk-brief">
-      <div class="chk-brief-head">
-        <div class="chk-brief-tag">Shop brief</div>
-        <h3 ref={headingRef} tabIndex={-1}>{brief.vehicleLine}</h3>
-        <div class="chk-brief-meta">{brief.metaLine}</div>
-      </div>
-      {brief.fairRange && (
-        <div class="chk-brief-sec chk-brief-fair">
-          <div class="chk-brief-lbl">Fair range for this job</div>
-          <p class="chk-brief-amt">{brief.fairRange}</p>
-          <p class="chk-brief-foot">{brief.footerNote}</p>
-        </div>
-      )}
-      <div class="chk-brief-sec">
-        <div class="chk-brief-lbl">Symptom, as the shop needs it</div>
-        <p>{brief.symptom}</p>
-      </div>
-      <div class="chk-brief-sec">
-        <div class="chk-brief-lbl">Ask the shop to</div>
-        <p>{request}</p>
-      </div>
-      {brief.historyNotes.length > 0 && (
-        <div class="chk-brief-sec chk-brief-note">
-          {brief.historyNotes.map((n) => (
-            <p key={n}>{n}</p>
-          ))}
-        </div>
-      )}
-      <div class="chk-brief-share">
-        <button type="button" class="btn btn-primary" onClick={onShare}>Share brief</button>
-        {shareStatus && <p class="notice notice-ok" role="status">{shareStatus}</p>}
-        {shareError && <p class="notice notice-error" role="alert">{shareError}</p>}
-      </div>
-    </div>
-  )
+  return <ShopBriefView brief={brief} headingRef={headingRef} />
 }
 
 function CostRow({ what, amt, strong }: { what: string; amt: string; strong?: boolean }) {

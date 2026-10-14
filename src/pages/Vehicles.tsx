@@ -1,7 +1,9 @@
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
-import { hasRealData, knownReminders, itemBand, VERDICT_BAND_LABELS, type VerdictBand } from '../domain/verdict'
+import { vehicleVerdict, VERDICT_BAND_LABELS } from '../domain/verdict'
+import { getOpenConcerns } from '../db/concerns'
+import { localDateISO } from '../domain/format'
 import { PageHeader, Skel } from '../components/ui'
 import { VehicleRow } from '../components/VehicleRow'
 import { Reveal } from '../components/motion/Reveal'
@@ -10,18 +12,8 @@ async function loadVehiclesWithStatus() {
   const vehicles = await db.vehicles.orderBy('name').toArray()
   return Promise.all(
     vehicles.map(async (v) => {
-      const reminders = await getVehicleReminders(v.id)
-      // Same band vocabulary and the same not-set-up honesty as every other
-      // status readout in the app (Dashboard, VehicleDetail) — a vehicle with
-      // no logged service history must never show a status pill implying it
-      // does (see domain/verdict.ts hasRealData, the Earned Green Rule).
-      const known = hasRealData(reminders)
-      // rankReminders (via getVehicleReminders) already sorts worst-first, so
-      // the first non-not-applicable entry is this vehicle's worst band.
-      // Worst band among LOGGED items (never-logged ones are Unknown).
-      const bands = knownReminders(reminders).map(itemBand)
-      const worst = (['fix-now', 'book-soon', 'coast', 'all-clear'] as const).find((b) => bands.includes(b))
-      const band: VerdictBand = known ? (worst ?? 'all-clear') : 'not-set-up'
+      const [reminders, concerns] = await Promise.all([getVehicleReminders(v.id), getOpenConcerns(v.id)])
+      const band = vehicleVerdict(reminders, concerns, localDateISO(new Date())).band
       return { vehicle: v, band }
     }),
   )

@@ -3270,6 +3270,8 @@ a.list-row:hover {
   box-shadow: var(--shadow-card, 0 1px 2px rgba(35, 39, 43, 0.06), 0 8px 24px rgba(35, 39, 43, 0.07));
 }
 .cv-panel.cv-red { background: var(--sig-red); }
+/* Stop-sign read: fix-now gets a thick solid white band, not the faint keyline. */
+.cv-panel.cv-red .cv-inner { border: 4px solid #fff; padding: 13px 14px 11px; }
 /* Bright road-sign yellow uses asphalt ink for high-contrast verdicts. */
 .cv-panel.cv-amber { background: var(--sig-amber); color: var(--text); }
 .cv-panel.cv-amber .cv-inner { border-color: rgba(35, 39, 43, 0.45); }
@@ -3798,7 +3800,7 @@ a.list-row:hover {
 .chk-brief-tag {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.24em;
   text-transform: uppercase;
   opacity: 0.72;
@@ -3823,7 +3825,7 @@ a.list-row:hover {
 .chk-brief-lbl {
   font-family: var(--font-mono);
   font-weight: 600;
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -3858,6 +3860,7 @@ a.list-row:hover {
   border-top: 1px solid var(--border);
 }
 .chk-brief-share .notice { margin-bottom: 0; }
+.chk-brief-share .btn { width: 100%; }
 
 /* --- the vehicle's open-concern list (the loop) --- */
 .chk-onlist { padding: 14px 16px; margin-bottom: 20px; }
@@ -3906,9 +3909,11 @@ a.list-row:hover {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
+  gap: 8px;
   flex: none;
 }
+.chk-onlist-actions .btn-link { min-height: 44px; }
+.concern-status { display: block; margin-top: 6px; font-size: 12px; color: var(--text-muted); }
 
 /* --- nav raised center action --- */
 /* Absolutely positioned against .bottom-nav (not a flex sibling of
@@ -4306,7 +4311,7 @@ a.list-row:hover {
   margin-bottom: 6px;
 }
 .sb-ok .sb-odl { color: var(--sig-green); }
-.sb-no .sb-odl { color: var(--sig-red); }
+.sb-no .sb-odl { color: var(--text); }
 .sb-okdecline ul { margin: 0; padding-left: 16px; }
 .sb-okdecline li {
   font-family: var(--font-sans);
@@ -4414,9 +4419,9 @@ a.list-row:hover {
   color: var(--sig-green-ink); /* was --sig-green (4.40:1 on this tint) — same pattern as the amber-ink fix */
 }
 .qc-yn-no.is-on {
-  border-color: var(--sig-red);
-  background: color-mix(in srgb, var(--sig-red) 12%, var(--bg-card));
-  color: var(--sig-red);
+  border-color: var(--sig-amber);
+  background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
+  color: var(--sig-amber-ink);
 }
 .qc-result {
   margin-top: 14px;
@@ -4433,8 +4438,8 @@ a.list-row:hover {
   border-color: color-mix(in srgb, var(--sig-amber) 32%, transparent);
 }
 .qc-result.qc-flag {
-  background: color-mix(in srgb, var(--sig-red) 10%, var(--bg-card));
-  border-color: color-mix(in srgb, var(--sig-red) 30%, transparent);
+  background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
+  border-color: color-mix(in srgb, var(--sig-amber) 32%, transparent);
 }
 /* Neutral: the amount genuinely wasn't checked (no price anchor) — deliberately
    NOT green, so it never reads as "passed" the way qc-ok does. */
@@ -4457,8 +4462,8 @@ a.list-row:hover {
 .qc-ok .qc-dot { background: var(--sig-green); }
 .qc-high .qc-rating { color: var(--sig-amber-ink); } /* was --sig-amber (~2.4:1 on the light tint bg) */
 .qc-high .qc-dot { background: var(--sig-amber); }
-.qc-flag .qc-rating { color: var(--sig-red); }
-.qc-flag .qc-dot { background: var(--sig-red); }
+.qc-flag .qc-rating { color: var(--sig-amber-ink); }
+.qc-flag .qc-dot { background: var(--sig-amber); }
 .qc-reason {
   font-family: var(--font-sans);
   font-size: 14.5px;
