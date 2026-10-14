@@ -5083,3 +5083,83 @@ a.list-row:hover {
 .vd-picker-menu option {
   color: var(--text);
 }
+
+/* =========================================================================
+   Glass tab bar (phones and tablets, under 1024px). The bar floats as a
+   rounded pill above the bottom edge and blurs the page behind it. The active
+   tab sits in a soft glass capsule. Desktop keeps its sidebar untouched.
+   The web cannot bend light like Apple's real glass, so this is blur + a
+   bright edge + a soft shadow.
+   ========================================================================= */
+@media (max-width: 1023px) {
+  :root {
+    /* pill height 62 + 10 gap, so page padding, Log button and toast clear it */
+    --nav-height: 72px;
+  }
+  .bottom-nav {
+    left: 12px;
+    right: 12px;
+    bottom: calc(10px + env(safe-area-inset-bottom));
+    width: auto;
+    height: 62px;
+    border-radius: 31px;
+    background: color-mix(in srgb, var(--bg-elevated) 58%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(180%);
+    backdrop-filter: blur(18px) saturate(180%);
+    border: 0.5px solid color-mix(in srgb, #fff 75%, transparent);
+    box-shadow:
+      0 8px 24px rgba(20, 30, 45, 0.16),
+      inset 0 1px 0 color-mix(in srgb, #fff 70%, transparent);
+  }
+  .nav-scroll {
+    padding: 0 6px;
+    border-radius: inherit;
+  }
+  .nav-check {
+    bottom: 0;
+    height: 62px;
+  }
+  .nav-item {
+    margin: 6px 0;
+    border-radius: 24px;
+    transition: background 0.2s ease, color 0.2s ease;
+  }
+  .nav-item,
+  .nav-check {
+    color: color-mix(in srgb, var(--text) 72%, transparent);
+  }
+  .nav-item.is-active,
+  .nav-check.is-active {
+    color: var(--sig-blue-deep);
+  }
+  .nav-item.is-active .nav-icon {
+    color: var(--sig-blue-deep);
+  }
+  .nav-item.is-active {
+    background: color-mix(in srgb, var(--text) 9%, transparent);
+    box-shadow: inset 0 0 0 0.5px color-mix(in srgb, #fff 70%, transparent);
+  }
+  /* No "Check" text under the disc; the link keeps its aria-label. */
+  .nav-check .nav-label {
+    display: none;
+  }
+  .nav-check {
+    justify-content: center;
+  }
+  .nav-check-disc {
+    margin-top: -16px;
+  }
+  /* Ring that separates the Check disc from the glass (was navy). */
+  .nav-check-disc {
+    box-shadow:
+      0 0 0 4px color-mix(in srgb, #fff 55%, transparent),
+      0 6px 16px rgba(27, 95, 170, 0.38);
+  }
+}
+@media (max-width: 1023px) and (prefers-reduced-transparency: reduce) {
+  .bottom-nav {
+    background: var(--bg-elevated);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
