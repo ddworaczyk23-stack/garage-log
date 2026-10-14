@@ -38,8 +38,9 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
   // undefined = loading, null = failed to load
   const [loaded, setLoaded] = useState<Loaded | null | undefined>(undefined)
   const [feedBusy, setFeedBusy] = useState(false)
-  const [feedError, setFeedError] = useState<string | null>(null)
-  const [showGoogle, setShowGoogle] = useState(false)
+  const [feedStatus, setFeedStatus] = useState<string | null>(null)
+  // Which subscribe link panel is showing (after its button was tapped).
+  const [linkFor, setLinkFor] = useState<'apple' | 'google' | null>(null)
   const feed = useQuery(async () => ((await db.appMeta.get('calendarFeed'))?.value as FeedState | undefined) ?? null)
 
   async function openSheet() {
@@ -56,17 +57,17 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
 
   function close() {
     setOpen(false)
-    setShowGoogle(false)
-    setFeedError(null)
+    setLinkFor(null)
+    setFeedStatus(null)
   }
 
   async function turnOnFeed(): Promise<FeedState | null> {
     setFeedBusy(true)
-    setFeedError(null)
+    setFeedStatus(null)
     try {
       return await enableFeed()
     } catch {
-      setFeedError("Couldn't reach the calendar server. Check your connection and try again.")
+      setFeedStatus("Couldn't reach the calendar server. Check your connection and try again.")
       return null
     } finally {
       setFeedBusy(false)
@@ -75,19 +76,23 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
 
   async function subscribeApple() {
     const s = await turnOnFeed()
-    if (s) location.href = feedLinks(s).webcal
+    if (!s) return
+    // Show the link too: browsers with no webcal: handler (desktop, Android)
+    // ignore the navigation silently.
+    setLinkFor('apple')
+    location.href = feedLinks(s).webcal
   }
 
   async function subscribeGoogle() {
-    if (await turnOnFeed()) setShowGoogle(true)
+    if (await turnOnFeed()) setLinkFor('google')
   }
 
   async function copyFeedLink(link: string) {
     try {
       await navigator.clipboard.writeText(link)
-      setFeedError('Link copied.')
+      setFeedStatus('Link copied.')
     } catch {
-      setFeedError('Press and hold the link to copy it.')
+      setFeedStatus('Press and hold the link to copy it.')
     }
   }
 
@@ -136,7 +141,7 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
           Add reminders to Calendar
         </button>
         <InfoTip label="Calendar reminders">
-          One alert at 9am on each due date. Re-add every month or two. On iPhone, open the file and tap Add All.
+          One alert at 9am on each due date. The live calendar updates by itself. A downloaded file is a one-time copy.
         </InfoTip>
         {last && <span class="muted small">Last added {formatShortDate(last)}</span>}
       </div>
@@ -169,31 +174,39 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
                 <button type="button" class="btn" onClick={subscribeApple} disabled={feedBusy}>
                   {feedBusy ? 'Connecting…' : 'Apple Calendar'}
                 </button>
+                <p class="muted small">On the Subscribe screen, turn off Remove Alerts to keep the 9am alerts.</p>
                 <button type="button" class="btn" onClick={subscribeGoogle} disabled={feedBusy}>
                   Google Calendar
                 </button>
-                {showGoogle && feed && (
-                  <div class="cal-export-google">
-                    <p class="muted small">
-                      In a browser, open Google Calendar, paste this link under "From URL". Updates take up to a day.
-                    </p>
+                {linkFor && feed && (
+                  <div class="cal-export-link">
+                    {linkFor === 'apple' ? (
+                      <p class="muted small">Nothing opened? Add this link as a subscribed calendar.</p>
+                    ) : (
+                      <p class="muted small">
+                        In a browser, open Google Calendar and paste this link under "From URL". Then, in that
+                        calendar's settings, add an all-day notification. Updates take up to a day.
+                      </p>
+                    )}
                     <input type="text" readOnly value={feedLinks(feed).https} onFocus={(e) => e.currentTarget.select()} />
                     <button type="button" class="btn btn-secondary" onClick={() => copyFeedLink(feedLinks(feed).https)}>
                       Copy link
                     </button>
-                    <a
-                      class="btn btn-secondary"
-                      href="https://calendar.google.com/calendar/r/settings/addbyurl"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Open Google Calendar
-                    </a>
+                    {linkFor === 'google' && (
+                      <a
+                        class="btn btn-secondary"
+                        href="https://calendar.google.com/calendar/r/settings/addbyurl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Open Google Calendar
+                      </a>
+                    )}
                   </div>
                 )}
-                {feedError && (
+                {feedStatus && (
                   <p class="muted small" role="status">
-                    {feedError}
+                    {feedStatus}
                   </p>
                 )}
                 {feed && (
@@ -205,8 +218,8 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
                       busyLabel="Stopping…"
                       onConfirm={async () => {
                         await disableFeed()
-                        setShowGoogle(false)
-                        setFeedError('Stopped. Also remove the calendar from your phone.')
+                        setLinkFor(null)
+                        setFeedStatus('Stopped. Also remove the calendar from your phone.')
                       }}
                     />
                   </p>

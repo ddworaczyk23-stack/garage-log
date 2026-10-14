@@ -71,3 +71,15 @@ describe('calendar feed worker', () => {
     expect(bad.headers.get('Access-Control-Allow-Origin')).toBeNull()
   })
 })
+
+describe('calendar feed worker rate limit', () => {
+  it('refuses writes once the per-IP limit says no, but still serves reads', async () => {
+    const e = env()
+    let allowed = 1
+    e.WRITE_LIMIT = { limit: async () => ({ success: allowed-- > 0 }) }
+    expect((await worker.fetch(req('PUT', `/feed/${ID}`, { key: KEY, body: ICS }), e)).status).toBe(204)
+    expect((await worker.fetch(req('PUT', `/feed/${ID}`, { key: KEY, body: ICS }), e)).status).toBe(429)
+    expect((await worker.fetch(req('DELETE', `/feed/${ID}`, { key: KEY }), e)).status).toBe(429)
+    expect((await worker.fetch(req('GET', `/feed/${ID}.ics`), e)).status).toBe(200)
+  })
+})

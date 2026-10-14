@@ -64,8 +64,8 @@ app (phone)  --PUT .ics-->  Cloudflare Worker + KV  <--GET .ics--  Apple / Googl
   app works as today. Add to `.env.example`, `.env.local`, and the deploy
   workflow (repository secret).
 - **Feed state:** `{ feedId, writeKey, lastHash }` in `appMeta` (local-only,
-  never synced; it DOES ride along in backups, so a restore keeps the same
-  subscription link working). One feed per device. That is fine: the phone
+  never synced, kept out of backups; a restore keeps this device's copy so a
+  subscribed calendar never goes stale). One feed per device. That is fine: the phone
   is the device that subscribes and opens the app.
 - **New `src/db/calendarFeed.ts`:** `enableFeed()`, `pushFeed()`,
   `disableFeed()`. `pushFeed()` reuses `collectItems()` (move it out of

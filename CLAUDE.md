@@ -122,8 +122,11 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   Worker in `worker/calendar-feed/` (Cloudflare Worker + KV, stores bytes
   only) so Apple/Google Calendar subscribe and get date changes by themselves.
   Off unless `VITE_CALENDAR_FEED_URL` is set at build time. Credentials in
-  `appMeta['calendarFeed']` (local, in backups). Pushes on start, after data
-  writes (5 s debounce), and on return to foreground; skips if items unchanged.
+  `appMeta['calendarFeed']` (local, device-only: never exported, and a restore
+  keeps the device's copy). Pushes on start, after data writes (5 s debounce),
+  and on return to foreground; skips if items unchanged. Push/enable/disable
+  run one at a time. Subscribed calendars drop alerts by default (iOS "Remove
+  Alerts", Google ignores VALARM), so the sheet tells the user how to keep them.
   `db/calendarExport.ts` (`collectCalendarItems`) is the one item source for
   the download, the text copy and the feed. Worker live at
   `https://coast-calendar-feed.calendar-feed.workers.dev`; redeploy from

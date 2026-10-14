@@ -4738,7 +4738,7 @@ a.list-row:hover {
   margin: -4px 0 0;
 }
 .cal-export-live,
-.cal-export-google {
+.cal-export-link {
   display: flex;
   flex-direction: column;
   gap: 12px;

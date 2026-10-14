@@ -9,6 +9,11 @@
 //
 // feedId and writeKey are 32 random bytes, base64url (43 chars), made on the
 // device. Only sha256(writeKey) is stored.
+//
+// Writes are open by design (anyone may create a feed), so PUT/DELETE are
+// rate-limited per client IP. That stops a single-source loop from burning the
+// free KV write quota; a wide distributed flood could still exhaust it for a
+// day (feeds then stop updating until the quota resets; nothing leaks).
 
 export interface FeedStore {
   get(key: string): Promise<string | null>
@@ -18,6 +23,9 @@ export interface FeedStore {
 
 export interface Env {
   FEEDS: FeedStore
+  // Cloudflare rate-limit binding (wrangler.toml). Optional so tests and local
+  // runs work without it.
+  WRITE_LIMIT?: { limit(opts: { key: string }): Promise<{ success: boolean }> }
 }
 
 interface FeedRecord {
@@ -86,6 +94,11 @@ export default {
     }
 
     if (ics || (req.method !== 'PUT' && req.method !== 'DELETE')) return reply('Method not allowed', 405)
+
+    if (env.WRITE_LIMIT) {
+      const ip = req.headers.get('CF-Connecting-IP') ?? 'unknown'
+      if (!(await env.WRITE_LIMIT.limit({ key: ip })).success) return reply('Too many requests', 429)
+    }
 
     const writeKey = bearer(req)
     if (!writeKey) return reply('Unauthorized', 401)
