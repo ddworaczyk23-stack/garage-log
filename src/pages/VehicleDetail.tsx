@@ -58,6 +58,7 @@ export function VehicleDetail({ id }: Props) {
   const [editingSpecs, setEditingSpecs] = useState(false)
   const [serviceCategory, setServiceCategory] = useState<MaintenanceCategory | undefined>(undefined)
   const [logSheetOpen, setLogSheetOpen] = useState(false)
+  const [logSheetPos, setLogSheetPos] = useState({ top: 0, right: 16 })
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null)
   const formRef = useRef<HTMLDivElement>(null)
   // One-shot flag set by AddVehicle right before redirecting here on a fresh
@@ -113,21 +114,24 @@ export function VehicleDetail({ id }: Props) {
     )
   }, [odometerReadings, events])
 
-  // The log menu closes on Escape or a tap anywhere outside it (or its button).
+  // The log menu closes on Escape, a scroll, or a tap anywhere outside it (or its button).
   useEffect(() => {
     if (!logSheetOpen) return
     function onDocClick(e: MouseEvent) {
       const t = e.target as Element | null
-      if (!t?.closest('.vd-log-sheet, .vd-sticky')) setLogSheetOpen(false)
+      if (!t?.closest('.vd-log, .vd-log-sheet')) setLogSheetOpen(false)
     }
     function onKey(e: KeyboardEvent) {
       if (e.key === 'Escape') setLogSheetOpen(false)
     }
+    const onScroll = () => setLogSheetOpen(false)
     document.addEventListener('click', onDocClick)
     window.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
       document.removeEventListener('click', onDocClick)
       window.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', onScroll)
     }
   }, [logSheetOpen])
 
@@ -249,6 +253,26 @@ export function VehicleDetail({ id }: Props) {
       <PageHeader
         title={vehicleLabel(vehicle)}
         class="vd-masthead"
+        meta={!activeForm && (
+          <div class="vd-log">
+            <button
+              type="button"
+              class="btn btn-on-frame vd-log-btn"
+              aria-expanded={logSheetOpen}
+              aria-controls={logSheetOpen ? 'vd-log-sheet' : undefined}
+              onClick={(e) => {
+                const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                setLogSheetPos({ top: r.bottom + 8, right: window.innerWidth - r.right })
+                setLogSheetOpen((open) => !open)
+              }}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              Log
+            </button>
+          </div>
+        )}
       >
         {editingName ? (
           <NicknameEditor vehicle={vehicle} onDone={() => setEditingName(false)} />
@@ -531,26 +555,14 @@ export function VehicleDetail({ id }: Props) {
       </div>
       </div>
 
+      {/* Rendered outside the masthead: its clip-path (the navy bleed) would
+          cut off a menu hanging below it. Fixed under the button; closes on scroll. */}
       {!activeForm && logSheetOpen && (
-        <div class="vd-log-sheet" id="vd-log-sheet" role="group" aria-label="Choose what to log">
+        <div class="vd-log-sheet" id="vd-log-sheet" role="group" aria-label="Choose what to log" style={{ top: `${logSheetPos.top}px`, right: `${logSheetPos.right}px` }}>
           <button type="button" onClick={() => openForm('service')}>Service</button>
           <button type="button" onClick={() => openForm('repair')}>Repair</button>
           <button type="button" onClick={() => openForm('odometer')}>Odometer</button>
         </div>
-      )}
-      {!activeForm && (
-        <button
-          type="button"
-          class="vd-sticky"
-          aria-expanded={logSheetOpen}
-          aria-controls={logSheetOpen ? 'vd-log-sheet' : undefined}
-          onClick={() => setLogSheetOpen((open) => !open)}
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Log
-        </button>
       )}
       <Toast message={toast?.message ?? ''} onDismiss={() => setToast(null)} />
     </section>

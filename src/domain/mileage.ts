@@ -144,17 +144,30 @@ function earlier(a: MileagePoint, b: MileagePoint): MileagePoint {
 }
 
 /** Best-effort estimate of miles driven so far this calendar year: current
- * mileage minus the mileage as-of the start of the year (last reading before
- * Jan 1). If there's no pre-year reading we fall back to the earliest reading
- * this year, i.e. "miles logged since the first entry this year". null when
- * there aren't enough distinct points to compute a delta. */
+ * mileage minus the mileage as-of Jan 1. With readings on both sides of Jan 1,
+ * the Jan 1 mileage is interpolated between the last one before it and the
+ * first one after it (a reading from last spring must not count last summer's
+ * driving as this year's). With only a pre-year reading we use it as-is; with
+ * none we fall back to the earliest reading this year. null when there aren't
+ * enough distinct points to compute a delta. */
 export function milesThisYear(points: MileagePoint[], year: number): number | null {
   if (points.length < 2) return null
   const latest = points.reduce(later)
   const yearStart = `${year}-01-01`
   const preYear = points.filter((p) => p.date < yearStart)
-  const baseline = preYear.length ? preYear.reduce(later) : points.reduce(earlier)
-  if (baseline === latest) return null
-  const driven = latest.miles - baseline.miles
+  const inYear = points.filter((p) => p.date >= yearStart)
+  let baselineMiles: number
+  if (preYear.length && inYear.length) {
+    const before = preYear.reduce(later)
+    const after = inYear.reduce(earlier)
+    const span = parseDay(after.date) - parseDay(before.date)
+    const share = span > 0 ? (parseDay(yearStart) - parseDay(before.date)) / span : 0
+    baselineMiles = Math.round(before.miles + (after.miles - before.miles) * share)
+  } else {
+    const baseline = preYear.length ? preYear.reduce(later) : points.reduce(earlier)
+    if (baseline === latest) return null
+    baselineMiles = baseline.miles
+  }
+  const driven = latest.miles - baselineMiles
   return driven >= 0 ? driven : null
 }

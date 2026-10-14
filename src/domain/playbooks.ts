@@ -1,6 +1,7 @@
 import type { SignalBand } from './verdict'
 import { CATEGORY_LABELS, type MaintenanceCategory } from '../types'
 import type { BriefFacts } from './shopBrief'
+import { formatMoneyRange } from './format'
 
 // ---------------------------------------------------------------------------
 // Coast triage playbooks (Stage 2 of the Coast migration — see COAST-PLAN.md).
@@ -83,6 +84,9 @@ export interface PlaybookOutcome {
   title: string
   /** Plain-English body explaining the verdict (the human voice). */
   explanation: string
+  /** Set by contextualizeOutcome when the engine has this category overdue or
+   *  due soon. Shown under the ruler, never inside the sign. */
+  contextNote?: string
   /** Ranked likely causes, most-likely first, in plain "most often" phrasing. */
   likelyCauses: string[]
   cost: CostRange
@@ -1721,13 +1725,9 @@ export function resolveStep(pb: Playbook, answers: Answers): StepResult {
 
 // --- cost + shop-brief bridge ----------------------------------------------
 
-function money(n: number): string {
-  return `$${n.toLocaleString('en-US')}`
-}
-
 /** The independent-shop range as display text (used on the verdict cost card). */
 export function fairRangeText(cost: CostRange): string {
-  return `${money(cost.shopLow)}–${money(cost.shopHigh)}`
+  return formatMoneyRange(cost.shopLow, cost.shopHigh)
 }
 
 /**
@@ -1755,7 +1755,7 @@ export interface TriageContext {
  * Returns an annotated COPY of `outcome` when its category is overdue or due
  * soon on the reminder engine's side; otherwise returns `outcome` unchanged
  * (identity-equal, so callers can rely on reference equality for "no-op").
- * Only ever ADDS a leading context sentence to `explanation` — band and
+ * Only ever ADDS a `contextNote` (shown under the ruler) — band and
  * escalation triggers are never touched, so this can sharpen a verdict but
  * never relax or reassure one away (same fail-safe rule as the engine).
  * Reordering `likelyCauses` is deliberately NOT done here: the research-
@@ -1770,11 +1770,18 @@ export function contextualizeOutcome(outcome: PlaybookOutcome, context: TriageCo
   if (!overdue && !dueSoon) return outcome
 
   const label = CATEGORY_LABELS[outcome.category].toLowerCase()
-  const note = overdue
-    ? `Your ${label} is also overdue for service, which raises the odds this is the wear-related cause below.`
-    : `Your ${label} is also due soon, which raises the odds this is the wear-related cause below.`
+  const contextNote = overdue
+    ? `Your ${label} is overdue too, so wear is the likely cause.`
+    : `Your ${label} is due soon too, so wear is the likely cause.`
 
-  return { ...outcome, explanation: `${note} ${outcome.explanation}` }
+  return { ...outcome, contextNote }
+}
+
+/** Splits an explanation into its first sentence (for the sign) and the rest
+ *  (for Details). A sentence ends at . ! or ? followed by a space and a capital. */
+export function splitLead(text: string): { lead: string; rest: string } {
+  const m = /^(.+?[.!?])\s+(?=[A-Z])/.exec(text)
+  return m ? { lead: m[1], rest: text.slice(m[0].length) } : { lead: text, rest: '' }
 }
 
 export function outcomeToBriefFacts(outcome: PlaybookOutcome): BriefFacts {

@@ -117,12 +117,32 @@ describe('milesThisYear', () => {
     expect(milesThisYear(points, 2026)).toBe(120)
   })
 
-  it('measures from the last reading before Jan 1 when there is one', () => {
+  it('interpolates Jan 1 between the readings on either side of it', () => {
+    // 2025-07-01 -> 2026-07-01 is 365 days; Jan 1 is 184 days in.
+    const points = [
+      { date: '2025-07-01', miles: 80000 },
+      { date: '2026-07-01', miles: 86000 },
+    ]
+    expect(milesThisYear(points, 2026)).toBe(86000 - Math.round(80000 + 6000 * (184 / 365)))
+  })
+
+  it('does not count last year\'s driving when the pre-year reading is old', () => {
+    const points = [
+      { date: '2025-05-20', miles: 76000 },
+      { date: '2026-01-10', miles: 82100 },
+      { date: '2026-10-05', miles: 90650 },
+    ]
+    const ytd = milesThisYear(points, 2026)!
+    expect(ytd).toBeGreaterThan(8550) // a little more than since Jan 10
+    expect(ytd).toBeLessThan(8800)
+  })
+
+  it('returns null when every reading is from last year', () => {
     const points = [
       { date: '2025-12-20', miles: 80000 },
-      { date: '2026-06-01', miles: 86000 },
+      { date: '2025-12-01', miles: 79000 },
     ]
-    expect(milesThisYear(points, 2026)).toBe(6000)
+    expect(milesThisYear(points, 2026)).toBeNull()
   })
 
   it('is null with fewer than two points', () => {

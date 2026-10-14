@@ -1072,7 +1072,7 @@ input::placeholder {
   color: var(--c-stale);
 }
 
-/* One small save confirmation, clear of the bottom navigation and sticky CTA. */
+/* One small save confirmation, clear of the bottom navigation. */
 .toast {
   position: fixed;
   left: 50%;
@@ -1812,11 +1812,6 @@ iframe.preview-media {
 .infotip-btn::after {
   inset: -15px;
 }
-/* Room under the last card so the floating "+ Log" never covers it. */
-.page.vd {
-  padding-bottom: 64px;
-}
-
 /* ---------- InfoTip (circled "?", click-toggle + desktop hover) ---------- */
 .infotip {
   position: relative;
@@ -2488,7 +2483,7 @@ iframe.preview-media {
     opacity: 1;
     transform: none;
   }
-  .vd-sticky {
+  .vd-log-sheet {
     animation: none;
   }
   .vd-lamp.is-overdue {
@@ -2783,32 +2778,14 @@ iframe.preview-media {
   grid-row: 2;
 }
 /* One "+ Log" control, docked away from the raised centre Check disc. */
-.vd-sticky {
-  position: fixed;
-  right: 16px;
-  bottom: calc(var(--nav-height) + 14px + env(safe-area-inset-bottom));
-  background: var(--accent);
-  color: var(--accent-text);
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 14px;
-  border: 0;
-  padding: 13px 20px;
-  border-radius: 999px;
-  box-shadow: var(--shadow-raised);
+.vd-log-btn {
   display: inline-flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
-  cursor: pointer;
-  z-index: 40;
-  animation: stickyIn 0.3s var(--ease-paper);
 }
-.vd-sticky svg {
-  width: 15px;
-  height: 15px;
-}
-.vd-sticky:hover {
-  background: var(--accent-hover);
+.vd-log-btn svg {
+  width: 14px;
+  height: 14px;
 }
 @keyframes stickyIn {
   from {
@@ -2823,8 +2800,6 @@ iframe.preview-media {
 
 .vd-log-sheet {
   position: fixed;
-  right: 16px;
-  bottom: calc(var(--nav-height) + 72px + env(safe-area-inset-bottom));
   z-index: 39;
   width: min(210px, calc(100vw - 32px));
   padding: 6px;
@@ -3410,6 +3385,12 @@ a.list-row:hover {
   text-transform: uppercase;
 }
 .cv-ruler-labels span.on { color: var(--text); font-weight: 600; }
+.chk-why {
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--text);
+  margin: 14px 0 18px;
+}
 .cv-ruler-note {
   font-family: var(--font-sans);
   font-style: normal;
@@ -4240,50 +4221,9 @@ a.list-row:hover {
     margin-right: auto;
   }
 
-  /* The floating "+ Log" pill is anchored to the bottom nav and centred on the
-     viewport — both wrong on desktop, where there is no bottom nav and left:50%
-     ignores the 248px sidebar (it landed visibly off-centre). Dock it to the
-     bottom-right, clear of the rail. The entry keyframe hardcodes the mobile
-     translateX(-50%) centring trick, and an animation outranks these
-     declarations while it plays, so desktop needs its own keyframe too. */
-  .vd-sticky {
-    left: auto;
-    right: 32px;
-    bottom: 24px;
-    transform: none;
-    animation-name: stickyInDesktop;
-  }
-  .vd-log-sheet {
-    right: 32px;
-    bottom: 78px;
-  }
 }
 
-@keyframes stickyInDesktop {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 
-/* The reduced-motion override above and the desktop animation-name rule are
- * both a plain `.vd-sticky` selector — identical specificity — so whichever
- * comes LAST in source order wins the cascade, and the desktop rule was
- * winning regardless of the user's OS-level reduced-motion preference. A
- * combined query that's unconditionally later in source fixes it for real,
- * rather than relying on rule ordering to stay correct. */
-@media (min-width: 1024px) and (prefers-reduced-motion: reduce) {
-  .vd-sticky {
-    animation: none;
-  }
-  .vd-log-sheet {
-    animation: none;
-  }
-}
 
 /* =========================================================================
    COAST — shop brief page (Stage 3, design/COAST-PLAN.md)
@@ -4365,11 +4305,15 @@ a.list-row:hover {
   font-size: 17px;
   color: var(--text-muted);
 }
-.qc-input {
+/* Two classes so this beats the global input[type='text'] box, which drew a
+   second field inside the wrap. */
+.qc-input-wrap .qc-input {
   flex: 1;
   border: none;
+  border-radius: 0;
   background: transparent;
   padding: 11px 0;
+  min-height: 0;
   font-family: var(--font-mono);
   font-size: 17px;
   color: var(--text);

@@ -35,6 +35,11 @@ export function formatMoney(n: number | null | undefined): string {
   }).format(value)
 }
 
+/** One price-range format everywhere: "$300–$700" (both ends carry "$"). */
+export function formatMoneyRange(low: number, high: number): string {
+  return `${formatMoney(low)}–${formatMoney(high)}`
+}
+
 /**
  * A Date's calendar date as "YYYY-MM-DD" using LOCAL time components — not
  * `toISOString()`, which is UTC and can land on the wrong calendar day
