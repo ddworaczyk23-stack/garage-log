@@ -26,7 +26,7 @@
   --frame-line: rgba(255, 255, 255, 0.12);
   --on-frame: #ffffff;
   --on-frame-muted: rgba(255, 255, 255, 0.74); /* 8.6:1 on --frame */
-  --on-frame-accent: #9cc3f0; /* links, eyebrows, active tab: 8.2:1 */
+  --on-frame-accent: #ffffff; /* links, eyebrows, active tab: white on navy (two blues only: navy + accent) */
   --bg-elevated: #fafaf7;
   --bg-card: #ffffff; /* sign-face white */
   --bg-inset: #f0f0eb; /* concrete wells inside cards */
@@ -34,7 +34,7 @@
   --text: #23272b; /* asphalt ink */
   --text-muted: #5a6167; /* deepened from #6b7076 — the original failed 4.5:1 on the canvas and inset wells (4.33/4.37), passing only on white cards */
   --accent: #1b5faa; /* interstate guide-sign blue — the brand signature */
-  --accent-hover: #164e8c;
+  --accent-hover: var(--accent); /* one accent blue: no second, deeper blue */
   --accent-tint: rgba(27, 95, 170, 0.11);
   --accent-text: #ffffff;
   --danger: #b3402e; /* signal red */
@@ -48,7 +48,7 @@
   --c-overdue-bg: rgba(179, 64, 46, 0.12);
   --c-due: #8a5800; /* amber ink, readable on tint */
   --c-due-bg: rgba(217, 138, 0, 0.15);
-  --c-watch: #164e8c; /* guide-sign blue, deepened */
+  --c-watch: var(--accent); /* guide-sign blue (the one accent) */
   --c-watch-bg: rgba(27, 95, 170, 0.11);
   --c-ok: #1e7a44; /* highway guide green */
   --c-ok-bg: rgba(30, 122, 68, 0.12);
