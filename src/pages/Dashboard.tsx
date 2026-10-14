@@ -35,11 +35,6 @@ export function Dashboard() {
   // Health band (worst-wins across reminders AND open concerns) drives the
   // garage lamp, so a fix-now concern can't sit under a green "All caught up"
   // header. Not-set-up vehicles are neither: they get their own neutral line.
-  const needsAttention = summary.vehicles.filter(
-    (s) => s.health.band === 'fix-now' || s.health.band === 'book-soon',
-  ).length
-  const notSetUp = summary.vehicles.filter((s) => s.health.band === 'not-set-up').length
-  const fixNowCount = summary.vehicles.filter((s) => s.health.band === 'fix-now').length
   const hasHistory = summary.vehicles.some((s) => hasRealData(s.reminders))
 
   // First run (deployed builds start genuinely empty — see db/seed.ts): one
@@ -49,31 +44,11 @@ export function Dashboard() {
   if (summary.vehicles.length === 0) {
     return (
       <section class="page gb">
-        <PageHeader eyebrow="The Garage · Today" title="Your Garage" />
+        <PageHeader title="Plain-English answers about your car." />
 
-        <div class="cv-card">
-          <div class="cv-panel cv-slate fr-hero">
-            <div class="cv-inner">
-              <div class="cv-tag">Welcome to Coast</div>
-              <h3 class="cv-headline">Plain-English answers about your car.</h3>
-              <p class="cv-sentence">
-                Add a car and Coast turns its maintenance schedule into verdicts you can act on —
-                what needs attention, what can wait, and what to say at the shop counter.
-              </p>
-            </div>
-          </div>
-
-          {/* A real 3-step sequence — this is the activation path, in order. */}
-          <ol class="fr-steps">
-            <li><b>Add a car</b> — year, make, and model is enough.</li>
-            <li><b>Log your last oil change</b>: the date and mileage are enough.</li>
-            <li><b>Get your verdict</b> — and a shop brief whenever something's up.</li>
-          </ol>
-
-          <div class="fr-actions">
-            <a class="btn btn-primary" href="#/add-vehicle">Add a car</a>
-            <span class="fr-note">Takes about a minute. Everything stays on this device unless you sign in to sync.</span>
-          </div>
+        <div class="fr-actions">
+          <a class="btn btn-primary" href="#/add-vehicle">Add a car</a>
+          <span class="fr-note">Takes about a minute.</span>
         </div>
       </section>
     )
@@ -81,29 +56,7 @@ export function Dashboard() {
 
   return (
     <section class="page gb">
-      <PageHeader
-        eyebrow="The Garage · Today"
-        title="Your Garage"
-        meta={
-          <span class="gb-status">
-            <span
-              class={`vd-lamp ${
-                fixNowCount > 0 ? 'is-overdue' : needsAttention > 0 ? 'is-due' : notSetUp > 0 ? 'is-na' : 'is-ok'
-              }`}
-            />
-            {needsAttention > 0 ? (
-              <b>
-                {needsAttention} vehicle{needsAttention === 1 ? '' : 's'} need{needsAttention === 1 ? 's' : ''} attention
-              </b>
-            ) : notSetUp > 0 ? (
-              <b>{notSetUp === summary.vehicles.length ? 'Not set up yet' : `${notSetUp} not set up yet`}</b>
-            ) : (
-              <b class="tone-ok">All caught up</b>
-            )}{' '}
-            · {summary.vehicles.length} vehicle{summary.vehicles.length === 1 ? '' : 's'}
-          </span>
-        }
-      />
+      <PageHeader eyebrow="The Garage · Today" title="Your Garage" />
 
       {/* Stacks on mobile; a 2-up board on desktop (see .gb-today-grid, R2). */}
       <div class="gb-today-grid">
@@ -112,20 +65,9 @@ export function Dashboard() {
         ))}
       </div>
 
-      {/* A comparison of one vehicle compares nothing — needs at least two. */}
-      {hasHistory && summary.vehicles.length >= 2 && (
-        <Reveal>
-          <ComparisonCard vehicles={summary.vehicles} year={summary.year} />
-        </Reveal>
-      )}
-
       {hasHistory && (
         <Reveal>
           <section class="card">
-            <h3 class="card-title">Reminders</h3>
-            <p class="muted small cal-export-lead">
-              Get alerts for every vehicle in your phone's Calendar, dated from each car's estimated mileage.
-            </p>
             <CalendarExport />
           </section>
         </Reveal>
@@ -134,14 +76,6 @@ export function Dashboard() {
       <div class="gb-links">
         <a class="gb-link" href="#/costs">
           Cost summary
-          <ArrowRightIcon />
-        </a>
-        <a class="gb-link" href="#/backup">
-          Back up your garage
-          <ArrowRightIcon />
-        </a>
-        <a class="gb-link" href="#/add-vehicle">
-          Add a car
           <ArrowRightIcon />
         </a>
       </div>
@@ -153,6 +87,10 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
   const v = s.vehicle
   const verdict = vehicleVerdict(s.reminders, s.openConcerns, localDateISO(new Date()))
   const coastShown = verdict.coastItems.slice(0, Math.max(0, 4 - verdict.actionItems.length))
+  const showActionItems = verdict.actionItems.length !== 1
+  const cardVerdict = verdict.band === 'not-set-up'
+    ? { ...verdict, sentence: 'Log your last oil change to start.' }
+    : verdict
 
   return (
     <Reveal class="cv-card">
@@ -169,20 +107,14 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
               {s.spendThisYear > 0 && <> · {formatMoney(s.spendThisYear)} in {year}</>}
             </span>
           </div>
-          <VerdictPanel verdict={verdict} headingLevel="h4" />
+          <VerdictPanel verdict={cardVerdict} headingLevel="h4" />
           <UrgencyRuler verdict={verdict} />
-
-          {verdict.unknownCount > 0 && (
-            <p class="cv-unknown-note">
-              {verdict.unknownCount} {verdict.unknownCount === 1 ? 'service' : 'services'} not tracked yet.
-            </p>
-          )}
 
           {/* The items behind the headline come first, so the list explains
               the sign above it; "can coast" items follow under their label. */}
-          {(verdict.actionItems.length > 0 || coastShown.length > 0) && (
+          {(showActionItems && verdict.actionItems.length > 0 || coastShown.length > 0) && (
             <div class="cv-coast-list">
-              {verdict.actionItems.map((item) => (
+              {showActionItems && verdict.actionItems.map((item) => (
                 <div key={item.label} class={`cv-coast-item is-${verdict.band}`}>
                   <span class="cv-coast-dot" />
                   <span>
@@ -191,7 +123,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
                   </span>
                 </div>
               ))}
-              {coastShown.length > 0 && verdict.actionItems.length > 0 && (
+              {coastShown.length > 0 && showActionItems && verdict.actionItems.length > 0 && (
                 <div class="cv-coast-label">Can coast</div>
               )}
               {coastShown.map((item) => (
@@ -209,49 +141,10 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
 
         <span class="open-link cv-open-row">
           {/* A not-set-up card's next step is setup, not reading a record. */}
-          {verdict.band === 'not-set-up' ? 'Set it up' : 'Open Service Record'}
+          {verdict.band === 'not-set-up' ? 'Set it up' : 'Open'}
           <ArrowRightIcon />
         </span>
       </a>
     </Reveal>
-  )
-}
-
-function ComparisonCard({ vehicles, year }: { vehicles: VehicleSummary[]; year: number }) {
-  const rows: { label: string; value: (s: VehicleSummary) => string }[] = [
-    {
-      label: `Miles driven (${year})`,
-      value: (s) => (s.milesThisYear != null ? formatMiles(s.milesThisYear) : '—'),
-    },
-    { label: `Spent this year`, value: (s) => (s.spendThisYear > 0 ? formatMoney(s.spendThisYear) : '—') },
-    { label: 'Overdue items', value: (s) => (hasRealData(s.reminders) ? String(s.counts.overdue) : '—') },
-    { label: 'Completed items', value: (s) => String(s.counts.completed) },
-    { label: 'Documents', value: (s) => String(s.documentCount) },
-  ]
-
-  return (
-    <section class="card">
-      <h3 class="card-title">Side-by-side</h3>
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th></th>
-            {vehicles.map((s) => (
-              <th key={s.vehicle.id}>{vehicleLabel(s.vehicle)}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map((row) => (
-            <tr key={row.label}>
-              <td class="muted">{row.label}</td>
-              {vehicles.map((s) => (
-                <td key={s.vehicle.id}>{row.value(s)}</td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </section>
   )
 }

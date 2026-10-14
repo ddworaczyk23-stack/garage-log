@@ -285,7 +285,6 @@ export function VehicleDetail({ id }: Props) {
             <Reveal class="cv-card">
               <div class="cv-panel cv-slate">
                 <div class="cv-inner">
-                  <div class="cv-tag">You're in</div>
                   <h3 class="cv-headline">{vehicleLabel(vehicle)} is in your garage.</h3>
                   <p class="cv-sentence">
                     When was its last oil change? That one entry gives you a real verdict.
@@ -307,14 +306,8 @@ export function VehicleDetail({ id }: Props) {
             </Reveal>
           )}
           <div class="cv-card">
-            <VerdictPanel verdict={verdict} tag="This vehicle" />
+            <VerdictPanel verdict={verdict} />
             <UrgencyRuler verdict={verdict} />
-            {verdict.unknownCount > 0 && (
-              <p class="cv-unknown-note">
-                {verdict.unknownCount} {verdict.unknownCount === 1 ? 'service' : 'services'} not tracked
-                yet. They're listed under Unknown below.
-              </p>
-            )}
             {verdict.band === 'not-set-up' && !justAdded && (
               <div class="vd-setup fr-actions">
                 <button
@@ -380,7 +373,7 @@ export function VehicleDetail({ id }: Props) {
           </div>
         )}
 
-        <Collapsible title="Specifications" count="4 fields">
+        <Collapsible title="Specifications">
           {editingSpecs ? (
             <VehicleSpecsEditor vehicle={vehicle} onDone={() => setEditingSpecs(false)} />
           ) : (
@@ -468,10 +461,6 @@ export function VehicleDetail({ id }: Props) {
 
             {unknownItems.length > 0 && (
               <>
-                <p class="muted small vd-schedule-note">
-                  {unknownItems.length} {unknownItems.length === 1 ? 'service' : 'services'} we don't have
-                  dates for yet. Open one and log when you last did it.
-                </p>
                 <Collapsible
                   title="Unknown"
                   count={`${unknownItems.length} item${unknownItems.length === 1 ? '' : 's'}`}
@@ -507,7 +496,7 @@ export function VehicleDetail({ id }: Props) {
             {!events ? (
               <Loading />
             ) : maintenanceEvents.length === 0 ? (
-              <p class="muted small">Nothing logged yet — use + Log to add service.</p>
+              <p class="muted small">Nothing logged yet.</p>
             ) : (
               <ul class="list">
                 {maintenanceEvents.map((e) => (
@@ -521,7 +510,7 @@ export function VehicleDetail({ id }: Props) {
             {!events ? (
               <Loading />
             ) : repairEvents.length === 0 ? (
-              <p class="muted small">Nothing logged yet — use + Log to add a repair.</p>
+              <p class="muted small">No repairs yet.</p>
             ) : (
               <ul class="list">
                 {repairEvents.map((e) => (
@@ -549,7 +538,6 @@ export function VehicleDetail({ id }: Props) {
         </div>
       </Reveal>
 
-      <p class="colophon">Coast · The service record, kept honest</p>
       </div>
       </div>
 
