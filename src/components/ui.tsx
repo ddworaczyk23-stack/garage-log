@@ -94,6 +94,34 @@ export function Sheet({
   const ref = useRef<HTMLDialogElement>(null)
   const drag = useRef<{ y: number; dy: number } | null>(null)
   const titleId = useId()
+  const closing = useRef(false)
+
+  // Slide down (desktop: fade) first, THEN unmount. Used by ✕, scrim, Escape
+  // and swipe. A save still unmounts at once from the parent.
+  function requestClose() {
+    const dialog = ref.current
+    if (closing.current) return
+    closing.current = true
+    if (!dialog || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      onClose()
+      return
+    }
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      onClose()
+    }
+    // Only the panel's own slide/fade, not the scrim's (::backdrop reports here too).
+    dialog.addEventListener('transitionend', (e) => {
+      if (e.target === dialog && !e.pseudoElement) finish()
+    })
+    window.setTimeout(finish, 400)
+    // From wherever a swipe left it, back onto the CSS transition and away.
+    dialog.style.transition = ''
+    dialog.style.transform = ''
+    dialog.classList.remove('is-in')
+  }
 
   useEffect(() => {
     const dialog = ref.current
@@ -125,10 +153,10 @@ export function Sheet({
       aria-labelledby={titleId}
       onCancel={(e) => {
         e.preventDefault()
-        onClose()
+        requestClose()
       }}
       onClick={(e) => {
-        if (e.target === ref.current) onClose()
+        if (e.target === ref.current) requestClose()
       }}
     >
       <div class="sheet-panel">
@@ -148,8 +176,8 @@ export function Sheet({
           onPointerUp={() => {
             const dy = drag.current?.dy ?? 0
             drag.current = null
-            setOffset(0)
-            if (dy > 90) onClose()
+            if (dy > 90) requestClose()
+            else setOffset(0)
           }}
           onPointerCancel={() => {
             drag.current = null
@@ -164,7 +192,7 @@ export function Sheet({
                 {title}
               </h2>
             </div>
-            <button type="button" class="sheet-close" aria-label="Close" onClick={onClose}>
+            <button type="button" class="sheet-close" aria-label="Close" onClick={requestClose}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
                 <path d="M6 6l12 12M18 6L6 18" />
               </svg>
