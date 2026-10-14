@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact'
+import { useEffect, useLayoutEffect, useRef } from 'preact/hooks'
 
 interface NavProps {
   route: string
@@ -91,6 +92,25 @@ export function Nav({ route }: NavProps) {
   const left = ITEMS.slice(0, 2)
   const right = ITEMS.slice(2)
 
+  // The glass capsule slides under the active tab (phones/tablets). It is one
+  // element moved with CSS variables, so a route change animates by transition.
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const placePill = () => {
+    const box = scrollRef.current
+    if (!box) return
+    const on = box.querySelector<HTMLElement>('.nav-item.is-active')
+    box.style.setProperty('--pill-on', on ? '1' : '0')
+    if (on) {
+      box.style.setProperty('--pill-x', `${on.offsetLeft}px`)
+      box.style.setProperty('--pill-w', `${on.offsetWidth}px`)
+    }
+  }
+  useLayoutEffect(placePill, [route])
+  useEffect(() => {
+    window.addEventListener('resize', placePill)
+    return () => window.removeEventListener('resize', placePill)
+  }, [])
+
   const tab = (it: (typeof ITEMS)[number]) => {
     const active = it.isActive(route)
     return (
@@ -110,7 +130,8 @@ export function Nav({ route }: NavProps) {
 
   return (
     <nav class="bottom-nav">
-      <div class="nav-scroll">
+      <div class="nav-scroll" ref={scrollRef}>
+        <span class="nav-pill" aria-hidden="true" />
         {left.map(tab)}
         {/* Reserves the gap the absolutely-positioned Check disc floats over,
             so the two flanking tab groups stay evenly spaced. */}

@@ -5135,9 +5135,34 @@ a.list-row:hover {
   .nav-item.is-active .nav-icon {
     color: var(--sig-blue-deep);
   }
-  .nav-item.is-active {
+  /* The capsule is its own element (.nav-pill) that slides to the active tab,
+     so the tab itself no longer paints it. */
+  .nav-scroll {
+    position: relative;
+  }
+  .nav-pill {
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 0;
+    width: var(--pill-w, 0px);
+    transform: translateX(var(--pill-x, 0px));
+    opacity: var(--pill-on, 0);
+    border-radius: 24px;
     background: color-mix(in srgb, var(--text) 9%, transparent);
     box-shadow: inset 0 0 0 0.5px color-mix(in srgb, #fff 70%, transparent);
+    pointer-events: none;
+    transition:
+      transform 0.42s cubic-bezier(0.3, 1.25, 0.4, 1),
+      width 0.42s cubic-bezier(0.3, 1.25, 0.4, 1),
+      opacity 0.2s ease;
+  }
+  .nav-item.is-active .nav-icon {
+    animation: navPop 0.4s cubic-bezier(0.3, 1.4, 0.4, 1);
+  }
+  @keyframes navPop {
+    0% { transform: scale(0.8); }
+    100% { transform: scale(1); }
   }
   /* No "Check" text under the disc; the link keeps its aria-label. */
   .nav-check .nav-label {
@@ -5154,6 +5179,19 @@ a.list-row:hover {
     box-shadow:
       0 0 0 4px color-mix(in srgb, #fff 55%, transparent),
       0 6px 16px rgba(27, 95, 170, 0.38);
+  }
+}
+@media (min-width: 1024px) {
+  .nav-pill {
+    display: none;
+  }
+}
+@media (max-width: 1023px) and (prefers-reduced-motion: reduce) {
+  .nav-pill {
+    transition: none;
+  }
+  .nav-item.is-active .nav-icon {
+    animation: none;
   }
 }
 @media (max-width: 1023px) and (prefers-reduced-transparency: reduce) {
