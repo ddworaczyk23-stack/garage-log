@@ -37,11 +37,10 @@ const FolderIcon = (
   </svg>
 )
 
-const BackupIcon = (
+const SettingsIcon = (
   <svg viewBox="0 0 24 24" {...stroke} aria-hidden="true">
-    <path d="M4.5 4.5h15a1 1 0 0 1 1 1v3h-17v-3a1 1 0 0 1 1-1Z" />
-    <path d="M4.5 8.5V19a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1V8.5" />
-    <path d="M10 12.5h4" />
+    <circle cx="12" cy="8.5" r="3.5" />
+    <path d="M5 19.5c1.4-3.2 4-4.8 7-4.8s5.6 1.6 7 4.8" />
   </svg>
 )
 
@@ -74,9 +73,15 @@ const ITEMS: {
     icon: FolderIcon,
     isActive: (r) => r === '/documents' || r.startsWith('/documents/'),
   },
-  { href: '#/backup', label: 'Backup', icon: BackupIcon, isActive: (r) => r === '/backup' },
+  // Settings holds sync + Backup & restore (Backup used to be its own tab).
   // Debug is a developer view — reachable from the Backup page, kept off the
   // primary nav so the everyday bar stays uncluttered.
+  {
+    href: '#/settings',
+    label: 'Settings',
+    icon: SettingsIcon,
+    isActive: (r) => r === '/settings' || r === '/backup',
+  },
 ]
 
 export function Nav({ route }: NavProps) {

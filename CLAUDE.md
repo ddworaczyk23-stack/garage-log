@@ -124,16 +124,16 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
 - **`src/components/`** — `EventForm` (shared maintenance+repair, add+edit via
   `kind`/`existing`; owns attachment picker + next-due override), `OdometerForm`,
   `EventListItem`/`OdometerListItem`, `DocumentGrid`, `DocumentPreviewModal`,
-  `VehicleDocuments` (Glovebox), `NicknameEditor`, `AccountBar`, `ui.tsx`
+  `VehicleDocuments` (Glovebox), `NicknameEditor`, `ui.tsx`
   (`Loading`, `EmptyState`, `ConfirmButton`, `ErrorBoundary`).
 - **`src/app.tsx`** — shell + a tiny **hash router** (`#/`, `#/vehicles`,
   `#/vehicle/<id>`, `#/service/<vehicleId:category>`,
-  `#/milestone/<vehicleId>/<miles>`, `#/documents`, `#/costs`, `#/backup`, `#/add-vehicle`,
+  `#/milestone/<vehicleId>/<miles>`, `#/documents`, `#/costs`, `#/settings`, `#/backup`, `#/add-vehicle`,
   `#/import/<id>`, `#/debug`, `#/template`, `#/reminders-debug`). Hash routing is
   deliberate — deep-links on static hosts with no 404-rewrite, survives
   `base: './'`. Don't swap in a History-API router without a Pages fallback.
 - **`src/pages/`** — `Dashboard`, `Vehicles`, `VehicleDetail` (main CRUD hub),
-  `Documents`, `Costs`, `Backup`, `AddVehicle`, `ImportHistory`, `Debug`,
+  `Documents`, `Costs`, `Settings` (sync account + link to Backup; the bottom-nav tab), `Backup`, `AddVehicle`, `ImportHistory`, `Debug`,
   `TemplateAdmin`, `ReminderDebug` (read-only inspection — don't re-add input
   forms, it'd duplicate `EventForm`/`OdometerForm`).
 - **`vite.config.ts`** — `base: './'` (domain root AND `/garage-log/` subpath).
@@ -197,7 +197,7 @@ sync activates only when `VITE_DEXIE_CLOUD_URL` is present at build time.
 - **Local dev:** `VITE_DEXIE_CLOUD_URL=https://zcrqdxpc7.dexie.cloud` in
   `.env.local` (gitignored; template in `.env.example`). Without it, dev/build
   produce the byte-identical local-only bundle (Vite constant-folds it to
-  `undefined`, tree-shaking out the AccountBar branch).
+  `undefined`, tree-shaking out the Settings sync card).
 - **Deployed build:** the workflow injects the URL from a **repository** secret
   (not environment secret — the build job has no `environment:` key) named
   `VITE_DEXIE_CLOUD_URL`. If missing, the deploy still succeeds but ships
