@@ -4999,3 +4999,45 @@ a.list-row:hover {
     z-index: 1;
   }
 }
+
+/* Car page: picker + mileage line on top, next jobs under the verdict. */
+.vd-picker {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0;
+}
+.vd-picker a {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 6px;
+  text-align: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: inherit;
+  text-decoration: none;
+  font: 600 14px var(--font-sans);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.vd-picker a.is-on {
+  background: var(--text);
+  border-color: var(--text);
+  color: var(--bg);
+}
+.vd-miles {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+.vd-miles-num {
+  font: 600 18px var(--font-mono);
+}
+.vd-miles-note {
+  font-size: 12px;
+  opacity: 0.7;
+}
+.vd-miles .btn-link {
+  margin-left: auto;
+}
