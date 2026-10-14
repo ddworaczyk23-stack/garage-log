@@ -7,7 +7,7 @@ colors:
   signal-amber: "#f5b700"
   signal-green: "#1e7a44"
   night-road-navy: "#0f2a44"
-  on-navy-accent: "#ffffff"
+  on-navy-accent: "#9cc3f0"
   daylight-concrete: "#efefea"
   elevated-paper: "#fafaf7"
   sign-face-white: "#ffffff"
@@ -99,7 +99,7 @@ The system explicitly rejects the generic SaaS dashboard (stat-tile grids, densi
 A restrained daylight palette under four saturated signal colors that carry all meaning.
 
 ### Primary
-- **Guide-Sign Blue** (#1b5faa): The brand signature — interstate guide-sign blue. Primary actions, active nav, links, focus, and the "can coast" band. There is no second, deeper blue: hover and text-on-tint use the same blue (decision 2026-10-14: the app has two blues, navy and this one).
+- **Guide-Sign Blue** (#1b5faa): The brand signature — interstate guide-sign blue. Primary actions, active nav, links, focus, and the "can coast" band. There is no second, deeper blue: hover and text-on-tint use the same blue (decision 2026-10-14: on light surfaces the app has two blues, navy and this one; a light blue appears only on top of navy).
 
 ### Secondary
 - **Signal Red** (#b3402e): Fix-now band and danger actions. Reserved for genuinely-stop-now: an overdue SAFETY item (brakes, tires, timing belt). An overdue routine item (oil, rotation, filters) is amber book-soon, never red. Never used for emphasis.
@@ -107,7 +107,7 @@ A restrained daylight palette under four saturated signal colors that carry all 
 - **Signal Green** (#1e7a44): All-clear band, success. Highway guide green — earned by real history, never shown as a default.
 
 ### Frame
-- **Night-Road Navy** (#0f2a44): The app's chrome — the top bar, each page's title band (back link, eyebrow, title, meta; it bleeds edge to edge and joins the top bar), and the bottom nav (desktop: the left rail). White text on it; **On-Navy Accent** (white, same as body text) for links, eyebrows and the active tab; white at 74% (8.6:1) for secondary text. Added 2026-10-13 because the all-grey-and-white screens read as plain.
+- **Night-Road Navy** (#0f2a44): The app's chrome — the top bar, each page's title band (back link, eyebrow, title, meta; it bleeds edge to edge and joins the top bar), and the bottom nav (desktop: the left rail). White text on it; **On-Navy Accent** (#9cc3f0, 8.2:1, light blue used only on navy) for links, eyebrows, icons and step dots; white at 74% (8.6:1) for secondary text. Added 2026-10-13 because the all-grey-and-white screens read as plain.
 
 **The Frame Is Not a Signal Rule.** Navy is chrome only. It never carries status, never appears inside a card, and is dark enough that it can't be read as the guide-sign blue "can coast" band. Cards stay white on concrete so the four signal colors keep their meaning.
 

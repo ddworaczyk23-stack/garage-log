@@ -26,7 +26,7 @@
   --frame-line: rgba(255, 255, 255, 0.12);
   --on-frame: #ffffff;
   --on-frame-muted: rgba(255, 255, 255, 0.74); /* 8.6:1 on --frame */
-  --on-frame-accent: #ffffff; /* links, eyebrows, active tab: white on navy (two blues only: navy + accent) */
+  --on-frame-accent: #9cc3f0; /* links, eyebrows, icons, step dots on navy: 8.2:1. Light blue lives ONLY on navy. */
   --bg-elevated: #fafaf7;
   --bg-card: #ffffff; /* sign-face white */
   --bg-inset: #f0f0eb; /* concrete wells inside cards */
