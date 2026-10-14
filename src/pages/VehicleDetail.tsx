@@ -278,7 +278,23 @@ export function VehicleDetail({ id }: Props) {
       <PageHeader
         title={
           <>
-            {garage && garage.length > 1 ? (
+            {garage && garage.length > 2 ? (
+              // 3+ cars: chips would not fit, so one menu.
+              <select
+                class="vd-picker-menu"
+                aria-label="Switch car"
+                value={id}
+                onChange={(e) => {
+                  location.hash = `#/vehicle/${(e.target as HTMLSelectElement).value}`
+                }}
+              >
+                {garage.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {vehicleLabel(v)}
+                  </option>
+                ))}
+              </select>
+            ) : garage && garage.length === 2 ? (
               <nav class="vd-picker" aria-label="Switch car">
                 {garage.map((v) => (
                   <a
