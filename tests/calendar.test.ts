@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildCalendar,
+  calendarText,
   milestoneCalendarItem,
   reminderCalendarItems,
   reminderDueDate,
@@ -105,5 +106,26 @@ describe('buildCalendar', () => {
       expect(new TextEncoder().encode(line).length).toBeLessThanOrEqual(75)
     }
     expect(ics).toContain('\\n')
+  })
+})
+
+describe('calendarText', () => {
+  it('renders one item per line, grouped by vehicle name', () => {
+    expect(
+      calendarText([
+        { uid: 'rogue', date: '2026-11-02', title: 'Rogue: Tire rotation', description: '' },
+        { uid: 'f150-later', date: '2026-11-04', title: 'F-150: Brakes', description: '' },
+        { uid: 'f150-first', date: '2026-10-30', title: 'F-150: Oil change (est.)', description: '' },
+      ]),
+    ).toBe('Oct 30 - F-150: Oil change (est.)\nNov 4 - F-150: Brakes\nNov 2 - Rogue: Tire rotation')
+  })
+
+  it('does not mutate the supplied item array', () => {
+    const items = [
+      { uid: 'later', date: '2026-11-02', title: 'Rogue: Tires', description: '' },
+      { uid: 'first', date: '2026-10-30', title: 'F-150: Oil', description: '' },
+    ]
+    calendarText(items)
+    expect(items.map((item) => item.uid)).toEqual(['later', 'first'])
   })
 })

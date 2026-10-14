@@ -23,6 +23,32 @@ export interface CalendarItem {
 /** How far ahead to export. */
 export const CALENDAR_HORIZON_DAYS = 365
 
+/** A compact, shareable plain-text list of upcoming calendar items. */
+export function calendarText(items: CalendarItem[]): string {
+  return items
+    .slice()
+    .sort(
+      (a, b) =>
+        calendarTextVehicle(a.title).localeCompare(calendarTextVehicle(b.title)) ||
+        a.date.localeCompare(b.date) ||
+        a.title.localeCompare(b.title),
+    )
+    .map((item) => `${formatCalendarTextDate(item.date)} - ${item.title}`)
+    .join('\n')
+}
+
+function calendarTextVehicle(title: string): string {
+  return title.split(':', 1)[0]
+}
+
+function formatCalendarTextDate(iso: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
+  if (!match) return iso
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(
+    new Date(`${iso}T00:00:00Z`),
+  )
+}
+
 /**
  * The calendar date an item comes due: the earlier of its date-based due date
  * and the mileage projection. Null for items with neither, or that are already
