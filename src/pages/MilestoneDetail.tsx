@@ -18,7 +18,7 @@ import {
 } from '../domain/milestones'
 import { vehicleLabel } from '../domain/vehicle'
 import { MILESTONE_STATE_PILL, milestoneStateLabel } from '../components/MilestoneCard'
-import { EmptyState, SkeletonPage } from '../components/ui'
+import { EmptyState, PageHeader, SkeletonPage } from '../components/ui'
 
 // One milestone checkup (#/milestone/<vehicleId>/<miles>): the tailored
 // checklist grouped by action, saved as you tick, plus mark done / skip.
@@ -73,10 +73,7 @@ export function MilestoneDetail({ vehicleId, miles }: { vehicleId: string; miles
         ‹ {vehicleLabel(vehicle)}
       </a>
 
-      <header class="sd-head">
-        <span class="eyebrow">Milestone · {vehicleLabel(vehicle)}</span>
-        <h2 class="sd-title">{milestoneName(miles)}</h2>
-      </header>
+      <PageHeader eyebrow="Milestone" title={milestoneName(miles)} />
 
       <section class="card">
         <div class="sd-status-row">

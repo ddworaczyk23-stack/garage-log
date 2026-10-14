@@ -4651,21 +4651,6 @@ a.list-row:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.sd-head {
-  margin-bottom: 16px;
-}
-.sd-head .eyebrow {
-  display: block;
-  margin-bottom: 8px;
-}
-.sd-title {
-  font-family: var(--font-sans);
-  font-weight: 600;
-  font-size: 30px;
-  line-height: 1.05;
-  letter-spacing: -0.015em;
-  margin: 0;
-}
 .sd-status-row {
   display: flex;
   flex-wrap: wrap;
