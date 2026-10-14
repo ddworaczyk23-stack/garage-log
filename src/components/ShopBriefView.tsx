@@ -34,7 +34,7 @@ export function ShopBriefView({ brief, headingRef }: { brief: ShopBrief; heading
       {brief.escalationTriggers.length > 0 && <div class="chk-brief-sec"><div class="chk-brief-lbl">Gets urgent if</div><p>{brief.escalationTriggers.join(' · ')}</p></div>}
       {brief.historyNotes.length > 0 && <div class="chk-brief-sec chk-brief-note">{brief.historyNotes.map((note) => <p key={note}>{note}</p>)}</div>}
       {!brief.fairRange && <div class="chk-brief-sec chk-brief-note"><p>{brief.footerNote}</p></div>}
-      <div class="chk-brief-share"><button type="button" class="btn btn-primary" onClick={onShare}>Share brief</button>{shared && <p class="notice notice-ok" role="status">{shared}</p>}{shareError && <p class="notice notice-error" role="alert">{shareError}</p>}</div>
+      <div class="chk-brief-share sb-chrome"><button type="button" class="btn btn-primary" onClick={onShare}>Share brief</button>{shared && <p class="notice notice-ok" role="status">{shared}</p>}{shareError && <p class="notice notice-error" role="alert">{shareError}</p>}</div>
     </div>
     <QuoteCheck brief={brief} />
   </>
@@ -48,7 +48,7 @@ export function QuoteCheck({ brief }: { brief: ShopBrief }) {
   const quoted = parseNumberInput(quoteRaw)
   const result = quoted != null && quoted > 0 ? checkQuote({ fairLow: brief.fairLow, fairHigh: brief.fairHigh, quotedTotal: quoted, diagnosisChecks: checks }) : null
   const midpoint = brief.fairLow != null && brief.fairHigh != null ? Math.round((brief.fairLow + brief.fairHigh) / 2) : undefined
-  return <section class="qc"><h3 class="qc-title">Got a quote? Check it.</h3><p class="chk-sub">On your side of the counter — nothing here is saved or shared.</p>
+  return <section class="qc sb-chrome"><h3 class="qc-title">Got a quote? Check it.</h3><p class="chk-sub">On your side of the counter — nothing here is saved or shared.</p>
     <label class="qc-field"><span class="qc-field-lbl">What did they quote?</span><span class="qc-input-wrap"><span class="qc-dollar" aria-hidden="true">$</span><input type="text" inputMode="decimal" class="qc-input" placeholder={midpoint ? String(midpoint) : 'Amount'} value={quoteRaw} onInput={(e) => setQuoteRaw((e.target as HTMLInputElement).value)} aria-label="Quoted total in dollars" /></span></label>
     {checks.length > 0 && <div class="qc-checks"><div class="qc-checks-lbl">Did the shop do these before quoting?</div>{checks.map((check) => <div key={check.id} class="qc-check"><span class="qc-check-label">{check.label}?</span><span class="qc-check-btns" role="group" aria-label={check.label}><button type="button" class={`qc-yn${check.done === true ? ' is-on' : ''}`} aria-pressed={check.done === true} onClick={() => setChecks((all) => all.map((item) => item.id === check.id ? { ...item, done: item.done === true ? null : true } : item))}>Yes</button><button type="button" class={`qc-yn qc-yn-no${check.done === false ? ' is-on' : ''}`} aria-pressed={check.done === false} onClick={() => setChecks((all) => all.map((item) => item.id === check.id ? { ...item, done: item.done === false ? null : false } : item))}>No</button></span></div>)}</div>}
     {result && <div class={`qc-result ${TONES[result.rating].cls}`} role="status"><div class="qc-rating"><span class="qc-dot" aria-hidden="true" />{TONES[result.rating].label}</div>{result.reasons.map((reason) => <p key={reason} class="qc-reason">{reason}</p>)}<div class="qc-script"><div class="qc-script-lbl">Worth asking</div><ul>{result.secondOpinionScript.map((item) => <li key={item}>{item}</li>)}</ul></div></div>}

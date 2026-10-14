@@ -35,7 +35,7 @@ export function ConcernList({ vehicle, concerns }: { vehicle: Vehicle; concerns:
             </span>
             <span class="chk-onlist-actions">
               {handled?.id !== concern.id && <ConfirmButton label="Handled" confirmLabel="Mark handled" class="btn-link" onConfirm={async () => { await resolveConcern(concern.id); setHandled(concern) }} />}
-              <ConfirmButton label="Remove" confirmLabel="Remove" class="btn-link" onConfirm={() => deleteConcern(concern.id)} />
+              <ConfirmButton label="Remove" confirmLabel="Remove" class="btn-link" onConfirm={async () => { await deleteConcern(concern.id); if (handled?.id === concern.id) setHandled(null) }} />
             </span>
           </div>
         )

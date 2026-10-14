@@ -20,7 +20,10 @@ aggressively, every time.
   Check and the brief page share one complete brief view, vehicle pages expose
   actionable saved problems with Undo, and non-safety red is removed. `npm
   test` (403) and `npm run typecheck` pass; seeded 375px/390px concern flows
-  were verified and cleaned up. One PR only; do not merge. Claude reviews.
+  were verified and cleaned up. One PR only; do not merge. Claude reviewed 2026-10-14: fixed quote check +
+  share button printing on the brief page (lost `sb-chrome`), fixed a ghost row
+  after Remove on a just-handled concern, and gave the red fix-now sign a thick
+  white stop-sign band. Waiting on David to merge.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
