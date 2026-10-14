@@ -23,6 +23,8 @@ import { vehicleLabel } from '../domain/vehicle'
 import { formatShortDate } from '../domain/format'
 import { Loading, SkeletonPage, EmptyState, ConfirmButton, PageHeader, Tooltip } from '../components/ui'
 import type { Vehicle, Concern, MaintenanceCategory } from '../types'
+import { VehicleRow } from '../components/VehicleRow'
+import { ChevronRightIcon } from '../components/icons'
 
 // ---------------------------------------------------------------------------
 // Coast "Start a check" triage flow (Stage 2 — see design/COAST-PLAN.md).
@@ -87,13 +89,7 @@ function CheckPicker() {
       <PageHeader eyebrow="Start a check" title="Which car?" />
       <div class="chk-choices">
         {vehicles.map((v) => (
-          <a key={v.id} class="chk-choice" href={`#/check/${v.id}`}>
-            <span>
-              <b>{vehicleLabel(v)}</b>
-              <small>{v.year} {v.make} {v.model}</small>
-            </span>
-            <Chevron />
-          </a>
+          <VehicleRow key={v.id} vehicle={v} href={`#/check/${v.id}`} />
         ))}
       </div>
     </section>
@@ -529,14 +525,16 @@ function FlowTop({ onBack, steps }: { onBack: () => void; steps?: boolean[] }) {
   return (
     <div class="chk-flowtop">
       <Tooltip label="Back">
-        <button type="button" class="chk-back" onClick={onBack} aria-label="Back">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12.5 4 6.5 10l6 6" />
-          </svg>
+        <button type="button" class="back-link chk-back" onClick={onBack}>
+          ‹ Back
         </button>
       </Tooltip>
       {steps && (
-        <div class="chk-steps" aria-hidden="true">
+        <div
+          class="chk-steps"
+          role="img"
+          aria-label={`Step ${Math.min(steps.filter(Boolean).length + 1, steps.length)} of ${steps.length}`}
+        >
           {steps.map((done, i) => (
             <i key={i} class={done ? 'done' : ''} />
           ))}
@@ -553,9 +551,5 @@ function stepDots(pb: Playbook, answers: Answers): boolean[] {
 }
 
 function Chevron() {
-  return (
-    <svg class="chk-chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M7.5 4 13.5 10l-6 6" />
-    </svg>
-  )
+  return <ChevronRightIcon class="chk-chevron" />
 }

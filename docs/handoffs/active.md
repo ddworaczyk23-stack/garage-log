@@ -13,6 +13,11 @@ aggressively, every time.
 
 ## Open
 
+- **Consistency round.** Plan: `docs/superpowers/plans/2026-10-14-consistency-round.md`.
+  Branch `design/consistency-round` has the start (icons, VehicleRow, Check back
+  button). Codex builds the rest, one PR, do not merge. Includes the grey
+  "Synced as …" strip on mobile (user called it out).
+
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave

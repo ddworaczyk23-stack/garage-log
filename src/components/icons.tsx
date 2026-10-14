@@ -48,3 +48,30 @@ export function WarningIcon({ class: className = '' }: IconProps) {
     </svg>
   )
 }
+
+/** Row affordance: "opens a page". One chevron everywhere (no text "›"). */
+export function ChevronRightIcon({ class: className = 'chevron-icon' }: IconProps) {
+  return (
+    <svg class={className} viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M7.5 4 13.5 10l-6 6" />
+    </svg>
+  )
+}
+
+/** Disclosure: points right when closed, rotates down when open (CSS). */
+export function DisclosureIcon({ open }: { open: boolean }) {
+  return (
+    <svg class={`disclosure-icon${open ? ' is-open' : ''}`} viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M7.5 4 13.5 10l-6 6" />
+    </svg>
+  )
+}
+
+/** In-app link arrow (→). The diagonal ↗ read as "leaves the app". */
+export function ArrowRightIcon({ class: className = '' }: IconProps) {
+  return (
+    <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  )
+}

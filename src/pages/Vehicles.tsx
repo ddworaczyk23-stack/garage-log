@@ -1,10 +1,9 @@
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getVehicleReminders } from '../db/summary'
-import { vehicleLabel } from '../domain/vehicle'
 import { hasRealData, knownReminders, itemBand, VERDICT_BAND_LABELS, type VerdictBand } from '../domain/verdict'
 import { PageHeader, Skel } from '../components/ui'
-import { VehicleIcon } from '../components/icons'
+import { VehicleRow } from '../components/VehicleRow'
 import { Reveal } from '../components/motion/Reveal'
 
 async function loadVehiclesWithStatus() {
@@ -57,21 +56,11 @@ export function Vehicles() {
         <ul class="list">
           {rows.map(({ vehicle: v, band }) => (
             <li key={v.id}>
-              <a class="list-row" href={`#/vehicle/${v.id}`}>
-                <span class="vehicle-emoji" aria-hidden="true">
-                  <VehicleIcon />
-                </span>
-                <span class="list-row-main">
-                  <span class="list-row-title">{vehicleLabel(v)}</span>
-                  <span class="muted small">
-                    {v.year} {v.make} {v.model}
-                  </span>
-                </span>
-                <span class={`status-pill status-pill-${band}`}>{VERDICT_BAND_LABELS[band]}</span>
-                <span class="chevron" aria-hidden="true">
-                  ›
-                </span>
-              </a>
+              <VehicleRow
+                vehicle={v}
+                href={`#/vehicle/${v.id}`}
+                status={<span class={`status-pill status-pill-${band}`}>{VERDICT_BAND_LABELS[band]}</span>}
+              />
             </li>
           ))}
         </ul>
