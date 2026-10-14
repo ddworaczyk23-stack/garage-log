@@ -3,7 +3,7 @@ import { useQuery } from '../db/useQuery'
 import { deleteEvent } from '../db/events'
 import { formatMiles, formatMoney, formatShortDate } from '../domain/format'
 import { EventForm, loadEventDocs } from './EventForm'
-import { ConfirmButton } from './ui'
+import { ConfirmButton, Sheet } from './ui'
 import { serviceHref } from '../domain/serviceHistory'
 import { CATEGORY_LABELS, type MaintenanceEvent } from '../types'
 import { ChevronRightIcon } from './icons'
@@ -15,26 +15,13 @@ interface Props {
   linkToService?: boolean
 }
 
-// One row in the maintenance/repair history list. Toggles into the shared
-// EventForm (pre-filled) for editing. No onChanged plumbing needed — Dexie's
+// One row in the maintenance/repair history list. "Edit" opens the shared
+// EventForm (pre-filled) in the same bottom sheet as logging. No onChanged plumbing needed — Dexie's
 // liveQuery already re-runs every dependent query (history list, reminders,
 // documents) automatically whenever the underlying tables change.
 export function EventListItem({ vehicleId, event, linkToService = true }: Props) {
   const [editing, setEditing] = useState(false)
   const docs = useQuery(() => (editing ? loadEventDocs(event) : Promise.resolve([])), [editing, event.id])
-
-  if (editing) {
-    return (
-      <EventForm
-        vehicleId={vehicleId}
-        kind={event.kind}
-        existing={event}
-        existingDocs={docs ?? []}
-        onDone={() => setEditing(false)}
-        onCancel={() => setEditing(false)}
-      />
-    )
-  }
 
   return (
     <li class="list-row event-row">
@@ -71,6 +58,22 @@ export function EventListItem({ vehicleId, event, linkToService = true }: Props)
           onConfirm={() => deleteEvent(event.id)}
         />
       </span>
+      {editing && (
+        <Sheet
+          eyebrow={formatShortDate(event.date)}
+          title={`Edit ${event.kind === 'repair' ? 'repair' : 'service'}`}
+          onClose={() => setEditing(false)}
+        >
+          <EventForm
+            vehicleId={vehicleId}
+            kind={event.kind}
+            existing={event}
+            existingDocs={docs ?? []}
+            onDone={() => setEditing(false)}
+            onCancel={() => setEditing(false)}
+          />
+        </Sheet>
+      )}
     </li>
   )
 }

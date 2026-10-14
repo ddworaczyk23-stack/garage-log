@@ -80,7 +80,7 @@ export function MilestoneCard({ vehicleId }: { vehicleId: string }) {
         <p class="muted small">Every milestone so far is recorded.</p>
       )}
 
-      <Collapsible title="All milestones" count={`${all.length}`}>
+      <Collapsible title="All milestones" count={`${all.length} ${all.length === 1 ? 'checkup' : 'checkups'}`}>
         <ul class="ms-list">
           {all.map((m) => (
             <li key={m.miles}>

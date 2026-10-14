@@ -1680,6 +1680,37 @@ const transmissionFeel: Playbook = {
   },
 }
 
+// ===========================================================================
+// NOT SURE  — the escape hatch when nothing above fits. No questions: goes
+// straight to a safe "get it diagnosed" outcome with clear stop-now triggers.
+// ===========================================================================
+const notSure: Playbook = {
+  id: 'not-sure',
+  label: 'Not sure / something else',
+  blurb: 'Something feels off, but it doesn’t fit the list above',
+  questions: [],
+  outcomes: [],
+  fallback: {
+    id: 'not-sure-generic',
+    band: 'book-soon',
+    title: 'Worth a diagnostic check',
+    explanation:
+      'When it’s hard to name, a shop’s diagnostic check is the quickest way to an answer. Note what you notice so they can find it fast.',
+    likelyCauses: ['A diagnostic check will pin down the cause'],
+    cost: { shopLow: 100, shopHigh: 200 },
+    escalation: [
+      'A flashing check-engine light, smoke, or the temperature gauge in the red (pull over)',
+      'Brakes or steering feel different',
+    ],
+    selfCheck: [
+      'Note when it happens: cold or warm, at what speed, turning, braking, or all the time',
+      'Note any dashboard lights and what they look like',
+    ],
+    symptomLine: 'Something feels off that the driver couldn’t pin down.',
+    askShopTo: 'run a diagnostic check, including a scan for stored codes, and explain what they find before quoting a repair.',
+  },
+}
+
 export const PLAYBOOKS: Playbook[] = [
   warningLight,
   brakeNoise,
@@ -1689,6 +1720,7 @@ export const PLAYBOOKS: Playbook[] = [
   steeringVibration,
   acClimate,
   transmissionFeel,
+  notSure,
 ]
 
 export function getPlaybook(id: string): Playbook | undefined {

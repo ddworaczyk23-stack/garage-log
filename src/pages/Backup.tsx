@@ -23,6 +23,7 @@ export function Backup() {
   const [exportNotice, setExportNotice] = useState<Notice>(null)
 
   const [pending, setPending] = useState<BackupFile | null>(null)
+  const [fileName, setFileName] = useState('')
   const [restoreError, setRestoreError] = useState<string | null>(null)
   const [restoring, setRestoring] = useState(false)
   const [restoreNotice, setRestoreNotice] = useState<Notice>(null)
@@ -49,6 +50,7 @@ export function Backup() {
     const input = e.target as HTMLInputElement
     const file = input.files?.[0]
     input.value = '' // allow re-picking the same file
+    setFileName(file?.name ?? '')
     setPending(null)
     setRestoreError(null)
     setRestoreNotice(null)
@@ -120,10 +122,20 @@ export function Backup() {
           <h3 class="card-title">Restore</h3>
           <p class="muted small">Replaces <strong>all data on this device</strong>.</p>
 
-          <label class="admin-field">
-            <span class="muted small">Choose a backup file (.json)</span>
-            <input type="file" accept="application/json,.json" onChange={onFile} disabled={restoring} />
-          </label>
+          <div class="admin-field">
+            <span class="muted small">Backup file (.json)</span>
+            <label class="file-picker">
+              <input
+                class="sr-only"
+                type="file"
+                accept="application/json,.json"
+                onChange={onFile}
+                disabled={restoring}
+              />
+              <span class="btn btn-secondary file-picker-button">Choose backup file</span>
+              <span class="file-picker-summary">{fileName || 'No file chosen'}</span>
+            </label>
+          </div>
 
           {restoreError && <p class="notice notice-error" role="alert">{restoreError}</p>}
 

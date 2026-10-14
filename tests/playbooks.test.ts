@@ -29,13 +29,14 @@ function run(pb: Playbook, answers: Answers) {
 }
 
 describe('playbook data integrity', () => {
-  it('has the eight expected playbooks', () => {
+  it('has the nine expected playbooks', () => {
     expect(PLAYBOOKS.map((p) => p.id).sort()).toEqual(
       [
         'ac-climate',
         'brake-noise',
         'car-wont-start',
         'leak-smell',
+        'not-sure',
         'other-noise',
         'steering-vibration',
         'transmission-feel',
@@ -614,5 +615,14 @@ describe('splitLead', () => {
   })
   it('does not split on a lowercase continuation like "e.g. the"', () => {
     expect(splitLead('Often a sensor, e.g. the cam sensor. Cheap fix.').lead).toBe('Often a sensor, e.g. the cam sensor.')
+  })
+})
+
+describe('not-sure playbook', () => {
+  it('asks nothing and goes straight to the diagnostic-check outcome', () => {
+    const pb = PLAYBOOKS.find((p) => p.id === 'not-sure')!
+    const step = resolveStep(pb, {})
+    expect(step.kind).toBe('outcome')
+    if (step.kind === 'outcome') expect(step.outcome.id).toBe('not-sure-generic')
   })
 })
