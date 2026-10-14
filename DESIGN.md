@@ -3,12 +3,11 @@ name: Coast
 description: Local-first PWA that turns car maintenance into plain-English road-sign verdicts.
 colors:
   guide-sign-blue: "#1b5faa"
-  guide-sign-blue-deep: "#164e8c"
   signal-red: "#b3402e"
   signal-amber: "#f5b700"
   signal-green: "#1e7a44"
   night-road-navy: "#0f2a44"
-  on-navy-accent: "#9cc3f0"
+  on-navy-accent: "#ffffff"
   daylight-concrete: "#efefea"
   elevated-paper: "#fafaf7"
   sign-face-white: "#ffffff"
@@ -61,7 +60,7 @@ components:
     rounded: "{rounded.control}"
     padding: "12px 18px"
   button-primary-hover:
-    backgroundColor: "{colors.guide-sign-blue-deep}"
+    backgroundColor: "{colors.guide-sign-blue}"
   button-secondary:
     backgroundColor: "{colors.guide-sign-blue-tint}"
     textColor: "{colors.guide-sign-blue}"
@@ -100,7 +99,7 @@ The system explicitly rejects the generic SaaS dashboard (stat-tile grids, densi
 A restrained daylight palette under four saturated signal colors that carry all meaning.
 
 ### Primary
-- **Guide-Sign Blue** (#1b5faa): The brand signature — interstate guide-sign blue. Primary actions, active nav, links, focus, and the "can coast" band. Deepens to **Guide-Sign Blue Deep** (#164e8c) on hover and for readable text-on-tint.
+- **Guide-Sign Blue** (#1b5faa): The brand signature — interstate guide-sign blue. Primary actions, active nav, links, focus, and the "can coast" band. There is no second, deeper blue: hover and text-on-tint use the same blue (decision 2026-10-14: the app has two blues, navy and this one).
 
 ### Secondary
 - **Signal Red** (#b3402e): Fix-now band and danger actions. Reserved for genuinely-stop-now: an overdue SAFETY item (brakes, tires, timing belt). An overdue routine item (oil, rotation, filters) is amber book-soon, never red. Never used for emphasis.
@@ -108,7 +107,7 @@ A restrained daylight palette under four saturated signal colors that carry all 
 - **Signal Green** (#1e7a44): All-clear band, success. Highway guide green — earned by real history, never shown as a default.
 
 ### Frame
-- **Night-Road Navy** (#0f2a44): The app's chrome — the top bar, each page's title band (back link, eyebrow, title, meta; it bleeds edge to edge and joins the top bar), and the bottom nav (desktop: the left rail). White text on it; **On-Navy Accent** (#9cc3f0, 8.2:1) for links, eyebrows and the active tab; white at 74% (8.6:1) for secondary text. Added 2026-10-13 because the all-grey-and-white screens read as plain.
+- **Night-Road Navy** (#0f2a44): The app's chrome — the top bar, each page's title band (back link, eyebrow, title, meta; it bleeds edge to edge and joins the top bar), and the bottom nav (desktop: the left rail). White text on it; **On-Navy Accent** (white, same as body text) for links, eyebrows and the active tab; white at 74% (8.6:1) for secondary text. Added 2026-10-13 because the all-grey-and-white screens read as plain.
 
 **The Frame Is Not a Signal Rule.** Navy is chrome only. It never carries status, never appears inside a card, and is dark enough that it can't be read as the guide-sign blue "can coast" band. Cards stay white on concrete so the four signal colors keep their meaning.
 
@@ -174,7 +173,7 @@ Matter-of-fact and sturdy: solid fills, 10px control radius, no ornamentation. C
 
 ### Buttons
 - **Shape:** Modest rounding (10px, `--radius-control`).
-- **Primary (`.btn`):** Solid Guide-Sign Blue fill, white text, 12px 18px padding, weight 600. Hover deepens to #164e8c; active dims via brightness; disabled at 0.55 opacity.
+- **Primary (`.btn`):** Solid Guide-Sign Blue fill, white text, 12px 18px padding, weight 600. Hover keeps the same blue; active dims via brightness; disabled at 0.55 opacity.
 - **Danger:** Signal Red fill, same geometry.
 - **Secondary (`.btn.btn-secondary`):** Tinted Guide-Sign Blue fill (`--accent-tint`) with Guide-Sign Blue text, same geometry as primary. Demotes the second action in a stacked pair (e.g. Check's "Make my shop brief", the shop brief's "Print it") so only one solid fill reads as primary per group.
 - **Text actions (`.btn-link`):** Plain accent-colored text links for inline row actions.
