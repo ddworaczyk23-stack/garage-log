@@ -93,7 +93,7 @@ export function Backup() {
       <a class="back-link" href="#/settings">
         ‹ Settings
       </a>
-      <PageHeader eyebrow="Your data" title="Backup & restore">
+      <PageHeader title="Backup & restore">
         <p class="page-header-prose">Stored only on this device.</p>
       </PageHeader>
 

@@ -128,7 +128,7 @@ export function AddVehicle() {
         ‹ Vehicles
       </a>
 
-      <PageHeader eyebrow="The Garage" title="Add a car" />
+      <PageHeader title="Add a car" />
 
       <div class="seg" role="group" aria-label="Add a car mode">
         <button

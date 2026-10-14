@@ -4826,7 +4826,7 @@ a.list-row:hover {
 .page > .vd-masthead:first-child,
 .page > .vd-rail:first-child > .vd-masthead:first-child {
   margin-top: -20px;
-  padding-top: 18px;
+  padding-top: 12px;
 }
 .page > .back-link:first-child {
   display: block;
@@ -4843,7 +4843,7 @@ a.list-row:hover {
 }
 .page-header,
 .vd-masthead {
-  padding-bottom: 22px;
+  padding-bottom: 16px;
   margin-bottom: 20px;
 }
 .page-header .rule-double,

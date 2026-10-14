@@ -15,7 +15,7 @@ export function Settings() {
   const lastBackupAt = typeof lastBackup?.value === 'string' ? lastBackup.value : null
   return (
     <section class="page">
-      <PageHeader eyebrow="Your data" title="Settings" />
+      <PageHeader title="Settings" />
 
       {cloudConfigured && <SyncCard />}
 
