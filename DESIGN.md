@@ -5,7 +5,7 @@ colors:
   guide-sign-blue: "#1b5faa"
   guide-sign-blue-deep: "#164e8c"
   signal-red: "#b3402e"
-  signal-amber: "#d98a00"
+  signal-amber: "#f5b700"
   signal-green: "#1e7a44"
   night-road-navy: "#0f2a44"
   on-navy-accent: "#9cc3f0"
@@ -104,7 +104,7 @@ A restrained daylight palette under four saturated signal colors that carry all 
 
 ### Secondary
 - **Signal Red** (#b3402e): Fix-now band and danger actions. Reserved for genuinely-stop-now: an overdue SAFETY item (brakes, tires, timing belt). An overdue routine item (oil, rotation, filters) is amber book-soon, never red. Never used for emphasis.
-- **Signal Amber** (#d98a00): Book-soon band. Its text-on-tint ink deepens to #8a5800 for contrast.
+- **Signal Amber** (#f5b700): Book-soon sign. It uses asphalt-ink text, like a yellow road sign; #8a5800 stays for readable text on amber tints.
 - **Signal Green** (#1e7a44): All-clear band, success. Highway guide green — earned by real history, never shown as a default.
 
 ### Frame

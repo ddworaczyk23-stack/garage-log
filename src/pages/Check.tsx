@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getCurrentMileageEstimate } from '../db/events'
@@ -17,7 +17,7 @@ import {
   type DriveVerdict,
   type TriageContext,
 } from '../domain/playbooks'
-import { composeBrief } from '../domain/shopBrief'
+import { composeBrief, type ShopBrief } from '../domain/shopBrief'
 import { knownReminders, type SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { formatShortDate } from '../domain/format'
@@ -25,6 +25,9 @@ import { Loading, SkeletonPage, EmptyState, ConfirmButton, PageHeader } from '..
 import type { Vehicle, Concern, MaintenanceCategory } from '../types'
 import { VehicleRow } from '../components/VehicleRow'
 import { ChevronRightIcon } from '../components/icons'
+import { Collapsible } from '../components/motion/Collapsible'
+import { useReducedMotion } from '../motion/hooks'
+import { shareBrief } from '../components/briefShare'
 
 // ---------------------------------------------------------------------------
 // Coast "Start a check" triage flow (Stage 2 — see design/COAST-PLAN.md).
@@ -108,6 +111,7 @@ interface FlowData {
 }
 
 function CheckVehicle({ vehicleId }: { vehicleId: string }) {
+  const reduced = useReducedMotion()
   const data = useQuery<FlowData>(
     async () => {
       const [vehicle, mileage, eventCount, concerns, reminders] = await Promise.all([
@@ -143,6 +147,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   // Null until "Add to my list" succeeds, then the new concern's id (which
   // also unlocks the link to the standalone shareable brief page).
   const [addedId, setAddedId] = useState<string | null>(null)
+  const briefHeadingRef = useRef<HTMLHeadingElement>(null)
 
   if (!data) return <SkeletonPage rows={3} />
   if (!data.vehicle) {
@@ -221,6 +226,14 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     }
     reset()
   }
+
+  useEffect(() => {
+    if (!showBrief) return
+    const heading = briefHeadingRef.current
+    if (!heading) return
+    heading.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' })
+    heading.focus({ preventScroll: true })
+  }, [showBrief, reduced])
 
   // ---- phase: choose a playbook ----
   if (!playbook) {
@@ -315,17 +328,21 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         </div>
       </div>
 
-      {/* Drive-vs-tow is the safety call — PRODUCT.md: "err urgent on safety,
-          calm on money." It leads right under the verdict, before cost or
-          cause detail, instead of being buried under a price table. */}
-      <ActionCards outcome={outcome} />
+      <DriveCard outcome={outcome} />
 
-      <h3 class="chk-sect">Most likely</h3>
-      <ul class="chk-causes">
-        {outcome.likelyCauses.map((c) => (
-          <li key={c}>{c}</li>
-        ))}
-      </ul>
+      {(outcome.band !== 'fix-now' || !outcome.driveOrTow) && outcome.escalation.length > 0 && (
+        <>
+          <h3 class="chk-sect">When it becomes urgent</h3>
+          <div class="chk-escalate">
+            <b>Treat it as “fix now” if:</b>
+            <ul>
+              {outcome.escalation.map((e) => (
+                <li key={e}>{e}</li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
 
       {(outcome.cost.shopLow > 0 || outcome.cost.shopHigh > 0) && (
         <>
@@ -342,35 +359,21 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         </>
       )}
 
-      {outcome.escalation.length > 0 && (
-        <>
-          <h3 class="chk-sect">When it becomes urgent</h3>
-          <div class="chk-escalate">
-            <b>{outcome.band === 'fix-now' ? 'Stop driving if:' : 'Treat it as “fix now” if:'}</b>
-            <ul>
-              {outcome.escalation.map((e) => (
-                <li key={e}>{e}</li>
-              ))}
-            </ul>
-          </div>
-        </>
+      {(outcome.band === 'fix-now' || outcome.band === 'book-soon') && (
+        <div class="chk-brief-trigger">
+          {showBrief ? (
+            <button type="button" class="btn-link" onClick={() => setShowBrief(false)}>Hide brief</button>
+          ) : (
+            <button type="button" class="btn btn-primary" onClick={() => setShowBrief(true)}>Make my shop brief</button>
+          )}
+        </div>
       )}
 
-      {showBrief && (
-        <ShopBriefCard
-          vehicle={vehicle}
-          mileage={data.mileage}
-          historyKnown={data.historyKnown}
-          outcome={outcome}
-        />
-      )}
+      <Collapsible title="Details">
+        <OutcomeDetails outcome={outcome} />
+      </Collapsible>
 
       <div class="chk-actions">
-        {(outcome.band === 'fix-now' || outcome.band === 'book-soon') && (
-          <button type="button" class="btn btn-primary" onClick={() => setShowBrief((s) => !s)}>
-            {showBrief ? 'Hide the shop brief' : 'Make my shop brief'}
-          </button>
-        )}
         {addedId ? (
           <div class="notice notice-ok" role="status">
             Saved. It now counts in {vehicleLabel(vehicle)}’s verdict. <a href={`#/brief/${addedId}`}>Open the shareable brief →</a>
@@ -383,14 +386,26 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
           )
         )}
         {outcome.band !== 'fix-now' && outcome.band !== 'book-soon' && (
-          <button type="button" class="btn btn-secondary" onClick={() => setShowBrief((s) => !s)}>
-            {showBrief ? 'Hide the shop brief' : 'Make my shop brief'}
-          </button>
+          showBrief ? (
+            <button type="button" class="btn-link" onClick={() => setShowBrief(false)}>Hide brief</button>
+          ) : (
+            <button type="button" class="btn btn-secondary" onClick={() => setShowBrief(true)}>Make my shop brief</button>
+          )
         )}
         <button type="button" class="btn-link" onClick={checkSomethingElse}>
           Check something else
         </button>
       </div>
+
+      {showBrief && (
+        <ShopBriefCard
+          vehicle={vehicle}
+          mileage={data.mileage}
+          historyKnown={data.historyKnown}
+          outcome={outcome}
+          headingRef={briefHeadingRef}
+        />
+      )}
     </section>
   )
 }
@@ -404,31 +419,52 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
  * brief uses for CATEGORY_BRIEFS. `whatToBring` is deliberately Check-only:
  * it's for the driver, not the shop, so it never reaches the printed brief.
  */
-function ActionCards({ outcome }: { outcome: PlaybookOutcome }) {
-  const { selfCheck, driveOrTow, whatToBring, shopChoice } = outcome
-  const hasAny =
-    driveOrTow != null || !!selfCheck?.length || !!whatToBring?.length || !!shopChoice
-  if (!hasAny) return null
-
-  const drive = driveOrTow ? DRIVE_TONE[driveOrTow.verdict] : null
+function DriveCard({ outcome }: { outcome: PlaybookOutcome }) {
+  const { driveOrTow, escalation } = outcome
+  if (!driveOrTow) return null
+  const drive = DRIVE_TONE[driveOrTow.verdict]
 
   return (
     <>
       <h3 class="chk-sect">Your next move</h3>
-
-      {driveOrTow && drive && (
-        <div class={`chk-drive ${drive.cls}`} role={driveOrTow.verdict === 'tow' ? 'alert' : undefined}>
-          <div class="chk-drive-head">
-            <span class="chk-drive-dot" aria-hidden="true" />
-            <b>{drive.label}</b>
-          </div>
-          <p class="chk-drive-note">{driveOrTow.note}</p>
+      <div class={`chk-drive ${drive.cls}`} role={driveOrTow.verdict === 'tow' ? 'alert' : undefined}>
+        <div class="chk-drive-head">
+          <span class="chk-drive-dot" aria-hidden="true" />
+          <b>{drive.label}</b>
         </div>
+        <p class="chk-drive-note">{driveOrTow.note}</p>
+        {outcome.band === 'fix-now' && escalation.length > 0 && (
+          <div class="chk-drive-escalation">
+            <b>Stop driving if:</b>
+            <ul>
+              {escalation.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          </div>
+        )}
+      </div>
+    </>
+  )
+}
+
+function OutcomeDetails({ outcome }: { outcome: PlaybookOutcome }) {
+  const { selfCheck, whatToBring, shopChoice } = outcome
+  const hasAny = outcome.likelyCauses.length > 0 || !!selfCheck?.length || !!whatToBring?.length || !!shopChoice
+  if (!hasAny) return <p class="muted small">No extra details for this check.</p>
+
+  return (
+    <>
+      {outcome.likelyCauses.length > 0 && (
+        <>
+          <h3 class="chk-sect">Most likely</h3>
+          <ul class="chk-causes">
+            {outcome.likelyCauses.map((cause) => <li key={cause}>{cause}</li>)}
+          </ul>
+        </>
       )}
 
       {!!selfCheck?.length && (
         <div class="card chk-action">
-          <h4 class="chk-action-title">Try this first</h4>
+          <h4 class="chk-sect">Try this first</h4>
           <ul class="chk-action-list">
             {selfCheck.map((s) => (
               <li key={s}>{s}</li>
@@ -439,7 +475,7 @@ function ActionCards({ outcome }: { outcome: PlaybookOutcome }) {
 
       {!!whatToBring?.length && (
         <div class="card chk-action">
-          <h4 class="chk-action-title">What to bring</h4>
+          <h4 class="chk-sect">What to bring</h4>
           <ul class="chk-action-list">
             {whatToBring.map((s) => (
               <li key={s}>{s}</li>
@@ -450,7 +486,7 @@ function ActionCards({ outcome }: { outcome: PlaybookOutcome }) {
 
       {shopChoice && (
         <div class="card chk-action">
-          <h4 class="chk-action-title">Where to take it</h4>
+          <h4 class="chk-sect">Where to take it</h4>
           <p class="chk-action-body">{shopChoice}</p>
         </div>
       )}
@@ -498,31 +534,41 @@ function ShopBriefCard({
   mileage,
   historyKnown,
   outcome,
+  headingRef,
 }: {
   vehicle: Vehicle
   mileage: number | null
   historyKnown: boolean
   outcome: PlaybookOutcome
+  headingRef: { current: HTMLHeadingElement | null }
 }) {
   // Uses the shared Stage 3 composer (domain/shopBrief.ts) so there's one shop
   // brief in the app; the triage outcome adapts in via outcomeToBriefFacts.
   const brief = composeBrief(vehicle, mileage, outcomeToBriefFacts(outcome), {
     known: historyKnown,
   })
+  return <InlineBrief brief={brief} headingRef={headingRef} />
+}
+
+function InlineBrief({ brief, headingRef }: { brief: ShopBrief; headingRef: { current: HTMLHeadingElement | null } }) {
+  const [shareStatus, setShareStatus] = useState<string | null>(null)
+  const [shareError, setShareError] = useState<string | null>(null)
+
+  async function onShare() {
+    setShareStatus(null)
+    setShareError(null)
+    const result = await shareBrief(brief)
+    if (result?.kind === 'copied') setShareStatus(result.message)
+    if (result?.kind === 'error') setShareError(result.message)
+  }
+
+  const request = brief.request.replace(/^please[,:]?\s*/i, '')
   return (
     <div class="chk-brief">
       <div class="chk-brief-head">
         <div class="chk-brief-tag">Shop brief</div>
-        <h3>{brief.vehicleLine}</h3>
+        <h3 ref={headingRef} tabIndex={-1}>{brief.vehicleLine}</h3>
         <div class="chk-brief-meta">{brief.metaLine}</div>
-      </div>
-      <div class="chk-brief-sec">
-        <div class="chk-brief-lbl">Symptom, as the shop needs it</div>
-        <p>{brief.symptom}</p>
-      </div>
-      <div class="chk-brief-sec">
-        <div class="chk-brief-lbl">Please</div>
-        <p>{brief.request}</p>
       </div>
       {brief.fairRange && (
         <div class="chk-brief-sec chk-brief-fair">
@@ -531,6 +577,14 @@ function ShopBriefCard({
           <p class="chk-brief-foot">{brief.footerNote}</p>
         </div>
       )}
+      <div class="chk-brief-sec">
+        <div class="chk-brief-lbl">Symptom, as the shop needs it</div>
+        <p>{brief.symptom}</p>
+      </div>
+      <div class="chk-brief-sec">
+        <div class="chk-brief-lbl">Ask the shop to</div>
+        <p>{request}</p>
+      </div>
       {brief.historyNotes.length > 0 && (
         <div class="chk-brief-sec chk-brief-note">
           {brief.historyNotes.map((n) => (
@@ -538,6 +592,11 @@ function ShopBriefCard({
           ))}
         </div>
       )}
+      <div class="chk-brief-share">
+        <button type="button" class="btn btn-primary" onClick={onShare}>Share brief</button>
+        {shareStatus && <p class="notice notice-ok" role="status">{shareStatus}</p>}
+        {shareError && <p class="notice notice-error" role="alert">{shareError}</p>}
+      </div>
     </div>
   )
 }

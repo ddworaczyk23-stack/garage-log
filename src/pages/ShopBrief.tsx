@@ -4,7 +4,7 @@ import { useQuery } from '../db/useQuery'
 import { getCurrentMileageEstimate } from '../db/events'
 import { getVehicleReminders } from '../db/summary'
 import { getPlaybook, outcomeToBriefFacts } from '../domain/playbooks'
-import { composeBrief, briefFromReminder, briefToText, type ShopBrief as Brief } from '../domain/shopBrief'
+import { composeBrief, briefFromReminder, type ShopBrief as Brief } from '../domain/shopBrief'
 import { BAND_LABELS } from '../domain/verdict'
 import {
   checkQuote,
@@ -15,6 +15,7 @@ import {
 import { parseNumberInput } from '../domain/format'
 import { SkeletonPage, EmptyState } from '../components/ui'
 import type { Vehicle } from '../types'
+import { shareBrief } from '../components/briefShare'
 
 // ---------------------------------------------------------------------------
 // Coast shop brief page (Stage 3 — design/COAST-PLAN.md): the standalone
@@ -90,25 +91,10 @@ export function ShopBriefPage({ id }: { id: string }) {
   const { vehicle, brief } = data
 
   async function share() {
-    const text = briefToText(brief)
     setShareError(null)
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: `Shop brief — ${brief.vehicleLine}`, text })
-        return
-      }
-      await navigator.clipboard.writeText(text)
-      setShared('Copied to the clipboard — paste it anywhere.')
-    } catch (err) {
-      // AbortError = the user dismissed the native share sheet themselves —
-      // a cancel, not a failure, and correctly gets no message. Any other
-      // rejection (clipboard blocked, non-secure context, iOS quirks) fires
-      // at the highest-stakes moment in the app — standing at a counter
-      // trying to hand this to a mechanic — so silence there previously
-      // just read as "the app is broken."
-      if (err instanceof DOMException && err.name === 'AbortError') return
-      setShareError("Couldn't share — the brief is still on screen above, or tap Print.")
-    }
+    const result = await shareBrief(brief)
+    if (result?.kind === 'copied') setShared(result.message)
+    if (result?.kind === 'error') setShareError(result.message)
   }
 
   return (
@@ -135,8 +121,8 @@ export function ShopBriefPage({ id }: { id: string }) {
           <p>{brief.symptom}</p>
         </div>
         <div class="chk-brief-sec">
-          <div class="chk-brief-lbl">Please</div>
-          <p>{brief.request}</p>
+          <div class="chk-brief-lbl">Ask the shop to</div>
+          <p>{brief.request.replace(/^please[,:]?\s*/i, '')}</p>
         </div>
         {brief.fairRange && (
           <div class="chk-brief-sec chk-brief-fair">

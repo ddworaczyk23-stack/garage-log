@@ -67,8 +67,8 @@
    * explaining the split, which read as accidental drift. It wasn't; this is
    * the single source of truth for both usages now. */
   --sig-red: #b3402e;
-  --sig-amber: #d98a00;
-  --sig-amber-ink: #8a5800; /* text-on-tint / panel-text-bearing amber — see DESIGN.md */
+  --sig-amber: #f5b700;
+  --sig-amber-ink: #8a5800; /* readable text on amber tints — see DESIGN.md */
   --sig-blue: var(--accent);
   --sig-blue-deep: var(--c-watch);
   --sig-green: var(--c-ok);
@@ -1383,6 +1383,7 @@ code {
 .nav-item.is-active {
   color: var(--accent);
 }
+.nav-label { font-size: 11.5px; }
 .nav-icon {
   display: flex;
 }
@@ -2224,7 +2225,7 @@ iframe.preview-media {
 }
 .kicker {
   font-family: var(--font-mono);
-  font-size: 10.5px;
+  font-size: 11px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--text-muted);
@@ -3266,9 +3267,9 @@ a.list-row:hover {
   box-shadow: var(--shadow-card, 0 1px 2px rgba(35, 39, 43, 0.06), 0 8px 24px rgba(35, 39, 43, 0.07));
 }
 .cv-panel.cv-red { background: var(--sig-red); }
-/* --sig-amber-ink, not --sig-amber: white text on #d98a00 measured 2.77:1
-   (fails 3:1 even at the 24px/800 headline size). #8a5800 passes at 6:1+. */
-.cv-panel.cv-amber { background: var(--sig-amber-ink); }
+/* Bright road-sign yellow uses asphalt ink for high-contrast verdicts. */
+.cv-panel.cv-amber { background: var(--sig-amber); color: var(--text); }
+.cv-panel.cv-amber .cv-inner { border-color: rgba(35, 39, 43, 0.45); }
 .cv-panel.cv-blue { background: var(--sig-blue); }
 .cv-panel.cv-green { background: var(--sig-green); }
 /* The honest unknown state — slate, deliberately outside the signal scale
@@ -3397,8 +3398,8 @@ a.list-row:hover {
   flex: 1;
   font-family: var(--font-mono);
   font-weight: 500;
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   text-align: center;
   text-transform: uppercase;
@@ -3714,6 +3715,19 @@ a.list-row:hover {
   color: var(--text);
   margin: 6px 0 0;
 }
+.chk-drive-escalation {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid currentColor;
+}
+.chk-drive-escalation b {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.chk-drive-escalation ul { margin: 7px 0 0; padding-left: 18px; }
+.chk-drive-escalation li { font-size: 14.5px; line-height: 1.5; }
 .chk-drive.is-tow {
   background: color-mix(in srgb, var(--sig-red) 10%, var(--bg-card));
   border-color: color-mix(in srgb, var(--sig-red) 30%, transparent);
@@ -3734,15 +3748,7 @@ a.list-row:hover {
 .chk-drive.is-ok .chk-drive-dot { background: var(--sig-blue); }
 
 .chk-action { margin-bottom: 10px; }
-.chk-action-title {
-  font-family: var(--font-signal);
-  font-weight: 800;
-  font-size: 13px;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  margin: 0 0 8px;
-}
+.chk-action .chk-sect { margin-top: 0; }
 .chk-action-list { margin: 0; padding-left: 18px; }
 .chk-action-list li {
   font-family: var(--font-sans);
@@ -3766,6 +3772,7 @@ a.list-row:hover {
   gap: 10px;
   margin-top: 22px;
 }
+.chk-brief-trigger { margin-top: 22px; }
 
 /* --- inline shop brief --- */
 .chk-brief {
@@ -3776,8 +3783,8 @@ a.list-row:hover {
   margin-top: 16px;
 }
 .chk-brief-head {
-  background: var(--text);
-  color: var(--bg-card);
+  background: var(--frame);
+  color: var(--on-frame);
   padding: 15px 17px;
 }
 .chk-brief-tag {
@@ -3838,6 +3845,11 @@ a.list-row:hover {
   background: color-mix(in srgb, var(--sig-amber) 12%, var(--bg-card));
 }
 .chk-brief-note p + p { margin-top: 6px; }
+.chk-brief-share {
+  padding: 13px 17px;
+  border-top: 1px solid var(--border);
+}
+.chk-brief-share .notice { margin-bottom: 0; }
 
 /* --- the vehicle's open-concern list (the loop) --- */
 .chk-onlist { padding: 14px 16px; margin-bottom: 20px; }

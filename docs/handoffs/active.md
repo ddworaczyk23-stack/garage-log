@@ -13,10 +13,14 @@ aggressively, every time.
 
 ## Open
 
-- **Amber sign + shop brief ending.** Plan:
+- **Amber sign + shop brief ending — ready for Claude review.** Plan:
   `docs/superpowers/plans/2026-10-14-amber-and-brief.md` (from the
-  2026-10-14 15:03 design review, 26/40). Codex builds on
-  `design/amber-and-brief`, one PR, do not merge. Claude reviews.
+  2026-10-14 15:03 design review, 26/40). Implemented on
+  `design/amber-and-brief`: bright amber/dark-ink verdict signs, reordered
+  Check safety/cost/details flow, inline brief scroll/focus/share behavior,
+  and the small-text floor. `npm test` (403) and `npm run typecheck` pass;
+  seeded 375px/390px Check walkthroughs passed. One PR only; do not merge.
+  Claude reviews.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
