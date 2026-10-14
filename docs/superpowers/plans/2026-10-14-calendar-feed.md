@@ -35,14 +35,15 @@ for this; the current per-car-per-day grouping in `domain/calendar.ts` stays.
 ## Architecture
 
 ```
-app (phone)  --PUT .ics-->  Cloudflare Worker + KV  <--GET .ics--  Apple / Google Calendar
+app (phone)  --PUT .ics-->  Cloudflare Worker + D1  <--GET .ics--  Apple / Google Calendar
 ```
 
 - The app builds the .ics on the device (as today) and uploads it.
 - The Worker only stores and serves bytes. It never sees the database, never
   holds the Dexie Cloud key, and does no maintenance logic.
-- Free tier is enough: KV allows 1,000 writes/day; we write only when the
-  file content changes.
+- Free tier is enough: D1 allows 100k row writes/day (KV, the first try,
+  allowed only 1,000, too easy to exhaust); we write only when the file
+  content changes, and writes are capped per IP per hour.
 
 ### Worker (`worker/calendar-feed/`, its own `wrangler.toml`)
 

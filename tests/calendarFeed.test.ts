@@ -3,7 +3,8 @@ import { db } from '../src/db/db'
 import { recordCompletedEvent, recordOdometerReading } from '../src/db/events'
 import { addVehicle } from '../src/db/vehicleOnboarding'
 import { disableFeed, enableFeed, feedLinks, getFeedState, pushFeed } from '../src/db/calendarFeed'
-import worker, { type Env } from '../worker/calendar-feed/src/index'
+import { handle, type FeedStore } from '../worker/calendar-feed/src/index'
+import { sqliteStore } from './feedWorkerDb'
 import { exportGarage, importGarage } from '../src/db/backup'
 import { localDateISO } from '../src/domain/format'
 
@@ -12,7 +13,7 @@ import { localDateISO } from '../src/domain/format'
 // delete) is exercised without a network.
 
 const BASE = 'https://feed.test'
-let store: Map<string, string>
+let store: FeedStore
 let puts: number
 // When set, PUTs wait on this before reaching the Worker (to hold a push in flight).
 let gate: Promise<void> | null
@@ -25,16 +26,9 @@ beforeEach(async () => {
     db.reminderRules.clear(),
     db.appMeta.clear(),
   ])
-  store = new Map()
+  store = sqliteStore()
   puts = 0
   gate = null
-  const env: Env = {
-    FEEDS: {
-      get: async (k) => store.get(k) ?? null,
-      put: async (k, v) => void store.set(k, v),
-      delete: async (k) => void store.delete(k),
-    },
-  }
   vi.stubEnv('VITE_CALENDAR_FEED_URL', `${BASE}/`)
   vi.stubGlobal('location', { origin: 'https://app.test', pathname: '/' })
   vi.stubGlobal('fetch', async (url: string, init: RequestInit) => {
@@ -42,7 +36,7 @@ beforeEach(async () => {
       puts++
       if (gate) await gate
     }
-    return worker.fetch(new Request(url, init), env)
+    return handle(new Request(url, init), store)
   })
 })
 

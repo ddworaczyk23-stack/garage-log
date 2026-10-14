@@ -1,21 +1,13 @@
 # Coast calendar feed Worker. Deploy from this folder:
-#   npx wrangler login                          (once)
-#   npx wrangler kv namespace create FEEDS      (once; paste the id below)
+#   npx wrangler login                                              (once)
+#   npx wrangler d1 migrations apply coast-calendar-feed --remote   (after a new migration)
 #   npx wrangler deploy
 name = "coast-calendar-feed"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
 
-[[kv_namespaces]]
-binding = "FEEDS"
-id = "c3100bd2678a4b0cb47c2eee165eb4c8"
-
-# Per-IP limit on PUT/DELETE (src/index.ts). The app writes at most once per
-# change (5 s debounce), so 10 a minute is plenty for real use.
-[[ratelimits]]
-name = "WRITE_LIMIT"
-namespace_id = "1001"
-
-  [ratelimits.simple]
-  limit = 10
-  period = 60
+[[d1_databases]]
+binding = "DB"
+database_name = "coast-calendar-feed"
+database_id = "5f77b93f-fe2b-49af-ae9d-20b04a75eb81"
+migrations_dir = "migrations"

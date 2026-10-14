@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import worker, { MAX_ICS_BYTES, type Env } from '../worker/calendar-feed/src/index'
+import { handle, MAX_ICS_BYTES, WRITES_PER_HOUR, type FeedStore } from '../worker/calendar-feed/src/index'
+import { sqliteStore } from './feedWorkerDb'
 
 const BASE = 'https://feed.example'
 const ID = 'a'.repeat(43)
@@ -7,16 +8,8 @@ const KEY = 'k'.repeat(43)
 const OTHER = 'z'.repeat(43)
 const ICS = 'BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n'
 
-function env(): Env {
-  const m = new Map<string, string>()
-  return {
-    FEEDS: {
-      get: async (k) => m.get(k) ?? null,
-      put: async (k, v) => void m.set(k, v),
-      delete: async (k) => void m.delete(k),
-    },
-  }
-}
+const worker = { fetch: (r: Request, store: FeedStore, now?: number) => handle(r, store, now) }
+const env = sqliteStore
 
 function req(method: string, path: string, init: { key?: string; body?: string; origin?: string } = {}) {
   const headers: Record<string, string> = {}
@@ -73,13 +66,34 @@ describe('calendar feed worker', () => {
 })
 
 describe('calendar feed worker rate limit', () => {
-  it('refuses writes once the per-IP limit says no, but still serves reads', async () => {
+  it('caps writes per IP per hour, costs no write once capped, and resets next hour', async () => {
     const e = env()
-    let allowed = 1
-    e.WRITE_LIMIT = { limit: async () => ({ success: allowed-- > 0 }) }
-    expect((await worker.fetch(req('PUT', `/feed/${ID}`, { key: KEY, body: ICS }), e)).status).toBe(204)
-    expect((await worker.fetch(req('PUT', `/feed/${ID}`, { key: KEY, body: ICS }), e)).status).toBe(429)
-    expect((await worker.fetch(req('DELETE', `/feed/${ID}`, { key: KEY }), e)).status).toBe(429)
-    expect((await worker.fetch(req('GET', `/feed/${ID}.ics`), e)).status).toBe(200)
+    const now = Date.UTC(2026, 9, 14, 12)
+    const put = (t = now) => worker.fetch(req('PUT', `/feed/${ID}`, { key: KEY, body: ICS }), e, t)
+    for (let i = 0; i < WRITES_PER_HOUR; i++) expect((await put()).status).toBe(204)
+    expect((await put()).status).toBe(429)
+    expect(await e.hits('unknown', Math.floor(now / 3_600_000))).toBe(WRITES_PER_HOUR)
+    expect((await worker.fetch(req('DELETE', `/feed/${ID}`, { key: KEY }), e, now)).status).toBe(429)
+    // Reads are never limited.
+    expect((await worker.fetch(req('GET', `/feed/${ID}.ics`), e, now)).status).toBe(200)
+    expect((await put(now + 3_600_000)).status).toBe(204)
+  })
+
+  it('counts each IP separately', async () => {
+    const e = env()
+    const now = Date.UTC(2026, 9, 14, 12)
+    const put = (ip: string) =>
+      worker.fetch(
+        new Request(`${BASE}/feed/${ID}`, {
+          method: 'PUT',
+          headers: { Authorization: `Bearer ${KEY}`, 'CF-Connecting-IP': ip },
+          body: ICS,
+        }),
+        e,
+        now,
+      )
+    for (let i = 0; i < WRITES_PER_HOUR; i++) await put('1.1.1.1')
+    expect((await put('1.1.1.1')).status).toBe(429)
+    expect((await put('2.2.2.2')).status).toBe(204)
   })
 })

@@ -15,18 +15,15 @@ aggressively, every time.
 
 - **Calendar options (2026-10-14):** plan
   `docs/superpowers/plans/2026-10-14-calendar-feed.md`.
-  - Phase 1 (sheet + copy as text): PR #32, branch `feat/calendar-text`.
-    Claude fixed iOS share (items load on sheet open) and checked the sheet
-    with test data on Dashboard + VehicleDetail.
-  - Phases 2-3 (Worker + live feed in app): built on `feat/calendar-feed`
-    (stacked on `feat/calendar-text`). 415 tests green; round trip checked
-    against a local copy of the Worker (logging a service moved the feed date).
-  - **Worker deployed 2026-10-14:**
-    `https://coast-calendar-feed.calendar-feed.workers.dev` (KV `FEEDS`,
-    id in `wrangler.toml`). Live PUT/GET/403/CORS/DELETE checked with curl.
-  - **Next:** repo secret `VITE_CALENDAR_FEED_URL` = that URL. Merge #32,
-    retarget #33 to `main`, merge (auto-deploys). Then Phase 4: subscribe on
-    David's iPhone + Google Calendar, log a service, confirm the event moves.
+  - Phase 1 merged (PR #32). Phases 2-3 + review fixes: PR #33 (base
+    `main`), waiting on David's merge. Repo secret `VITE_CALENDAR_FEED_URL`
+    is set.
+  - **Worker live:** `https://coast-calendar-feed.calendar-feed.workers.dev`,
+    storage D1 `coast-calendar-feed` (exact 60 writes/IP/hour cap). The old
+    KV namespace `FEEDS` (c3100bd2…) is unused; delete only with David's OK.
+  - **Next:** after #33 merges and deploys, Phase 4: subscribe on David's
+    iPhone (turn off Remove Alerts) + Google Calendar, log a service, confirm
+    the event moves.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push

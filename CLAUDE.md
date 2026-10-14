@@ -119,7 +119,7 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   - `documents.ts`, `cost.ts`, `backup.ts`, `format.ts`, `vehicle.ts`,
     `vehicleIdentity.ts`, `importHistory.ts`, `practicalTiming.ts`.
 - **`src/db/calendarFeed.ts`** — live calendar feed. Uploads the .ics to the
-  Worker in `worker/calendar-feed/` (Cloudflare Worker + KV, stores bytes
+  Worker in `worker/calendar-feed/` (Cloudflare Worker + D1, stores bytes
   only) so Apple/Google Calendar subscribe and get date changes by themselves.
   Off unless `VITE_CALENDAR_FEED_URL` is set at build time. Credentials in
   `appMeta['calendarFeed']` (local, device-only: never exported, and a restore
