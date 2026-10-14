@@ -21,11 +21,12 @@ aggressively, every time.
   - Phases 2-3 (Worker + live feed in app): built on `feat/calendar-feed`
     (stacked on `feat/calendar-text`). 415 tests green; round trip checked
     against a local copy of the Worker (logging a service moved the feed date).
-  - **Blocked on David:** Cloudflare account + `npx wrangler login`. Then in
-    `worker/calendar-feed/`: `npx wrangler kv namespace create FEEDS`, paste
-    the id into `wrangler.toml`, `npx wrangler deploy`. Then add repo secret
-    `VITE_CALENDAR_FEED_URL` = the workers.dev URL. Then Phase 4 (iPhone +
-    Google subscribe test).
+  - **Worker deployed 2026-10-14:**
+    `https://coast-calendar-feed.calendar-feed.workers.dev` (KV `FEEDS`,
+    id in `wrangler.toml`). Live PUT/GET/403/CORS/DELETE checked with curl.
+  - **Next:** repo secret `VITE_CALENDAR_FEED_URL` = that URL. Merge #32,
+    retarget #33 to `main`, merge (auto-deploys). Then Phase 4: subscribe on
+    David's iPhone + Google Calendar, log a service, confirm the event moves.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push

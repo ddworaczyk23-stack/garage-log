@@ -125,7 +125,9 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   `appMeta['calendarFeed']` (local, in backups). Pushes on start, after data
   writes (5 s debounce), and on return to foreground; skips if items unchanged.
   `db/calendarExport.ts` (`collectCalendarItems`) is the one item source for
-  the download, the text copy and the feed.
+  the download, the text copy and the feed. Worker live at
+  `https://coast-calendar-feed.calendar-feed.workers.dev`; redeploy from
+  `worker/calendar-feed/` with `npx wrangler deploy` (David's Cloudflare login).
 - **`src/services/`** — `vinDecode.ts` (REAL NHTSA vPIC `decodevinvalues` call,
   no key). The onboarding "reference data" adapters that used to live here
   (`maintenanceProvider.ts`, mock-only) were removed — see git history.
