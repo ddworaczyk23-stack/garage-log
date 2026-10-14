@@ -207,7 +207,7 @@ body {
   margin: 0 auto;
   padding: 20px 16px;
   /* leave room for the fixed bottom nav + iOS home indicator */
-  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 84px);
+  padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 28px);
 }
 /* The dashboard is a wide bento board, not a single-column document like
    VehicleDetail/Backup/etc — give it more breathing room on desktop so the
