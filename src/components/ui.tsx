@@ -97,10 +97,18 @@ export function Sheet({
   const titleId = useId()
 
   useEffect(() => {
-    ref.current?.showModal()
+    const dialog = ref.current
+    dialog?.showModal()
+    // Slide in a frame later, once the dialog has been laid out at the bottom.
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => dialog?.classList.add('is-in'))
+    })
     const root = document.documentElement
     root.classList.add('sheet-open')
-    return () => root.classList.remove('sheet-open')
+    return () => {
+      cancelAnimationFrame(frame)
+      root.classList.remove('sheet-open')
+    }
   }, [])
 
   function setOffset(dy: number) {
