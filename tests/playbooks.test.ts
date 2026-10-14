@@ -7,6 +7,7 @@ import {
   outcomeToBriefFacts,
   fairRangeText,
   contextualizeOutcome,
+  splitLead,
   type Answers,
   type Playbook,
   type DriveVerdict,
@@ -569,22 +570,22 @@ describe('contextualizeOutcome', () => {
     expect(result).toBe(synthetic)
   })
 
-  it('prepends a context note when the category is overdue', () => {
+  it('adds a context note (and leaves the explanation alone) when the category is overdue', () => {
     const result = contextualizeOutcome(outcome, ctx(['brake-inspection']))
     expect(result).not.toBe(outcome)
-    expect(result.explanation.toLowerCase()).toContain('overdue')
-    expect(result.explanation.endsWith(outcome.explanation)).toBe(true)
+    expect(result.contextNote?.toLowerCase()).toContain('overdue')
+    expect(result.explanation).toBe(outcome.explanation)
   })
 
-  it('prepends a due-soon note (distinct from the overdue note) when only due soon', () => {
+  it('adds a due-soon note (distinct from the overdue note) when only due soon', () => {
     const result = contextualizeOutcome(outcome, ctx([], ['brake-inspection']))
-    expect(result.explanation.toLowerCase()).toContain('due soon')
-    expect(result.explanation.toLowerCase()).not.toContain('overdue')
+    expect(result.contextNote?.toLowerCase()).toContain('due soon')
+    expect(result.contextNote?.toLowerCase()).not.toContain('overdue')
   })
 
   it('overdue takes precedence when a category is in both sets', () => {
     const result = contextualizeOutcome(outcome, ctx(['brake-inspection'], ['brake-inspection']))
-    expect(result.explanation.toLowerCase()).toContain('overdue')
+    expect(result.contextNote?.toLowerCase()).toContain('overdue')
   })
 
   it('never changes the band', () => {
@@ -601,5 +602,17 @@ describe('contextualizeOutcome', () => {
     const before = outcome.explanation
     contextualizeOutcome(outcome, ctx(['brake-inspection']))
     expect(outcome.explanation).toBe(before)
+  })
+})
+
+describe('splitLead', () => {
+  it('puts the first sentence in lead and the rest in rest', () => {
+    expect(splitLead('Pads are gone. Every drive costs more.')).toEqual({ lead: 'Pads are gone.', rest: 'Every drive costs more.' })
+  })
+  it('keeps a one-sentence text whole', () => {
+    expect(splitLead('Pads are gone.')).toEqual({ lead: 'Pads are gone.', rest: '' })
+  })
+  it('does not split on a lowercase continuation like "e.g. the"', () => {
+    expect(splitLead('Often a sensor, e.g. the cam sensor. Cheap fix.').lead).toBe('Often a sensor, e.g. the cam sensor.')
   })
 })

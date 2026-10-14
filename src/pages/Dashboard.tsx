@@ -124,7 +124,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
           {(showActionItems && verdict.actionItems.length > 0 || coastShown.length > 0) && (
             <div class="cv-coast-list">
               {showActionItems && verdict.actionItems.map((item) => (
-                <div key={item.label} class={`cv-coast-item is-${verdict.band}`}>
+                <div key={item.label} class={`cv-coast-item is-${item.band}`}>
                   <span class="cv-coast-dot" />
                   <span>
                     <b>{item.label}</b>

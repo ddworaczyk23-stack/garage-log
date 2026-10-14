@@ -121,6 +121,12 @@ export interface CoastItem {
   window: string
 }
 
+/** A fix-now / book-soon item; carries its OWN band so a book-soon row under
+ *  a red sign is still painted amber (red is for safety only). */
+export interface ActionItem extends CoastItem {
+  band: 'fix-now' | 'book-soon'
+}
+
 export interface VehicleVerdict {
   band: VerdictBand
   /** The sign: short, declarative. e.g. "One thing to book soon." */
@@ -134,7 +140,7 @@ export interface VehicleVerdict {
   safeWindow: string | null
   coastItems: CoastItem[]
   /** The fix-now / book-soon items behind the headline, worst first (max 3). */
-  actionItems: CoastItem[]
+  actionItems: ActionItem[]
   /** Tracked items with no logged history — "Unknown", never counted above. */
   unknownCount: number
   /** Odometer caveat ("no reading on file" / "estimate is stale"), else null. */
@@ -460,6 +466,7 @@ export function vehicleVerdict(
       .slice(0, 3)
       .map((r) => ({
         label: r.rule.label,
+        band: fixNow.includes(r) ? ('fix-now' as const) : ('book-soon' as const),
         window: r.status === 'overdue' ? overdueText(r) : (windowText(r) ?? 'due now'),
       })),
     unknownCount: known ? unknownReminders(reminders).length : 0,

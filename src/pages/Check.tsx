@@ -11,6 +11,7 @@ import {
   outcomeToBriefFacts,
   fairRangeText,
   contextualizeOutcome,
+  splitLead,
   type Answers,
   type Playbook,
   type PlaybookOutcome,
@@ -18,6 +19,7 @@ import {
   type TriageContext,
 } from '../domain/playbooks'
 import { composeBrief } from '../domain/shopBrief'
+import { formatMoneyRange } from '../domain/format'
 import { knownReminders, type SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { Loading, SkeletonPage, EmptyState, PageHeader } from '../components/ui'
@@ -295,11 +297,14 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   }
 
   // ---- phase: verdict ----
-  // Stage 5B: annotate with engine context (e.g. "your brakes are also
-  // overdue") before render. Nothing persisted (Concern rows, the shop brief)
-  // reads `explanation`, so this only affects what's shown here.
+  // Stage 5B: annotate with engine context (e.g. "your brakes are
+  // overdue too") before render. Nothing persisted reads `contextNote`, so
+  // this only affects what's shown here.
   const outcome = contextualizeOutcome(step.outcome, data.context)
   const tone = BAND_TONE[outcome.band]
+  // The sign carries one message (the first sentence); the why sits under the ruler.
+  const { lead, rest } = splitLead(outcome.explanation)
+  const why = [outcome.contextNote, rest].filter(Boolean).join(' ')
 
   async function addToList() {
     const id = await openConcern(vehicle.id, playbook!, outcome, answers)
@@ -314,7 +319,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         <div class="cv-inner">
           <div class="cv-tag">{tone.tag}</div>
           <h2 class="cv-headline">{outcome.title}</h2>
-          <p class="cv-sentence">{outcome.explanation}</p>
+          <p class="cv-sentence">{lead}</p>
         </div>
       </div>
 
@@ -332,6 +337,8 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
           <span class={outcome.band === 'all-clear' ? 'on' : ''}>All clear</span>
         </div>
       </div>
+
+      {why && <p class="chk-why">{why}</p>}
 
       <DriveCard outcome={outcome} />
 
@@ -355,10 +362,10 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
           <div class="card chk-cost">
             <CostRow what="At an independent shop" amt={fairRangeText(outcome.cost)} strong />
             {outcome.cost.dealerLow != null && (
-              <CostRow what="At a dealer" amt={`$${outcome.cost.dealerLow.toLocaleString()}–$${outcome.cost.dealerHigh!.toLocaleString()}`} />
+              <CostRow what="At a dealer" amt={formatMoneyRange(outcome.cost.dealerLow, outcome.cost.dealerHigh!)} />
             )}
             {outcome.cost.diyLow != null && (
-              <CostRow what="Doing it yourself — parts" amt={`$${outcome.cost.diyLow.toLocaleString()}–$${outcome.cost.diyHigh!.toLocaleString()}`} />
+              <CostRow what="Doing it yourself — parts" amt={formatMoneyRange(outcome.cost.diyLow, outcome.cost.diyHigh!)} />
             )}
           </div>
         </>

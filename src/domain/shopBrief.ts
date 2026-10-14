@@ -2,7 +2,7 @@ import type { ComputedReminder } from './reminderEngine'
 import type { MaintenanceCategory, Vehicle } from '../types'
 import type { SignalBand } from './verdict'
 import { itemBand } from './verdict'
-import { formatMiles, formatMoney, formatShortDate, localDateISO } from './format'
+import { formatMiles, formatMoney, formatMoneyRange, formatShortDate, localDateISO } from './format'
 
 // ---------------------------------------------------------------------------
 // Coast shop brief (Stage 3 of design/COAST-PLAN.md) — the "show this at the
@@ -59,13 +59,13 @@ export interface ShopBrief {
   band: SignalBand
   symptom: string
   request: string
-  /** "$300–700 at an independent shop", null when no cost facts exist. */
+  /** "$300–$700 at an independent shop", null when no cost facts exist. */
   fairRange: string | null
   /** Raw fair-range bounds behind `fairRange` — the price anchor Stage 5C's
    *  quote checker reads. Both null when the brief has no cost facts. */
   fairLow: number | null
   fairHigh: number | null
-  /** "Doing it yourself: roughly $100–300 in parts.", null when absent. */
+  /** "Doing it yourself: roughly $100–$300 in parts.", null when absent. */
   diyNote: string | null
   reasonableIfSuggested: string[]
   fineToDecline: string[]
@@ -258,10 +258,8 @@ const FOOTER_NO_RANGE = 'Please provide a written estimate before starting work.
 
 function range(low: number | null | undefined, high: number | null | undefined): string | null {
   if (low == null && high == null) return null
-  if (low != null && high != null)
-    return `${formatMoney(low).replace(/\.00$/, '')}–${formatMoney(high).replace(/\.00$/, '').slice(1)}`
-  const only = low ?? high
-  return `about ${formatMoney(only).replace(/\.00$/, '')}`
+  if (low != null && high != null) return formatMoneyRange(low, high)
+  return `about ${formatMoney(low ?? high)}`
 }
 
 function vehicleLine(v: Vehicle): string {
