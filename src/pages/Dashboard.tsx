@@ -173,9 +173,6 @@ function QuickActions({ vehicles }: { vehicles: Vehicle[] }) {
         <button type="button" class={pick === 'odometer' ? 'is-on' : ''} aria-expanded={vehicles.length > 1 ? pick === 'odometer' : undefined} onClick={() => tap('odometer')}>
           <GaugeIcon />Update miles
         </button>
-        <a href="#/check">
-          <AlertIcon />Check a noise
-        </a>
       </div>
       {pick && (
         <div class="hm-pick" role="group" aria-label="Which car?">
@@ -252,15 +249,6 @@ function GaugeIcon() {
       <path d="M4 16a8 8 0 1 1 16 0" />
       <path d="M12 16l4-5" />
       <circle cx="12" cy="16" r="1.2" fill="currentColor" />
-    </svg>
-  )
-}
-
-function AlertIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
-      <circle cx="12" cy="12" r="9" />
-      <path d="M12 7.5v5.5M12 16.3v.2" />
     </svg>
   )
 }

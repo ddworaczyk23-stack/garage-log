@@ -2571,9 +2571,8 @@ iframe.preview-media {
   border-top: 0.5px solid var(--border);
 }
 
-/* cover: instrument + specifications fold */
-.vd-cover .fold {
-  margin-top: 15px;
+/* cover: odometer + specifications folds (a rule between them, none on top) */
+.vd-cover .fold + .fold {
   border-top: 1px solid var(--border);
 }
 .vd-spec-table {
@@ -3486,7 +3485,7 @@ a.list-row:hover {
 .hm-sq.is-book-soon { background: var(--sig-amber); }
 .hm-quick {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
   margin-top: 16px;
 }
