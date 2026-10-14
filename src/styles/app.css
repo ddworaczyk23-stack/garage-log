@@ -2432,6 +2432,9 @@ iframe.preview-media {
   gap: 6px;
   font-variant-numeric: tabular-nums;
 }
+.odo-comma {
+  margin: 0 -0.16em; /* trims the mono cell evenly on both sides */
+}
 .odo .unit {
   font-size: 15px;
   color: var(--text-muted);
@@ -3718,7 +3721,7 @@ a.list-row:hover {
 .chk-drive-escalation {
   margin-top: 12px;
   padding-top: 12px;
-  border-top: 1px solid currentColor;
+  border-top: 1px solid color-mix(in srgb, var(--sig-red) 30%, transparent);
 }
 .chk-drive-escalation b {
   font-family: var(--font-mono);
@@ -3772,7 +3775,10 @@ a.list-row:hover {
   gap: 10px;
   margin-top: 22px;
 }
-.chk-brief-trigger { margin-top: 22px; }
+.chk-brief-trigger { margin: 22px 0 18px; }
+.chk-brief-trigger .chk-brief { margin-top: 0; }
+.chk-brief-hide { margin-top: 8px; min-height: 44px; }
+.btn.btn-block { display: block; width: 100%; text-align: center; }
 
 /* --- inline shop brief --- */
 .chk-brief {
@@ -3782,9 +3788,11 @@ a.list-row:hover {
   overflow: hidden;
   margin-top: 16px;
 }
+/* Light header: navy is page chrome only, never inside a card. */
 .chk-brief-head {
-  background: var(--frame);
-  color: var(--on-frame);
+  background: var(--bg-inset);
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
   padding: 15px 17px;
 }
 .chk-brief-tag {

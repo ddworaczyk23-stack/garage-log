@@ -45,7 +45,7 @@ export function Instrument({
         {action}
       </div>
       <div class="odo">
-        <span class="num">{value == null ? '—' : Math.round(main).toLocaleString('en-US')}</span>
+        <span class="num">{value == null ? '—' : withTightCommas(Math.round(main).toLocaleString('en-US'))}</span>
         {unit && <span class="unit">{unit}</span>}
       </div>
       {facts.length > 0 && (
@@ -60,4 +60,9 @@ export function Instrument({
       )}
     </div>
   )
+}
+
+/** A mono comma fills a whole digit cell ("89 , 644"); narrow it. */
+function withTightCommas(text: string): ComponentChildren {
+  return text.split(',').map((part, i) => (i === 0 ? part : [<span class="odo-comma">,</span>, part]))
 }

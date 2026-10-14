@@ -364,15 +364,30 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         </>
       )}
 
-      {(outcome.band === 'fix-now' || outcome.band === 'book-soon') && (
-        <div class="chk-brief-trigger">
-          {showBrief ? (
-            <button type="button" class="btn-link" onClick={() => setShowBrief(false)}>Hide brief</button>
-          ) : (
-            <button type="button" class="btn btn-primary" onClick={() => setShowBrief(true)}>Make my shop brief</button>
-          )}
-        </div>
-      )}
+      {/* The brief opens right where it was asked for, before Details and the
+          exit actions. Primary on fix-now / book-soon, secondary otherwise. */}
+      <div class="chk-brief-trigger">
+        {showBrief ? (
+          <>
+            <ShopBriefCard
+              vehicle={vehicle}
+              mileage={data.mileage}
+              historyKnown={data.historyKnown}
+              outcome={outcome}
+              headingRef={briefHeadingRef}
+            />
+            <button type="button" class="btn-link chk-brief-hide" onClick={() => setShowBrief(false)}>Hide brief</button>
+          </>
+        ) : (
+          <button
+            type="button"
+            class={`btn ${outcome.band === 'fix-now' || outcome.band === 'book-soon' ? 'btn-primary' : 'btn-secondary'} btn-block`}
+            onClick={() => setShowBrief(true)}
+          >
+            Make my shop brief
+          </button>
+        )}
+      </div>
 
       <Collapsible title="Details">
         <OutcomeDetails outcome={outcome} />
@@ -385,16 +400,9 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
           </div>
         ) : (
           outcome.band !== 'all-clear' && (
-            <button type="button" class="btn btn-secondary" onClick={addToList}>
+            <button type="button" class="btn btn-secondary btn-block" onClick={addToList}>
               Save to {vehicleLabel(vehicle)}’s record
             </button>
-          )
-        )}
-        {outcome.band !== 'fix-now' && outcome.band !== 'book-soon' && (
-          showBrief ? (
-            <button type="button" class="btn-link" onClick={() => setShowBrief(false)}>Hide brief</button>
-          ) : (
-            <button type="button" class="btn btn-secondary" onClick={() => setShowBrief(true)}>Make my shop brief</button>
           )
         )}
         <button type="button" class="btn-link" onClick={checkSomethingElse}>
@@ -402,15 +410,6 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         </button>
       </div>
 
-      {showBrief && (
-        <ShopBriefCard
-          vehicle={vehicle}
-          mileage={data.mileage}
-          historyKnown={data.historyKnown}
-          outcome={outcome}
-          headingRef={briefHeadingRef}
-        />
-      )}
     </section>
   )
 }
@@ -432,7 +431,12 @@ function DriveCard({ outcome }: { outcome: PlaybookOutcome }) {
   return (
     <>
       <h3 class="chk-sect">Your next move</h3>
-      <div class={`chk-drive ${drive.cls}`} role={driveOrTow.verdict === 'tow' ? 'alert' : undefined}>
+      {/* On a fix-now verdict the card stays in the red family, so red sign +
+          amber card never reads as "not so bad". */}
+      <div
+        class={`chk-drive ${outcome.band === 'fix-now' ? 'is-tow' : drive.cls}`}
+        role={driveOrTow.verdict === 'tow' ? 'alert' : undefined}
+      >
         <div class="chk-drive-head">
           <span class="chk-drive-dot" aria-hidden="true" />
           <b>{drive.label}</b>
@@ -442,13 +446,19 @@ function DriveCard({ outcome }: { outcome: PlaybookOutcome }) {
           <div class="chk-drive-escalation">
             <b>Stop driving if:</b>
             <ul>
-              {escalation.map((item) => <li key={item}>{item}</li>)}
+              {escalation.map((item) => <li key={item}>{stripTowClause(item)}</li>)}
             </ul>
           </div>
         )}
       </div>
     </>
   )
+}
+
+/** Under a "Stop driving if:" label the trailing "— stop driving and arrange
+ * a tow" just repeats the label, so drop it there. */
+function stripTowClause(item: string): string {
+  return item.replace(/\s+—\s+(?:(?:stop driving|stop|pull over) and )?(?:arrange a tow|stop driving)$/i, '')
 }
 
 function OutcomeDetails({ outcome }: { outcome: PlaybookOutcome }) {
@@ -567,7 +577,8 @@ function InlineBrief({ brief, headingRef }: { brief: ShopBrief; headingRef: { cu
     if (result?.kind === 'error') setShareError(result.message)
   }
 
-  const request = brief.request.replace(/^please[,:]?\s*/i, '')
+  const stripped = brief.request.replace(/^please[,:]?\s*/i, '')
+  const request = stripped.charAt(0).toUpperCase() + stripped.slice(1)
   return (
     <div class="chk-brief">
       <div class="chk-brief-head">
