@@ -48,7 +48,7 @@ export function Vehicles() {
     <section class="page">
       <PageHeader
         title="Vehicles"
-        meta={<a class="btn-link" href="#/add-vehicle">Add a car</a>}
+        meta={<a class="btn btn-on-frame" href="#/add-vehicle">+ Add a car</a>}
       />
 
       <Reveal>

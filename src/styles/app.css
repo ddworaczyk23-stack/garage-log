@@ -1803,17 +1803,13 @@ iframe.preview-media {
    that extends the tap area toward 44px, so rows don't grow taller. */
 .infotip-btn::after,
 .vd-interval-edit::after,
-.back-link::after,
-.gb-link::after {
+.back-link::after {
   content: '';
   position: absolute;
   inset: -14px -10px;
 }
 .infotip-btn::after {
   inset: -15px;
-}
-.gb-link::after {
-  inset: -13px -10px;
 }
 /* Room under the last card so the floating "+ Log" never covers it. */
 .page.vd {
@@ -3281,30 +3277,17 @@ a.list-row:hover {
  * verbatim; none of these are numbers a driver came to this screen to read.
  * Plain text links instead — the numbers still live on their destination
  * pages (Costs, Backup), with the context that makes them meaningful. */
-.gb-links {
-  display: flex;
-  flex-wrap: wrap;
-  /* 26px row gap = two 13px hit-area overhangs, so wrapped links never overlap. */
-  gap: 26px 22px;
-  margin-top: 4px;
-}
-.gb-link {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-weight: 600;
+/* Rounded button that sits on the navy title band (e.g. "+ Add a car"). */
+.btn.btn-on-frame {
+  padding: 9px 14px;
+  min-height: 40px;
+  border: 1px solid var(--frame-line);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--on-frame);
   font-size: 0.88rem;
-  color: var(--accent);
-  text-decoration: none;
 }
-.gb-link:hover {
-  text-decoration: underline;
-}
-.gb-link svg {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
+.btn.btn-on-frame:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 @media (max-width: 760px) {

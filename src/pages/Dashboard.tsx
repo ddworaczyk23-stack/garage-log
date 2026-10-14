@@ -7,7 +7,7 @@ import { PageHeader, Skel } from '../components/ui'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
 import { CalendarExport } from '../components/CalendarExport'
-import { ArrowRightIcon } from '../components/icons'
+import { ArrowRightIcon, ChevronRightIcon } from '../components/icons'
 
 // Home dashboard: Coast "Today" (Stage 1, design/COAST-PLAN.md). One verdict
 // per vehicle — a road-sign panel with a single plain-English sentence — with
@@ -54,6 +54,8 @@ export function Dashboard() {
     )
   }
 
+  const yearSpend = summary.vehicles.reduce((sum, v) => sum + v.spendThisYear, 0)
+
   return (
     <section class="page gb">
       <PageHeader title="Your Garage" />
@@ -73,12 +75,19 @@ export function Dashboard() {
         </Reveal>
       )}
 
-      <div class="gb-links">
-        <a class="gb-link" href="#/costs">
-          Cost summary
-          <ArrowRightIcon />
-        </a>
-      </div>
+      <ul class="list">
+        <li>
+          <a class="list-row" href="#/costs">
+            <span class="list-row-main">
+              <span class="list-row-title">Costs</span>
+              <span class="muted small">
+                {yearSpend > 0 ? `${formatMoney(yearSpend)} in ${summary.year}` : 'No costs logged yet'}
+              </span>
+            </span>
+            <ChevronRightIcon />
+          </a>
+        </li>
+      </ul>
     </section>
   )
 }
