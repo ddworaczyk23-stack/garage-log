@@ -7,7 +7,7 @@ import { Loading } from './ui'
 
 const SOURCE_NOTE: Record<'custom' | 'calculated' | 'default', string> = {
   custom: 'Using your custom average.',
-  calculated: 'Calculated from your logged history.',
+  calculated: '',
   default: 'Default estimate — log a couple of odometer readings a few months apart to personalize.',
 }
 
@@ -80,9 +80,6 @@ export function AnnualMileageEditor({ vehicleId }: { vehicleId: string }) {
               onInput={(e) => setValue((e.target as HTMLInputElement).value)}
             />
           </label>
-          {info.calculated != null && (
-            <p class="muted small">Calculated from your history: {formatMiles(info.calculated)}/yr.</p>
-          )}
           {error && <p class="notice notice-error" role="alert">{error}</p>}
           <div class="form-actions">
             <button class="btn" type="submit" disabled={saving}>
@@ -100,7 +97,7 @@ export function AnnualMileageEditor({ vehicleId }: { vehicleId: string }) {
         </form>
       ) : (
         <>
-          <p class="muted small">{SOURCE_NOTE[info.source]}</p>
+          {SOURCE_NOTE[info.source] && <p class="muted small">{SOURCE_NOTE[info.source]}</p>}
           <button type="button" class="btn-link" onClick={startEdit}>
             {info.override != null ? 'Edit average' : 'Set your own'}
           </button>

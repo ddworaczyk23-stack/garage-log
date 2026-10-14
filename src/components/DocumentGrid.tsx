@@ -43,7 +43,7 @@ export function DocumentGrid({ documents, onRemove }: Props) {
   }, [])
 
   if (!documents.length) {
-    return <p class="muted small">No documents attached yet.</p>
+    return <p class="muted small">No documents yet.</p>
   }
 
   return (

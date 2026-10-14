@@ -137,7 +137,7 @@ export function Documents({ initialVehicleId }: Props) {
           title={total === 0 ? 'No documents yet' : 'No documents match these filters'}
           hint={
             total === 0
-              ? 'Attach receipts or photos when you log a service, or add vehicle papers to the Glovebox.'
+              ? 'Receipts and photos you attach show up here.'
               : 'Try clearing the search or a filter above.'
           }
         />

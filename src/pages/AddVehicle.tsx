@@ -128,12 +128,7 @@ export function AddVehicle() {
         ‹ Vehicles
       </a>
 
-      <PageHeader eyebrow="The Garage" title="Add a car">
-        <p class="page-header-prose">
-          About a minute. Enter a VIN and Coast decodes the rest, or fill in year, make, and model by
-          hand.
-        </p>
-      </PageHeader>
+      <PageHeader eyebrow="The Garage" title="Add a car" />
 
       <div class="seg" role="group" aria-label="Add a car mode">
         <button
@@ -164,7 +159,7 @@ export function AddVehicle() {
               onInput={(e) => setVin((e.target as HTMLInputElement).value.toUpperCase())}
               placeholder="17-character VIN"
             />
-            <span class="field-hint">Find it on the driver-side dashboard or your insurance card.</span>
+            <span class="field-hint">On the driver-side dashboard or insurance card.</span>
           </label>
           {decodeError && (
             <p class="notice notice-error" role="alert">

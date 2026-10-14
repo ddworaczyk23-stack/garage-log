@@ -94,19 +94,13 @@ export function Backup() {
         ‹ Settings
       </a>
       <PageHeader eyebrow="Your data" title="Backup & restore">
-        <p class="page-header-prose">
-          Everything is stored only on this device. Export a backup before clearing
-          browser data or switching phones — then restore it on the new device.
-        </p>
+        <p class="page-header-prose">Stored only on this device.</p>
       </PageHeader>
 
       <Reveal>
         <section class="card">
           <h3 class="card-title">Export</h3>
-          <p class="muted small">
-            Downloads one file with every vehicle, service &amp; repair, odometer
-            reading, reminder override, and document (photos/PDFs included).
-          </p>
+          <p class="muted small">One file with everything, photos included.</p>
           <button class="btn full" onClick={onExport} disabled={exporting}>
             {exporting ? 'Preparing…' : 'Download backup'}
           </button>
@@ -124,10 +118,7 @@ export function Backup() {
       <Reveal>
         <section class="card">
           <h3 class="card-title">Restore</h3>
-          <p class="muted small">
-            Restoring <strong>replaces all data on this device</strong> with the
-            backup file. Documents and their links are restored too.
-          </p>
+          <p class="muted small">Replaces <strong>all data on this device</strong>.</p>
 
           <label class="admin-field">
             <span class="muted small">Choose a backup file (.json)</span>

@@ -46,11 +46,6 @@ export function VehicleDocuments({ vehicleId, eventDocuments = [], embedded = fa
 
   const content = (
     <>
-      <p class="muted small">
-        Registration, insurance, title, owner's manual — anything about the vehicle
-        that isn't a specific service. Large photos are compressed automatically.
-      </p>
-
       <label class="admin-field">
         <span class="muted small">Add vehicle document</span>
         <input
@@ -81,7 +76,6 @@ export function VehicleDocuments({ vehicleId, eventDocuments = [], embedded = fa
             Browse all →
           </a>
         </div>
-        <p class="muted small">Files attached to a logged service or repair.</p>
         <DocumentGrid documents={eventDocuments} />
       </div>
     </>

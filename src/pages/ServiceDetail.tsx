@@ -84,7 +84,7 @@ export function ServiceDetail({ id }: { id: string }) {
       {r && (
         // The same road sign as the vehicle verdict, for this one service.
         <div class="cv-card sd-sign">
-          <VerdictPanel verdict={serviceVerdict(r)} tag="This service" />
+          <VerdictPanel verdict={serviceVerdict(r)} />
         </div>
       )}
 

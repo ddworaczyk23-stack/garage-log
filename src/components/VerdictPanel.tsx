@@ -17,11 +17,9 @@ const BAND_CLASS: Record<VerdictBand, string> = {
 
 export function VerdictPanel({
   verdict,
-  tag = 'Today',
   headingLevel: Heading = 'h3',
 }: {
   verdict: VerdictSign
-  tag?: string
   /** Defaults to h3 (a page-level h2 title precedes it on VehicleDetail/Check).
    * Dashboard's TodayCard passes 'h4' — its own per-vehicle name is already an
    * h3, so this headline is a subsection of THAT, not a sibling of it. */
@@ -30,9 +28,6 @@ export function VerdictPanel({
   return (
     <div class={`cv-panel ${BAND_CLASS[verdict.band]}`}>
       <div class="cv-inner">
-        <div class="cv-tag">
-          {verdict.band === 'not-set-up' ? tag : `${tag} · ${VERDICT_BAND_LABELS[verdict.band]}`}
-        </div>
         <Heading class="cv-headline">{verdict.headline}</Heading>
         <p class="cv-sentence">{verdict.sentence}</p>
       </div>
@@ -71,7 +66,6 @@ export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
           </span>
         ))}
       </div>
-      {note && <p class="cv-ruler-note">{note}</p>}
     </div>
   )
 }

@@ -13,6 +13,15 @@ aggressively, every time.
 
 ## Open
 
+- **Fewer words on every page — ready for Claude review.** Plan:
+  `docs/superpowers/plans/2026-10-14-fewer-words.md`. Implemented on
+  `copy/fewer-words`: removed redundant dashboard, vehicle, cost, document,
+  backup, and add-car copy (including the Home side-by-side table), and fixed
+  signed-out Settings showing sync status. `npm test` (403) and
+  `npm run typecheck` pass; seeded 375px/390px layouts and the restored-config
+  signed-out Settings card were checked. One PR only; do not merge. Claude
+  reviews.
+
 - **Next: re-run the design review** (`/impeccable critique src`) on the
   live site after PR #22 (Check flow + fuller Settings). Last score 27/40.
 

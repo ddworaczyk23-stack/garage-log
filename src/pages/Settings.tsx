@@ -49,10 +49,10 @@ function SyncCard() {
       <p class="muted small">
         {user.isLoggedIn
           ? `Synced as ${user.email ?? user.name ?? user.userId}`
-          : 'Not signed in. Your data stays on this device.'}
+          : 'Not signed in'}
       </p>
-      <p class="muted small">{syncStatus(state)}</p>
-      {lastSynced && <p class="muted small">Last synced {relativeTime(lastSynced)}</p>}
+      {user.isLoggedIn && <p class="muted small">{syncStatus(state)}</p>}
+      {user.isLoggedIn && lastSynced && <p class="muted small">Last synced {relativeTime(lastSynced)}</p>}
       {user.isLoggedIn ? (
         <ConfirmButton
           label="Sign out"
