@@ -5139,6 +5139,16 @@ a.list-row:hover {
     background: color-mix(in srgb, var(--text) 9%, transparent);
     box-shadow: inset 0 0 0 0.5px color-mix(in srgb, #fff 70%, transparent);
   }
+  /* No "Check" text under the disc; the link keeps its aria-label. */
+  .nav-check .nav-label {
+    display: none;
+  }
+  .nav-check {
+    justify-content: center;
+  }
+  .nav-check-disc {
+    margin-top: -16px;
+  }
   /* Ring that separates the Check disc from the glass (was navy). */
   .nav-check-disc {
     box-shadow:
