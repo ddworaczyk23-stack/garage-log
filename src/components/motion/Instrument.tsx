@@ -1,93 +1,63 @@
 import type { ComponentChildren } from 'preact'
-import { useEffect, useRef, useState } from 'preact/hooks'
 import { useCountUp } from '../../motion/hooks'
 
-// Quiet odometer readout. The primary value counts up on first view (from
-// `countFrom`, e.g. this year's starting mileage); an optional year-to-date
-// block on the right shows a counting delta + growing month bars.
+// Odometer readout: a head row (label + action), the big number (counts up
+// on first view from `countFrom`), then small labelled facts side by side.
 
-export interface InstrumentYtd {
-  delta: number
-  deltaCaption: string
-  /** Bar heights as fractions 0..1, most-recent last. */
-  bars: number[]
-  barsCaption?: string
+export interface InstrumentFact {
+  label: string
+  value: ComponentChildren
 }
 
 export function Instrument({
   label,
+  note,
   value,
   unit,
-  footer,
   countFrom,
-  ytd,
+  facts = [],
   action,
   animate = false,
   reduced = false,
 }: {
   label: string
-  value: number
+  /** Muted word after the label, e.g. "estimated". */
+  note?: string
+  /** Null = no reading yet (shows a dash). */
+  value: number | null
   unit?: string
-  footer?: ComponentChildren
   countFrom?: number
-  ytd?: InstrumentYtd
+  facts?: InstrumentFact[]
   action?: ComponentChildren
   animate?: boolean
   reduced?: boolean
 }) {
-  const main = useCountUp(value, { from: countFrom ?? Math.max(0, value - 2000), active: animate, reduced })
-  const delta = useCountUp(ytd?.delta ?? 0, { from: 0, active: animate && !!ytd, reduced })
-
-  // grow the month bars once (after mount) when animating
-  const [barsIn, setBarsIn] = useState(reduced || !animate)
-  const barTimer = useRef(0)
-  useEffect(() => {
-    if (reduced || !animate) {
-      setBarsIn(true)
-      return
-    }
-    barTimer.current = window.setTimeout(() => setBarsIn(true), 60)
-    return () => window.clearTimeout(barTimer.current)
-  }, [animate, reduced])
+  const target = value ?? 0
+  const main = useCountUp(target, { from: countFrom ?? Math.max(0, target - 2000), active: animate && value != null, reduced })
 
   return (
-    <div class="instrument">
-      <div class="instr-top">
-        <div>
-          <span class="kicker">{label}</span>
-          <div class="odo">
-            <span class="num">{Math.round(main).toLocaleString('en-US')}</span>
-            {unit && <span class="unit">{unit}</span>}
-          </div>
-          {footer && <div class="odo-foot">{footer}</div>}
-        </div>
-        {(ytd || action) && (
-          <div class="instr-side">
-            {ytd && (
-              <>
-                <span class="ytd">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <path d="M7 17L17 7M8 7h9v9" />
-                  </svg>
-                  +{Math.round(delta).toLocaleString('en-US')} mi
-                </span>
-                <div class="ytd-cap">{ytd.deltaCaption}</div>
-                <div class={`mbars${barsIn ? ' is-in' : ''}`}>
-                  {ytd.bars.map((h, i) => (
-                    <div
-                      key={i}
-                      class={`mbar${i < ytd.bars.length - 1 ? ' dim' : ''}`}
-                      style={`height:${Math.round(h * 100)}%`}
-                    />
-                  ))}
-                </div>
-                {ytd.barsCaption && <div class="ytd-cap" style="margin-top:5px">{ytd.barsCaption}</div>}
-              </>
-            )}
-            {action && <div class="instr-action">{action}</div>}
-          </div>
-        )}
+    <div class="odo-card">
+      <div class="odo-head">
+        <span class="odo-label">
+          {label}
+          {note && <span class="odo-note"> · {note}</span>}
+        </span>
+        {action}
       </div>
+      <div class="odo">
+        <span class="num">{value == null ? '—' : Math.round(main).toLocaleString('en-US')}</span>
+        {unit && <span class="unit">{unit}</span>}
+      </div>
+      {facts.length > 0 && (
+        <dl class="odo-facts">
+          {facts.map((f) => (
+            <div key={f.label}>
+              <dt>{f.label}</dt>
+              <dd>{f.value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </div>
   )
 }

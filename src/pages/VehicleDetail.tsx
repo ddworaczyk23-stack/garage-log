@@ -327,50 +327,39 @@ export function VehicleDetail({ id }: Props) {
 
       {/* odometer instrument + specifications */}
       <section class="card vd-cover">
-        {mileage ? (
-          <Instrument
-            label={mileage.isProjected ? 'Odometer · estimated' : 'Odometer'}
-            value={mileage.miles}
-            unit="MI"
-            animate={intro}
-            reduced={reduced}
-            countFrom={ytdMiles != null ? mileage.miles - ytdMiles : undefined}
-            footer={
-              <>
-                <span class="live-dot" aria-hidden="true" />
-                {mileage.isProjected
-                  ? `Last read ${formatMiles(mileage.lastActual.miles)} · ${formatShortDate(mileage.lastActual.asOfDate)}`
-                  : `Last reading ${formatShortDate(mileage.lastActual.asOfDate)}`}
-                {stale ? ' · confirm mileage' : ''}
-              </>
-            }
-            ytd={
-              ytdMiles != null
-                ? { delta: ytdMiles, deltaCaption: `in ${new Date().getFullYear()}`, bars: [] }
-                : undefined
-            }
-            action={
-              <button type="button" class="btn-link odo-update" onClick={() => openForm('odometer')}>
-                Update
-              </button>
-            }
-          />
-        ) : (
-          <div class="instrument">
-            <div class="instr-top">
-              <div>
-                <span class="kicker">Odometer</span>
-                <div class="odo"><span class="num">—</span><span class="unit">MI</span></div>
-                <div class="odo-foot">No readings yet.</div>
-              </div>
-              <div class="instr-side">
-                <button type="button" class="btn-link odo-update" onClick={() => openForm('odometer')}>
-                  Add reading
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <Instrument
+          label="Odometer"
+          note={mileage?.isProjected ? 'estimated' : undefined}
+          value={mileage ? mileage.miles : null}
+          unit="mi"
+          animate={intro}
+          reduced={reduced}
+          countFrom={mileage && ytdMiles != null ? mileage.miles - ytdMiles : undefined}
+          facts={
+            mileage
+              ? [
+                  {
+                    label: 'Last reading',
+                    value: (
+                      <>
+                        {mileage.isProjected && <span class="odo-fact-main">{formatMiles(mileage.lastActual.miles)}</span>}
+                        <span class="odo-fact-sub">{formatShortDate(mileage.lastActual.asOfDate)}</span>
+                        {stale && <span class="odo-fact-sub">Confirm mileage</span>}
+                      </>
+                    ),
+                  },
+                  ...(ytdMiles != null
+                    ? [{ label: `In ${new Date().getFullYear()}`, value: <span class="odo-fact-main">+{formatMiles(ytdMiles)}</span> }]
+                    : []),
+                ]
+              : []
+          }
+          action={
+            <button type="button" class="btn-link odo-update" onClick={() => openForm('odometer')}>
+              {mileage ? 'Update' : 'Add reading'}
+            </button>
+          }
+        />
 
         <Collapsible title="Specifications">
           {editingSpecs ? (

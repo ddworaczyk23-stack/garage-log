@@ -2399,107 +2399,71 @@ iframe.preview-media {
   transform: translateX(-50%);
 }
 
-/* --- quiet odometer row (Instrument.tsx) --- */
-.instrument {
-  background: var(--bg-inset);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  padding: 15px 17px 14px;
-  color: var(--text);
-  position: relative;
-  overflow: hidden;
+/* --- odometer readout (Instrument.tsx): head row, big number, facts --- */
+.odo-card {
+  padding-bottom: 14px;
 }
-.instrument .kicker {
-  color: var(--text-muted);
-}
-.instr-top {
+.odo-head {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 10px;
+  margin: -10px 0 0; /* the Update button's 44px tap area sits in the card padding */
+}
+.odo-label {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text);
+}
+.odo-note {
+  font-weight: 400;
+  color: var(--text-muted);
 }
 .odo {
   font-family: var(--font-mono);
   font-weight: 600;
-  /* Sized down from a fixed 36px, and scales with viewport width, so the YTD
-     block (.instr-side) reliably fits on the same row without wrapping or
-     clipping, even on the narrowest phones. */
-  font-size: clamp(22px, 7vw, 30px);
-  letter-spacing: 0.06em;
-  margin: 5px 0 0;
-  line-height: 1;
+  font-size: clamp(28px, 9vw, 36px);
+  letter-spacing: 0.02em;
+  margin: 2px 0 0;
+  line-height: 1.1;
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: 6px;
   font-variant-numeric: tabular-nums;
 }
 .odo .unit {
-  font-size: 13px;
-  letter-spacing: 0.18em;
+  font-size: 15px;
   color: var(--text-muted);
   font-weight: 500;
 }
-.odo-foot {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.05em;
+.odo-facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 0.5px solid var(--border);
+}
+.odo-facts dt {
+  font-size: 0.78rem;
   color: var(--text-muted);
-  margin: 9px 0 0;
+  margin: 0 0 3px;
+}
+.odo-facts dd {
+  margin: 0;
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 1px;
 }
-.instr-side {
-  text-align: right;
-  flex-shrink: 0;
-}
-.ytd {
+.odo-fact-main {
   font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.04em;
+  font-size: 0.95rem;
+  font-weight: 600;
   color: var(--text);
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  justify-content: flex-end;
 }
-.ytd svg {
-  width: 11px;
-  height: 11px;
-}
-.ytd-cap {
-  font-family: var(--font-mono);
-  font-size: 9.5px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+.odo-fact-sub {
+  font-size: 0.85rem;
   color: var(--text-muted);
-  margin-top: 2px;
-}
-.mbars {
-  display: flex;
-  align-items: flex-end;
-  gap: 6px;
-  height: 38px;
-  margin-top: 9px;
-  justify-content: flex-end;
-}
-.mbar {
-  width: 16px;
-  border-radius: 4px 4px 2px 2px;
-  background: linear-gradient(180deg, var(--text), var(--border));
-  transform: scaleY(0);
-  transform-origin: bottom;
-  transition: transform 0.55s var(--ease-mech);
-}
-.mbars.is-in .mbar {
-  transform: scaleY(1);
-}
-.mbar.dim {
-  background: var(--border);
-}
-
-.instr-action {
-  margin-top: 8px;
 }
 .odo-update {
   min-height: 44px;
@@ -2507,34 +2471,11 @@ iframe.preview-media {
   align-items: center;
 }
 
-/* --- live "current reading" dot --- */
-/* was #8fb37a, a pale green — leftover from the pre-M12 olive theme, off-
-   palette, and easy to misread as a status signal next to the real greens. */
-.live-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--text-muted);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-muted) 18%, transparent);
-  animation: breathe 3.4s ease-in-out infinite;
-  flex-shrink: 0;
-}
-@keyframes breathe {
-  0%,
-  100% {
-    box-shadow: 0 0 0 3px color-mix(in srgb, var(--text-muted) 18%, transparent);
-  }
-  50% {
-    box-shadow: 0 0 0 5.5px color-mix(in srgb, var(--text-muted) 8%, transparent);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .reveal,
   .fold-body,
   .fold-inner,
   .bullet-fill,
-  .mbar,
   .chev,
   .cost-bar-fill {
     transition: none !important;
@@ -2542,9 +2483,6 @@ iframe.preview-media {
   .reveal {
     opacity: 1;
     transform: none;
-  }
-  .live-dot {
-    animation: none;
   }
   .vd-sticky {
     animation: none;
@@ -3164,9 +3102,6 @@ a.list-row:hover {
   margin: 4px 0 0;
 }
 
-.gb-hero .instrument {
-  margin-top: 14px;
-}
 .gb-focus {
   display: flex;
   align-items: center;
