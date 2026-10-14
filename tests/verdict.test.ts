@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ReminderRule } from '../src/types'
 import { computeVehicleReminders, type ReminderInputs } from '../src/domain/reminderEngine'
-import { bandFromStatus, vehicleVerdict, BAND_LABELS } from '../src/domain/verdict'
+import { bandFromStatus, knownReminders, vehicleVerdict, BAND_LABELS } from '../src/domain/verdict'
 import { localDateISO } from '../src/domain/format'
 
 // Verdicts are built from REAL engine output (computeVehicleReminders) rather
@@ -49,6 +49,22 @@ describe('bandFromStatus', () => {
     for (const band of ['fix-now', 'book-soon', 'coast', 'all-clear'] as const) {
       expect(BAND_LABELS[band]).toBeTruthy()
     }
+  })
+})
+
+describe('knownReminders', () => {
+  it('excludes a never-logged service even when its factory projection says it is due', () => {
+    const reminders = computeVehicleReminders(
+      [
+        makeRule({ category: 'brake-inspection', label: 'Brake inspection', lastDoneDate: null, lastDoneMiles: null }),
+        makeRule({ category: 'oil-change', label: 'Engine oil & filter' }),
+      ],
+      [],
+      inputsAt('2026-07-01', 49_600),
+    )
+
+    expect(reminders.find((r) => r.rule.category === 'brake-inspection')?.status).toBe('due-next')
+    expect(knownReminders(reminders).map((r) => r.rule.category)).toEqual(['oil-change'])
   })
 })
 

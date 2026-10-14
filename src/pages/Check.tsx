@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { getCurrentMileageEstimate } from '../db/events'
@@ -18,10 +18,10 @@ import {
   type TriageContext,
 } from '../domain/playbooks'
 import { composeBrief } from '../domain/shopBrief'
-import type { SignalBand } from '../domain/verdict'
+import { knownReminders, type SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { formatShortDate } from '../domain/format'
-import { Loading, SkeletonPage, EmptyState, ConfirmButton, PageHeader, Tooltip } from '../components/ui'
+import { Loading, SkeletonPage, EmptyState, ConfirmButton, PageHeader } from '../components/ui'
 import type { Vehicle, Concern, MaintenanceCategory } from '../types'
 import { VehicleRow } from '../components/VehicleRow'
 import { ChevronRightIcon } from '../components/icons'
@@ -119,7 +119,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
       ])
       const overdueCategories = new Set<MaintenanceCategory>()
       const dueSoonCategories = new Set<MaintenanceCategory>()
-      for (const r of reminders) {
+      for (const r of knownReminders(reminders)) {
         if (r.status === 'overdue') overdueCategories.add(r.rule.category)
         else if (r.status === 'due-next') dueSoonCategories.add(r.rule.category)
       }
@@ -158,6 +158,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   }
   const vehicle = data.vehicle
   const playbook = playbookId ? getPlaybook(playbookId) : undefined
+  const historyDepth = playbook ? trail.length + 1 : 0
 
   function reset() {
     setPlaybookId(null)
@@ -173,43 +174,64 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     setTrail([])
     setShowBrief(false)
     setAddedId(null)
+    history.pushState({ chk: 1 }, '')
   }
 
   function answer(qid: string, value: string) {
     setAnswers((a) => ({ ...a, [qid]: value }))
     setTrail((t) => [...t, qid])
+    history.pushState({ chk: trail.length + 2 }, '')
   }
 
+  useEffect(() => {
+    function onPopState(event: PopStateEvent) {
+      const targetDepth = typeof event.state?.chk === 'number' ? event.state.chk : 0
+      // Depth 0 is the symptom list (the entry before the first push).
+      if (targetDepth === 0) {
+        reset()
+        return
+      }
+      if (targetDepth < historyDepth && trail.length > 0) {
+        const last = trail[trail.length - 1]
+        setTrail((t) => t.slice(0, -1))
+        setAnswers((a) => {
+          const next = { ...a }
+          delete next[last]
+          return next
+        })
+        setShowBrief(false)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [historyDepth, trail, playbookId])
+
   function back() {
-    if (trail.length > 0) {
-      const last = trail[trail.length - 1]
-      setTrail((t) => t.slice(0, -1))
-      setAnswers((a) => {
-        const next = { ...a }
-        delete next[last]
-        return next
-      })
-      setShowBrief(false)
+    if (historyDepth > 0) {
+      history.back()
       return
     }
-    if (playbook) {
-      reset()
+    window.location.hash = '#/check'
+  }
+
+  function checkSomethingElse() {
+    if (historyDepth > 0) {
+      history.go(-historyDepth)
       return
     }
-    window.location.hash = '#/'
+    reset()
   }
 
   // ---- phase: choose a playbook ----
   if (!playbook) {
     return (
       <section class="page chk">
-        <FlowTop onBack={back} />
+        <PageHeader eyebrow={`Checking ${vehicleLabel(vehicle)}`} title="What’s going on?" prefix={<FlowTop onBack={back} />}>
+          <p class="page-header-prose">Pick what’s closest.</p>
+        </PageHeader>
         {data.concerns.length > 0 && (
           <ConcernList vehicle={vehicle} concerns={data.concerns} />
         )}
-        <PageHeader eyebrow={`Checking ${vehicleLabel(vehicle)}`} title="What’s going on?">
-          <p class="page-header-prose">Describe it like you’d tell a friend — no car words needed.</p>
-        </PageHeader>
         <div class="chk-choices">
           {PLAYBOOKS.map((pb) => (
             <button key={pb.id} type="button" class="chk-choice" onClick={() => choosePlaybook(pb)}>
@@ -232,8 +254,11 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     const q = step.question
     return (
       <section class="page chk">
-        <FlowTop onBack={back} steps={stepDots(playbook, answers)} />
-        <PageHeader eyebrow={`Checking ${vehicleLabel(vehicle)} · ${q.eyebrow}`} title={q.text}>
+        <PageHeader
+          eyebrow={`Checking ${vehicleLabel(vehicle)} · ${q.eyebrow}`}
+          title={q.text}
+          prefix={<FlowTop onBack={back} steps={stepDots(playbook, answers)} />}
+        >
           {q.sub && <p class="page-header-prose">{q.sub}</p>}
         </PageHeader>
         <div class="chk-choices">
@@ -265,9 +290,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
 
   return (
     <section class="page chk">
-      <FlowTop onBack={back} />
-
-      <PageHeader eyebrow={`Checking ${vehicleLabel(vehicle)}`} title="Your verdict" />
+      <PageHeader eyebrow={`Checking ${vehicleLabel(vehicle)}`} title="Your verdict" prefix={<FlowTop onBack={back} />} />
 
       <div class={`cv-panel ${tone.cls}`}>
         <div class="cv-inner">
@@ -323,7 +346,7 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
         <>
           <h3 class="chk-sect">When it becomes urgent</h3>
           <div class="chk-escalate">
-            <b>Treat it as “fix now” if:</b>
+            <b>{outcome.band === 'fix-now' ? 'Stop driving if:' : 'Treat it as “fix now” if:'}</b>
             <ul>
               {outcome.escalation.map((e) => (
                 <li key={e}>{e}</li>
@@ -343,21 +366,28 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
       )}
 
       <div class="chk-actions">
+        {(outcome.band === 'fix-now' || outcome.band === 'book-soon') && (
+          <button type="button" class="btn btn-primary" onClick={() => setShowBrief((s) => !s)}>
+            {showBrief ? 'Hide the shop brief' : 'Make my shop brief'}
+          </button>
+        )}
         {addedId ? (
           <div class="notice notice-ok" role="status">
-            Added to {vehicleLabel(vehicle)}’s list. <a href={`#/brief/${addedId}`}>Open the shareable brief →</a>
+            Saved. It now counts in {vehicleLabel(vehicle)}’s verdict. <a href={`#/brief/${addedId}`}>Open the shareable brief →</a>
           </div>
         ) : (
           outcome.band !== 'all-clear' && (
-            <button type="button" class="btn btn-primary" onClick={addToList}>
-              Add to my list
+            <button type="button" class="btn btn-secondary" onClick={addToList}>
+              Save to {vehicleLabel(vehicle)}’s record
             </button>
           )
         )}
-        <button type="button" class="btn btn-secondary" onClick={() => setShowBrief((s) => !s)}>
-          {showBrief ? 'Hide the shop brief' : 'Make my shop brief'}
-        </button>
-        <button type="button" class="btn-link" onClick={reset}>
+        {outcome.band !== 'fix-now' && outcome.band !== 'book-soon' && (
+          <button type="button" class="btn btn-secondary" onClick={() => setShowBrief((s) => !s)}>
+            {showBrief ? 'Hide the shop brief' : 'Make my shop brief'}
+          </button>
+        )}
+        <button type="button" class="btn-link" onClick={checkSomethingElse}>
           Check something else
         </button>
       </div>
@@ -524,11 +554,9 @@ function CostRow({ what, amt, strong }: { what: string; amt: string; strong?: bo
 function FlowTop({ onBack, steps }: { onBack: () => void; steps?: boolean[] }) {
   return (
     <div class="chk-flowtop">
-      <Tooltip label="Back">
-        <button type="button" class="back-link chk-back" onClick={onBack}>
-          ‹ Back
-        </button>
-      </Tooltip>
+      <button type="button" class="back-link chk-back" onClick={onBack}>
+        ‹ Back
+      </button>
       {steps && (
         <div
           class="chk-steps"

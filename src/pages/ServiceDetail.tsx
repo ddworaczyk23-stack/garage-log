@@ -68,7 +68,8 @@ export function ServiceDetail({ id }: { id: string }) {
 
   const { vehicle, category, reminder: r, history, mileage } = data
   const label = r?.rule.label ?? CATEGORY_LABELS[category] ?? category
-  const prog = r && (r.lastDone.date != null || r.lastDone.miles != null) ? reminderProgress(r) : null
+  const isKnown = r != null && (r.lastDone.date != null || r.lastDone.miles != null)
+  const prog = r && isKnown ? reminderProgress(r) : null
   const actionable = r && (r.status === 'overdue' || r.status === 'due-next')
   const kind = history.events[0]?.kind ?? 'maintenance'
 
@@ -120,21 +121,29 @@ export function ServiceDetail({ id }: { id: string }) {
                     : 'Not logged yet'}
                 </dd>
               </div>
-              <div>
-                <dt>Next due</dt>
-                <dd>
-                  {[
-                    r.dueAtMiles != null ? `at ${formatMiles(r.dueAtMiles)}` : null,
-                    r.dueAtDate ? `by ${formatShortDate(r.dueAtDate)}` : null,
-                  ]
-                    .filter(Boolean)
-                    .join(' or ') || '—'}
-                </dd>
-              </div>
-              <div>
-                <dt>Estimated</dt>
-                <dd>{r.projectedDueDate ? `~${formatShortDate(r.projectedDueDate)}` : '—'}</dd>
-              </div>
+              {isKnown ? (
+                <>
+                  <div>
+                    <dt>Next due</dt>
+                    <dd>
+                      {[
+                        r.dueAtMiles != null ? `at ${formatMiles(r.dueAtMiles)}` : null,
+                        r.dueAtDate ? `by ${formatShortDate(r.dueAtDate)}` : null,
+                      ]
+                        .filter(Boolean)
+                        .join(' or ') || '—'}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Estimated</dt>
+                    <dd>{r.projectedDueDate ? `~${formatShortDate(r.projectedDueDate)}` : '—'}</dd>
+                  </div>
+                </>
+              ) : (
+                <div class="sd-facts-wide">
+                  <dd class="muted small">Log the last time this was done and Coast can tell you when it’s next due.</dd>
+                </div>
+              )}
               {r.rule.override && (
                 <div class="sd-facts-wide">
                   <dt>Override</dt>

@@ -33,6 +33,7 @@ export function Backup() {
     try {
       const backup = await exportGarage()
       downloadBackup(serializeBackupToJson(backup), backupFilename(new Date()))
+      await db.appMeta.put({ key: 'lastBackupAt', value: new Date().toISOString() })
       setExportNotice({
         kind: 'success',
         text: `Backup downloaded — ${backup.counts.vehicles} vehicles, ${backup.counts.events} events, ${backup.counts.documents} documents.`,

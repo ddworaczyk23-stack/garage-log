@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
 import { db } from './db'
-import type { UserLogin } from 'dexie-cloud-addon'
+import type { SyncState, UserLogin } from 'dexie-cloud-addon'
 
 // Dexie Cloud is only wired up when a database URL is provided (see
 // .env.local / CLAUDE.md) — without one, `cloudConfigured` stays false and
@@ -49,4 +49,22 @@ export function useCloudUser(): UserLogin | undefined {
     return () => sub.unsubscribe()
   }, [])
   return user
+}
+
+/** Reactive sync health for Settings. Timestamp is the last persisted server sync. */
+export function useSyncState(): { state: SyncState | undefined; lastSynced: Date | undefined } {
+  const [state, setState] = useState<SyncState>()
+  const [lastSynced, setLastSynced] = useState<Date>()
+  useEffect(() => {
+    if (!cloudConfigured) return
+    const stateSub = db.cloud.syncState.subscribe(setState)
+    const persistedSub = db.cloud.persistedSyncState.subscribe((persisted) => {
+      setLastSynced(persisted?.timestamp)
+    })
+    return () => {
+      stateSub.unsubscribe()
+      persistedSub.unsubscribe()
+    }
+  }, [])
+  return { state, lastSynced }
 }
