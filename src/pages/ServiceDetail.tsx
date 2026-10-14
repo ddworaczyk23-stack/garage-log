@@ -79,7 +79,7 @@ export function ServiceDetail({ id }: { id: string }) {
         ‹ {vehicleLabel(vehicle)}
       </a>
 
-      <PageHeader eyebrow={`Service · ${vehicleLabel(vehicle)}`} title={label} />
+      <PageHeader eyebrow="Service" title={label} />
 
       {r && (
         // The same road sign as the vehicle verdict, for this one service.
@@ -134,10 +134,12 @@ export function ServiceDetail({ id }: { id: string }) {
                         .join(' or ') || '—'}
                     </dd>
                   </div>
-                  <div>
-                    <dt>Estimated</dt>
-                    <dd>{r.projectedDueDate ? `~${formatShortDate(r.projectedDueDate)}` : '—'}</dd>
-                  </div>
+                  {r.projectedDueDate && (
+                    <div>
+                      <dt>Estimated</dt>
+                      <dd>~{formatShortDate(r.projectedDueDate)}</dd>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div class="sd-facts-wide">

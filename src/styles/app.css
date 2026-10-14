@@ -2763,6 +2763,9 @@ iframe.preview-media {
   width: 14px;
   height: 14px;
 }
+.sd-stale .warning-mark {
+  margin: 0 6px 0 0;
+}
 .vd-svc-meta .sep {
   opacity: 0.5;
 }

@@ -29,6 +29,9 @@ export function Costs() {
 
   return (
     <section class="page">
+      <a class="back-link" href="#/">
+        ‹ Home
+      </a>
       <PageHeader title="Costs" />
 
       {hasAnySpend && (
