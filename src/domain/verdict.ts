@@ -125,6 +125,8 @@ export interface CoastItem {
  *  a red sign is still painted amber (red is for safety only). */
 export interface ActionItem extends CoastItem {
   band: 'fix-now' | 'book-soon'
+  /** Past due (vs. due soon) — lets a one-item headline say "is overdue". */
+  overdue: boolean
 }
 
 export interface VehicleVerdict {
@@ -467,6 +469,7 @@ export function vehicleVerdict(
       .map((r) => ({
         label: r.rule.label,
         band: fixNow.includes(r) ? ('fix-now' as const) : ('book-soon' as const),
+        overdue: r.status === 'overdue',
         window: r.status === 'overdue' ? overdueText(r) : (windowText(r) ?? 'due now'),
       })),
     unknownCount: known ? unknownReminders(reminders).length : 0,
@@ -523,4 +526,104 @@ export function serviceVerdict(r: ComputedReminder): VerdictSign {
 
 function capitalize(s: string): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
+}
+
+// --- Home page (compact cards, garage line, coming-up list) -----------------
+
+/** The short sign on a Home car card, plus one line for what else is behind it. */
+export interface CompactSign {
+  headline: string
+  also: { text: string; band: VerdictBand } | null
+}
+
+const dropPeriod = (t: string) => t.replace(/\.$/, '')
+
+/** Squeezes a full vehicle verdict into the Home card's one-line sign. When
+ * the sign stands for exactly one scheduled item, it names that item ("Brake
+ * inspection is overdue"); otherwise it keeps the verdict's own headline. */
+export function compactSign(v: VehicleVerdict): CompactSign {
+  if (v.band === 'not-set-up') {
+    return { headline: dropPeriod(v.headline), also: { text: 'Log your last oil change to start.', band: 'not-set-up' } }
+  }
+  if (v.band === 'fix-now' || v.band === 'book-soon') {
+    const inBand = v.actionItems.filter((i) => i.band === v.band)
+    const single = inBand.length === 1 && v.headline.startsWith('One thing')
+    if (single) {
+      const top = inBand[0]
+      const rest = v.actionItems.filter((i) => i !== top)
+      return {
+        headline: `${top.label} ${top.overdue ? 'is overdue' : 'is due soon'}`,
+        also: rest.length
+          ? { text: `Also: ${rest.map((i) => `${i.label}, ${BAND_LABELS[i.band].toLowerCase()}`).join('; ')}`, band: rest[0].band }
+          : null,
+      }
+    }
+    const labels = inBand.map((i) => i.label)
+    return {
+      headline: dropPeriod(v.headline),
+      also: labels.length ? { text: joinAnd(labels), band: v.band } : null,
+    }
+  }
+  const next = v.coastItems[0]
+  return {
+    headline: dropPeriod(v.headline),
+    also: next ? { text: `Next: ${next.label} ${next.window}`, band: 'coast' } : null,
+  }
+}
+
+function joinAnd(items: string[]): string {
+  if (items.length <= 1) return items[0] ?? ''
+  const lower = items.map((t, i) => (i === 0 ? t : t.charAt(0).toLowerCase() + t.slice(1)))
+  return `${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`
+}
+
+/** Whole-garage count for the Home line: every known fix-now / book-soon
+ * reminder plus every open concern in those bands, across all vehicles. */
+export function garageTally(
+  vehicles: { reminders: ComputedReminder[]; openConcerns: ConcernInput[] }[],
+): { fixNow: number; bookSoon: number } {
+  let fixNow = 0
+  let bookSoon = 0
+  for (const v of vehicles) {
+    const bands = [...knownReminders(v.reminders).map(itemBand), ...v.openConcerns.map((c) => c.band)]
+    fixNow += bands.filter((b) => b === 'fix-now').length
+    bookSoon += bands.filter((b) => b === 'book-soon').length
+  }
+  return { fixNow, bookSoon }
+}
+
+/** windowText's short form for a narrow list column: one axis only. */
+function shortWindow(r: ComputedReminder): string {
+  if (r.milesRemaining != null && r.milesRemaining > 0) return `in ~${formatMiles(r.milesRemaining)}`
+  const date = monthYear(r.dueAtDate ?? r.projectedDueDate)
+  return date ? `~${date}` : 'coming up'
+}
+
+export interface ComingUpItem {
+  vehicleId: string
+  vehicleName: string
+  label: string
+  window: string
+}
+
+/** The "Coming up" list on Home: every known can-coast (watch-next) reminder
+ * across all vehicles, soonest first. Overdue / due-soon items are left out —
+ * the car cards already show those. */
+export function comingUp(
+  vehicles: { vehicleId: string; vehicleName: string; reminders: ComputedReminder[] }[],
+  max = 5,
+): ComingUpItem[] {
+  const rows = vehicles.flatMap((v) =>
+    knownReminders(v.reminders)
+      .filter((r) => r.status === 'watch-next')
+      .map((r) => ({
+        vehicleId: v.vehicleId,
+        vehicleName: v.vehicleName,
+        label: r.rule.label,
+        window: shortWindow(r),
+        key: r.dueAtDate ?? r.projectedDueDate ?? '9999-12-31',
+      })),
+  )
+  rows.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+  return rows.slice(0, max).map(({ key: _key, ...item }) => item)
 }

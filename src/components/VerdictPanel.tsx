@@ -6,7 +6,7 @@ import { BAND_LABELS, VERDICT_BAND_LABELS } from '../domain/verdict'
 // VehicleVerdict — no queries, no state; every number was decided in
 // domain/verdict.ts so this stays a dumb signage renderer.
 
-const BAND_CLASS: Record<VerdictBand, string> = {
+export const BAND_CLASS: Record<VerdictBand, string> = {
   'fix-now': 'cv-red',
   'book-soon': 'cv-amber',
   coast: 'cv-blue',
