@@ -195,6 +195,10 @@ body {
   margin: 2px 0 4px;
   overflow-wrap: anywhere;
 }
+.settings-build {
+  margin: 18px 0 0;
+  text-align: center;
+}
 
 .app-main {
   flex: 1;
@@ -3652,23 +3656,28 @@ a.list-row:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 2px 0 14px;
-  min-height: 40px;
+  margin: 0 0 10px;
+  min-height: 44px;
 }
 .chk-back {
   min-height: 44px;
   color: var(--accent);
-  margin: -4px;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  margin: 0;
 }
-.chk-back:hover { color: var(--accent); }
+.page-header .chk-back { color: var(--on-frame-accent); }
+.chk-back:hover { color: var(--on-frame-accent); }
 .chk-steps { display: flex; gap: 6px; margin-left: auto; }
 .chk-steps i {
   width: 22px;
   height: 4px;
   border-radius: 2px;
-  background: rgba(35, 39, 43, 0.18);
+  background: rgba(255, 255, 255, 0.25);
 }
-.chk-steps i.done { background: var(--sig-blue); }
+.chk-steps i.done { background: var(--on-frame-accent); }
 
 .disclosure-icon {
   width: 14px;

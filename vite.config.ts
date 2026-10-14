@@ -2,11 +2,16 @@ import { defineConfig } from 'vite'
 import preact from '@preact/preset-vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const buildSha = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.GITHUB_SHA
+
 // NOTE: `base` is relative so the built app works both at a domain root
 // (custom domain) and under a GitHub Pages project subpath (e.g. /garage-log/)
 // without any extra config. Hash-based routing keeps deep links working there too.
 export default defineConfig({
   base: './',
+  define: {
+    __COAST_BUILD__: JSON.stringify(buildSha?.slice(0, 7) ?? 'dev'),
+  },
   plugins: [
     preact(),
     VitePWA({

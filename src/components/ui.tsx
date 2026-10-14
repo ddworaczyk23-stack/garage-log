@@ -10,17 +10,21 @@ export function PageHeader({
   eyebrow,
   title,
   meta,
+  prefix,
   children,
   class: className = '',
 }: {
   eyebrow: ComponentChildren
   title: ComponentChildren
   meta?: ComponentChildren
+  /** Optional content that belongs at the top of the shared navy title band. */
+  prefix?: ComponentChildren
   children?: ComponentChildren
   class?: string
 }) {
   return (
     <header class={`page-header${className ? ` ${className}` : ''}`}>
+      {prefix}
       <span class="eyebrow">{eyebrow}</span>
       <div class="page-header-row">
         <h2 class="page-title">{title}</h2>
