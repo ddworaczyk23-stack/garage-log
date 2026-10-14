@@ -7,6 +7,7 @@ import { PageHeader, Skel } from '../components/ui'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
 import { CalendarExport } from '../components/CalendarExport'
+import { ArrowRightIcon } from '../components/icons'
 
 // Home dashboard: Coast "Today" (Stage 1, design/COAST-PLAN.md). One verdict
 // per vehicle — a road-sign panel with a single plain-English sentence — with
@@ -133,15 +134,15 @@ export function Dashboard() {
       <div class="gb-links">
         <a class="gb-link" href="#/costs">
           Cost summary
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
+          <ArrowRightIcon />
         </a>
         <a class="gb-link" href="#/backup">
           Back up your garage
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
+          <ArrowRightIcon />
         </a>
         <a class="gb-link" href="#/add-vehicle">
           Add a car
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14" /></svg>
+          <ArrowRightIcon />
         </a>
       </div>
     </section>
@@ -209,7 +210,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
         <span class="open-link cv-open-row">
           {/* A not-set-up card's next step is setup, not reading a record. */}
           {verdict.band === 'not-set-up' ? 'Set it up' : 'Open Service Record'}
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M7 17L17 7M8 7h9v9" /></svg>
+          <ArrowRightIcon />
         </span>
       </a>
     </Reveal>

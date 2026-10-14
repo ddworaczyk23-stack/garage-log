@@ -93,27 +93,28 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
           <VehicleIcon />
         </span>
         <div>
-          <h3 class="card-title vehicle-name">{vehicleLabel(vehicle)}</h3>
+          <h3 class="list-row-title">{vehicleLabel(vehicle)}</h3>
           <p class="muted small">
             {vehicle.year} {vehicle.make} · {vehicle.model}
           </p>
         </div>
       </div>
 
-      <p class="cost-vehicle-summary">
-        <span>{formatMoney(breakdown.total)}</span> spent {rangeLabel}:{' '}
-        <span>{formatMoney(breakdown.maintenanceTotal)}</span> on maintenance and{' '}
-        <span>{formatMoney(breakdown.repairTotal)}</span> on repairs.
-      </p>
-
       {breakdown.byCategory.length === 0 ? (
         <p class="muted small cost-empty">No costs logged {rangeLabel}.</p>
       ) : (
-        <ul class="cost-cat-list">
-          {breakdown.byCategory.map((c) => (
-            <CategoryRow key={c.category} cost={c} />
-          ))}
-        </ul>
+        <>
+          <p class="cost-vehicle-summary">
+            <span>{formatMoney(breakdown.total)}</span> spent {rangeLabel}:{' '}
+            <span>{formatMoney(breakdown.maintenanceTotal)}</span> on maintenance and{' '}
+            <span>{formatMoney(breakdown.repairTotal)}</span> on repairs.
+          </p>
+          <ul class="cost-cat-list">
+            {breakdown.byCategory.map((c) => (
+              <CategoryRow key={c.category} cost={c} />
+            ))}
+          </ul>
+        </>
       )}
 
       {summary.costPerMile != null && summary.milesTracked != null && (

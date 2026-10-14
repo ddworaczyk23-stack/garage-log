@@ -13,6 +13,11 @@ aggressively, every time.
 
 ## Open
 
+- **Consistency round: reviewed, waiting on David.** PR #20 on
+  `design/consistency-round`. Claude review done: all plan items in, plus the
+  missed $0 Costs fix. Next: merge when David says "merge 20", then re-run
+  the design review on the live site.
+
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave

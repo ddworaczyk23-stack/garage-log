@@ -6,6 +6,7 @@ import { EventForm, loadEventDocs } from './EventForm'
 import { ConfirmButton } from './ui'
 import { serviceHref } from '../domain/serviceHistory'
 import { CATEGORY_LABELS, type MaintenanceEvent } from '../types'
+import { ChevronRightIcon } from './icons'
 
 interface Props {
   vehicleId: string
@@ -40,7 +41,7 @@ export function EventListItem({ vehicleId, event, linkToService = true }: Props)
       <span class="list-row-main">
         {linkToService ? (
           <a class="list-row-title list-row-link" href={serviceHref(vehicleId, event.category)}>
-            {event.title} <span aria-hidden="true">›</span>
+            {event.title} <ChevronRightIcon />
           </a>
         ) : (
           <span class="list-row-title">{event.title}</span>

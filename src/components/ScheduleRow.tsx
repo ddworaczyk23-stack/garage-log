@@ -4,7 +4,7 @@ import { formatInterval, formatShortDate } from '../domain/format'
 import { reminderProgress } from '../domain/progress'
 import { BulletTrack } from './motion/BulletTrack'
 import { RuleOverrideEditor } from './RuleOverrideEditor'
-import { WarningIcon } from './icons'
+import { ChevronRightIcon, WarningIcon } from './icons'
 import type { ComputedReminder } from '../domain/reminderEngine'
 
 // Pill color follows the band, not the raw engine status: an overdue routine
@@ -69,7 +69,7 @@ export function ScheduleRow({ reminder: r, animate, reduced, estimated = false }
       <a class="vd-row-hit" href={`#/service/${r.rule.id}`} aria-label={`Open ${r.rule.label}`} />
       <div class="vd-row-main">
         <span class="vd-svc">
-          {r.rule.label} <span aria-hidden="true">›</span>
+          {r.rule.label} <ChevronRightIcon />
         </span>
         <div class="vd-svc-meta">
           <span class="interval">

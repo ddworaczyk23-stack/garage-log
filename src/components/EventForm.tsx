@@ -5,6 +5,7 @@ import { recordCompletedEvent, updateEvent, type RuleOverrideInput } from '../db
 import { formatMoney, localDateISO, parseNumberInput } from '../domain/format'
 import { costLooksOff } from '../domain/cost'
 import { parseQuickEntry } from '../domain/quickEntry'
+import { DisclosureIcon } from './icons'
 import {
   CATEGORY_LABELS,
   MAINTENANCE_CATEGORIES,
@@ -271,7 +272,7 @@ export function EventForm({
 
       <div class="also-section">
         <button type="button" class="btn-link" onClick={() => setShowAlso((s) => !s)}>
-          {showAlso ? '▾' : '▸'} Also performed{' '}
+          <DisclosureIcon open={showAlso} /> Also performed{' '}
           {additionalCategories.filter((c) => c !== category).length > 0
             ? `(${additionalCategories.filter((c) => c !== category).length})`
             : '(optional)'}
@@ -337,7 +338,7 @@ export function EventForm({
 
       <div class="override-section">
         <button type="button" class="btn-link" onClick={() => setShowMore((s) => !s)}>
-          {showMore ? '▾' : '▸'} More details (label, vendor, parts, notes…)
+          <DisclosureIcon open={showMore} /> More details (label, vendor, parts, notes…)
         </button>
         {showMore && (
           <div class="admin-form">
@@ -485,7 +486,7 @@ export function EventForm({
       {kind === 'maintenance' && (
         <div class="override-section">
           <button type="button" class="btn-link" onClick={() => setShowOverride((s) => !s)}>
-            {showOverride ? '▾' : '▸'} Next-due override (optional)
+            <DisclosureIcon open={showOverride} /> Next-due override (optional)
           </button>
           {showOverride && (
             <div class="admin-form">

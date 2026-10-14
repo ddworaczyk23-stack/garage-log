@@ -204,11 +204,15 @@ body {
   max-width: 700px;
   margin: 0 auto;
   font-size: 0.75rem;
-  border-bottom: 0.5px solid var(--border);
+  background: var(--frame);
+  color: var(--on-frame-muted);
+  border-bottom: 0.5px solid var(--frame-line);
+  box-shadow: 0 0 0 100vmax var(--frame);
+  clip-path: inset(0 -100vmax);
   min-width: 0;
 }
 .account-status {
-  color: var(--text-muted);
+  color: var(--on-frame-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -220,6 +224,7 @@ body {
 }
 .account-bar .btn-link {
   flex-shrink: 0;
+  color: var(--on-frame-accent);
 }
 
 .app-main {
@@ -328,6 +333,12 @@ body {
   align-items: center;
   gap: 12px;
   margin-bottom: 14px;
+}
+.vehicle-card-head .list-row-title {
+  margin: 0;
+}
+.vehicle-card-head .muted {
+  margin: 2px 0 0;
 }
 
 /* Vehicle icons sit in a tinted rounded square as part of the shared stroke set. */
@@ -585,9 +596,16 @@ a.list-row:active {
   font-weight: 600;
   letter-spacing: -0.008em;
 }
-.chevron {
-  color: rgba(35, 39, 43, 0.58); /* was .32 (~1.9:1) — needs 3:1 as large-scale text */
-  font-size: 1.4rem;
+.chevron-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.list-row-title .chevron-icon,
+.vd-svc .chevron-icon {
+  display: inline-block;
+  vertical-align: -0.28em;
 }
 
 .event-row .list-row-main {
@@ -770,6 +788,10 @@ input::placeholder {
   align-items: center;
   gap: 16px;
   margin-top: 4px;
+}
+.form-actions .btn-link {
+  min-height: 44px;
+  align-self: center;
 }
 .override-section {
   border-top: 0.5px solid var(--border);
@@ -1175,7 +1197,7 @@ input::placeholder {
   border: none;
   /* Comfortable tap target without visually inflating the link. */
   padding: 8px 4px;
-  margin: -4px 0;
+  margin: -4px;
   font-size: 0.85rem;
   font-weight: 600;
   text-align: left;
@@ -2737,9 +2759,9 @@ iframe.preview-media {
   border-top: 0;
 }
 .vd-row.is-overdue {
-  margin: 0 -18px;
-  padding-left: 18px;
-  padding-right: 18px;
+  margin: 0 -16px;
+  padding-left: 16px;
+  padding-right: 16px;
   /* Heavy red on the left, fading to the card's white on the right. */
   background: linear-gradient(90deg, rgba(179, 64, 46, 0.28), transparent 65%);
   border-top-color: transparent;
@@ -3665,28 +3687,34 @@ a.list-row:hover {
   min-height: 40px;
 }
 .chk-back {
-  width: 40px;
-  height: 40px;
-  min-width: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 50%;
-  color: var(--text-muted);
-  background: none;
-  border: none;
-  cursor: pointer;
-  margin-left: -8px;
+  min-height: 44px;
+  color: var(--accent);
+  margin: -4px;
 }
-.chk-back:hover { color: var(--text); }
-.chk-back svg { width: 20px; height: 20px; }
+.chk-back:hover { color: var(--accent); }
 .chk-steps { display: flex; gap: 6px; margin-left: auto; }
 .chk-steps i {
   width: 22px;
   height: 4px;
   border-radius: 2px;
-  background: var(--border);
+  background: rgba(35, 39, 43, 0.18);
 }
 .chk-steps i.done { background: var(--sig-blue); }
+
+.disclosure-icon {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: -0.15em;
+  margin-right: 2px;
+  transition: transform 0.15s ease;
+}
+.disclosure-icon.is-open {
+  transform: rotate(90deg);
+}
+@media (prefers-reduced-motion: reduce) {
+  .disclosure-icon { transition: none; }
+}
 
 /* --- verdict extras: causes, cost, escalation --- */
 .chk-sect {
@@ -4168,8 +4196,9 @@ a.list-row:hover {
     gap: 6px;
     padding: 14px 18px 18px;
     border-bottom: none;
-    border-right: 0.5px solid var(--border);
-    background: var(--bg-elevated);
+    border-right: 0.5px solid var(--frame-line);
+    box-shadow: none;
+    clip-path: none;
   }
 
   /* --- content column: scrolls independently; the fixed-nav bottom padding is

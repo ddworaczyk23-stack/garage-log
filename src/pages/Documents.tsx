@@ -75,57 +75,59 @@ export function Documents({ initialVehicleId }: Props) {
       <PageHeader
         eyebrow="The Garage"
         title="Documents"
-        meta={total === 0 ? 'No documents yet' : `${results.length} of ${total} shown`}
+        meta={total > 0 ? `${results.length} of ${total} shown` : undefined}
       />
 
-      <div class="doc-filters card">
-        <input
-          class="doc-search"
-          type="search"
-          placeholder="Search filename, tag, or context…"
-          aria-label="Search documents"
-          value={query}
-          onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
-        />
-        <div class="doc-filter-row">
-          <select
-            aria-label="Filter by vehicle"
-            value={vehicleId}
-            onChange={(e) => setVehicleId((e.target as HTMLSelectElement).value)}
-          >
-            <option value="">All vehicles</option>
-            {(vehicles ?? []).map((v) => (
-              <option key={v.id} value={v.id}>
-                {vehicleLabel(v)}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Filter by source"
-            value={source}
-            onChange={(e) => setSource((e.target as HTMLSelectElement).value as DocSource | '')}
-          >
-            <option value="">All sources</option>
-            {(Object.keys(SOURCE_LABELS) as DocSource[]).map((s) => (
-              <option key={s} value={s}>
-                {SOURCE_LABELS[s]}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Filter by file type"
-            value={fileType}
-            onChange={(e) => setFileType((e.target as HTMLSelectElement).value as DocFileType | '')}
-          >
-            <option value="">All file types</option>
-            {(Object.keys(FILE_TYPE_LABELS) as DocFileType[]).map((t) => (
-              <option key={t} value={t}>
-                {FILE_TYPE_LABELS[t]}
-              </option>
-            ))}
-          </select>
+      {total > 0 && (
+        <div class="doc-filters card">
+          <input
+            class="doc-search"
+            type="search"
+            placeholder="Search filename, tag, or context…"
+            aria-label="Search documents"
+            value={query}
+            onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+          />
+          <div class="doc-filter-row">
+            <select
+              aria-label="Filter by vehicle"
+              value={vehicleId}
+              onChange={(e) => setVehicleId((e.target as HTMLSelectElement).value)}
+            >
+              <option value="">All vehicles</option>
+              {(vehicles ?? []).map((v) => (
+                <option key={v.id} value={v.id}>
+                  {vehicleLabel(v)}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Filter by source"
+              value={source}
+              onChange={(e) => setSource((e.target as HTMLSelectElement).value as DocSource | '')}
+            >
+              <option value="">All sources</option>
+              {(Object.keys(SOURCE_LABELS) as DocSource[]).map((s) => (
+                <option key={s} value={s}>
+                  {SOURCE_LABELS[s]}
+                </option>
+              ))}
+            </select>
+            <select
+              aria-label="Filter by file type"
+              value={fileType}
+              onChange={(e) => setFileType((e.target as HTMLSelectElement).value as DocFileType | '')}
+            >
+              <option value="">All file types</option>
+              {(Object.keys(FILE_TYPE_LABELS) as DocFileType[]).map((t) => (
+                <option key={t} value={t}>
+                  {FILE_TYPE_LABELS[t]}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
+      )}
 
       {!entries ? (
         <Loading />
