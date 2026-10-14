@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+import { useEffect, useMemo, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { formatMiles, formatShortDate, localDateISO } from '../domain/format'
@@ -22,7 +22,7 @@ import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
 import { ConcernList } from '../components/ConcernList'
-import { Loading, Skel, ConfirmButton, InfoTip, PageHeader, Toast } from '../components/ui'
+import { Loading, Skel, ConfirmButton, InfoTip, PageHeader, Sheet, Toast } from '../components/ui'
 import { PencilIcon } from '../components/icons'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
@@ -60,7 +60,6 @@ export function VehicleDetail({ id }: Props) {
   const [serviceCategory, setServiceCategory] = useState<MaintenanceCategory | undefined>(undefined)
   const [logSheetOpen, setLogSheetOpen] = useState(false)
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null)
-  const formRef = useRef<HTMLDivElement>(null)
   // One-shot flag set by AddVehicle right before redirecting here on a fresh
   // creation. Consumed (removed) immediately so the welcome banner below can
   // only ever show once, even across a reload of this same page.
@@ -150,9 +149,6 @@ export function VehicleDetail({ id }: Props) {
     }
     if (form !== 'service' && form !== 'odometer') return
     setActiveForm(form)
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'auto', block: 'center' })),
-    )
   }, [vehicle?.id])
 
   if (vehicle === undefined) {
@@ -222,11 +218,6 @@ export function VehicleDetail({ id }: Props) {
     setLogSheetOpen(false)
     setServiceCategory(category)
     setActiveForm(form)
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() =>
-        formRef.current?.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'center' }),
-      ),
-    )
   }
   async function handleEventSaved(result: EventFormSaveResult) {
     closeForm()
@@ -472,31 +463,6 @@ export function VehicleDetail({ id }: Props) {
         </Collapsible>
       </section>
 
-      <div ref={formRef}>
-        {activeForm === 'service' && (
-          <EventForm
-            key={`service-${serviceCategory ?? 'generic'}`}
-            vehicleId={id}
-            kind="maintenance"
-            initialCategory={serviceCategory}
-            defaultOdometer={mileage?.lastActual.miles}
-            onDone={handleEventSaved}
-            onCancel={closeForm}
-          />
-        )}
-        {activeForm === 'repair' && (
-          <EventForm
-            vehicleId={id}
-            kind="repair"
-            defaultOdometer={mileage?.lastActual.miles}
-            onDone={handleEventSaved}
-            onCancel={closeForm}
-          />
-        )}
-        {activeForm === 'odometer' && (
-          <OdometerForm vehicleId={id} onDone={handleOdometerSaved} onCancel={closeForm} />
-        )}
-      </div>
       </div>
 
       <div class="vd-main">
@@ -621,6 +587,49 @@ export function VehicleDetail({ id }: Props) {
       </div>
       </div>
 
+      {activeForm && (
+        <Sheet
+          eyebrow={vehicleLabel(vehicle)}
+          title={activeForm === 'odometer' ? 'Update odometer' : `Log ${activeForm}`}
+          onClose={closeForm}
+        >
+          <div class="sheet-seg" role="group" aria-label="What to log">
+            {(['service', 'repair', 'odometer'] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                aria-pressed={activeForm === f}
+                onClick={() => setActiveForm(f)}
+              >
+                {f === 'service' ? 'Service' : f === 'repair' ? 'Repair' : 'Odometer'}
+              </button>
+            ))}
+          </div>
+          {activeForm === 'service' && (
+            <EventForm
+              key={`service-${serviceCategory ?? 'generic'}`}
+              vehicleId={id}
+              kind="maintenance"
+              initialCategory={serviceCategory}
+              defaultOdometer={mileage?.lastActual.miles}
+              onDone={handleEventSaved}
+              onCancel={closeForm}
+            />
+          )}
+          {activeForm === 'repair' && (
+            <EventForm
+              vehicleId={id}
+              kind="repair"
+              defaultOdometer={mileage?.lastActual.miles}
+              onDone={handleEventSaved}
+              onCancel={closeForm}
+            />
+          )}
+          {activeForm === 'odometer' && (
+            <OdometerForm vehicleId={id} onDone={handleOdometerSaved} onCancel={closeForm} />
+          )}
+        </Sheet>
+      )}
       {!activeForm && logSheetOpen && (
         <div class="vd-log-sheet" id="vd-log-sheet" role="group" aria-label="Choose what to log">
           <button type="button" onClick={() => openForm('service')}>Service</button>

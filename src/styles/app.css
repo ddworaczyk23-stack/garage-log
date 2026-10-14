@@ -5203,3 +5203,199 @@ a.list-row:hover {
     backdrop-filter: none;
   }
 }
+
+/* ---------- Bottom sheet (Sheet in ui.tsx): logging slides up over the page ---------- */
+html.sheet-open {
+  overflow: hidden;
+}
+dialog.sheet {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  max-height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  overflow: hidden;
+}
+dialog.sheet::backdrop {
+  background: rgba(15, 42, 68, 0.45);
+  animation: sheetFade 0.2s var(--ease-paper);
+}
+.sheet-panel {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 90dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  color: var(--text);
+  border-radius: 22px 22px 0 0;
+  box-shadow: var(--shadow-modal);
+  animation: sheetUp 0.28s var(--ease-paper);
+  transition: transform 0.2s var(--ease-paper);
+}
+.sheet-drag {
+  touch-action: none;
+  cursor: grab;
+}
+.sheet-grab {
+  display: block;
+  width: 40px;
+  height: 5px;
+  margin: 8px auto 4px;
+  border-radius: 3px;
+  background: var(--border);
+}
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 4px 16px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.sheet-eyebrow {
+  display: block;
+  font: 600 0.7rem var(--font-mono);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+.sheet-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.sheet-close {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--bg-inset);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.sheet-close svg {
+  width: 18px;
+  height: 18px;
+}
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px 0;
+}
+.sheet-seg {
+  display: flex;
+  padding: 3px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-control);
+  background: var(--bg-inset);
+}
+.sheet-seg button {
+  flex: 1;
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-muted);
+  font: 700 0.9rem var(--font-sans);
+  cursor: pointer;
+}
+.sheet-seg button[aria-pressed='true'] {
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(35, 39, 43, 0.1);
+}
+/* The form drops its card chrome inside the sheet: the sheet is the card. */
+.sheet .event-form {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: none;
+}
+.sheet .event-form > .card-title {
+  display: none;
+}
+/* Save stays pinned at the bottom of the sheet, near the thumb. ✕ cancels. */
+.sheet .form-actions {
+  position: sticky;
+  bottom: 0;
+  margin: 4px -16px 0;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  background: var(--bg-card);
+  border-top: 1px solid var(--border);
+}
+.sheet .form-actions .btn {
+  flex: 1;
+  min-height: 50px;
+  font-size: 1.05rem;
+}
+.sheet .form-actions .btn-link {
+  display: none;
+}
+.more-options {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+}
+.more-options-hint {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.8rem;
+  text-align: right;
+}
+.more-options-sub {
+  display: block;
+  margin-top: 6px;
+  padding-top: 10px;
+  border-top: 0.5px solid var(--border);
+}
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheetFade {
+  from {
+    opacity: 0;
+  }
+}
+@media (min-width: 1024px) {
+  .sheet-panel {
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    top: 50%;
+    width: min(520px, calc(100vw - 48px));
+    max-height: 86vh;
+    border-radius: var(--radius);
+    transform: translate(-50%, -50%);
+    animation: sheetFade 0.2s var(--ease-paper);
+  }
+  .sheet-grab {
+    display: none;
+  }
+  .sheet-head {
+    padding-top: 14px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheet-panel,
+  dialog.sheet::backdrop {
+    animation: none;
+  }
+}

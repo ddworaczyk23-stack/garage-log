@@ -75,6 +75,100 @@ export function Toast({
   )
 }
 
+/**
+ * Bottom sheet for logging. A modal <dialog>, so it sits above the tab bar,
+ * traps focus and closes on Escape for free. Also closes on a tap on the
+ * scrim, the ✕, or a downward swipe on the header. Centered card on desktop.
+ */
+export function Sheet({
+  eyebrow,
+  title,
+  onClose,
+  children,
+}: {
+  eyebrow?: ComponentChildren
+  title: ComponentChildren
+  onClose: () => void
+  children: ComponentChildren
+}) {
+  const ref = useRef<HTMLDialogElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const drag = useRef<{ y: number; dy: number } | null>(null)
+  const titleId = useId()
+
+  useEffect(() => {
+    ref.current?.showModal()
+    const root = document.documentElement
+    root.classList.add('sheet-open')
+    return () => root.classList.remove('sheet-open')
+  }, [])
+
+  function setOffset(dy: number) {
+    const panel = panelRef.current
+    if (!panel) return
+    panel.style.transform = dy > 0 ? `translateY(${dy}px)` : ''
+    panel.style.transition = dy > 0 ? 'none' : ''
+  }
+
+  return (
+    <dialog
+      ref={ref}
+      class="sheet"
+      aria-labelledby={titleId}
+      onCancel={(e) => {
+        e.preventDefault()
+        onClose()
+      }}
+      onClick={(e) => {
+        if (e.target === ref.current) onClose()
+      }}
+    >
+      <div class="sheet-panel" ref={panelRef}>
+        <div
+          class="sheet-drag"
+          onPointerDown={(e) => {
+            // Swipe-to-close is phone/tablet only; desktop centers the panel.
+            if ((e.target as Element).closest('button') || matchMedia('(min-width: 1024px)').matches) return
+            drag.current = { y: e.clientY, dy: 0 }
+            ;(e.currentTarget as Element).setPointerCapture(e.pointerId)
+          }}
+          onPointerMove={(e) => {
+            if (!drag.current) return
+            drag.current.dy = e.clientY - drag.current.y
+            setOffset(drag.current.dy)
+          }}
+          onPointerUp={() => {
+            const dy = drag.current?.dy ?? 0
+            drag.current = null
+            setOffset(0)
+            if (dy > 90) onClose()
+          }}
+          onPointerCancel={() => {
+            drag.current = null
+            setOffset(0)
+          }}
+        >
+          <span class="sheet-grab" aria-hidden="true" />
+          <header class="sheet-head">
+            <div>
+              {eyebrow && <span class="sheet-eyebrow">{eyebrow}</span>}
+              <h2 class="sheet-title" id={titleId}>
+                {title}
+              </h2>
+            </div>
+            <button type="button" class="sheet-close" aria-label="Close" onClick={onClose}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </header>
+        </div>
+        <div class="sheet-body">{children}</div>
+      </div>
+    </dialog>
+  )
+}
+
 /** One shimmering placeholder block. Compose into page-shaped skeletons. */
 export function Skel({ class: className = '', style }: { class?: string; style?: string }) {
   return <span class={`skel ${className}`} style={style} aria-hidden="true" />

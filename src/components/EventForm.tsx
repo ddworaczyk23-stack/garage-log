@@ -72,7 +72,6 @@ export function EventForm({
   const [additionalCategories, setAdditionalCategories] = useState<MaintenanceCategory[]>(
     existing?.additionalCategories ?? [],
   )
-  const [showAlso, setShowAlso] = useState((existing?.additionalCategories?.length ?? 0) > 0)
   const [title, setTitle] = useState(existing?.title ?? '')
   const [cost, setCost] = useState(existing?.cost?.toString() ?? '')
   const [vendor, setVendor] = useState(existing?.vendor ?? '')
@@ -90,17 +89,17 @@ export function EventForm({
   const [fix, setFix] = useState(existing?.fix ?? '')
   const [labor, setLabor] = useState(existing?.labor ?? '')
 
-  // Maintenance-only: optional rule override, collapsed by default.
-  const [showOverride, setShowOverride] = useState(false)
+  // Maintenance-only: optional rule override (inside "More options").
   const [overrideKind, setOverrideKind] = useState<OverrideKind | ''>('')
   const [overrideNote, setOverrideNote] = useState('')
   const [customMiles, setCustomMiles] = useState('')
   const [customMonths, setCustomMonths] = useState('')
 
-  // Secondary fields (label/parts/fluids/vendor/notes/etc.) are collapsed by
-  // default on a fresh add — a routine oil change only needs date/odometer/
-  // category/cost/attach to log fast. Editing an existing entry starts
-  // expanded so none of its already-filled detail is hidden from view.
+  // Everything optional (quick fill, also performed, label/parts/vendor/notes,
+  // next-due override) sits behind ONE "More options" fold, collapsed on a
+  // fresh add — a routine oil change only needs category/date/odometer/cost/
+  // receipt. Editing an existing entry starts expanded so none of its
+  // already-filled detail is hidden from view.
   const [showMore, setShowMore] = useState(!!existing)
 
   const [newFiles, setNewFiles] = useState<File[]>([])
@@ -129,26 +128,16 @@ export function EventForm({
   function handleQuickFill() {
     if (!quickEntryText.trim()) return
     const result = parseQuickEntry(quickEntryText)
-    let expandMore = false
-
     if (result.category) {
       setCategory(result.category)
       setAdditionalCategories(result.additionalCategories)
-      if (result.additionalCategories.length > 0) setShowAlso(true)
     }
     if (result.cost != null && !cost.trim()) {
       setCost(String(result.cost))
     }
-    if (result.vendor && !vendor.trim()) {
-      setVendor(result.vendor)
-      expandMore = true
-    }
-    if (!title.trim() && quickEntryText.trim()) {
-      setTitle(quickEntryText.trim())
-      expandMore = true
-    }
-    if (expandMore) setShowMore(true)
-    setQuickEntryHint(result.hadMatch ? '' : 'Couldn’t detect a category — pick one below.')
+    if (result.vendor && !vendor.trim()) setVendor(result.vendor)
+    if (!title.trim() && quickEntryText.trim()) setTitle(quickEntryText.trim())
+    setQuickEntryHint(result.hadMatch ? '' : 'Couldn’t detect a category — pick one above.')
   }
 
   async function submit(e: Event) {
@@ -192,7 +181,7 @@ export function EventForm({
     }
 
     const ruleOverride: RuleOverrideInput | undefined =
-      kind === 'maintenance' && showOverride && (overrideKind || customMiles || customMonths)
+      kind === 'maintenance' && showMore && (overrideKind || customMiles || customMonths)
         ? {
             overrideKind: overrideKind || null,
             overrideNote: overrideNote.trim() || null,
@@ -216,29 +205,27 @@ export function EventForm({
     }
   }
 
+  const alsoCount = additionalCategories.filter((c) => c !== category).length
+
   return (
     <form class="card event-form" onSubmit={submit}>
       <h3 class="card-title">
         {existing ? 'Edit' : 'Log'} {kind === 'maintenance' ? 'service' : 'repair'}
       </h3>
 
-      {!existing && (
-        <div class="admin-field quick-entry">
-          <span class="muted small">Quick fill (optional)</span>
-          <div class="quick-entry-row">
-            <input
-              type="text"
-              placeholder="e.g. Oil change at Jiffy Lube, $45.99"
-              value={quickEntryText}
-              onInput={(e) => setQuickEntryText((e.target as HTMLInputElement).value)}
-            />
-            <button type="button" class="btn-link" onClick={handleQuickFill}>
-              Fill in ↓
-            </button>
-          </div>
-          {quickEntryHint && <p class="muted small quick-entry-hint">{quickEntryHint}</p>}
-        </div>
-      )}
+      <label class="admin-field">
+        <span class="muted small">{kind === 'maintenance' ? 'What was done' : 'Category'}</span>
+        <select
+          value={category}
+          onChange={(e) => setCategory((e.target as HTMLSelectElement).value as MaintenanceCategory)}
+        >
+          {MAINTENANCE_CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {CATEGORY_LABELS[c]}
+            </option>
+          ))}
+        </select>
+      </label>
 
       <div class="admin-when">
         <label class="admin-field">
@@ -254,56 +241,6 @@ export function EventForm({
             onInput={(e) => setOdometerMiles((e.target as HTMLInputElement).value)}
           />
         </label>
-      </div>
-
-      <label class="admin-field">
-        <span class="muted small">Category</span>
-        <select
-          value={category}
-          onChange={(e) => setCategory((e.target as HTMLSelectElement).value as MaintenanceCategory)}
-        >
-          {MAINTENANCE_CATEGORIES.map((c) => (
-            <option key={c} value={c}>
-              {CATEGORY_LABELS[c]}
-            </option>
-          ))}
-        </select>
-      </label>
-
-      <div class="also-section">
-        <button type="button" class="btn-link" onClick={() => setShowAlso((s) => !s)}>
-          <DisclosureIcon open={showAlso} /> Also performed{' '}
-          {additionalCategories.filter((c) => c !== category).length > 0
-            ? `(${additionalCategories.filter((c) => c !== category).length})`
-            : '(optional)'}
-        </button>
-        {showAlso && (
-          <>
-            <p class="muted small" style="margin:2px 0 6px">
-              Tag anything else done in this same visit — each also updates its own reminder.
-            </p>
-            <div class="also-chips">
-              {MAINTENANCE_CATEGORIES.filter((c) => c !== 'other' && c !== category).map((c) => {
-                const on = additionalCategories.includes(c)
-                return (
-                  <button
-                    key={c}
-                    type="button"
-                    class={`also-chip${on ? ' is-on' : ''}`}
-                    aria-pressed={on}
-                    onClick={() =>
-                      setAdditionalCategories((prev) =>
-                        prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
-                      )
-                    }
-                  >
-                    {CATEGORY_LABELS[c]}
-                  </button>
-                )
-              })}
-            </div>
-          </>
-        )}
       </div>
 
       {kind === 'repair' && (
@@ -336,12 +273,101 @@ export function EventForm({
         )}
       </label>
 
+      <div class="admin-field">
+        <span class="muted small">Receipt or photo (optional)</span>
+        <label class="file-picker">
+          <input
+            class="sr-only"
+            type="file"
+            multiple
+            accept="image/*,application/pdf"
+            onChange={(e) => setNewFiles(Array.from((e.target as HTMLInputElement).files ?? []))}
+          />
+          <span class="btn btn-secondary file-picker-button">Add file</span>
+          <span class="file-picker-summary">
+            {newFiles.length === 0
+              ? 'No files selected'
+              : `${newFiles.length} ${newFiles.length === 1 ? 'file' : 'files'} selected`}
+          </span>
+        </label>
+      </div>
+      {remainingDocs.length > 0 && (
+        <ul class="doc-remove-list">
+          {remainingDocs.map((d) => (
+            <li key={d.id}>
+              <span class="muted small">📎 {d.filename}</span>
+              <button
+                type="button"
+                class="btn-link"
+                onClick={() => setRemovedDocIds((ids) => [...ids, d.id])}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <div class="override-section">
-        <button type="button" class="btn-link" onClick={() => setShowMore((s) => !s)}>
-          <DisclosureIcon open={showMore} /> More details (label, vendor, parts, notes…)
+        <button type="button" class="btn-link more-options" aria-expanded={showMore} onClick={() => setShowMore((s) => !s)}>
+          <span>
+            <DisclosureIcon open={showMore} /> More options
+          </span>
+          {!showMore && (
+            <span class="more-options-hint">
+              {alsoCount > 0
+                ? `${alsoCount} also done`
+                : kind === 'maintenance'
+                  ? 'vendor, notes, also done, next due'
+                  : 'vendor, notes, diagnosis'}
+            </span>
+          )}
         </button>
         {showMore && (
           <div class="admin-form">
+            {!existing && (
+                <div class="admin-field quick-entry">
+                  <span class="muted small">Quick fill (optional)</span>
+                  <div class="quick-entry-row">
+                    <input
+                      type="text"
+                      placeholder="e.g. Oil change at Jiffy Lube, $45.99"
+                      value={quickEntryText}
+                      onInput={(e) => setQuickEntryText((e.target as HTMLInputElement).value)}
+                    />
+                    <button type="button" class="btn-link" onClick={handleQuickFill}>
+                      Fill in ↓
+                    </button>
+                  </div>
+                  {quickEntryHint && <p class="muted small quick-entry-hint">{quickEntryHint}</p>}
+                </div>
+            )}
+
+            <div class="admin-field">
+              <span class="muted small">Also done in this visit</span>
+              <p class="muted small" style="margin:0 0 4px">Each one also updates its own reminder.</p>
+              <div class="also-chips">
+                {MAINTENANCE_CATEGORIES.filter((c) => c !== 'other' && c !== category).map((c) => {
+                  const on = additionalCategories.includes(c)
+                  return (
+                    <button
+                      key={c}
+                      type="button"
+                      class={`also-chip${on ? ' is-on' : ''}`}
+                      aria-pressed={on}
+                      onClick={() =>
+                        setAdditionalCategories((prev) =>
+                          prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c],
+                        )
+                      }
+                    >
+                      {CATEGORY_LABELS[c]}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+
             <label class="admin-field">
               <span class="muted small">Label (optional, shown in history)</span>
               <input
@@ -444,103 +470,68 @@ export function EventForm({
               <span class="muted small">Notes</span>
               <input type="text" value={notes} onInput={(e) => setNotes((e.target as HTMLInputElement).value)} />
             </label>
+
+            {kind === 'maintenance' && (
+              <>
+                <span class="muted small more-options-sub">Next-due override</span>
+                  <label class="admin-field">
+                    <span class="muted small">Status override</span>
+                    <select
+                      value={overrideKind}
+                      onChange={(e) => setOverrideKind((e.target as HTMLSelectElement).value as OverrideKind | '')}
+                    >
+                      <option value="">— none —</option>
+                      {OVERRIDE_KINDS.map((k) => (
+                        <option key={k} value={k}>
+                          {OVERRIDE_LABELS[k]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div class="admin-when">
+                    <label class="admin-field">
+                      <span class="muted small">Custom interval (mi)</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={customMiles}
+                        onInput={(e) => setCustomMiles((e.target as HTMLInputElement).value)}
+                      />
+                    </label>
+                    <label class="admin-field">
+                      <span class="muted small">Custom interval (mo)</span>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={customMonths}
+                        onInput={(e) => setCustomMonths((e.target as HTMLInputElement).value)}
+                      />
+                    </label>
+                  </div>
+                  <label class="admin-field">
+                    <span class="muted small">Override note</span>
+                    <input
+                      type="text"
+                      value={overrideNote}
+                      onInput={(e) => setOverrideNote((e.target as HTMLInputElement).value)}
+                    />
+                  </label>
+              </>
+            )}
           </div>
         )}
       </div>
 
-      <div class="admin-field">
-        <span class="muted small">Attach photos / receipts / PDFs</span>
-        <label class="file-picker">
-          <input
-            class="sr-only"
-            type="file"
-            multiple
-            accept="image/*,application/pdf"
-            onChange={(e) => setNewFiles(Array.from((e.target as HTMLInputElement).files ?? []))}
-          />
-          <span class="btn btn-secondary file-picker-button">Choose files</span>
-          <span class="file-picker-summary">
-            {newFiles.length === 0
-              ? 'No files selected'
-              : `${newFiles.length} ${newFiles.length === 1 ? 'file' : 'files'} selected`}
-          </span>
-        </label>
-      </div>
-      {remainingDocs.length > 0 && (
-        <ul class="doc-remove-list">
-          {remainingDocs.map((d) => (
-            <li key={d.id}>
-              <span class="muted small">📎 {d.filename}</span>
-              <button
-                type="button"
-                class="btn-link"
-                onClick={() => setRemovedDocIds((ids) => [...ids, d.id])}
-              >
-                Remove
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {kind === 'maintenance' && (
-        <div class="override-section">
-          <button type="button" class="btn-link" onClick={() => setShowOverride((s) => !s)}>
-            <DisclosureIcon open={showOverride} /> Next-due override (optional)
-          </button>
-          {showOverride && (
-            <div class="admin-form">
-              <label class="admin-field">
-                <span class="muted small">Status override</span>
-                <select
-                  value={overrideKind}
-                  onChange={(e) => setOverrideKind((e.target as HTMLSelectElement).value as OverrideKind | '')}
-                >
-                  <option value="">— none —</option>
-                  {OVERRIDE_KINDS.map((k) => (
-                    <option key={k} value={k}>
-                      {OVERRIDE_LABELS[k]}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div class="admin-when">
-                <label class="admin-field">
-                  <span class="muted small">Custom interval (mi)</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={customMiles}
-                    onInput={(e) => setCustomMiles((e.target as HTMLInputElement).value)}
-                  />
-                </label>
-                <label class="admin-field">
-                  <span class="muted small">Custom interval (mo)</span>
-                  <input
-                    type="number"
-                    inputMode="numeric"
-                    value={customMonths}
-                    onInput={(e) => setCustomMonths((e.target as HTMLInputElement).value)}
-                  />
-                </label>
-              </div>
-              <label class="admin-field">
-                <span class="muted small">Override note</span>
-                <input
-                  type="text"
-                  value={overrideNote}
-                  onInput={(e) => setOverrideNote((e.target as HTMLInputElement).value)}
-                />
-              </label>
-            </div>
-          )}
-        </div>
-      )}
-
       {error && <p class="notice notice-error" role="alert">{error}</p>}
       <div class="form-actions">
         <button class="btn" type="submit" disabled={saving}>
-          {saving ? 'Saving…' : existing ? 'Save changes' : 'Log entry'}
+          {saving ? 'Saving…' : existing
+              ? 'Save changes'
+              : kind === 'repair'
+                ? 'Log repair'
+                : category === 'other'
+                  ? 'Log service'
+                  : `Log ${CATEGORY_LABELS[category].toLowerCase()}`}
         </button>
         <button class="btn-link" type="button" onClick={onCancel}>
           Cancel

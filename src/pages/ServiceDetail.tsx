@@ -11,7 +11,7 @@ import { BulletTrack } from '../components/motion/BulletTrack'
 import { EventForm } from '../components/EventForm'
 import { EventListItem } from '../components/EventListItem'
 import { RuleOverrideEditor } from '../components/RuleOverrideEditor'
-import { EmptyState, PageHeader, SkeletonPage } from '../components/ui'
+import { EmptyState, PageHeader, Sheet, SkeletonPage } from '../components/ui'
 import { VerdictPanel } from '../components/VerdictPanel'
 import { WarningIcon } from '../components/icons'
 import { useReducedMotion } from '../motion/hooks'
@@ -167,8 +167,8 @@ export function ServiceDetail({ id }: { id: string }) {
       )}
 
       <div class="sd-actions">
-        <button type="button" class="btn btn-primary" onClick={() => setLogging((v) => !v)}>
-          {logging ? 'Close' : `Log ${label.toLowerCase()}`}
+        <button type="button" class="btn btn-primary" onClick={() => setLogging(true)}>
+          Log {label.toLowerCase()}
         </button>
         {actionable && (
           <a class="btn btn-secondary" href={`#/brief/${r.rule.id}`}>
@@ -177,14 +177,16 @@ export function ServiceDetail({ id }: { id: string }) {
         )}
       </div>
       {logging && (
-        <EventForm
-          vehicleId={vehicle.id}
-          kind={kind}
-          initialCategory={category}
-          defaultOdometer={mileage?.lastActual.miles}
-          onDone={() => setLogging(false)}
-          onCancel={() => setLogging(false)}
-        />
+        <Sheet eyebrow={vehicleLabel(vehicle)} title={`Log ${label.toLowerCase()}`} onClose={() => setLogging(false)}>
+          <EventForm
+            vehicleId={vehicle.id}
+            kind={kind}
+            initialCategory={category}
+            defaultOdometer={mileage?.lastActual.miles}
+            onDone={() => setLogging(false)}
+            onCancel={() => setLogging(false)}
+          />
+        </Sheet>
       )}
 
       <section class="card">
