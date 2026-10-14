@@ -76,6 +76,7 @@ export function VehicleDetail({ id }: Props) {
   })
 
   const vehicle = useQuery(async () => (await db.vehicles.get(id)) ?? null, [id])
+  const garage = useQuery(() => db.vehicles.orderBy('name').toArray(), [])
   const reminders = useQuery(() => getVehicleReminders(id), [id])
   const openConcerns = useQuery(() => getOpenConcerns(id), [id])
   const mileage = useQuery(() => getProjectedMileage(id), [id])
@@ -206,7 +207,12 @@ export function VehicleDetail({ id }: Props) {
   const unknownItems = notSetUp ? [] : unknownReminders(list)
   const isActionable = (r: ComputedReminder) => r.status === 'overdue' || r.status === 'due-next'
   const actionable = list.filter((r) => isActionable(r) && (notSetUp || hasHistory(r)))
-  const onTrack = list.filter((r) => !actionable.includes(r) && !unknownItems.includes(r))
+  const onTrackAll = list.filter((r) => !actionable.includes(r) && !unknownItems.includes(r))
+  // The 3 most urgent known jobs sit under the verdict so they show on the
+  // first screen. The schedule below skips them, so no job is listed twice.
+  const nextJobs = notSetUp ? [] : [...actionable, ...onTrackAll.filter(hasHistory)].slice(0, 3)
+  const actionableRest = actionable.filter((r) => !nextJobs.includes(r))
+  const onTrack = onTrackAll.filter((r) => !nextJobs.includes(r))
 
   function closeForm() {
     setActiveForm(null)
@@ -311,6 +317,28 @@ export function VehicleDetail({ id }: Props) {
         )}
       </PageHeader>
 
+      {garage && garage.length > 1 && (
+        <nav class="vd-picker" aria-label="Switch car">
+          {garage.map((v) => (
+            <a
+              key={v.id}
+              href={`#/vehicle/${v.id}`}
+              class={v.id === id ? 'is-on' : undefined}
+              aria-current={v.id === id ? 'page' : undefined}
+            >
+              {vehicleLabel(v)}
+            </a>
+          ))}
+        </nav>
+      )}
+      <div class="vd-miles">
+        <span class="vd-miles-num">{mileage ? `${formatMiles(mileage.miles)}` : 'No mileage yet'}</span>
+        {mileage?.isProjected && <span class="vd-miles-note">estimated</span>}
+        <button type="button" class="btn-link" onClick={() => openForm('odometer')}>
+          {mileage ? 'Update' : 'Add reading'}
+        </button>
+      </div>
+
       {/* Coast verdict: the one-sentence answer for this vehicle (Stage 1,
           design/COAST-PLAN.md) — pure re-narration of the ranked reminders,
           merged with any open triage concerns (Stage 2). */}
@@ -362,8 +390,17 @@ export function VehicleDetail({ id }: Props) {
         </>
       )}
 
-      {/* odometer instrument + specifications */}
+      {nextJobs.length > 0 && (
+        <section class="card vd-next">
+          <h3 class="card-title">Next {nextJobs.length === 1 ? 'job' : `${nextJobs.length} jobs`}</h3>
+          <ul class="vd-ledger">{nextJobs.map(renderRow)}</ul>
+        </section>
+      )}
+
+      {/* odometer instrument + specifications, folded: the mileage is already
+          in the line at the top */}
       <section class="card vd-cover">
+        <Collapsible title="Odometer details">
         <Instrument
           label="Odometer"
           note={mileage?.isProjected ? 'estimated' : undefined}
@@ -397,6 +434,7 @@ export function VehicleDetail({ id }: Props) {
             </button>
           }
         />
+        </Collapsible>
 
         <Collapsible title="Specifications">
           {editingSpecs ? (
@@ -481,7 +519,7 @@ export function VehicleDetail({ id }: Props) {
               // principle 1); the not-set-up note above already explains it.
               !notSetUp && <p class="muted small">Nothing needs attention right now — nice.</p>
             ) : (
-              <ul class="vd-ledger">{actionable.map(renderRow)}</ul>
+              actionableRest.length > 0 && <ul class="vd-ledger">{actionableRest.map(renderRow)}</ul>
             )}
 
             {unknownItems.length > 0 && (
