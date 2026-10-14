@@ -49,6 +49,16 @@ export function WarningIcon({ class: className = '' }: IconProps) {
   )
 }
 
+/** Edit affordance (pencil), e.g. next to the vehicle name. */
+export function PencilIcon({ class: className = '' }: IconProps) {
+  return (
+    <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" />
+      <path d="M13.5 6.5l4 4" />
+    </svg>
+  )
+}
+
 /** Row affordance: "opens a page". One chevron everywhere (no text "›"). */
 export function ChevronRightIcon({ class: className = 'chevron-icon' }: IconProps) {
   return (
