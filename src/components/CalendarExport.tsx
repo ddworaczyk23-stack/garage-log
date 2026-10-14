@@ -93,11 +93,11 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
         <button type="button" class="btn btn-secondary" onClick={exportCalendar} disabled={busy}>
           {busy ? 'Preparing…' : 'Add reminders to Calendar'}
         </button>
+        <InfoTip label="Calendar reminders">
+          One alert at 9am on each due date. Re-add every month or two. On iPhone, open the file and tap Add All.
+        </InfoTip>
         {last && <span class="muted small">Last added {formatShortDate(last)}</span>}
       </div>
-      <InfoTip label="Calendar reminders">
-        One alert at 9am on each due date. Re-add every month or two. On iPhone, open the file and tap Add All.
-      </InfoTip>
       {status && (
         <p class="muted small" role="status">
           {status}

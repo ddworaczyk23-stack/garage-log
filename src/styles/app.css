@@ -4775,22 +4775,17 @@ a.list-row:hover {
   padding-top: 12px;
   border-top: 0.5px solid var(--border);
 }
-.card > .cal-export-lead + .cal-export {
+/* Alone in its own card (Home): no divider above it. */
+.card > .cal-export:first-child {
   margin-top: 0;
   padding-top: 0;
   border-top: none;
-}
-.cal-export-lead {
-  margin: 4px 0 12px;
 }
 .cal-export-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px 12px;
-}
-.cal-export-hint {
-  margin: 8px 0 0;
 }
 
 /* =========================================================================
