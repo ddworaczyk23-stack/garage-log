@@ -1,7 +1,7 @@
 import { cloudConfigured, login, logout, useCloudUser, useSyncState } from '../db/cloud'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
-import { formatShortDate } from '../domain/format'
+import { formatShortDate, localDateISO } from '../domain/format'
 import { ChevronRightIcon } from '../components/icons'
 import { ConfirmButton, PageHeader } from '../components/ui'
 
@@ -25,7 +25,7 @@ export function Settings() {
             <span class="list-row-main">
               <span class="list-row-title">Back up &amp; restore</span>
               <span class="muted small">
-                {lastBackupAt ? `Last backup: ${formatShortDate(lastBackupAt.slice(0, 10))}` : 'No backup yet'}
+                {lastBackupAt ? `Last backup: ${formatShortDate(localDateISO(new Date(lastBackupAt)))}` : 'No backup yet'}
               </span>
             </span>
             <ChevronRightIcon />

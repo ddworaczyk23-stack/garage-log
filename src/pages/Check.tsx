@@ -186,8 +186,9 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   useEffect(() => {
     function onPopState(event: PopStateEvent) {
       const targetDepth = typeof event.state?.chk === 'number' ? event.state.chk : 0
+      // Depth 0 is the symptom list (the entry before the first push).
       if (targetDepth === 0) {
-        window.location.hash = '#/check'
+        reset()
         return
       }
       if (targetDepth < historyDepth && trail.length > 0) {
