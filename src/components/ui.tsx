@@ -92,7 +92,6 @@ export function Sheet({
   children: ComponentChildren
 }) {
   const ref = useRef<HTMLDialogElement>(null)
-  const panelRef = useRef<HTMLDivElement>(null)
   const drag = useRef<{ y: number; dy: number } | null>(null)
   const titleId = useId()
 
@@ -111,11 +110,12 @@ export function Sheet({
     }
   }, [])
 
+  // Drag moves the dialog itself: it carries the white background.
   function setOffset(dy: number) {
-    const panel = panelRef.current
-    if (!panel) return
-    panel.style.transform = dy > 0 ? `translateY(${dy}px)` : ''
-    panel.style.transition = dy > 0 ? 'none' : ''
+    const dialog = ref.current
+    if (!dialog) return
+    dialog.style.transform = dy > 0 ? `translateY(${dy}px)` : ''
+    dialog.style.transition = dy > 0 ? 'none' : ''
   }
 
   return (
@@ -131,7 +131,7 @@ export function Sheet({
         if (e.target === ref.current) onClose()
       }}
     >
-      <div class="sheet-panel" ref={panelRef}>
+      <div class="sheet-panel">
         <div
           class="sheet-drag"
           onPointerDown={(e) => {
