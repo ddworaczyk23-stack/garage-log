@@ -110,7 +110,7 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
         </>
       )}
 
-      {summary.costPerMile != null && summary.milesTracked != null && (
+      {summary.costPerMile != null && summary.milesTracked != null && summary.costPerMile >= 0.1 && (
         <p class="muted small cost-note">
           <span class="cost-per-mile">{formatMoney(summary.costPerMile)}/mi</span>
         </p>

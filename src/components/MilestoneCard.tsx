@@ -10,7 +10,7 @@ export const MILESTONE_STATE_LABELS: Record<MilestoneState, string> = {
   done: 'Done',
   skipped: 'Skipped',
   missed: 'Not recorded',
-  due: 'Due now',
+  due: 'Reached',
   upcoming: 'Upcoming',
 }
 
