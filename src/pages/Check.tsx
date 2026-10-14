@@ -149,44 +149,10 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
   const [addedId, setAddedId] = useState<string | null>(null)
   const briefHeadingRef = useRef<HTMLHeadingElement>(null)
 
-  if (!data) return <SkeletonPage rows={3} />
-  if (!data.vehicle) {
-    return (
-      <section class="page">
-        <EmptyState
-          title="Vehicle not found"
-          hint="It may have been removed."
-          action={<a class="btn" href="#/check">Back to check</a>}
-        />
-      </section>
-    )
-  }
-  const vehicle = data.vehicle
+  // Hooks stay above the early returns so they run in the same order on
+  // every render (the flow state doesn't depend on the loaded data).
   const playbook = playbookId ? getPlaybook(playbookId) : undefined
   const historyDepth = playbook ? trail.length + 1 : 0
-
-  function reset() {
-    setPlaybookId(null)
-    setAnswers({})
-    setTrail([])
-    setShowBrief(false)
-    setAddedId(null)
-  }
-
-  function choosePlaybook(pb: Playbook) {
-    setPlaybookId(pb.id)
-    setAnswers({})
-    setTrail([])
-    setShowBrief(false)
-    setAddedId(null)
-    history.pushState({ chk: 1 }, '')
-  }
-
-  function answer(qid: string, value: string) {
-    setAnswers((a) => ({ ...a, [qid]: value }))
-    setTrail((t) => [...t, qid])
-    history.pushState({ chk: trail.length + 2 }, '')
-  }
 
   useEffect(() => {
     function onPopState(event: PopStateEvent) {
@@ -211,6 +177,52 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     return () => window.removeEventListener('popstate', onPopState)
   }, [historyDepth, trail, playbookId])
 
+  useEffect(() => {
+    if (!showBrief) return
+    const heading = briefHeadingRef.current
+    if (!heading) return
+    heading.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' })
+    heading.focus({ preventScroll: true })
+  }, [showBrief, reduced])
+
+  if (!data) return <SkeletonPage rows={3} />
+  if (!data.vehicle) {
+    return (
+      <section class="page">
+        <EmptyState
+          title="Vehicle not found"
+          hint="It may have been removed."
+          action={<a class="btn" href="#/check">Back to check</a>}
+        />
+      </section>
+    )
+  }
+  const vehicle = data.vehicle
+
+  function reset() {
+    setPlaybookId(null)
+    setAnswers({})
+    setTrail([])
+    setShowBrief(false)
+    setAddedId(null)
+  }
+
+  function choosePlaybook(pb: Playbook) {
+    setPlaybookId(pb.id)
+    setAnswers({})
+    setTrail([])
+    setShowBrief(false)
+    setAddedId(null)
+    history.pushState({ chk: 1 }, '')
+  }
+
+  function answer(qid: string, value: string) {
+    setAnswers((a) => ({ ...a, [qid]: value }))
+    setTrail((t) => [...t, qid])
+    history.pushState({ chk: trail.length + 2 }, '')
+  }
+
+
   function back() {
     if (historyDepth > 0) {
       history.back()
@@ -227,13 +239,6 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
     reset()
   }
 
-  useEffect(() => {
-    if (!showBrief) return
-    const heading = briefHeadingRef.current
-    if (!heading) return
-    heading.scrollIntoView({ block: 'start', behavior: reduced ? 'auto' : 'smooth' })
-    heading.focus({ preventScroll: true })
-  }, [showBrief, reduced])
 
   // ---- phase: choose a playbook ----
   if (!playbook) {
