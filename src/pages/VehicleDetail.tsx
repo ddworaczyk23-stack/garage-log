@@ -132,6 +132,28 @@ export function VehicleDetail({ id }: Props) {
     }
   }, [logSheetOpen])
 
+  // One-shot flag from Home's quick buttons ("Log service", "Update miles"):
+  // open that form once the vehicle has loaded. Consumed at once, like
+  // justAdded, so a reload doesn't reopen it.
+  useEffect(() => {
+    if (!vehicle) return
+    let form: string | null = null
+    try {
+      const flag = sessionStorage.getItem('gl_open_log')
+      if (flag?.startsWith(`${id}:`)) {
+        sessionStorage.removeItem('gl_open_log')
+        form = flag.slice(id.length + 1)
+      }
+    } catch {
+      return
+    }
+    if (form !== 'service' && form !== 'odometer') return
+    setActiveForm(form)
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: 'auto', block: 'center' })),
+    )
+  }, [vehicle?.id])
+
   if (vehicle === undefined) {
     return (
       <section class="page" role="status" aria-live="polite" aria-label="Loading vehicle">

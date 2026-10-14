@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import type { ReminderRule } from '../src/types'
 import { computeVehicleReminders, type ReminderInputs } from '../src/domain/reminderEngine'
-import { bandFromStatus, knownReminders, vehicleVerdict, BAND_LABELS } from '../src/domain/verdict'
+import { bandFromStatus, knownReminders, vehicleVerdict, BAND_LABELS, compactSign, garageTally, comingUp } from '../src/domain/verdict'
 import { localDateISO } from '../src/domain/format'
 
 // Verdicts are built from REAL engine output (computeVehicleReminders) rather
@@ -356,5 +356,50 @@ describe('vehicleVerdict — never-logged items are Unknown, not urgent', () => 
     const v = verdictFor([unknown()], inputsAt('2026-07-01', 44800))
     expect(v.band).toBe('not-set-up')
     expect(v.unknownCount).toBe(0)
+  })
+})
+
+describe('Home helpers', () => {
+  const at = inputsAt('2026-10-14', 50000)
+  // Oil every 5,000 mi from 40,000 -> 5,000 mi overdue (book soon: not safety).
+  const oil = () => makeRule({ category: 'oil-change', label: 'Engine oil & filter' })
+  // Brakes every 10,000 mi from 30,000 -> overdue and safety -> fix now.
+  const brakes = () => makeRule({ category: 'brake-inspection', label: 'Brake inspection', customIntervalMiles: 10000, lastDoneMiles: 30000 })
+  // Rotation every 15,000 from 36,000 -> due at 51,000: 1,000 mi out -> watch-next.
+  const rotation = () => makeRule({ category: 'tire-rotation', label: 'Tire rotation', customIntervalMiles: 15000, lastDoneMiles: 36000 })
+
+  it('compactSign names the single item behind a fix-now sign and lists the rest', () => {
+    const sign = compactSign(verdictFor([brakes(), oil()], at))
+    expect(sign.headline).toBe('Brake inspection is overdue')
+    expect(sign.also).toEqual({ text: 'Also: Engine oil & filter, book soon', band: 'book-soon' })
+  })
+
+  it('compactSign keeps the counted headline when several items share the band', () => {
+    const sign = compactSign(verdictFor([oil(), makeRule({ category: 'cabin-air-filter', label: 'Cabin air filter', customIntervalMiles: 5000 })], at))
+    expect(sign.headline).toBe('2 things to book soon')
+    expect(sign.also?.text).toBe('Engine oil & filter and cabin air filter')
+  })
+
+  it('compactSign on a car with no history says so', () => {
+    const sign = compactSign(verdictFor([makeRule({ lastDoneDate: null, lastDoneMiles: null })], at))
+    expect(sign.headline).toBe('Not set up yet')
+    expect(sign.also?.band).toBe('not-set-up')
+  })
+
+  it('garageTally counts every fix-now and book-soon item plus open concerns', () => {
+    const reminders = computeVehicleReminders([brakes(), oil()], [], at)
+    const tally = garageTally([
+      { reminders, openConcerns: [] },
+      { reminders: computeVehicleReminders([oil()], [], at), openConcerns: [{ title: 'Squeal', band: 'book-soon', createdDate: '2026-10-01' }] },
+    ])
+    expect(tally).toEqual({ fixNow: 1, bookSoon: 3 })
+  })
+
+  it('comingUp lists only can-coast items, across cars', () => {
+    const items = comingUp([
+      { vehicleId: 'a', vehicleName: 'F-150', reminders: computeVehicleReminders([brakes(), rotation()], [], at) },
+      { vehicleId: 'b', vehicleName: 'Rogue', reminders: computeVehicleReminders([oil()], [], at) },
+    ])
+    expect(items.map((i) => `${i.vehicleName}: ${i.label}`)).toEqual(['F-150: Tire rotation'])
   })
 })

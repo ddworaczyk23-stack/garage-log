@@ -1,20 +1,30 @@
+import { useState } from 'preact/hooks'
 import { useQuery } from '../db/useQuery'
 import { getGarageSummary, type VehicleSummary } from '../db/summary'
 import { formatMiles, formatMoney, localDateISO } from '../domain/format'
-import { hasRealData, vehicleVerdict } from '../domain/verdict'
-import { vehicleLabel } from '../domain/vehicle'
+import {
+  compactSign,
+  comingUp,
+  garageTally,
+  hasRealData,
+  vehicleVerdict,
+  VERDICT_BAND_LABELS,
+  type VerdictBand,
+} from '../domain/verdict'
+import { vehicleBody, vehicleLabel } from '../domain/vehicle'
 import { PageHeader, Skel } from '../components/ui'
-import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
+import { BAND_CLASS } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
 import { CalendarExport } from '../components/CalendarExport'
-import { ArrowRightIcon, ChevronRightIcon } from '../components/icons'
+import { ChevronRightIcon, VehicleIcon } from '../components/icons'
+import type { Vehicle } from '../types'
 
-// Home dashboard: Coast "Today" (Stage 1, design/COAST-PLAN.md). One verdict
-// per vehicle — a road-sign panel with a single plain-English sentence — with
-// the urgency ruler and the "can coast" deferred list beneath it. Vehicles
-// stay ranked most-urgent-first by compareVehicleUrgency (db/summary); the
-// verdict layer only re-narrates each vehicle's engine output, it never
-// re-decides anything. Comparison table + utility tiles remain below.
+// Home: one line for the whole garage, three quick buttons, then one small
+// card per vehicle (a one-line road sign, a label-free urgency ruler, one line
+// for what else is behind it) and a "Coming up" list of can-coast items
+// across every car. The full verdict lives on the car page, one tap away.
+// Vehicles stay ranked most-urgent-first by compareVehicleUrgency
+// (db/summary); this page only re-narrates the engine, it never re-decides.
 export function Dashboard() {
   const summary = useQuery(getGarageSummary)
 
@@ -55,10 +65,17 @@ export function Dashboard() {
   }
 
   const yearSpend = summary.vehicles.reduce((sum, v) => sum + v.spendThisYear, 0)
+  const tally = garageTally(summary.vehicles)
+  const upcoming = comingUp(
+    summary.vehicles.map((s) => ({ vehicleId: s.vehicle.id, vehicleName: vehicleLabel(s.vehicle), reminders: s.reminders })),
+  )
 
   return (
     <section class="page gb">
-      <PageHeader title="Your Garage" />
+      <PageHeader title="Your Garage">
+        <GarageLine fixNow={tally.fixNow} bookSoon={tally.bookSoon} hasHistory={hasHistory} />
+        <QuickActions vehicles={summary.vehicles.map((s) => s.vehicle)} />
+      </PageHeader>
 
       {/* Stacks on mobile; a 2-up board on desktop (see .gb-today-grid, R2). */}
       <div class="gb-today-grid">
@@ -66,6 +83,24 @@ export function Dashboard() {
           <TodayCard key={s.vehicle.id} summary={s} year={summary.year} />
         ))}
       </div>
+
+      {upcoming.length > 0 && (
+        <Reveal>
+          <section class="card hm-next" aria-labelledby="hm-next-title">
+            <h3 class="hm-next-title" id="hm-next-title">Coming up</h3>
+            {upcoming.map((item) => (
+              <a key={`${item.vehicleId}:${item.label}`} class="hm-next-row" href={`#/vehicle/${item.vehicleId}`}>
+                <span class="cv-coast-dot" aria-hidden="true" />
+                <span class="hm-next-main">
+                  <b>{item.label}</b>
+                  <span class="muted small">{item.vehicleName}</span>
+                </span>
+                <span class="hm-next-win">{item.window}</span>
+              </a>
+            ))}
+          </section>
+        </Reveal>
+      )}
 
       {hasHistory && (
         <Reveal>
@@ -92,68 +127,140 @@ export function Dashboard() {
   )
 }
 
+/** The whole garage in one line, under the page title. */
+function GarageLine({ fixNow, bookSoon, hasHistory }: { fixNow: number; bookSoon: number; hasHistory: boolean }) {
+  if (!hasHistory) return <p class="hm-line">Log a service to get your first verdict.</p>
+  if (fixNow + bookSoon === 0) return <p class="hm-line">Nothing due on what you’ve logged.</p>
+  return (
+    <p class="hm-line">
+      {fixNow > 0 && (
+        <span><i class="hm-sq is-fix-now" aria-hidden="true" /><b>{fixNow}</b> to fix now</span>
+      )}
+      {bookSoon > 0 && (
+        <span><i class="hm-sq is-book-soon" aria-hidden="true" /><b>{bookSoon}</b> to book soon</span>
+      )}
+    </p>
+  )
+}
+
+type QuickLog = 'service' | 'odometer'
+
+/** Three thumb-sized shortcuts. With more than one car, the two log buttons
+ * first ask which car; the Check flow already has its own car picker. */
+function QuickActions({ vehicles }: { vehicles: Vehicle[] }) {
+  const [pick, setPick] = useState<QuickLog | null>(null)
+
+  function go(form: QuickLog, vehicleId: string) {
+    try {
+      sessionStorage.setItem('gl_open_log', `${vehicleId}:${form}`)
+    } catch {
+      // No storage: the car page still opens, just without the form.
+    }
+    window.location.hash = `#/vehicle/${vehicleId}`
+  }
+
+  function tap(form: QuickLog) {
+    if (vehicles.length === 1) go(form, vehicles[0].id)
+    else setPick((p) => (p === form ? null : form))
+  }
+
+  return (
+    <>
+      <div class="hm-quick">
+        <button type="button" class={pick === 'service' ? 'is-on' : ''} aria-expanded={vehicles.length > 1 ? pick === 'service' : undefined} onClick={() => tap('service')}>
+          <WrenchIcon />Log service
+        </button>
+        <button type="button" class={pick === 'odometer' ? 'is-on' : ''} aria-expanded={vehicles.length > 1 ? pick === 'odometer' : undefined} onClick={() => tap('odometer')}>
+          <GaugeIcon />Update miles
+        </button>
+        <a href="#/check">
+          <AlertIcon />Check a noise
+        </a>
+      </div>
+      {pick && (
+        <div class="hm-pick" role="group" aria-label="Which car?">
+          <span class="hm-pick-q">Which car?</span>
+          {vehicles.map((v) => (
+            <button key={v.id} type="button" onClick={() => go(pick, v.id)}>{vehicleLabel(v)}</button>
+          ))}
+        </div>
+      )}
+    </>
+  )
+}
+
 function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number }) {
   const v = s.vehicle
   const verdict = vehicleVerdict(s.reminders, s.openConcerns, localDateISO(new Date()))
-  const coastShown = verdict.coastItems.slice(0, Math.max(0, 4 - verdict.actionItems.length))
-  const showActionItems = verdict.actionItems.length !== 1
-  const cardVerdict = verdict.band === 'not-set-up'
-    ? { ...verdict, sentence: 'Log your last oil change to start.' }
-    : verdict
+  const sign = compactSign(verdict)
 
   return (
     <Reveal class="cv-card">
-      <a class="card gb-tile" href={`#/vehicle/${v.id}`}>
-        {/* Groups the variable-length content (verdict sentence, optional ruler
-            note, coast list) so it can flex-grow on the desktop 2-up grid —
-            that pins the footer link to the same bottom edge on both cards
-            regardless of which vehicle's verdict text is longer. */}
-        <div class="cv-body">
-          <div class="cv-veh-row">
+      <a class="card gb-tile hm-car" href={`#/vehicle/${v.id}`}>
+        <div class="hm-car-row">
+          <span class="vehicle-emoji" aria-hidden="true"><VehicleIcon body={vehicleBody(v)} /></span>
+          <span class="hm-car-id">
             <h3 class="cv-veh-name">{vehicleLabel(v)}</h3>
             <span class="cv-veh-meta">
               {s.mileage ? `${s.mileage.projected ? '~' : ''}${formatMiles(s.mileage.miles)}` : '— mi'}
               {s.spendThisYear > 0 && <> · {formatMoney(s.spendThisYear)} in {year}</>}
             </span>
-          </div>
-          <VerdictPanel verdict={cardVerdict} headingLevel="h4" />
-          <UrgencyRuler verdict={verdict} />
-
-          {/* The items behind the headline come first, so the list explains
-              the sign above it; "can coast" items follow under their label. */}
-          {(showActionItems && verdict.actionItems.length > 0 || coastShown.length > 0) && (
-            <div class="cv-coast-list">
-              {showActionItems && verdict.actionItems.map((item) => (
-                <div key={item.label} class={`cv-coast-item is-${item.band}`}>
-                  <span class="cv-coast-dot" />
-                  <span>
-                    <b>{item.label}</b>
-                    <span class="cv-win">{item.window}</span>
-                  </span>
-                </div>
-              ))}
-              {coastShown.length > 0 && showActionItems && verdict.actionItems.length > 0 && (
-                <div class="cv-coast-label">Can coast</div>
-              )}
-              {coastShown.map((item) => (
-                <div key={item.label} class="cv-coast-item">
-                  <span class="cv-coast-dot" />
-                  <span>
-                    <b>{item.label}</b>
-                    <span class="cv-win">{item.window}</span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
+          </span>
+          <ChevronRightIcon />
         </div>
-
-        <span class="open-link cv-open-row">
-          {/* A not-set-up card's next step is setup, not reading a record. */}
-          {verdict.band === 'not-set-up' ? 'Set it up' : 'Open'}
-          <ArrowRightIcon />
-        </span>
+        <div class={`cv-panel hm-sign ${BAND_CLASS[verdict.band]}`}>
+          <div class="cv-inner">
+            <h4 class="hm-sign-head">{sign.headline}</h4>
+            <span class="hm-sign-tag">{VERDICT_BAND_LABELS[verdict.band]}</span>
+          </div>
+        </div>
+        {verdict.rulerPin != null && <MiniRuler pin={verdict.rulerPin} band={verdict.band} />}
+        {sign.also && (
+          <p class="hm-also">
+            <span class={`cv-coast-dot is-${sign.also.band}`} aria-hidden="true" />
+            {sign.also.text}
+          </p>
+        )}
       </a>
     </Reveal>
+  )
+}
+
+const ZONES = ['fix-now', 'book-soon', 'coast', 'all-clear'] as const
+
+/** The urgency ruler without its labels — the sign right above names the band. */
+function MiniRuler({ pin, band }: { pin: number; band: VerdictBand }) {
+  return (
+    <div class="hm-ruler" role="img" aria-label={`Urgency: ${VERDICT_BAND_LABELS[band]}`}>
+      {ZONES.map((z) => <i key={z} class={BAND_CLASS[z]} />)}
+      <span class="hm-ruler-pin" style={`left:${pin}%`} />
+    </div>
+  )
+}
+
+function WrenchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18l3 3 6.3-6.3a4 4 0 0 0 5.4-5.4l-2.6 2.6-2.4-.6-.6-2.4z" />
+    </svg>
+  )
+}
+
+function GaugeIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+      <path d="M4 16a8 8 0 1 1 16 0" />
+      <path d="M12 16l4-5" />
+      <circle cx="12" cy="16" r="1.2" fill="currentColor" />
+    </svg>
+  )
+}
+
+function AlertIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.5v5.5M12 16.3v.2" />
+    </svg>
   )
 }

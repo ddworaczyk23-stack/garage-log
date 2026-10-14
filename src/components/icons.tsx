@@ -1,14 +1,36 @@
 import type { DocFileType } from '../domain/documents'
+import type { VehicleBody } from '../domain/vehicle'
 
 type IconProps = { class?: string }
 
-export function VehicleIcon({ class: className = '' }: IconProps) {
+const WHEELS = (
+  <>
+    <circle cx="6.8" cy="16.5" r="2" />
+    <circle cx="17.2" cy="16.5" r="2" />
+  </>
+)
+
+/** Side-view vehicle in the app's thin-line style: a sedan by default, or a
+ * pickup / SUV so each car in the garage reads as itself (vehicleBody()). */
+export function VehicleIcon({ class: className = '', body = 'car' }: IconProps & { body?: VehicleBody }) {
   return (
-    <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
-      <path d="M4 14.5v-2.2l1.7-4.1A2 2 0 0 1 7.6 7h8.8a2 2 0 0 1 1.9 1.2l1.7 4.1v2.2" />
-      <path d="M3 14.5h18v3H3zM6 17.5v1.8M18 17.5v1.8M7 11.5h10" />
-      <circle cx="7" cy="15.8" r=".8" fill="currentColor" stroke="none" />
-      <circle cx="17" cy="15.8" r=".8" fill="currentColor" stroke="none" />
+    <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <g transform="translate(0 -0.6)">
+        {body === 'pickup' ? (
+          <>
+            <path d="M4.4 16.5H3a1 1 0 0 1-1-1v-2.6a1 1 0 0 1 .8-1l2.7-.6 1.7-3.2a1 1 0 0 1 .9-.6h4.1a1 1 0 0 1 1 1V12h7.3a1 1 0 0 1 1 1v2.5a1 1 0 0 1-1 1h-1.3M9.2 16.5h5.6" />
+            <path d="M13.4 12H6" />
+          </>
+        ) : body === 'suv' ? (
+          <>
+            <path d="M4.4 16.5H3a1 1 0 0 1-1-1v-2.7a1 1 0 0 1 .7-1l1.6-.5 2.1-3.6a1.5 1.5 0 0 1 1.3-.7H19a1.5 1.5 0 0 1 1.5 1.3l.5 3.6v3.6a1 1 0 0 1-1 1h-1.2M9.2 16.5h5.6" />
+            <path d="M4.3 11.3H21" />
+          </>
+        ) : (
+          <path d="M4.4 16.5H3a1 1 0 0 1-1-1v-2.4a1 1 0 0 1 .7-1l2.3-.7 2.2-2.6a2 2 0 0 1 1.5-.7h4.6a2 2 0 0 1 1.5.7l2.4 2.7 3.1.7a1 1 0 0 1 .7 1v2.3a1 1 0 0 1-1 1h-1.4M9.2 16.5h5.6" />
+        )}
+        {WHEELS}
+      </g>
     </svg>
   )
 }
