@@ -11,7 +11,7 @@ import {
   VERDICT_BAND_LABELS,
   type VerdictBand,
 } from '../domain/verdict'
-import { vehicleLabel } from '../domain/vehicle'
+import { vehicleBody, vehicleLabel } from '../domain/vehicle'
 import { PageHeader, Skel } from '../components/ui'
 import { BAND_CLASS } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
@@ -198,7 +198,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
     <Reveal class="cv-card">
       <a class="card gb-tile hm-car" href={`#/vehicle/${v.id}`}>
         <div class="hm-car-row">
-          <span class="vehicle-emoji" aria-hidden="true"><VehicleIcon /></span>
+          <span class="vehicle-emoji" aria-hidden="true"><VehicleIcon body={vehicleBody(v)} /></span>
           <span class="hm-car-id">
             <h3 class="cv-veh-name">{vehicleLabel(v)}</h3>
             <span class="cv-veh-meta">

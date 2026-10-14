@@ -1,5 +1,5 @@
 import type { ComponentChildren } from 'preact'
-import { vehicleLabel } from '../domain/vehicle'
+import { vehicleBody, vehicleLabel } from '../domain/vehicle'
 import type { Vehicle } from '../types'
 import { ChevronRightIcon, VehicleIcon } from './icons'
 
@@ -18,7 +18,7 @@ export function VehicleRow({
   return (
     <a class="list-row vehicle-row" href={href}>
       <span class="vehicle-emoji" aria-hidden="true">
-        <VehicleIcon />
+        <VehicleIcon body={vehicleBody(v)} />
       </span>
       <span class="list-row-main">
         <span class="list-row-title">{vehicleLabel(v)}</span>
