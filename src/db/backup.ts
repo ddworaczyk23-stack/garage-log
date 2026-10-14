@@ -8,6 +8,11 @@ import {
   type SerializedDocument,
 } from '../domain/backup'
 import type { VehicleDocument } from '../types'
+import { CALENDAR_FEED_KEY } from './calendarFeed'
+
+/** appMeta records that belong to THIS device: never exported, and a restore
+ * keeps the device's current copy instead of wiping or replacing it. */
+const DEVICE_ONLY_META_KEYS = [CALENDAR_FEED_KEY]
 
 // The impure half of Milestone 8: reads every table, turns document blobs into
 // base64 for a single portable JSON file, and restores that file by wiping the
@@ -83,7 +88,9 @@ export async function exportGarage(): Promise<BackupFile> {
     odometerReadings: odometerReadings.sort(byId),
     events: events.sort(byId),
     reminderRules: reminderRules.sort(byId),
-    appMeta: appMeta.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)),
+    appMeta: appMeta
+      .filter((r) => !DEVICE_ONLY_META_KEYS.includes(r.key))
+      .sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0)),
     documents: serializedDocs,
     concerns: concerns.sort(byId),
   }
@@ -151,6 +158,7 @@ export async function importGarage(backup: BackupFile): Promise<void> {
       db.concerns,
     ],
     async () => {
+      const kept = (await db.appMeta.bulkGet(DEVICE_ONLY_META_KEYS)).filter((r) => !!r)
       await Promise.all([
         db.vehicles.clear(),
         db.odometerReadings.clear(),
@@ -164,7 +172,8 @@ export async function importGarage(backup: BackupFile): Promise<void> {
       await db.odometerReadings.bulkPut(backup.data.odometerReadings)
       await db.events.bulkPut(backup.data.events)
       await db.reminderRules.bulkPut(backup.data.reminderRules)
-      await db.appMeta.bulkPut(backup.data.appMeta)
+      await db.appMeta.bulkPut(backup.data.appMeta.filter((r) => !DEVICE_ONLY_META_KEYS.includes(r.key)))
+      await db.appMeta.bulkPut(kept)
       await db.documents.bulkPut(documents)
       // validateBackup normalizes v1 files to an empty array, but guard anyway —
       // bulkPut(undefined) would abort the whole restore transaction.

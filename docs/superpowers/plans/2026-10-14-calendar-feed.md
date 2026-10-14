@@ -1,6 +1,6 @@
 # Calendar options: live feed + copy as text
 
-Date: 2026-10-14. Status: planned, not started.
+Date: 2026-10-14. Status: phases 1-3 built (PR #32 + `feat/calendar-feed`); deploy + phase 4 pending.
 
 ## Goal
 
@@ -35,14 +35,15 @@ for this; the current per-car-per-day grouping in `domain/calendar.ts` stays.
 ## Architecture
 
 ```
-app (phone)  --PUT .ics-->  Cloudflare Worker + KV  <--GET .ics--  Apple / Google Calendar
+app (phone)  --PUT .ics-->  Cloudflare Worker + D1  <--GET .ics--  Apple / Google Calendar
 ```
 
 - The app builds the .ics on the device (as today) and uploads it.
 - The Worker only stores and serves bytes. It never sees the database, never
   holds the Dexie Cloud key, and does no maintenance logic.
-- Free tier is enough: KV allows 1,000 writes/day; we write only when the
-  file content changes.
+- Free tier is enough: D1 allows 100k row writes/day (KV, the first try,
+  allowed only 1,000, too easy to exhaust); we write only when the file
+  content changes, and writes are capped per IP per hour.
 
 ### Worker (`worker/calendar-feed/`, its own `wrangler.toml`)
 
@@ -64,7 +65,8 @@ app (phone)  --PUT .ics-->  Cloudflare Worker + KV  <--GET .ics--  Apple / Googl
   app works as today. Add to `.env.example`, `.env.local`, and the deploy
   workflow (repository secret).
 - **Feed state:** `{ feedId, writeKey, lastHash }` in `appMeta` (local-only,
-  never synced, not in backup). One feed per device. That is fine: the phone
+  never synced, kept out of backups; a restore keeps this device's copy so a
+  subscribed calendar never goes stale). One feed per device. That is fine: the phone
   is the device that subscribes and opens the app.
 - **New `src/db/calendarFeed.ts`:** `enableFeed()`, `pushFeed()`,
   `disableFeed()`. `pushFeed()` reuses `collectItems()` (move it out of

@@ -118,6 +118,19 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
     Verified on iPhone 2026-10-13 (open the .ics, tap "Add All").
   - `documents.ts`, `cost.ts`, `backup.ts`, `format.ts`, `vehicle.ts`,
     `vehicleIdentity.ts`, `importHistory.ts`, `practicalTiming.ts`.
+- **`src/db/calendarFeed.ts`** — live calendar feed. Uploads the .ics to the
+  Worker in `worker/calendar-feed/` (Cloudflare Worker + D1, stores bytes
+  only) so Apple/Google Calendar subscribe and get date changes by themselves.
+  Off unless `VITE_CALENDAR_FEED_URL` is set at build time. Credentials in
+  `appMeta['calendarFeed']` (local, device-only: never exported, and a restore
+  keeps the device's copy). Pushes on start, after data writes (5 s debounce),
+  and on return to foreground; skips if items unchanged. Push/enable/disable
+  run one at a time. Subscribed calendars drop alerts by default (iOS "Remove
+  Alerts", Google ignores VALARM), so the sheet tells the user how to keep them.
+  `db/calendarExport.ts` (`collectCalendarItems`) is the one item source for
+  the download, the text copy and the feed. Worker live at
+  `https://coast-calendar-feed.calendar-feed.workers.dev`; redeploy from
+  `worker/calendar-feed/` with `npx wrangler deploy` (David's Cloudflare login).
 - **`src/services/`** — `vinDecode.ts` (REAL NHTSA vPIC `decodevinvalues` call,
   no key). The onboarding "reference data" adapters that used to live here
   (`maintenanceProvider.ts`, mock-only) were removed — see git history.

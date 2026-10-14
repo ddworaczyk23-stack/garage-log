@@ -1,0 +1,13 @@
+# Coast calendar feed Worker. Deploy from this folder:
+#   npx wrangler login                                              (once)
+#   npx wrangler d1 migrations apply coast-calendar-feed --remote   (after a new migration)
+#   npx wrangler deploy
+name = "coast-calendar-feed"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "coast-calendar-feed"
+database_id = "5f77b93f-fe2b-49af-ae9d-20b04a75eb81"
+migrations_dir = "migrations"
