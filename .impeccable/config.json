@@ -1,0 +1,14 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-radius",
+        "value": "3px",
+        "createdAt": "2026-10-14T22:16:45.513Z",
+        "reason": "Claude: rounded ends of the 5px-tall sheet drag bar (.sheet-grab), a shape primitive, not a card or control"
+      }
+    ]
+  }
+}
