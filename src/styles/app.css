@@ -184,47 +184,16 @@ body {
   margin: 0;
 }
 
-/* ---------- Account / sync status strip (Dexie Cloud) ---------- */
-.account-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 6px 16px;
-  /* width:100% + max-width:700px + margin:0 auto caps and centers on wide
-     viewports while still filling the column on narrow ones. width:100% is
-     load-bearing: .app-shell is a column flex container, so .account-bar is
-     a flex item on the CROSS axis, and the auto side-margins here (needed
-     for desktop centering) disable the default stretch sizing per the
-     flexbox spec — without an explicit width the item falls back to sizing
-     from its own un-shrinkable content (its flex-shrink:0 button + text),
-     which is what was dragging the whole page (and the fixed bottom nav
-     along with it) wider at 200% text zoom. */
-  width: 100%;
-  max-width: 700px;
-  margin: 0 auto;
-  font-size: 0.75rem;
-  background: var(--frame);
-  color: var(--on-frame-muted);
-  border-bottom: 0.5px solid var(--frame-line);
-  box-shadow: 0 0 0 100vmax var(--frame);
-  clip-path: inset(0 -100vmax);
-  min-width: 0;
+/* ---------- Settings page ---------- */
+.settings-sync {
+  margin-bottom: 16px;
 }
-.account-status {
-  color: var(--on-frame-muted);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  /* Flex items default to min-width: auto, which floors shrinking at the
-     text's natural width and defeats the ellipsis above — confirmed causing
-     horizontal viewport overflow at 200% text zoom together with the
-     adjacent flex-shrink:0 button. min-width: 0 lets it actually truncate. */
-  min-width: 0;
+.settings-sync .list-row-title {
+  margin: 0;
 }
-.account-bar .btn-link {
-  flex-shrink: 0;
-  color: var(--on-frame-accent);
+.settings-sync .muted {
+  margin: 2px 0 4px;
+  overflow-wrap: anywhere;
 }
 
 .app-main {
@@ -4042,9 +4011,8 @@ a.list-row:hover {
 /* =========================================================================
    DESKTOP LAYER — left sidebar (responsive plan R1, design/COAST-RESPONSIVE-PLAN.md)
    ≥1024px only, so mobile/tablet are byte-for-byte unchanged. Pure CSS: the
-   same three chrome elements (header, bottom-nav, account-bar) are re-placed by
-   grid into a fixed left rail — brand at top, nav filling the middle, sync at
-   the foot — with the content column scrolling on its own. No DOM/JS change;
+   same chrome elements (header, bottom-nav) are re-placed by
+   grid into a fixed left rail — brand at top, nav filling the middle — with the content column scrolling on its own. No DOM/JS change;
    the ".bottom-nav" class name is a mobile-era misnomer here but kept to avoid
    rippling through Nav.tsx.
    ========================================================================= */
@@ -4052,11 +4020,10 @@ a.list-row:hover {
   .app-shell {
     display: grid;
     grid-template-columns: 248px minmax(0, 1fr);
-    grid-template-rows: auto 1fr auto;
+    grid-template-rows: auto 1fr;
     grid-template-areas:
-      'brand   main'
-      'nav     main'
-      'account main';
+      'brand main'
+      'nav   main';
     height: 100vh;
     height: 100dvh;
     overflow: hidden; /* the content column scrolls, not the page body */
@@ -4184,21 +4151,6 @@ a.list-row:hover {
   }
   .nav-check:hover .nav-check-disc {
     transform: none;
-  }
-
-  /* --- sync status (was the strip under the header) --- */
-  .account-bar {
-    grid-area: account;
-    max-width: none;
-    margin: 0;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    padding: 14px 18px 18px;
-    border-bottom: none;
-    border-right: 0.5px solid var(--frame-line);
-    box-shadow: none;
-    clip-path: none;
   }
 
   /* --- content column: scrolls independently; the fixed-nav bottom padding is
@@ -4588,7 +4540,6 @@ a.list-row:hover {
 @media print {
   /* Only the brief card prints — no app chrome, no buttons. */
   .app-header,
-  .account-bar,
   .bottom-nav,
   .sb-chrome {
     display: none !important;
@@ -4945,17 +4896,9 @@ a.list-row:hover {
 
 @media (min-width: 1024px) {
   .app-header,
-  .bottom-nav,
-  .account-bar {
+  .bottom-nav {
     background: var(--frame);
     border-right: 0;
-  }
-  .account-bar,
-  .account-status {
-    color: var(--on-frame-muted);
-  }
-  .account-bar .btn-link {
-    color: var(--on-frame-accent);
   }
   .nav-item:hover {
     background: rgba(255, 255, 255, 0.08);

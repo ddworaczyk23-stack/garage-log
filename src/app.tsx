@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks'
 import { Nav } from './components/Nav'
-import { AccountBar } from './components/AccountBar'
+import { Settings } from './pages/Settings'
 import { ErrorBoundary } from './components/ui'
 import { Dashboard } from './pages/Dashboard'
 import { Vehicles } from './pages/Vehicles'
@@ -36,6 +36,7 @@ import { ReminderDebug } from './pages/ReminderDebug'
 //   #/documents/<vehicleId> -> …pre-filtered to one vehicle
 //   #/costs                 -> Cost summary (per-category spend)
 //   #/import/<vehicleId>    -> Import past service history
+//   #/settings              -> Settings (sync account, links to Backup)
 //   #/backup                -> Backup & restore
 //   #/debug                 -> IndexedDB debug view
 function useHashRoute(): string {
@@ -71,6 +72,7 @@ export function App() {
   else if (route.startsWith('/import/'))
     page = <ImportHistory vehicleId={route.slice('/import/'.length)} />
   else if (route === '/backup') page = <Backup />
+  else if (route === '/settings') page = <Settings />
   else if (route === '/debug') page = <Debug />
   else if (route === '/template') page = <TemplateAdmin />
   else if (route === '/reminders-debug') page = <ReminderDebug />
@@ -91,7 +93,6 @@ export function App() {
         </svg>
         <h1 class="app-title">Coast</h1>
       </header>
-      <AccountBar />
       <main
         class={`app-main${route === '/' || route.startsWith('/vehicle/') ? ' app-main-wide' : ''}`}
       >

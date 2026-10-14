@@ -89,6 +89,9 @@ export function Backup() {
 
   return (
     <section class="page">
+      <a class="back-link" href="#/settings">
+        ‹ Settings
+      </a>
       <PageHeader eyebrow="Your data" title="Backup & restore">
         <p class="page-header-prose">
           Everything is stored only on this device. Export a backup before clearing
