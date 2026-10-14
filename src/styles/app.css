@@ -5025,6 +5025,29 @@ a.list-row:hover {
   border-color: var(--text);
   color: var(--bg);
 }
+/* Inside the navy title band the picker IS the title. */
+.page-title .vd-picker {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+}
+.page-title .vd-picker a {
+  color: var(--on-frame);
+  border-color: var(--frame-line);
+  background: transparent;
+}
+.page-title .vd-picker a.is-on {
+  background: var(--on-frame);
+  border-color: var(--on-frame);
+  color: var(--text);
+}
+.vd-masthead .page-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .vd-miles {
   display: flex;
   align-items: baseline;
@@ -5040,4 +5063,23 @@ a.list-row:hover {
 }
 .vd-miles .btn-link {
   margin-left: auto;
+}
+
+.vd-picker-menu {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 36px 8px 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 1px solid var(--frame-line);
+  border-radius: 10px;
+  background: transparent
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E")
+    no-repeat right 12px center;
+  color: var(--on-frame);
+  font: 600 16px var(--font-sans);
+}
+.vd-picker-menu option {
+  color: var(--text);
 }

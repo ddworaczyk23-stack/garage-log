@@ -278,7 +278,38 @@ export function VehicleDetail({ id }: Props) {
       <PageHeader
         title={
           <>
-            {vehicleLabel(vehicle)}
+            {garage && garage.length > 2 ? (
+              // 3+ cars: chips would not fit, so one menu.
+              <select
+                class="vd-picker-menu"
+                aria-label="Switch car"
+                value={id}
+                onChange={(e) => {
+                  location.hash = `#/vehicle/${(e.target as HTMLSelectElement).value}`
+                }}
+              >
+                {garage.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    {vehicleLabel(v)}
+                  </option>
+                ))}
+              </select>
+            ) : garage && garage.length === 2 ? (
+              <nav class="vd-picker" aria-label="Switch car">
+                {garage.map((v) => (
+                  <a
+                    key={v.id}
+                    href={`#/vehicle/${v.id}`}
+                    class={v.id === id ? 'is-on' : undefined}
+                    aria-current={v.id === id ? 'page' : undefined}
+                  >
+                    {vehicleLabel(v)}
+                  </a>
+                ))}
+              </nav>
+            ) : (
+              vehicleLabel(vehicle)
+            )}
             {!editingName && (
               <button
                 type="button"
@@ -317,20 +348,6 @@ export function VehicleDetail({ id }: Props) {
         )}
       </PageHeader>
 
-      {garage && garage.length > 1 && (
-        <nav class="vd-picker" aria-label="Switch car">
-          {garage.map((v) => (
-            <a
-              key={v.id}
-              href={`#/vehicle/${v.id}`}
-              class={v.id === id ? 'is-on' : undefined}
-              aria-current={v.id === id ? 'page' : undefined}
-            >
-              {vehicleLabel(v)}
-            </a>
-          ))}
-        </nav>
-      )}
       <div class="vd-miles">
         <span class="vd-miles-num">{mileage ? `${formatMiles(mileage.miles)}` : 'No mileage yet'}</span>
         {mileage?.isProjected && <span class="vd-miles-note">estimated</span>}
