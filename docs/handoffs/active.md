@@ -13,10 +13,14 @@ aggressively, every time.
 
 ## Open
 
-- **Saved problems everywhere + one shop brief.** Plan:
-  `docs/superpowers/plans/2026-10-14-concerns-and-brief.md` (from the
-  2026-10-14 15:42 design review, 28/40). Codex builds on
-  `fix/concerns-and-brief`, one PR, do not merge. Claude reviews.
+- **Saved problems everywhere + one shop brief — ready for Claude review.**
+  Plan: `docs/superpowers/plans/2026-10-14-concerns-and-brief.md` (from the
+  2026-10-14 15:42 design review, 28/40). Implemented on
+  `fix/concerns-and-brief`: Vehicles now merges open concerns into verdicts,
+  Check and the brief page share one complete brief view, vehicle pages expose
+  actionable saved problems with Undo, and non-safety red is removed. `npm
+  test` (403) and `npm run typecheck` pass; seeded 375px/390px concern flows
+  were verified and cleaned up. One PR only; do not merge. Claude reviews.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
