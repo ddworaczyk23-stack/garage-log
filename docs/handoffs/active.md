@@ -13,6 +13,11 @@ aggressively, every time.
 
 ## Open
 
+- **Saved problems everywhere + one shop brief.** Plan:
+  `docs/superpowers/plans/2026-10-14-concerns-and-brief.md` (from the
+  2026-10-14 15:42 design review, 28/40). Codex builds on
+  `fix/concerns-and-brief`, one PR, do not merge. Claude reviews.
+
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
