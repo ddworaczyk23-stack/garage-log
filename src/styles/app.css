@@ -5242,7 +5242,11 @@ dialog.sheet.is-in {
 }
 dialog.sheet::backdrop {
   background: rgba(15, 42, 68, 0.45);
-  animation: sheetFade 0.2s var(--ease-paper);
+  opacity: 0;
+  transition: opacity 0.28s var(--ease-paper);
+}
+dialog.sheet.is-in::backdrop {
+  opacity: 1;
 }
 .sheet-panel {
   flex: 1;
@@ -5374,11 +5378,6 @@ dialog.sheet::backdrop {
   padding-top: 10px;
   border-top: 0.5px solid var(--border);
 }
-@keyframes sheetFade {
-  from {
-    opacity: 0;
-  }
-}
 @media (min-width: 1024px) {
   dialog.sheet {
     inset: 0;
@@ -5405,6 +5404,6 @@ dialog.sheet::backdrop {
     transition: none;
   }
   dialog.sheet::backdrop {
-    animation: none;
+    transition: none;
   }
 }
