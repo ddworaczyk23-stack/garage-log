@@ -127,6 +127,8 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   and on return to foreground; skips if items unchanged. Push/enable/disable
   run one at a time. Subscribed calendars drop alerts by default (iOS "Remove
   Alerts", Google ignores VALARM), so the sheet tells the user how to keep them.
+  Verified on iPhone 2026-10-14 (Apple subscription updated by itself after a
+  logged service).
   `db/calendarExport.ts` (`collectCalendarItems`) is the one item source for
   the download, the text copy and the feed. Worker live at
   `https://coast-calendar-feed.calendar-feed.workers.dev`; redeploy from

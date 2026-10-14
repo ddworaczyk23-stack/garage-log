@@ -13,17 +13,13 @@ aggressively, every time.
 
 ## Open
 
-- **Calendar options (2026-10-14):** plan
-  `docs/superpowers/plans/2026-10-14-calendar-feed.md`.
-  - Phase 1 merged (PR #32). Phases 2-3 + review fixes: PR #33 (base
-    `main`), waiting on David's merge. Repo secret `VITE_CALENDAR_FEED_URL`
-    is set.
-  - **Worker live:** `https://coast-calendar-feed.calendar-feed.workers.dev`,
-    storage D1 `coast-calendar-feed` (exact 60 writes/IP/hour cap). The old
-    KV namespace `FEEDS` (c3100bd2…) is unused; delete only with David's OK.
-  - **Next:** after #33 merges and deploys, Phase 4: subscribe on David's
-    iPhone (turn off Remove Alerts) + Google Calendar, log a service, confirm
-    the event moves.
+- **Calendar feed: confirm Google (2026-10-15).** Everything else shipped
+  (PRs #32, #33) and was verified on David's iPhone 2026-10-14: logging a
+  brake inspection moved the Apple Calendar event by itself. David added the
+  feed to Google Calendar by URL on 2026-10-14; Google refreshes about once a
+  day. Ask him whether the truck's brake inspection shows May 27, 2027 there.
+  If yes, delete this entry. If not, check the feed was added as "From URL"
+  (not imported) and that the calendar is turned on in the Google app.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
