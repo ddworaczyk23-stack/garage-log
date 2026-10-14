@@ -250,7 +250,8 @@ function sentence(band: SignalBand, top: ComputedReminder | null, next: Computed
   }
   if (band === 'book-soon' && top) {
     const when = windowText(top)
-    const extra = next && itemBand(next) === 'book-soon' ? ' One more is close behind.' : ''
+    // No "one more is close behind": the next jobs are listed right below.
+    const extra = ''
     if (top.status === 'overdue') {
       return `${top.rule.label} is ${overdueText(top)}. It's routine, so book it when it suits you.${extra}`
     }
