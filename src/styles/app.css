@@ -3217,6 +3217,9 @@ a.list-row:hover {
  * pages (Costs, Backup), with the context that makes them meaningful. */
 /* Rounded button that sits on the navy title band (e.g. "+ Add a car"). */
 .btn.btn-on-frame {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 9px 14px;
   min-height: 40px;
   border: 1px solid var(--frame-line);
