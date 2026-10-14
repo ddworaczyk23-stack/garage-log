@@ -100,20 +100,21 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
         </div>
       </div>
 
-      <p class="cost-vehicle-summary">
-        <span>{formatMoney(breakdown.total)}</span> spent {rangeLabel}:{' '}
-        <span>{formatMoney(breakdown.maintenanceTotal)}</span> on maintenance and{' '}
-        <span>{formatMoney(breakdown.repairTotal)}</span> on repairs.
-      </p>
-
       {breakdown.byCategory.length === 0 ? (
         <p class="muted small cost-empty">No costs logged {rangeLabel}.</p>
       ) : (
-        <ul class="cost-cat-list">
-          {breakdown.byCategory.map((c) => (
-            <CategoryRow key={c.category} cost={c} />
-          ))}
-        </ul>
+        <>
+          <p class="cost-vehicle-summary">
+            <span>{formatMoney(breakdown.total)}</span> spent {rangeLabel}:{' '}
+            <span>{formatMoney(breakdown.maintenanceTotal)}</span> on maintenance and{' '}
+            <span>{formatMoney(breakdown.repairTotal)}</span> on repairs.
+          </p>
+          <ul class="cost-cat-list">
+            {breakdown.byCategory.map((c) => (
+              <CategoryRow key={c.category} cost={c} />
+            ))}
+          </ul>
+        </>
       )}
 
       {summary.costPerMile != null && summary.milesTracked != null && (

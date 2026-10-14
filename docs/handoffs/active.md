@@ -13,12 +13,10 @@ aggressively, every time.
 
 ## Open
 
-- **Consistency round — ready for Claude review.** Plan:
-  `docs/superpowers/plans/2026-10-14-consistency-round.md`. The implementation
-  is on `design/consistency-round`: navy mobile sync bar, shared chevrons and
-  disclosures, copy/layout cleanup, and 375/390px route checks are complete.
-  `npm test` (402) and `npm run typecheck` pass. Next: Claude reviews the one
-  PR and re-runs the design review; do not merge until David approves.
+- **Consistency round: reviewed, waiting on David.** PR #20 on
+  `design/consistency-round`. Claude review done: all plan items in, plus the
+  missed $0 Costs fix. Next: merge when David says "merge 20", then re-run
+  the design review on the live site.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
