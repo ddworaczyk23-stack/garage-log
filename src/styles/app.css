@@ -4732,9 +4732,19 @@ a.list-row:hover {
 }
 .cal-export-sheet .btn {
   width: 100%;
+  text-align: center;
 }
 .cal-export-sheet p {
   margin: -4px 0 0;
+}
+.cal-export-live,
+.cal-export-google {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.cal-export-sheet .eyebrow {
+  margin: 4px 0 0;
 }
 
 /* =========================================================================

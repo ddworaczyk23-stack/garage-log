@@ -1,8 +1,11 @@
 import { useState } from 'preact/hooks'
 import { collectCalendarItems } from '../db/calendarExport'
+import { db } from '../db/db'
+import { disableFeed, enableFeed, feedConfigured, feedLinks, type FeedState } from '../db/calendarFeed'
+import { useQuery } from '../db/useQuery'
 import { buildCalendar, calendarText, type CalendarItem } from '../domain/calendar'
 import { formatShortDate, localDateISO } from '../domain/format'
-import { InfoTip } from './ui'
+import { ConfirmButton, InfoTip } from './ui'
 
 // "Add to Calendar": exports upcoming due dates (from the projected mileage)
 // as an .ics file so the phone's Calendar app delivers the reminders, with no
@@ -34,6 +37,10 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
   const [open, setOpen] = useState(false)
   // undefined = loading, null = failed to load
   const [loaded, setLoaded] = useState<Loaded | null | undefined>(undefined)
+  const [feedBusy, setFeedBusy] = useState(false)
+  const [feedError, setFeedError] = useState<string | null>(null)
+  const [showGoogle, setShowGoogle] = useState(false)
+  const feed = useQuery(async () => ((await db.appMeta.get('calendarFeed'))?.value as FeedState | undefined) ?? null)
 
   async function openSheet() {
     setStatus(null)
@@ -49,6 +56,39 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
 
   function close() {
     setOpen(false)
+    setShowGoogle(false)
+    setFeedError(null)
+  }
+
+  async function turnOnFeed(): Promise<FeedState | null> {
+    setFeedBusy(true)
+    setFeedError(null)
+    try {
+      return await enableFeed()
+    } catch {
+      setFeedError("Couldn't reach the calendar server. Check your connection and try again.")
+      return null
+    } finally {
+      setFeedBusy(false)
+    }
+  }
+
+  async function subscribeApple() {
+    const s = await turnOnFeed()
+    if (s) location.href = feedLinks(s).webcal
+  }
+
+  async function subscribeGoogle() {
+    if (await turnOnFeed()) setShowGoogle(true)
+  }
+
+  async function copyFeedLink(link: string) {
+    try {
+      await navigator.clipboard.writeText(link)
+      setFeedError('Link copied.')
+    } catch {
+      setFeedError('Press and hold the link to copy it.')
+    }
   }
 
   function exportCalendar(l: Loaded) {
@@ -118,6 +158,62 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
               <h3 id="calendar-export-title" class="modal-title">Add reminders to Calendar</h3>
               <button type="button" class="modal-close" aria-label="Close" onClick={close}>✕</button>
             </div>
+            {feedConfigured() && feed !== undefined && (
+              <div class="cal-export-live">
+                <p class="eyebrow">Live calendar · updates itself</p>
+                {!feed && (
+                  <p class="muted small">
+                    Shares car names, services and due dates through a private link. Covers both cars.
+                  </p>
+                )}
+                <button type="button" class="btn" onClick={subscribeApple} disabled={feedBusy}>
+                  {feedBusy ? 'Connecting…' : 'Apple Calendar'}
+                </button>
+                <button type="button" class="btn" onClick={subscribeGoogle} disabled={feedBusy}>
+                  Google Calendar
+                </button>
+                {showGoogle && feed && (
+                  <div class="cal-export-google">
+                    <p class="muted small">
+                      In a browser, open Google Calendar, paste this link under "From URL". Updates take up to a day.
+                    </p>
+                    <input type="text" readOnly value={feedLinks(feed).https} onFocus={(e) => e.currentTarget.select()} />
+                    <button type="button" class="btn btn-secondary" onClick={() => copyFeedLink(feedLinks(feed).https)}>
+                      Copy link
+                    </button>
+                    <a
+                      class="btn btn-secondary"
+                      href="https://calendar.google.com/calendar/r/settings/addbyurl"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Open Google Calendar
+                    </a>
+                  </div>
+                )}
+                {feedError && (
+                  <p class="muted small" role="status">
+                    {feedError}
+                  </p>
+                )}
+                {feed && (
+                  <p class="muted small">
+                    On{feed.lastPush ? ` · updated ${formatShortDate(localDateISO(new Date(feed.lastPush)))}` : ''}.{' '}
+                    <ConfirmButton
+                      label="Stop sharing"
+                      confirmLabel="Stop sharing"
+                      busyLabel="Stopping…"
+                      onConfirm={async () => {
+                        await disableFeed()
+                        setShowGoogle(false)
+                        setFeedError('Stopped. Also remove the calendar from your phone.')
+                      }}
+                    />
+                  </p>
+                )}
+                <p class="eyebrow">One-time copy</p>
+              </div>
+            )}
             {loaded === undefined && <p class="muted small">Preparing…</p>}
             {loaded === null && <p class="muted small">Could not load your reminders. Try again.</p>}
             {loaded && !loaded.items.length && (
@@ -127,10 +223,10 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
             )}
             {loaded && loaded.items.length > 0 && (
               <>
-                <button type="button" class="btn" onClick={() => exportCalendar(loaded)}>
+                <button type="button" class="btn btn-secondary" onClick={() => exportCalendar(loaded)}>
                   Download file
                 </button>
-                <p class="muted small">One-time copy. Won't update.</p>
+                <p class="muted small">Won't update when dates change.</p>
                 <button type="button" class="btn btn-secondary" onClick={() => copyCalendarText(loaded)}>
                   Copy as text
                 </button>

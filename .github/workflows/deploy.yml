@@ -38,6 +38,9 @@ jobs:
           # If the secret is unset the build still succeeds — just local-only,
           # no sync — since .env.local is not committed.
           VITE_DEXIE_CLOUD_URL: ${{ secrets.VITE_DEXIE_CLOUD_URL }}
+          # Live calendar feed Worker URL (worker/calendar-feed). Unset = the
+          # Apple/Google subscribe options are hidden.
+          VITE_CALENDAR_FEED_URL: ${{ secrets.VITE_CALENDAR_FEED_URL }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

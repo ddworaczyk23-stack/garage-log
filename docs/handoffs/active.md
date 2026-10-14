@@ -13,22 +13,19 @@ aggressively, every time.
 
 ## Open
 
-- **Calendar options (planned 2026-10-14, not started):** live subscription
-  feed for Apple + Google Calendar (Cloudflare Worker + KV), plus copy/share
-  as text. Plan with decisions and 4 phases:
-  `docs/superpowers/plans/2026-10-14-calendar-feed.md`. Phase 1 needs no
-  server. Phase 2 needs David's Cloudflare login.
-  - **Phase 1 implemented on `feat/calendar-text` (2026-10-14):**
-    `collectCalendarItems()` is now reusable outside `CalendarExport`,
-    `calendarText()` is pure and unit-tested, and the action opens a sheet
-    with Download file (one-time copy) plus Copy as text (native share,
-    clipboard fallback). `npm test` (405), `npm run typecheck`, and
-    `npm run build` are green. The local preview had no vehicle/history, so
-    its conditional Dashboard and VehicleDetail Calendar actions could not be
-    visually opened without adding test records. Check the sheet against an
-    existing vehicle with logged history before merging, then open the PR; do
-    not merge. Next after Phase 1 is Phase 2 (Cloudflare Worker), which needs
-    David's Cloudflare login.
+- **Calendar options (2026-10-14):** plan
+  `docs/superpowers/plans/2026-10-14-calendar-feed.md`.
+  - Phase 1 (sheet + copy as text): PR #32, branch `feat/calendar-text`.
+    Claude fixed iOS share (items load on sheet open) and checked the sheet
+    with test data on Dashboard + VehicleDetail.
+  - Phases 2-3 (Worker + live feed in app): built on `feat/calendar-feed`
+    (stacked on `feat/calendar-text`). 415 tests green; round trip checked
+    against a local copy of the Worker (logging a service moved the feed date).
+  - **Blocked on David:** Cloudflare account + `npx wrangler login`. Then in
+    `worker/calendar-feed/`: `npx wrangler kv namespace create FEEDS`, paste
+    the id into `wrangler.toml`, `npx wrangler deploy`. Then add repo secret
+    `VITE_CALENDAR_FEED_URL` = the workers.dev URL. Then Phase 4 (iPhone +
+    Google subscribe test).
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push

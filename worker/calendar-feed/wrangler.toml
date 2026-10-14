@@ -1,0 +1,11 @@
+# Coast calendar feed Worker. Deploy from this folder:
+#   npx wrangler login                          (once)
+#   npx wrangler kv namespace create FEEDS      (once; paste the id below)
+#   npx wrangler deploy
+name = "coast-calendar-feed"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[[kv_namespaces]]
+binding = "FEEDS"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"

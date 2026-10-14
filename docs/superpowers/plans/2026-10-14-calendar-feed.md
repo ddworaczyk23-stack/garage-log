@@ -1,6 +1,6 @@
 # Calendar options: live feed + copy as text
 
-Date: 2026-10-14. Status: planned, not started.
+Date: 2026-10-14. Status: phases 1-3 built (PR #32 + `feat/calendar-feed`); deploy + phase 4 pending.
 
 ## Goal
 
@@ -64,7 +64,8 @@ app (phone)  --PUT .ics-->  Cloudflare Worker + KV  <--GET .ics--  Apple / Googl
   app works as today. Add to `.env.example`, `.env.local`, and the deploy
   workflow (repository secret).
 - **Feed state:** `{ feedId, writeKey, lastHash }` in `appMeta` (local-only,
-  never synced, not in backup). One feed per device. That is fine: the phone
+  never synced; it DOES ride along in backups, so a restore keeps the same
+  subscription link working). One feed per device. That is fine: the phone
   is the device that subscribes and opens the app.
 - **New `src/db/calendarFeed.ts`:** `enableFeed()`, `pushFeed()`,
   `disableFeed()`. `pushFeed()` reuses `collectItems()` (move it out of

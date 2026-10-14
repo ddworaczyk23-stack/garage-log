@@ -1,6 +1,7 @@
 import { render } from 'preact'
 import { App } from './app'
 import { seedIfEmpty } from './db/seed'
+import { startFeedSync } from './db/calendarFeed'
 import './styles/fonts'
 import './styles/app.css'
 
@@ -39,6 +40,7 @@ async function boot() {
   }
 
   render(<App />, root)
+  startFeedSync()
 }
 
 boot()

@@ -18,6 +18,6 @@ export default defineConfig({
     // Tests must never configure Dexie Cloud, even on a dev machine whose
     // .env.local sets the URL (Vite loads it here too): db/cloud.ts would call
     // db.cloud.configure() at import, and the stubbed addon has no `cloud`.
-    env: { VITE_DEXIE_CLOUD_URL: '' },
+    env: { VITE_DEXIE_CLOUD_URL: '', VITE_CALENDAR_FEED_URL: '' },
   },
 })
