@@ -14,6 +14,13 @@ export const MILESTONE_STATE_LABELS: Record<MilestoneState, string> = {
   upcoming: 'Upcoming',
 }
 
+/** "Due now" only once the milestone is reached; inside the lead-up window
+ * it reads "Coming up" so it never contradicts "In 356 mi". */
+export function milestoneStateLabel(state: MilestoneState, milesAway: number | null): string {
+  if (state === 'due' && milesAway != null && milesAway > 0) return 'Coming up'
+  return MILESTONE_STATE_LABELS[state]
+}
+
 /** Reuses the reminder status-pill colors so the two read the same way. */
 export const MILESTONE_STATE_PILL: Record<MilestoneState, string> = {
   done: 'status-completed',
@@ -66,7 +73,7 @@ export function MilestoneCard({ vehicleId }: { vehicleId: string }) {
             </span>
           </span>
           <span class={`status-pill ${MILESTONE_STATE_PILL[next.state]}`}>
-            {MILESTONE_STATE_LABELS[next.state]}
+            {milestoneStateLabel(next.state, next.milesAway)}
           </span>
         </a>
       ) : (
@@ -83,7 +90,7 @@ export function MilestoneCard({ vehicleId }: { vehicleId: string }) {
                   {m.checkedCount}/{m.totalCount}
                 </span>
                 <span class={`status-pill ${MILESTONE_STATE_PILL[m.state]}`}>
-                  {MILESTONE_STATE_LABELS[m.state]}
+                  {milestoneStateLabel(m.state, m.milesAway)}
                 </span>
               </a>
             </li>

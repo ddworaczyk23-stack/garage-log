@@ -17,7 +17,7 @@ import {
   type MilestoneAction,
 } from '../domain/milestones'
 import { vehicleLabel } from '../domain/vehicle'
-import { MILESTONE_STATE_LABELS, MILESTONE_STATE_PILL } from '../components/MilestoneCard'
+import { MILESTONE_STATE_PILL, milestoneStateLabel } from '../components/MilestoneCard'
 import { EmptyState, SkeletonPage } from '../components/ui'
 
 // One milestone checkup (#/milestone/<vehicleId>/<miles>): the tailored
@@ -80,7 +80,7 @@ export function MilestoneDetail({ vehicleId, miles }: { vehicleId: string; miles
 
       <section class="card">
         <div class="sd-status-row">
-          <span class={`status-pill ${MILESTONE_STATE_PILL[state]}`}>{MILESTONE_STATE_LABELS[state]}</span>
+          <span class={`status-pill ${MILESTONE_STATE_PILL[state]}`}>{milestoneStateLabel(state, view?.milesAway ?? null)}</span>
           <span class="muted small">
             {record?.completedDate
               ? `Done ${formatShortDate(record.completedDate)}${record.completedMiles != null ? ` at ${formatMiles(record.completedMiles)}` : ''}`
