@@ -5235,7 +5235,7 @@ dialog.sheet::backdrop {
   flex-direction: column;
   background: var(--bg-card);
   color: var(--text);
-  border-radius: 22px 22px 0 0;
+  border-radius: var(--radius) var(--radius) 0 0;
   box-shadow: var(--shadow-modal);
   animation: sheetUp 0.28s var(--ease-paper);
   transition: transform 0.2s var(--ease-paper);
@@ -5262,14 +5262,14 @@ dialog.sheet::backdrop {
 }
 .sheet-eyebrow {
   display: block;
-  font: 600 0.7rem var(--font-mono);
+  font: 600 11px var(--font-mono);
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 .sheet-title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: 24px;
   font-weight: 800;
 }
 .sheet-close {
@@ -5305,10 +5305,10 @@ dialog.sheet::backdrop {
   flex: 1;
   min-height: 40px;
   border: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   background: transparent;
   color: var(--text-muted);
-  font: 700 0.9rem var(--font-sans);
+  font: 700 0.95rem var(--font-sans);
   cursor: pointer;
 }
 .sheet-seg button[aria-pressed='true'] {
@@ -5339,7 +5339,7 @@ dialog.sheet::backdrop {
 .sheet .form-actions .btn {
   flex: 1;
   min-height: 50px;
-  font-size: 1.05rem;
+  font-size: 1.02rem;
 }
 .sheet .form-actions .btn-link {
   display: none;
@@ -5355,7 +5355,7 @@ dialog.sheet::backdrop {
 .more-options-hint {
   color: var(--text-muted);
   font-weight: 400;
-  font-size: 0.8rem;
+  font-size: 11px;
   text-align: right;
 }
 .more-options-sub {
