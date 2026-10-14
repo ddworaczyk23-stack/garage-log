@@ -11,6 +11,7 @@ import {
 import { milestoneOverview } from '../domain/milestones'
 import { formatShortDate, localDateISO } from '../domain/format'
 import { vehicleLabel } from '../domain/vehicle'
+import { InfoTip } from './ui'
 
 // "Add to Calendar": exports upcoming due dates (from the projected mileage)
 // as an .ics file so the phone's Calendar app delivers the reminders, with no
@@ -95,9 +96,8 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
         {last && <span class="muted small">Last added {formatShortDate(last)}</span>}
       </div>
       <p class="muted small cal-export-hint">
-        One alert at 9am on each due date. On iPhone, open the downloaded file and tap{' '}
-        <strong>Add All</strong>. Dates shift as your mileage estimate updates, so re-add every month or
-        two.
+        One alert at 9am on each due date. Re-add every month or two.
+        <InfoTip label="How to add on iPhone">Open the downloaded file and tap Add All.</InfoTip>
       </p>
       {status && (
         <p class="muted small" role="status">

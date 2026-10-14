@@ -93,7 +93,7 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
           <VehicleIcon />
         </span>
         <div>
-          <h3 class="card-title vehicle-name">{vehicleLabel(vehicle)}</h3>
+          <h3 class="list-row-title">{vehicleLabel(vehicle)}</h3>
           <p class="muted small">
             {vehicle.year} {vehicle.make} · {vehicle.model}
           </p>

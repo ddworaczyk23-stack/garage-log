@@ -13,10 +13,12 @@ aggressively, every time.
 
 ## Open
 
-- **Consistency round.** Plan: `docs/superpowers/plans/2026-10-14-consistency-round.md`.
-  Branch `design/consistency-round` has the start (icons, VehicleRow, Check back
-  button). Codex builds the rest, one PR, do not merge. Includes the grey
-  "Synced as …" strip on mobile (user called it out).
+- **Consistency round — ready for Claude review.** Plan:
+  `docs/superpowers/plans/2026-10-14-consistency-round.md`. The implementation
+  is on `design/consistency-round`: navy mobile sync bar, shared chevrons and
+  disclosures, copy/layout cleanup, and 375/390px route checks are complete.
+  `npm test` (402) and `npm run typecheck` pass. Next: Claude reviews the one
+  PR and re-runs the design review; do not merge until David approves.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push

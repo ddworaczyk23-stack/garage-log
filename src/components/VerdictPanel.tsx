@@ -31,7 +31,7 @@ export function VerdictPanel({
     <div class={`cv-panel ${BAND_CLASS[verdict.band]}`}>
       <div class="cv-inner">
         <div class="cv-tag">
-          {tag} · {VERDICT_BAND_LABELS[verdict.band]}
+          {verdict.band === 'not-set-up' ? tag : `${tag} · ${VERDICT_BAND_LABELS[verdict.band]}`}
         </div>
         <Heading class="cv-headline">{verdict.headline}</Heading>
         <p class="cv-sentence">{verdict.sentence}</p>
