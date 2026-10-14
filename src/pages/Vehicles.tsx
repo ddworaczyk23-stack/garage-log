@@ -47,7 +47,6 @@ export function Vehicles() {
   return (
     <section class="page">
       <PageHeader
-        eyebrow="The Garage"
         title="Vehicles"
         meta={<a class="btn-link" href="#/add-vehicle">Add a car</a>}
       />

@@ -73,7 +73,6 @@ export function Documents({ initialVehicleId }: Props) {
   return (
     <section class="page">
       <PageHeader
-        eyebrow="The Garage"
         title="Documents"
         meta={total > 0 ? `${results.length} of ${total} shown` : undefined}
       />

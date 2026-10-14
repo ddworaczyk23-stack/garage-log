@@ -29,7 +29,7 @@ export function Costs() {
 
   return (
     <section class="page">
-      <PageHeader eyebrow="The Garage" title="Costs" />
+      <PageHeader title="Costs" />
 
       {hasAnySpend && (
         <p class="cost-summary">

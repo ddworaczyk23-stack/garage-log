@@ -56,7 +56,7 @@ export function Dashboard() {
 
   return (
     <section class="page gb">
-      <PageHeader eyebrow="The Garage · Today" title="Your Garage" />
+      <PageHeader title="Your Garage" />
 
       {/* Stacks on mobile; a 2-up board on desktop (see .gb-today-grid, R2). */}
       <div class="gb-today-grid">

@@ -246,7 +246,6 @@ export function VehicleDetail({ id }: Props) {
       <div class="vd-layout">
       <div class="vd-rail">
       <PageHeader
-        eyebrow="Vehicle"
         title={vehicleLabel(vehicle)}
         class="vd-masthead"
       >
