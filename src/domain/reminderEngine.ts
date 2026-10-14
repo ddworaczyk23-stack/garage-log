@@ -321,16 +321,11 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
       )
     }
   }
-  // Flag staleness whenever this item is mileage-tracked, even if milesRemaining
-  // itself couldn't be computed (no odometer reading at all) — that's precisely
-  // the case a reader most needs the caveat, since status silently falls back
-  // to a non-alarming default without it.
-  if (odometerStale && interval.miles != null) {
-    reasonParts.push(
-      inputs.currentMiles == null
-        ? 'no odometer reading logged — mileage-based due status unknown'
-        : 'mileage is estimated — log an odometer reading to confirm',
-    )
+  // No odometer reading at all: status silently falls back to a non-alarming
+  // default, so the row must say so. A merely stale reading is NOT repeated per
+  // row — the vehicle's mileage line already says "estimated · Update".
+  if (odometerStale && interval.miles != null && inputs.currentMiles == null) {
+    reasonParts.push('no odometer reading logged — mileage-based due status unknown')
   }
   if (rule.override?.kind === 'dealer-performed') reasonParts.push('dealer performed')
   if (rule.override?.kind === 'diy') reasonParts.push('DIY')
