@@ -13,17 +13,14 @@ aggressively, every time.
 
 ## Open
 
-- **Fewer words on every page — ready for Claude review.** Plan:
-  `docs/superpowers/plans/2026-10-14-fewer-words.md`. Implemented on
-  `copy/fewer-words`: removed redundant dashboard, vehicle, cost, document,
-  backup, and add-car copy (including the Home side-by-side table), and fixed
-  signed-out Settings showing sync status. `npm test` (403) and
-  `npm run typecheck` pass; seeded 375px/390px layouts and the restored-config
-  signed-out Settings card were checked. One PR only; do not merge. Claude
-  reviews.
-
-- **Next: re-run the design review** (`/impeccable critique src`) on the
-  live site after PR #22 (Check flow + fuller Settings). Last score 27/40.
+- **Amber sign + shop brief ending — ready for Claude review.** Plan:
+  `docs/superpowers/plans/2026-10-14-amber-and-brief.md` (from the
+  2026-10-14 15:03 design review, 26/40). Implemented on
+  `design/amber-and-brief`: bright amber/dark-ink verdict signs, reordered
+  Check safety/cost/details flow, inline brief scroll/focus/share behavior,
+  and the small-text floor. `npm test` (403) and `npm run typecheck` pass;
+  seeded 375px/390px Check walkthroughs passed. One PR only; do not merge.
+  Claude reviews.
 
 - **Possible follow-up (not started, user chose calendar for now):** true
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
