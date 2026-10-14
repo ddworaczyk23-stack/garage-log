@@ -5211,36 +5211,44 @@ a.list-row:hover {
 html.sheet-open {
   overflow: hidden;
 }
+/* The dialog IS the panel, pinned to the bottom edge. It starts below the
+   screen and slides up only once .is-in is added a frame after showModal(),
+   so Safari has placed it first (a keyframe on a child of a full-height
+   dialog flashed at the top on iPhone before settling). */
 dialog.sheet {
   position: fixed;
-  inset: 0;
+  inset: auto 0 0 0;
   width: 100%;
   max-width: 100%;
-  height: 100%;
-  max-height: 100%;
+  height: auto;
+  max-height: 90dvh;
   margin: 0;
   padding: 0;
   border: 0;
-  background: transparent;
+  border-radius: var(--radius) var(--radius) 0 0;
+  background: var(--bg-card);
+  color: var(--text);
+  box-shadow: var(--shadow-modal);
   overflow: hidden;
+  transform: translateY(100%);
+  transition: transform 0.28s var(--ease-paper);
+}
+dialog.sheet[open] {
+  display: flex;
+  flex-direction: column;
+}
+dialog.sheet.is-in {
+  transform: none;
 }
 dialog.sheet::backdrop {
   background: rgba(15, 42, 68, 0.45);
   animation: sheetFade 0.2s var(--ease-paper);
 }
 .sheet-panel {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-height: 90dvh;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  background: var(--bg-card);
-  color: var(--text);
-  border-radius: var(--radius) var(--radius) 0 0;
-  box-shadow: var(--shadow-modal);
-  animation: sheetUp 0.28s var(--ease-paper);
   transition: transform 0.2s var(--ease-paper);
 }
 .sheet-drag {
@@ -5367,27 +5375,24 @@ dialog.sheet::backdrop {
   padding-top: 10px;
   border-top: 0.5px solid var(--border);
 }
-@keyframes sheetUp {
-  from {
-    transform: translateY(100%);
-  }
-}
 @keyframes sheetFade {
   from {
     opacity: 0;
   }
 }
 @media (min-width: 1024px) {
-  .sheet-panel {
-    left: 50%;
-    right: auto;
-    bottom: auto;
-    top: 50%;
+  dialog.sheet {
+    inset: 0;
+    margin: auto;
     width: min(520px, calc(100vw - 48px));
     max-height: 86vh;
     border-radius: var(--radius);
-    transform: translate(-50%, -50%);
-    animation: sheetFade 0.2s var(--ease-paper);
+    transform: none;
+    opacity: 0;
+    transition: opacity 0.2s var(--ease-paper);
+  }
+  dialog.sheet.is-in {
+    opacity: 1;
   }
   .sheet-grab {
     display: none;
@@ -5397,7 +5402,9 @@ dialog.sheet::backdrop {
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sheet-panel,
+  dialog.sheet {
+    transition: none;
+  }
   dialog.sheet::backdrop {
     animation: none;
   }
