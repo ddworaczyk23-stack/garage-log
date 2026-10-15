@@ -31,7 +31,7 @@ import { useIntroGate, useReducedMotion } from '../motion/hooks'
 import { vehicleLabel } from '../domain/vehicle'
 import { CATEGORY_LABELS, type MaintenanceCategory, type VehicleDocument } from '../types'
 import { TraitChangeSheet } from '../components/TraitChangeSheet'
-import { canChangeTraits, traitSummary } from '../domain/traitChange'
+import { answersFromRules, canChangeTraits, traitSummary } from '../domain/traitChange'
 import { parseTraitsKey } from '../db/traitTemplates'
 
 interface Props {
@@ -458,7 +458,15 @@ export function VehicleDetail({ id }: Props) {
                 <div class="vd-spec-row"><dt>Drivetrain</dt><dd>{vehicle.drivetrain || 'Not set'}</dd></div>
                 <div class="vd-spec-row"><dt>Trim</dt><dd>{vehicle.trim || 'Not set'}</dd></div>
                 <div class="vd-spec-row"><dt>VIN</dt><dd class="muted">{vehicle.vin ?? 'Not set'}</dd></div>
-                {reminders && canChangeTraits(reminders[0]?.rule.templateKey ?? '') && <div class="vd-spec-row"><dt>Maintenance type</dt><dd>{parseTraitsKey(reminders[0].rule.templateKey) ? traitSummary(parseTraitsKey(reminders[0].rule.templateKey)!) : 'Not set'} <button type="button" class="btn-link" onClick={() => setChangingTraits(true)}>Change</button></dd></div>}
+                {reminders && reminders.length > 0 && canChangeTraits(reminders[0].rule.templateKey) && (
+                  <div class="vd-spec-row">
+                    <dt>Maintenance type</dt>
+                    <dd>
+                      {parseTraitsKey(reminders[0].rule.templateKey) ? traitSummary(answersFromRules(reminders.map((r) => r.rule))) : 'Not set'}{' '}
+                      <button type="button" class="btn-link" onClick={() => setChangingTraits(true)}>Change</button>
+                    </dd>
+                  </div>
+                )}
               </dl>
               <button type="button" class="btn-link" onClick={() => setEditingSpecs(true)}>
                 Edit specifications
@@ -468,7 +476,18 @@ export function VehicleDetail({ id }: Props) {
         </Collapsible>
       </section>
 
-      {changingTraits && reminders && parseTraitsKey(reminders[0]?.rule.templateKey ?? '') && <TraitChangeSheet vehicleId={id} rules={reminders.map((r) => r.rule)} initial={parseTraitsKey(reminders[0].rule.templateKey)!} onClose={() => setChangingTraits(false)} onSaved={() => { setChangingTraits(false); setToast({ id: Date.now(), message: 'Schedule updated' }) }} />}
+      {changingTraits && reminders && reminders.length > 0 && (
+        <TraitChangeSheet
+          vehicleId={id}
+          eyebrow={vehicleLabel(vehicle)}
+          rules={reminders.map((r) => r.rule)}
+          onClose={() => setChangingTraits(false)}
+          onSaved={() => {
+            setChangingTraits(false)
+            setToast({ id: Date.now(), message: 'Schedule updated' })
+          }}
+        />
+      )}
 
       </div>
 

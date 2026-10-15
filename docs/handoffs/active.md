@@ -25,3 +25,11 @@ aggressively, every time.
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
   the device, so confirm with the user before building.
+
+- **Change a car's traits: built and reviewed, awaiting PR (2026-10-15).** On
+  `feat/change-traits` (worktree `~/OS/active/garage-log-change-traits`).
+  Codex built it; Claude's review switched the sheet to the shared chip
+  pickers (`components/TraitPickers.tsx`), made "Not sure" answers read back
+  and save correctly, fixed stale labels, and made older generic cars work.
+  Push and open the PR only after David approves. After merge: delete this
+  entry and remove the worktree (`git worktree remove`).

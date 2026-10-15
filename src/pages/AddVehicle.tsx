@@ -9,6 +9,7 @@ import type { VehicleIdentity } from '../types'
 import type { VehicleTraits } from '../db/traitTemplates'
 import { traitsKey } from '../db/traitTemplates'
 import { ScheduleReview } from '../components/ScheduleReview'
+import { TraitPickers } from '../components/TraitPickers'
 import { resolveTraitAnswers, seedUnsureEdits, type ScheduleEdit } from '../domain/scheduleReview'
 import type { MaintenanceCategory } from '../types'
 
@@ -16,10 +17,6 @@ type Mode = 'vin' | 'manual'
 const CURRENT_YEAR = new Date().getFullYear()
 // Next year's models go on sale in the fall, so the list starts one year ahead.
 const VEHICLE_YEARS = Array.from({ length: 42 }, (_, index) => CURRENT_YEAR + 1 - index)
-const DRIVETRAINS = ['FWD', 'RWD', 'AWD', '4WD'] as const
-const POWER_OPTIONS = [['gas', 'Gas'], ['turbo', 'Turbo gas'], ['diesel', 'Diesel'], ['hybrid', 'Hybrid'], ['ev', 'Electric']] as const
-const TRANS_OPTIONS = [['auto', 'Automatic'], ['cvt', 'CVT'], ['dct', 'Dual-clutch'], ['manual', 'Manual'], ['none', 'Not sure']] as const
-const BELT_OPTIONS = [['yes', 'Yes'], ['no', 'No'], ['not-sure', 'Not sure']] as const
 
 function normalizeDrivetrain(value: string): string {
   const upper = value.toUpperCase()
@@ -270,7 +267,7 @@ export function AddVehicle() {
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
-          <ScheduleTraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={changeTrans} onBelt={changeBelt} onDrive={setDrivetrain} />
+          <TraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={changeTrans} onBelt={changeBelt} onDrive={setDrivetrain} />
           {submitError && (
             <p class="notice notice-error" role="alert">
               {submitError}
@@ -302,7 +299,7 @@ export function AddVehicle() {
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
-          <ScheduleTraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={changeTrans} onBelt={changeBelt} onDrive={setDrivetrain} />
+          <TraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={changeTrans} onBelt={changeBelt} onDrive={setDrivetrain} />
           {submitError && (
             <p class="notice notice-error" role="alert">
               {submitError}
@@ -323,40 +320,5 @@ export function AddVehicle() {
         </Reveal>
       )}
     </section>
-  )
-}
-
-function ScheduleTraitPickers({ power, trans, belt, drivetrain, onPower, onTrans, onBelt, onDrive }: {
-  power: VehicleTraits['power']; trans: VehicleTraits['trans']; belt: 'yes' | 'no' | 'not-sure'; drivetrain: string
-  onPower: (value: VehicleTraits['power']) => void; onTrans: (value: VehicleTraits['trans']) => void
-  onBelt: (value: 'yes' | 'no' | 'not-sure') => void; onDrive: (value: string) => void
-}) {
-  return <>
-    <ChipPicker legend="Engine type" value={power} options={POWER_OPTIONS} onChange={(value) => onPower(value as VehicleTraits['power'])} />
-    {power !== 'hybrid' && power !== 'ev' && <ChipPicker legend="Transmission" value={trans} options={TRANS_OPTIONS} onChange={(value) => onTrans(value as VehicleTraits['trans'])} />}
-    {power !== 'ev' && <ChipPicker legend="Timing belt?" value={belt} options={BELT_OPTIONS} onChange={(value) => onBelt(value as 'yes' | 'no' | 'not-sure')} hint="Not sure? Check your manual. Most newer cars have a chain." />}
-    <ChipPicker legend="Drivetrain — optional" value={drivetrain} options={DRIVETRAINS.map((value) => [value, value] as const)} onChange={(value) => onDrive(value === drivetrain ? '' : value)} />
-  </>
-}
-
-function ChipPicker({ legend, value, options, onChange, hint }: { legend: string; value: string; options: readonly (readonly [string, string])[]; onChange: (value: string) => void; hint?: string }) {
-  return (
-    <fieldset class="admin-field chip-field">
-      <legend class="muted small">{legend}</legend>
-      <div class="choice-chips">
-        {options.map(([option, label]) => (
-          <button
-            key={option}
-            type="button"
-            class={`choice-chip${value === option ? ' is-on' : ''}`}
-            aria-pressed={value === option}
-            onClick={() => onChange(option)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-      {hint && <span class="field-hint">{hint}</span>}
-    </fieldset>
   )
 }
