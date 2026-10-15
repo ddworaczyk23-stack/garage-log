@@ -1,5 +1,6 @@
 import { templateEntries } from '../db/scheduleTemplates'
 import { CATEGORY_LABELS, type Interval, type MaintenanceCategory, type ReminderRule } from '../types'
+import type { VehicleTraits } from '../db/traitTemplates'
 
 export type ScheduleEdit = {
   enabled: boolean
@@ -23,6 +24,38 @@ export type EditErrors = Partial<Record<'custom' | 'lastDoneDate' | 'lastDoneMil
 export const blankScheduleEdit = (): ScheduleEdit => ({
   enabled: true, customMiles: null, customMonths: null, lastDoneDate: null, lastDoneMiles: null,
 })
+
+/** Step-1 answers. `trans: 'none'` is the "Not sure" chip. */
+export type TraitAnswers = Omit<VehicleTraits, 'belt'> & { belt: 'yes' | 'no' | 'not-sure' }
+
+export const UNSURE_NOTE = 'Not sure if your car has this. Check your manual.'
+
+/**
+ * "Not sure" still shows the row on step 2, switched off: build from the
+ * timing-belt / automatic variant and list those categories as unsure.
+ */
+export function resolveTraitAnswers(answers: TraitAnswers): { traits: VehicleTraits; unsure: MaintenanceCategory[] } {
+  const unsure: MaintenanceCategory[] = []
+  const electrified = answers.power === 'hybrid' || answers.power === 'ev'
+  let trans = electrified ? 'none' : answers.trans
+  if (trans === 'none' && !electrified) {
+    trans = 'auto'
+    unsure.push('transmission-fluid')
+  }
+  let belt: VehicleTraits['belt'] = answers.belt === 'yes' ? 'yes' : 'no'
+  if (answers.belt === 'not-sure' && answers.power !== 'ev') {
+    belt = 'yes'
+    unsure.push('timing-belt')
+  }
+  return { traits: { power: answers.power, trans, drive: answers.drive, belt }, unsure }
+}
+
+/** Unsure rows start off unless the user already set them. */
+export function seedUnsureEdits(edits: Partial<Record<MaintenanceCategory, ScheduleEdit>>, unsure: MaintenanceCategory[]): Partial<Record<MaintenanceCategory, ScheduleEdit>> {
+  const next = { ...edits }
+  for (const category of unsure) next[category] ??= { ...blankScheduleEdit(), enabled: false }
+  return next
+}
 
 export const SCHEDULE_GROUPS = ['Engine', 'Tires and brakes', 'Fluids', 'Other'] as const
 

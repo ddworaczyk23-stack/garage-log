@@ -2738,6 +2738,7 @@ iframe.preview-media {
 .schedule-row-open small { font: 12px var(--font-mono); color: var(--text-muted); margin-top: 3px; }
 .schedule-row-open em { font-size: 12px; font-style: normal; color: var(--c-ok); margin-top: 3px; }
 .schedule-row-open em.schedule-row-error { color: var(--danger); }
+.schedule-row-open em.schedule-row-unsure { color: var(--text-muted); }
 .schedule-tag { display: inline-block; vertical-align: 2px; margin-left: 6px; padding: 2px 6px; border-radius: 8px; font: 500 10px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; background: var(--accent-tint); color: var(--accent); }
 .schedule-switch { width: 42px; height: 25px; border-radius: 99px; border: 0; background: var(--c-stale); padding: 3px; flex: none; cursor: pointer; }
 .schedule-switch[aria-checked="true"] { background: var(--accent); }
