@@ -26,3 +26,17 @@ aggressively, every time.
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
   the device, so confirm with the user before building.
 
+- **Change a car's traits after adding it: ready to build (2026-10-15).**
+  Codex builds it. Plan approved by David: `docs/plans/change-traits.md`
+  (read it in full; it is the spec). Branch `feat/change-traits` (plan
+  committed). WAIT until the "Not sure rows off" PR (branch
+  `fix/not-sure-rows-off`) is merged, then rebase this branch on `main` before
+  writing code: both touch the trait pickers in `src/pages/AddVehicle.tsx`.
+  Summary: a "Maintenance type" row + "Change" link on the car page opens a
+  sheet with the trait pickers and a live diff (added / removed / kept). Save
+  updates all the car's rules in one transaction: kept rules keep their
+  settings, removed rules are deleted (events stay), added rules take last done
+  from matching events. Every rule ends on the same `templateKey`. Hidden for
+  the F-150 and Rogue. Done = tests + typecheck + build pass, the plan's
+  Verification steps pass at 375x812, committed on the branch. Do not push:
+  David approves publishing. Claude reviews the PR after.
