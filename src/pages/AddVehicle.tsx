@@ -9,7 +9,7 @@ import type { VehicleIdentity } from '../types'
 import type { VehicleTraits } from '../db/traitTemplates'
 import { traitsKey } from '../db/traitTemplates'
 import { ScheduleReview } from '../components/ScheduleReview'
-import type { ScheduleEdit } from '../domain/scheduleReview'
+import { resolveTraitAnswers, seedUnsureEdits, type ScheduleEdit } from '../domain/scheduleReview'
 import type { MaintenanceCategory } from '../types'
 
 type Mode = 'vin' | 'manual'
@@ -89,7 +89,7 @@ export function AddVehicle() {
       setEngine(result.suggestedEngine ?? '')
       setDrivetrain(normalizeDrivetrain(result.suggestedDrivetrain ?? ''))
       setPower(result.suggestedTraits?.power ?? 'gas')
-      setTrans(result.suggestedTraits?.trans ?? 'none')
+      changeTrans(result.suggestedTraits?.trans ?? 'none')
     } finally {
       setDecoding(false)
     }
@@ -112,11 +112,24 @@ export function AddVehicle() {
   }
 
   const identity = mode === 'vin' ? decoded : manualIdentity()
-  const traits: VehicleTraits = {
+  const { traits, unsure } = resolveTraitAnswers({
     power,
-    trans: power === 'hybrid' || power === 'ev' ? 'none' : trans,
+    trans,
     drive: drivetrain === 'FWD' ? 'fwd' : drivetrain === 'RWD' ? 'rwd' : drivetrain === 'AWD' ? 'awd' : drivetrain === '4WD' ? '4wd' : 'none',
-    belt: belt === 'yes' ? 'yes' : 'no',
+    belt,
+  })
+
+  // A new answer resets that row, so a "Not sure" seed can't outlive it.
+  function clearEdit(category: MaintenanceCategory) {
+    setEdits(({ [category]: _dropped, ...rest }) => rest)
+  }
+  function changeTrans(value: VehicleTraits['trans']) {
+    if (value !== trans) clearEdit('transmission-fluid')
+    setTrans(value)
+  }
+  function changeBelt(value: 'yes' | 'no' | 'not-sure') {
+    if (value !== belt) clearEdit('timing-belt')
+    setBelt(value)
   }
 
   async function beginReview(e: Event) {
@@ -132,6 +145,7 @@ export function AddVehicle() {
       setDuplicate({ id: existing.id, label: `${existing.year} ${existing.make} ${existing.model}` })
       return
     }
+    setEdits((prev) => seedUnsureEdits(prev, unsure))
     setStep('schedule')
   }
 
@@ -165,7 +179,7 @@ export function AddVehicle() {
     }
   }
 
-  if (step === 'schedule' && identity) return <ScheduleReview identity={identity} traits={traits} templateKey={traitsKey(traits)} edits={edits} currentMiles={currentMiles} onChange={(nextEdits, nextMiles) => { setEdits(nextEdits); setCurrentMiles(nextMiles) }} onBack={() => setStep('car')} onSubmit={submit} submitting={submitting} error={submitError} />
+  if (step === 'schedule' && identity) return <ScheduleReview identity={identity} traits={traits} templateKey={traitsKey(traits)} unsure={unsure} edits={edits} currentMiles={currentMiles} onChange={(nextEdits, nextMiles) => { setEdits(nextEdits); setCurrentMiles(nextMiles) }} onBack={() => setStep('car')} onSubmit={submit} submitting={submitting} error={submitError} />
 
   return (
     <section class="page">
@@ -256,7 +270,7 @@ export function AddVehicle() {
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
-          <ScheduleTraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={setTrans} onBelt={setBelt} onDrive={setDrivetrain} />
+          <ScheduleTraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={changeTrans} onBelt={changeBelt} onDrive={setDrivetrain} />
           {submitError && (
             <p class="notice notice-error" role="alert">
               {submitError}
@@ -288,7 +302,7 @@ export function AddVehicle() {
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
-          <ScheduleTraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={setTrans} onBelt={setBelt} onDrive={setDrivetrain} />
+          <ScheduleTraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={changeTrans} onBelt={changeBelt} onDrive={setDrivetrain} />
           {submitError && (
             <p class="notice notice-error" role="alert">
               {submitError}

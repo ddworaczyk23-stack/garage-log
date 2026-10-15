@@ -5,6 +5,7 @@ import {
   intervalChanged,
   reviewItems,
   SCHEDULE_GROUPS,
+  UNSURE_NOTE,
   validateEdit,
   type ScheduleEdit,
   type ScheduleReviewItem,
@@ -18,6 +19,7 @@ type Props = {
   identity: VehicleIdentity
   traits: VehicleTraits
   templateKey: string
+  unsure: MaintenanceCategory[]
   edits: Edits
   currentMiles: number | null
   onChange: (edits: Edits, currentMiles: number | null) => void
@@ -34,8 +36,8 @@ const TRANS_TEXT: Record<VehicleTraits['trans'], string | null> = {
   auto: 'automatic', cvt: 'CVT', dct: 'dual-clutch', manual: 'manual', none: null,
 }
 
-function traitText(traits: VehicleTraits): string {
-  const parts = [POWER_TEXT[traits.power], TRANS_TEXT[traits.trans], traits.drive === 'none' ? null : traits.drive.toUpperCase()]
+function traitText(traits: VehicleTraits, transUnsure: boolean): string {
+  const parts = [POWER_TEXT[traits.power], transUnsure ? null : TRANS_TEXT[traits.trans], traits.drive === 'none' ? null : traits.drive.toUpperCase()]
   return parts.filter(Boolean).join(', ')
 }
 
@@ -46,7 +48,7 @@ const sameInterval = (edit: ScheduleEdit, interval: Interval) =>
 // be switched off, given a Suggested / Maker / Custom interval, and a
 // "last done" point. Nothing is written until onSubmit (addVehicle applies the
 // edits in the same transaction that creates the car).
-export function ScheduleReview({ identity, traits, templateKey, edits, currentMiles, onChange, onBack, onSubmit, submitting, error }: Props) {
+export function ScheduleReview({ identity, traits, templateKey, unsure, edits, currentMiles, onChange, onBack, onSubmit, submitting, error }: Props) {
   const [open, setOpen] = useState<MaintenanceCategory | null>(null)
   // Rows in Custom mode. Kept apart from the values so clearing both inputs
   // while typing doesn't silently flip the row back to Suggested.
@@ -63,7 +65,8 @@ export function ScheduleReview({ identity, traits, templateKey, edits, currentMi
   const tracked = items.filter((item) => editFor(item.category).enabled).length
   const changed = items.filter((item) => {
     const edit = editFor(item.category)
-    return !edit.enabled || intervalChanged(edit, item)
+    // An unsure row starts off, so off is not a change there.
+    return (!edit.enabled && !unsure.includes(item.category)) || intervalChanged(edit, item)
   }).length
   const withHistory = items.filter((item) => {
     const edit = editFor(item.category)
@@ -90,7 +93,7 @@ export function ScheduleReview({ identity, traits, templateKey, edits, currentMi
   }
   function reset(category: MaintenanceCategory) {
     setCustom(category, false)
-    update(category, blankScheduleEdit())
+    update(category, { ...blankScheduleEdit(), enabled: !unsure.includes(category) })
   }
 
   return (
@@ -110,7 +113,7 @@ export function ScheduleReview({ identity, traits, templateKey, edits, currentMi
         <div class="schedule-progress" aria-hidden="true"><i class="is-on" /><i class="is-on" /><i /></div>
         <p class="eyebrow">Step 2 of 3 · Schedule</p>
         <h1>Here’s the plan for your {identity.year} {identity.make} {identity.model}</h1>
-        <p>Built for {traitText(traits)}. Tap a row to change it. Switch off what you don’t need.</p>
+        <p>Built for {traitText(traits, unsure.includes('transmission-fluid'))}. Tap a row to change it. Switch off what you don’t need.</p>
       </header>
 
       <label class="schedule-current admin-field">
@@ -141,7 +144,7 @@ export function ScheduleReview({ identity, traits, templateKey, edits, currentMi
                 const choice = isCustom ? 'custom' : makerDiffers && sameInterval(edit, item.maker) ? 'maker' : 'suggested'
                 const effective = choice === 'suggested' ? item.suggested : { ...item.suggested, miles: edit.customMiles, months: edit.customMonths }
                 const hasLastDone = edit.lastDoneDate != null || edit.lastDoneMiles != null
-                const dirty = !edit.enabled || intervalChanged(edit, item) || hasLastDone || isCustom
+                const dirty = edit.enabled === unsure.includes(item.category) || intervalChanged(edit, item) || hasLastDone || isCustom
                 return (
                   <article class={`schedule-item${edit.enabled ? '' : ' is-off'}${expanded ? ' is-open' : ''}`} key={item.category}>
                     <div class="schedule-row">
@@ -165,6 +168,7 @@ export function ScheduleReview({ identity, traits, templateKey, edits, currentMi
                             {edit.lastDoneMiles != null ? formatMiles(edit.lastDoneMiles) : ''}
                           </em>
                         )}
+                        {unsure.includes(item.category) && <em class="schedule-row-unsure">{UNSURE_NOTE}</em>}
                         {!expanded && errors.length > 0 && <em class="schedule-row-error">Check this item</em>}
                       </button>
                       <button

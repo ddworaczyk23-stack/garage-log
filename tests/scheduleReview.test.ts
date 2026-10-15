@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { applyScheduleEdits, blankScheduleEdit, intervalChanged, reviewItems, scheduleGroup, validateEdit } from '../src/domain/scheduleReview'
+import { applyScheduleEdits, blankScheduleEdit, intervalChanged, resolveTraitAnswers, reviewItems, scheduleGroup, seedUnsureEdits, validateEdit } from '../src/domain/scheduleReview'
 import { rulesForVehicle } from '../src/db/scheduleTemplates'
-import { traitsKey, type VehicleTraits } from '../src/db/traitTemplates'
+import { parseTraitsKey, traitsKey, type VehicleTraits } from '../src/db/traitTemplates'
 
 const traits: VehicleTraits = { power: 'gas', trans: 'auto', drive: 'fwd', belt: 'no' }
 const key = traitsKey(traits)
@@ -58,5 +58,46 @@ describe('schedule review', () => {
     expect(validateEdit(blankScheduleEdit(), null, '2026-10-15').custom).toBeUndefined()
     expect(validateEdit(blankScheduleEdit(), null, '2026-10-15', true).custom).toBeTruthy()
     expect(validateEdit({ ...blankScheduleEdit(), customMonths: 6 }, null, '2026-10-15', true).custom).toBeUndefined()
+  })
+
+  it('keeps "Not sure" timing-belt and transmission rows, switched off', () => {
+    const { traits: resolved, unsure } = resolveTraitAnswers({ power: 'gas', trans: 'none', drive: 'fwd', belt: 'not-sure' })
+    expect(resolved).toEqual({ power: 'gas', trans: 'auto', drive: 'fwd', belt: 'yes' })
+    expect(parseTraitsKey(traitsKey(resolved))).toEqual(resolved)
+    expect(unsure).toEqual(['transmission-fluid', 'timing-belt'])
+    const categories = reviewItems(traitsKey(resolved)).map((item) => item.category)
+    expect(categories).toEqual(expect.arrayContaining(['transmission-fluid', 'timing-belt']))
+    const edits = seedUnsureEdits({}, unsure)
+    expect(edits['timing-belt']?.enabled).toBe(false)
+    expect(edits['transmission-fluid']?.enabled).toBe(false)
+  })
+
+  it('marks nothing unsure for sure answers or where the item cannot apply', () => {
+    expect(resolveTraitAnswers({ power: 'gas', trans: 'cvt', drive: 'fwd', belt: 'no' }).unsure).toEqual([])
+    const hybrid = resolveTraitAnswers({ power: 'hybrid', trans: 'none', drive: 'fwd', belt: 'yes' })
+    expect(hybrid.traits.trans).toBe('none')
+    expect(hybrid.unsure).toEqual([])
+    const ev = resolveTraitAnswers({ power: 'ev', trans: 'none', drive: 'awd', belt: 'not-sure' })
+    expect(ev.traits.belt).toBe('no')
+    expect(ev.unsure).toEqual([])
+  })
+
+  it('does not overwrite a row the user already set', () => {
+    const userOn = { ...blankScheduleEdit(), lastDoneMiles: 90000 }
+    const edits = seedUnsureEdits({ 'timing-belt': userOn }, ['timing-belt', 'transmission-fluid'])
+    expect(edits['timing-belt']).toBe(userOn)
+    expect(edits['transmission-fluid']?.enabled).toBe(false)
+  })
+
+  it('saves unsure rows left off as not-needed, and switched-on rows as tracked', () => {
+    const { traits: resolved, unsure } = resolveTraitAnswers({ power: 'gas', trans: 'none', drive: 'fwd', belt: 'not-sure' })
+    const unsureRules = rulesForVehicle('veh-test', traitsKey(resolved))
+    const seeded = seedUnsureEdits({}, unsure)
+    const off = applyScheduleEdits(unsureRules, seeded)
+    expect(off.find((rule) => rule.category === 'timing-belt')!.override?.kind).toBe('not-needed')
+    expect(off.find((rule) => rule.category === 'transmission-fluid')!.override?.kind).toBe('not-needed')
+    const on = applyScheduleEdits(unsureRules, { ...seeded, 'timing-belt': { ...seeded['timing-belt']!, enabled: true } })
+    expect(on.find((rule) => rule.category === 'timing-belt')!.override).toBeNull()
+    expect(on.find((rule) => rule.category === 'transmission-fluid')!.override?.kind).toBe('not-needed')
   })
 })
