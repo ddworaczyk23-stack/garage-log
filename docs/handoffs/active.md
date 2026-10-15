@@ -26,8 +26,3 @@ aggressively, every time.
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
   the device, so confirm with the user before building.
 
-- **Trait-based schedules: awaiting PR publication (2026-10-15).** Complete
-  and committed locally on `feat/trait-schedules` at `588b2d5`; tests,
-  typecheck, build, and manual preview checks passed. Push/open the PR against
-  `main` only after David explicitly approves publishing the branch. Claude
-  should review the PR once it exists.

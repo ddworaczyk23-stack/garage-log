@@ -17,7 +17,7 @@ const identity: VehicleIdentity = {
 }
 
 beforeEach(async () => {
-  await Promise.all([db.vehicles.clear(), db.reminderRules.clear()])
+  await Promise.all([db.vehicles.clear(), db.reminderRules.clear(), db.odometerReadings.clear()])
 })
 
 describe('addVehicle', () => {
@@ -49,6 +49,27 @@ describe('addVehicle', () => {
     expect(rules.map((rule) => rule.category)).toEqual(expect.arrayContaining(['fuel-filter', 'transfer-case-fluid']))
     expect(rules.map((rule) => rule.category)).not.toContain('spark-plugs')
     expect(resolveInterval(rules.find((rule) => rule.category === 'fuel-filter')!).miles).toBe(15000)
+  })
+
+  it('persists schedule-review edits and a current-mileage reading atomically', async () => {
+    const traits: VehicleTraits = { power: 'gas', trans: 'auto', drive: 'fwd', belt: 'no' }
+    const result = await addVehicle({
+      identity,
+      engine: '2.0L',
+      drivetrain: 'FWD',
+      traits,
+      currentMiles: 40000,
+      edits: {
+        'engine-air-filter': { enabled: false, customMiles: null, customMonths: null, lastDoneDate: null, lastDoneMiles: null },
+        'oil-change': { enabled: true, customMiles: 4000, customMonths: 5, lastDoneDate: '2026-01-01', lastDoneMiles: 39000 },
+      },
+    })
+    const air = await db.reminderRules.get(`${result.vehicle.id}:engine-air-filter`)
+    const oil = await db.reminderRules.get(`${result.vehicle.id}:oil-change`)
+    expect(air?.override?.kind).toBe('not-needed')
+    expect(oil?.customIntervalMiles).toBe(4000)
+    expect(oil?.override).toMatchObject({ kind: 'already-replaced', atMiles: 39000 })
+    expect(await db.odometerReadings.where('vehicleId').equals(result.vehicle.id).first()).toMatchObject({ miles: 40000, source: 'quick-log' })
   })
 
   it('does not duplicate rules when an existing vehicle is reused', async () => {

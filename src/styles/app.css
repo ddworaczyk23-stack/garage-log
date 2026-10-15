@@ -2715,6 +2715,54 @@ iframe.preview-media {
 .vd-row.vd-row-editing {
   display: block;
 }
+
+/* Add-car schedule review (step 2). Navy header, grouped white cards, and an
+   "Add car" bar that floats above the bottom nav on phones. */
+.schedule-review-head { background: var(--frame); color: var(--on-frame); border-radius: var(--radius); padding: 18px 18px 20px; }
+.schedule-review-head .eyebrow { color: var(--on-frame-accent); margin: 0; }
+.schedule-review-head h1 { margin: 6px 0 6px; font-size: 22px; line-height: 1.2; font-weight: 700; color: var(--on-frame); }
+.schedule-review-head p:last-child { margin: 0; font-size: 14px; color: var(--on-frame-muted); }
+.schedule-progress { display: flex; gap: 6px; margin-bottom: 14px; }
+.schedule-progress i { height: 4px; flex: 1; border-radius: 2px; background: var(--frame-line); }
+.schedule-progress i.is-on { background: var(--on-frame-accent); }
+.schedule-current { margin: 18px 4px 0; }
+.schedule-group { margin-top: 22px; }
+.schedule-group h2 { font: 500 11px var(--font-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin: 0 4px 8px; }
+.schedule-card { background: var(--bg-card); border: 0.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow-card); overflow: hidden; }
+.schedule-item + .schedule-item { border-top: 0.5px solid var(--border); }
+.schedule-item.is-off strong, .schedule-item.is-off small { text-decoration: line-through; color: var(--text-muted); }
+.schedule-row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; }
+.schedule-row-open { appearance: none; border: 0; background: none; padding: 0; text-align: left; flex: 1; min-width: 0; color: var(--text); cursor: pointer; }
+.schedule-row-open strong, .schedule-row-open small, .schedule-row-open em { display: block; }
+.schedule-row-open strong { font-size: 15px; font-weight: 600; }
+.schedule-row-open small { font: 12px var(--font-mono); color: var(--text-muted); margin-top: 3px; }
+.schedule-row-open em { font-size: 12px; font-style: normal; color: var(--c-ok); margin-top: 3px; }
+.schedule-row-open em.schedule-row-error { color: var(--danger); }
+.schedule-tag { display: inline-block; vertical-align: 2px; margin-left: 6px; padding: 2px 6px; border-radius: 8px; font: 500 10px var(--font-mono); letter-spacing: 0.06em; text-transform: uppercase; background: var(--accent-tint); color: var(--accent); }
+.schedule-switch { width: 42px; height: 25px; border-radius: 99px; border: 0; background: var(--c-stale); padding: 3px; flex: none; cursor: pointer; }
+.schedule-switch[aria-checked="true"] { background: var(--accent); }
+.schedule-switch i { display: block; height: 19px; width: 19px; border-radius: 50%; background: #fff; transition: transform 0.18s ease; }
+.schedule-switch[aria-checked="true"] i { transform: translateX(17px); }
+.schedule-edit { padding: 2px 14px 14px; display: grid; gap: 10px; justify-items: start; }
+.schedule-edit > * { width: 100%; }
+.schedule-edit > .btn-link { width: auto; }
+.schedule-edit .admin-when { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.schedule-edit .admin-field { margin: 0; }
+.schedule-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.schedule-chips .choice-chip { font-size: 12px; }
+.schedule-note { margin: 0; font-size: 12px; color: var(--text-muted); background: var(--bg-inset); border-radius: 8px; padding: 8px 10px; }
+.schedule-footnote { margin: 14px 4px 0; font-size: 12px; color: var(--text-muted); }
+.schedule-footer { position: fixed; z-index: 19; left: 12px; right: 12px; bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 20px); max-width: 676px; margin: 0 auto; padding: 10px 12px 12px; background: var(--bg-elevated); border: 0.5px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-raised); display: grid; gap: 8px; }
+.schedule-footer p { margin: 0; text-align: center; font: 11px var(--font-mono); letter-spacing: 0.04em; color: var(--text-muted); }
+.schedule-footer p.is-error { color: var(--danger); }
+.schedule-footer .btn { width: 100%; }
+.schedule-review { padding-bottom: calc(var(--nav-height) + 150px); }
+@media (min-width: 1024px) {
+  /* Nav is a sidebar here and .app-main is the scroller, so sticky works. */
+  .schedule-review { padding-bottom: 0; }
+  .schedule-footer { position: sticky; left: auto; right: auto; bottom: 16px; margin-top: 20px; max-width: none; }
+}
+@media (prefers-reduced-motion: reduce) { .schedule-switch i { transition: none; } }
 /* Inset sub-surface, not a card — .vd-row already lives inside the
    Service schedule card, and DESIGN.md bans nested cards. */
 .vd-rule-editor {
