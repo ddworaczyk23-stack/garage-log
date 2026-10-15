@@ -24,6 +24,8 @@ export const blankScheduleEdit = (): ScheduleEdit => ({
   enabled: true, customMiles: null, customMonths: null, lastDoneDate: null, lastDoneMiles: null,
 })
 
+export const SCHEDULE_GROUPS = ['Engine', 'Tires and brakes', 'Fluids', 'Other'] as const
+
 export function scheduleGroup(category: MaintenanceCategory): string {
   if (['oil-change', 'engine-air-filter', 'spark-plugs', 'timing-belt', 'serpentine-belt', 'fuel-filter'].includes(category)) return 'Engine'
   if (['tire-rotation', 'tire-replacement', 'tire-balancing', 'tire-inspection', 'wheel-alignment', 'brake-fluid', 'brake-inspection'].includes(category)) return 'Tires and brakes'
@@ -46,6 +48,12 @@ function matchesInterval(edit: ScheduleEdit, interval: Interval): boolean {
   return edit.customMiles === interval.miles && edit.customMonths === interval.months
 }
 
+/** True when the edit stores an interval other than the suggested one. */
+export function intervalChanged(edit: ScheduleEdit, item: Pick<ScheduleReviewItem, 'suggested'>): boolean {
+  if (edit.customMiles == null && edit.customMonths == null) return false
+  return !matchesInterval(edit, item.suggested)
+}
+
 export function applyScheduleEdits(rules: ReminderRule[], edits: Partial<Record<MaintenanceCategory, ScheduleEdit>>): ReminderRule[] {
   return rules.map((rule) => {
     const edit = edits[rule.category]
@@ -63,10 +71,11 @@ export function applyScheduleEdits(rules: ReminderRule[], edits: Partial<Record<
   })
 }
 
-export function validateEdit(edit: ScheduleEdit, currentMiles: number | null, today: string): EditErrors {
+/** `customMode`: the row is in Custom, so it needs at least one of miles/months. */
+export function validateEdit(edit: ScheduleEdit, currentMiles: number | null, today: string, customMode = false): EditErrors {
   const errors: EditErrors = {}
   if ((edit.customMiles != null && (!Number.isInteger(edit.customMiles) || edit.customMiles <= 0)) || (edit.customMonths != null && (!Number.isInteger(edit.customMonths) || edit.customMonths <= 0))) errors.custom = 'Use whole numbers greater than 0.'
-  if ((edit.customMiles != null || edit.customMonths != null) && edit.customMiles == null && edit.customMonths == null) errors.custom = 'Enter miles or months.'
+  if (customMode && edit.customMiles == null && edit.customMonths == null) errors.custom = 'Enter miles or months.'
   if (edit.lastDoneDate && edit.lastDoneDate > today) errors.lastDoneDate = 'Last-done date cannot be in the future.'
   if (edit.lastDoneMiles != null && currentMiles != null && edit.lastDoneMiles > currentMiles) errors.lastDoneMiles = 'Last-done miles cannot be higher than current miles.'
   return errors

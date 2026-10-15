@@ -1,4 +1,4 @@
-import { useState } from 'preact/hooks'
+import { useEffect, useState } from 'preact/hooks'
 import { addVehicle } from '../db/vehicleOnboarding'
 import { db } from '../db/db'
 import { decodeVin } from '../services/vinDecode'
@@ -54,6 +54,13 @@ export function AddVehicle() {
   const [belt, setBelt] = useState<'yes' | 'no' | 'not-sure'>('not-sure')
   const [edits, setEdits] = useState<Partial<Record<MaintenanceCategory, ScheduleEdit>>>({})
   const [currentMiles, setCurrentMiles] = useState<number | null>(null)
+
+  // Each step starts at the top. Phones scroll the window; desktop scrolls
+  // .app-main (see app.css), so reset both.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+    document.querySelector('.app-main')?.scrollTo(0, 0)
+  }, [step])
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')

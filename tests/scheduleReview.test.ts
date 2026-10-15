@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { applyScheduleEdits, blankScheduleEdit, reviewItems, scheduleGroup, validateEdit } from '../src/domain/scheduleReview'
+import { applyScheduleEdits, blankScheduleEdit, intervalChanged, reviewItems, scheduleGroup, validateEdit } from '../src/domain/scheduleReview'
 import { rulesForVehicle } from '../src/db/scheduleTemplates'
 import { traitsKey, type VehicleTraits } from '../src/db/traitTemplates'
 
@@ -45,5 +45,18 @@ describe('schedule review', () => {
     expect(validateEdit({ ...blankScheduleEdit(), customMiles: 0 }, 50000, '2026-10-15').custom).toBeTruthy()
     expect(validateEdit({ ...blankScheduleEdit(), lastDoneDate: '2026-10-16' }, 50000, '2026-10-15').lastDoneDate).toBeTruthy()
     expect(validateEdit({ ...blankScheduleEdit(), lastDoneMiles: 50001 }, 50000, '2026-10-15').lastDoneMiles).toBeTruthy()
+  })
+
+  it('flags a changed interval only when it differs from suggested', () => {
+    const oil = reviewItems(key).find((item) => item.category === 'oil-change')!
+    expect(intervalChanged(blankScheduleEdit(), oil)).toBe(false)
+    expect(intervalChanged({ ...blankScheduleEdit(), customMiles: 5000, customMonths: 6 }, oil)).toBe(false)
+    expect(intervalChanged({ ...blankScheduleEdit(), customMiles: 4000, customMonths: 6 }, oil)).toBe(true)
+  })
+
+  it('requires miles or months only while a row is in Custom mode', () => {
+    expect(validateEdit(blankScheduleEdit(), null, '2026-10-15').custom).toBeUndefined()
+    expect(validateEdit(blankScheduleEdit(), null, '2026-10-15', true).custom).toBeTruthy()
+    expect(validateEdit({ ...blankScheduleEdit(), customMonths: 6 }, null, '2026-10-15', true).custom).toBeUndefined()
   })
 })
