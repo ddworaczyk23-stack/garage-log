@@ -30,6 +30,9 @@ import { Instrument } from '../components/motion/Instrument'
 import { useIntroGate, useReducedMotion } from '../motion/hooks'
 import { vehicleLabel } from '../domain/vehicle'
 import { CATEGORY_LABELS, type MaintenanceCategory, type VehicleDocument } from '../types'
+import { TraitChangeSheet } from '../components/TraitChangeSheet'
+import { answersFromRules, canChangeTraits, traitSummary } from '../domain/traitChange'
+import { parseTraitsKey } from '../db/traitTemplates'
 
 interface Props {
   id: string
@@ -57,6 +60,7 @@ export function VehicleDetail({ id }: Props) {
   const [activeForm, setActiveForm] = useState<ActiveForm>(null)
   const [editingName, setEditingName] = useState(false)
   const [editingSpecs, setEditingSpecs] = useState(false)
+  const [changingTraits, setChangingTraits] = useState(false)
   const [serviceCategory, setServiceCategory] = useState<MaintenanceCategory | undefined>(undefined)
   const [logSheetOpen, setLogSheetOpen] = useState(false)
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null)
@@ -454,6 +458,15 @@ export function VehicleDetail({ id }: Props) {
                 <div class="vd-spec-row"><dt>Drivetrain</dt><dd>{vehicle.drivetrain || 'Not set'}</dd></div>
                 <div class="vd-spec-row"><dt>Trim</dt><dd>{vehicle.trim || 'Not set'}</dd></div>
                 <div class="vd-spec-row"><dt>VIN</dt><dd class="muted">{vehicle.vin ?? 'Not set'}</dd></div>
+                {reminders && reminders.length > 0 && canChangeTraits(reminders[0].rule.templateKey) && (
+                  <div class="vd-spec-row">
+                    <dt>Maintenance type</dt>
+                    <dd>
+                      {parseTraitsKey(reminders[0].rule.templateKey) ? traitSummary(answersFromRules(reminders.map((r) => r.rule))) : 'Not set'}{' '}
+                      <button type="button" class="btn-link" onClick={() => setChangingTraits(true)}>Change</button>
+                    </dd>
+                  </div>
+                )}
               </dl>
               <button type="button" class="btn-link" onClick={() => setEditingSpecs(true)}>
                 Edit specifications
@@ -462,6 +475,19 @@ export function VehicleDetail({ id }: Props) {
           )}
         </Collapsible>
       </section>
+
+      {changingTraits && reminders && reminders.length > 0 && (
+        <TraitChangeSheet
+          vehicleId={id}
+          eyebrow={vehicleLabel(vehicle)}
+          rules={reminders.map((r) => r.rule)}
+          onClose={() => setChangingTraits(false)}
+          onSaved={() => {
+            setChangingTraits(false)
+            setToast({ id: Date.now(), message: 'Schedule updated' })
+          }}
+        />
+      )}
 
       </div>
 

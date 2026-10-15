@@ -25,4 +25,3 @@ aggressively, every time.
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
   the device, so confirm with the user before building.
-

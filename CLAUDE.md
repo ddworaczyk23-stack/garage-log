@@ -107,6 +107,13 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   off = `not-needed` override, last done = `already-replaced` override,
   interval = `customInterval*` (only when it differs from suggested). UI:
   `components/ScheduleReview.tsx`.
+- **`src/db/traitChange.ts`** — `changeVehicleTraits()`: re-keys a car's rules
+  to new trait answers ("Maintenance type" sheet on the car page,
+  `components/TraitChangeSheet.tsx`). Kept rules keep settings, removed rules
+  are deleted (events stay), added rules take last done from events. All rules
+  must share one `templateKey` (seed.ts reconciles one key per car). Pure diff +
+  "Not sure" read-back in `domain/traitChange.ts`. Hidden for the hand-built
+  F-150/Rogue keys. Trait chips shared via `components/TraitPickers.tsx`.
 - **`src/domain/`** — PURE logic, all unit-tested:
   - `reminderEngine.ts` — `computeReminder(rule, inputs)` + `computeVehicleReminders`.
   - `reminderStatus.ts` — `resolveInterval(rule)`, `resolveLastDone()`.
