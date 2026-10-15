@@ -5047,6 +5047,12 @@ a.list-row:hover {
   .page > .vd-masthead:first-child,
   .page > .vd-rail:first-child > .vd-masthead:first-child {
     margin-top: -32px;
+    padding-top: 22px;
+  }
+  /* Even space above and below the title (its own 2px/4px margins included). */
+  .page-header,
+  .vd-masthead {
+    padding-bottom: 20px;
   }
 }
 
