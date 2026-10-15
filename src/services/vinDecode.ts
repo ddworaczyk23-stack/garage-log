@@ -92,8 +92,10 @@ export async function decodeVin(vin: string): Promise<VinDecodeResult> {
   const transmission = result?.TransmissionStyle?.toLowerCase() ?? ''
   const drive = suggestedDrivetrain?.toLowerCase() ?? ''
   const suggestedTraits: Partial<VehicleTraits> = {}
-  if (electrification.includes('electric')) suggestedTraits.power = 'ev'
-  else if (electrification.includes('hybrid')) suggestedTraits.power = 'hybrid'
+  // Hybrid first: vPIC hybrids read "HEV (Strong Hybrid Electric Vehicle)",
+  // which also contains "electric".
+  if (electrification.includes('hybrid')) suggestedTraits.power = 'hybrid'
+  else if (electrification.includes('bev') || fuelType?.toLowerCase() === 'electric') suggestedTraits.power = 'ev'
   else if (fuelType?.toLowerCase().includes('diesel')) suggestedTraits.power = 'diesel'
   else if (turbo === 'yes' || turbo === 'true') suggestedTraits.power = 'turbo'
   else if (fuelType) suggestedTraits.power = 'gas'

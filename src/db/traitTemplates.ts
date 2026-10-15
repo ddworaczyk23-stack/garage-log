@@ -140,7 +140,7 @@ export function composeTraitTemplate(traits: VehicleTraits): ScheduleTemplateEnt
   if (trans === 'manual') {
     entries.push({ category: 'transmission-fluid', label: 'Manual gearbox oil', factoryInterval: { miles: 60000, months: 48 }, mechanicConsensusInterval: { miles: 60000, months: 48 }, note: 'Use the exact gear oil in your manual. The wrong type can harm the shifting parts. On many FWD cars this oil also serves the front differential. Check your manual.' })
     const brakeFluid = entries.find((entry) => entry.category === 'brake-fluid')!
-    brakeFluid.note = `${brakeFluid.note ?? brakeFluid.consensusNote ?? ''} Also covers clutch fluid. Check your manual.`
+    brakeFluid.note = 'Also covers clutch fluid.'
   }
 
   if (traits.power !== 'ev' && traits.drive === 'awd') entries.push({ category: 'differential-fluid', label: 'Rear differential / AWD unit fluid', factoryInterval: { miles: 60000, months: 48 }, mechanicConsensusInterval: { miles: 60000, months: 48 }, note: 'Many AWD cars have a rear differential and a transfer unit up front (PTU). Some use special fluid. Toyota/Lexus can be 30k. Keep all four tires the same size and similar wear. Check your manual.' })
