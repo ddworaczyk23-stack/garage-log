@@ -2,7 +2,9 @@ import { db } from './db'
 import { matchesExistingVehicle } from '../domain/vehicleIdentity'
 import { GENERIC_TEMPLATE_KEY, rulesForVehicle } from './scheduleTemplates'
 import { traitsKey, type VehicleTraits } from './traitTemplates'
-import type { Vehicle, VehicleIdentity } from '../types'
+import { applyScheduleEdits, type ScheduleEdit } from '../domain/scheduleReview'
+import { localDateISO } from '../domain/format'
+import type { MaintenanceCategory, Vehicle, VehicleIdentity } from '../types'
 
 // New-vehicle onboarding: create the Vehicle record (+ its generic maintenance
 // schedule) in one transaction. This used to also hydrate two sample-data
@@ -17,6 +19,8 @@ export interface AddVehicleInput {
   engine: string
   drivetrain: string
   traits?: VehicleTraits
+  edits?: Partial<Record<MaintenanceCategory, ScheduleEdit>>
+  currentMiles?: number | null
 }
 
 export interface AddVehicleResult {
@@ -59,9 +63,14 @@ export async function addVehicle(input: AddVehicleInput): Promise<AddVehicleResu
   // generic template is the fallback for any car we don't have a curated
   // model schedule for — intervals personalize via custom overrides + logged
   // history from here. See GENERIC_TEMPLATE_KEY in scheduleTemplates.ts.
-  await db.transaction('rw', db.vehicles, db.reminderRules, async () => {
+  await db.transaction('rw', db.vehicles, db.reminderRules, db.odometerReadings, async () => {
     await db.vehicles.add(vehicle)
-    await db.reminderRules.bulkAdd(rulesForVehicle(vehicle.id, input.traits ? traitsKey(input.traits) : GENERIC_TEMPLATE_KEY))
+    const templateKey = input.traits ? traitsKey(input.traits) : GENERIC_TEMPLATE_KEY
+    const rules = applyScheduleEdits(rulesForVehicle(vehicle.id, templateKey), input.edits ?? {})
+    await db.reminderRules.bulkAdd(rules)
+    if (input.currentMiles != null) {
+      await db.odometerReadings.add({ id: `odo-${crypto.randomUUID()}`, vehicleId: vehicle.id, date: localDateISO(new Date()), miles: input.currentMiles, source: 'quick-log' })
+    }
   })
   return { vehicle, created: true }
 }

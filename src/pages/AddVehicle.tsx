@@ -1,11 +1,16 @@
 import { useState } from 'preact/hooks'
 import { addVehicle } from '../db/vehicleOnboarding'
+import { db } from '../db/db'
 import { decodeVin } from '../services/vinDecode'
-import { canonicalVehicleId } from '../domain/vehicleIdentity'
+import { canonicalVehicleId, matchesExistingVehicle } from '../domain/vehicleIdentity'
 import { Reveal } from '../components/motion/Reveal'
 import { PageHeader } from '../components/ui'
 import type { VehicleIdentity } from '../types'
 import type { VehicleTraits } from '../db/traitTemplates'
+import { traitsKey } from '../db/traitTemplates'
+import { ScheduleReview } from '../components/ScheduleReview'
+import type { ScheduleEdit } from '../domain/scheduleReview'
+import type { MaintenanceCategory } from '../types'
 
 type Mode = 'vin' | 'manual'
 const CURRENT_YEAR = new Date().getFullYear()
@@ -29,6 +34,7 @@ function normalizeDrivetrain(value: string): string {
 // NHTSA lookup) or manual entry resolve a VehicleIdentity, then addVehicle()
 // creates the record (deduped) and its generic maintenance schedule.
 export function AddVehicle() {
+  const [step, setStep] = useState<'car' | 'schedule'>('car')
   const [mode, setMode] = useState<Mode>('vin')
 
   const [vin, setVin] = useState('')
@@ -46,6 +52,8 @@ export function AddVehicle() {
   const [power, setPower] = useState<VehicleTraits['power']>('gas')
   const [trans, setTrans] = useState<VehicleTraits['trans']>('none')
   const [belt, setBelt] = useState<'yes' | 'no' | 'not-sure'>('not-sure')
+  const [edits, setEdits] = useState<Partial<Record<MaintenanceCategory, ScheduleEdit>>>({})
+  const [currentMiles, setCurrentMiles] = useState<number | null>(null)
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -56,6 +64,7 @@ export function AddVehicle() {
     setDecoded(null)
     setDecodeError('')
     setSubmitError('')
+    setStep('car')
   }
 
   async function runDecode(e: Event) {
@@ -103,15 +112,24 @@ export function AddVehicle() {
     belt: belt === 'yes' ? 'yes' : 'no',
   }
 
-  async function submit(e: Event) {
+  async function beginReview(e: Event) {
     e.preventDefault()
-    if (submitting) return
     if (!identity) {
       setSubmitError('Enter the year, make, and model — the rest is optional.')
       return
     }
     setSubmitError('')
     setDuplicate(null)
+    const existing = matchesExistingVehicle(identity, await db.vehicles.toArray())
+    if (existing) {
+      setDuplicate({ id: existing.id, label: `${existing.year} ${existing.make} ${existing.model}` })
+      return
+    }
+    setStep('schedule')
+  }
+
+  async function submit() {
+    if (submitting || !identity) return
     setSubmitting(true)
     try {
       const { vehicle, created } = await addVehicle({
@@ -119,6 +137,8 @@ export function AddVehicle() {
         engine: engine.trim(),
         drivetrain: drivetrain.trim(),
         traits,
+        edits,
+        currentMiles,
       })
       if (created) {
         try {
@@ -137,6 +157,8 @@ export function AddVehicle() {
       setSubmitting(false)
     }
   }
+
+  if (step === 'schedule' && identity) return <ScheduleReview identity={identity} traits={traits} templateKey={traitsKey(traits)} edits={edits} currentMiles={currentMiles} onChange={(nextEdits, nextMiles) => { setEdits(nextEdits); setCurrentMiles(nextMiles) }} onBack={() => setStep('car')} onSubmit={submit} submitting={submitting} error={submitError} />
 
   return (
     <section class="page">
@@ -193,7 +215,7 @@ export function AddVehicle() {
 
       {mode === 'manual' && (
         <Reveal>
-        <form class="card admin-form add-vehicle-form" onSubmit={submit}>
+        <form class="card admin-form add-vehicle-form" onSubmit={beginReview}>
           <label class="admin-field">
             <span class="muted small">Year</span>
             <select
@@ -241,7 +263,7 @@ export function AddVehicle() {
           )}
           <div class="form-actions">
             <button class="btn" type="submit" disabled={submitting}>
-              {submitting ? 'Adding…' : 'Add a car'}
+              Next: review schedule
             </button>
           </div>
         </form>
@@ -250,7 +272,7 @@ export function AddVehicle() {
 
       {mode === 'vin' && identity && (
         <Reveal>
-        <form class="card admin-form add-vehicle-form" onSubmit={submit}>
+        <form class="card admin-form add-vehicle-form" onSubmit={beginReview}>
           <p class="muted small">
             {identity.year} {identity.make} {identity.model} {identity.trim}
             {identity.vin ? ` · VIN ${identity.vin}` : ''}
@@ -273,7 +295,7 @@ export function AddVehicle() {
           )}
           <div class="form-actions">
             <button class="btn" type="submit" disabled={submitting}>
-              {submitting ? 'Adding…' : 'Add a car'}
+              Next: review schedule
             </button>
           </div>
         </form>

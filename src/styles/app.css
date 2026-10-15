@@ -2715,6 +2715,39 @@ iframe.preview-media {
 .vd-row.vd-row-editing {
   display: block;
 }
+
+/* Add-car schedule review: a single mobile-first editing surface, not nested cards. */
+.schedule-review { min-height: 100vh; background: var(--bg); padding-bottom: 150px; }
+.schedule-review-head { background: var(--frame); color: var(--frame-text, #fff); padding: 24px 20px 28px; }
+.schedule-review-head h1 { margin: 6px 0; font-size: 28px; line-height: 1.08; }
+.schedule-review-head p { margin: 0; color: color-mix(in srgb, var(--frame-text, #fff) 78%, transparent); }
+.schedule-progress { display: flex; gap: 5px; margin-bottom: 14px; }
+.schedule-progress i { height: 4px; flex: 1; border-radius: 3px; background: color-mix(in srgb, #fff 28%, transparent); }
+.schedule-progress i.is-on { background: var(--accent); }
+.schedule-current { margin: 16px 20px; }
+.schedule-group { margin: 24px 14px 0; }
+.schedule-group h2 { font: 600 11px var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); margin: 0 6px 8px; }
+.schedule-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.schedule-item + .schedule-item { border-top: 1px solid var(--border); }
+.schedule-item.is-off strong, .schedule-item.is-off small { text-decoration: line-through; color: var(--text-muted); }
+.schedule-row { display: flex; align-items: center; gap: 12px; padding: 13px 14px; }
+.schedule-row-open { appearance: none; border: 0; background: none; padding: 0; text-align: left; flex: 1; min-width: 0; color: var(--text); }
+.schedule-row strong, .schedule-row small, .schedule-row em { display: block; }
+.schedule-row strong { font-size: 15px; }
+.schedule-row small, .schedule-row em { font: 11px var(--font-mono); color: var(--text-muted); margin-top: 3px; }
+.schedule-row em { font-family: var(--font-sans); font-style: normal; }
+.schedule-switch { width: 42px; height: 25px; border-radius: 99px; border: 0; background: var(--text-muted); padding: 3px; flex: none; }
+.schedule-switch[aria-checked="true"] { background: var(--accent); }
+.schedule-switch i { display: block; height: 19px; width: 19px; border-radius: 50%; background: #fff; transition: transform .18s ease; }
+.schedule-switch[aria-checked="true"] i { transform: translateX(17px); }
+.schedule-edit { padding: 0 14px 15px; background: var(--bg-inset); }
+.schedule-chips { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 12px; }
+.schedule-chips .choice-chip { font-size: 11px; }
+.schedule-footer { position: sticky; bottom: 0; z-index: 2; margin-top: 24px; padding: 14px 20px max(18px, env(safe-area-inset-bottom)); background: var(--surface); border-top: 1px solid var(--border); display: grid; gap: 9px; }
+.schedule-footer p { margin: 0; font: 11px var(--font-mono); color: var(--text-muted); }
+.schedule-footer .btn { width: 100%; }
+.schedule-footer small { color: var(--text-muted); text-align: center; }
+@media (prefers-reduced-motion: reduce) { .schedule-switch i { transition: none; } }
 /* Inset sub-surface, not a card — .vd-row already lives inside the
    Service schedule card, and DESIGN.md bans nested cards. */
 .vd-rule-editor {
