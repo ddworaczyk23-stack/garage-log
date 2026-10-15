@@ -5026,11 +5026,19 @@ a.list-row:hover {
     background: rgba(255, 255, 255, 0.12);
     color: var(--on-frame);
   }
-  /* The band only bleeds into the content column, not under the rail. */
+  /* .app-main is the scroller here, so its own edges stop the bleed at the
+     rail; the band reaches both sides of the content area. */
   .page > .back-link:first-child,
   .page-header,
   .vd-masthead {
-    clip-path: inset(0 -100vmax 0 -16px);
+    clip-path: inset(0 -100vmax);
+  }
+  /* Cancel .app-main's 32px desktop top pad so the band meets the top. */
+  .page > .back-link:first-child,
+  .page > .page-header:first-child,
+  .page > .vd-masthead:first-child,
+  .page > .vd-rail:first-child > .vd-masthead:first-child {
+    margin-top: -32px;
   }
 }
 
