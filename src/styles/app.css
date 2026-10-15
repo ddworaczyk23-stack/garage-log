@@ -5019,7 +5019,8 @@ a.list-row:hover {
   .app-header,
   .bottom-nav {
     background: var(--frame);
-    border-right: 0;
+    /* Same navy as the title band, so a faint line marks where the rail ends. */
+    border-right: 1px solid rgba(255, 255, 255, 0.12);
   }
   .nav-item:hover {
     background: rgba(255, 255, 255, 0.08);
