@@ -5,12 +5,16 @@ import { canonicalVehicleId } from '../domain/vehicleIdentity'
 import { Reveal } from '../components/motion/Reveal'
 import { PageHeader } from '../components/ui'
 import type { VehicleIdentity } from '../types'
+import type { VehicleTraits } from '../db/traitTemplates'
 
 type Mode = 'vin' | 'manual'
 const CURRENT_YEAR = new Date().getFullYear()
 // Next year's models go on sale in the fall, so the list starts one year ahead.
 const VEHICLE_YEARS = Array.from({ length: 42 }, (_, index) => CURRENT_YEAR + 1 - index)
 const DRIVETRAINS = ['FWD', 'RWD', 'AWD', '4WD'] as const
+const POWER_OPTIONS = [['gas', 'Gas'], ['turbo', 'Turbo gas'], ['diesel', 'Diesel'], ['hybrid', 'Hybrid'], ['ev', 'Electric']] as const
+const TRANS_OPTIONS = [['auto', 'Automatic'], ['cvt', 'CVT'], ['dct', 'Dual-clutch'], ['manual', 'Manual'], ['none', 'Not sure']] as const
+const BELT_OPTIONS = [['yes', 'Yes'], ['no', 'No'], ['not-sure', 'Not sure']] as const
 
 function normalizeDrivetrain(value: string): string {
   const upper = value.toUpperCase()
@@ -39,6 +43,9 @@ export function AddVehicle() {
 
   const [engine, setEngine] = useState('')
   const [drivetrain, setDrivetrain] = useState('')
+  const [power, setPower] = useState<VehicleTraits['power']>('gas')
+  const [trans, setTrans] = useState<VehicleTraits['trans']>('none')
+  const [belt, setBelt] = useState<'yes' | 'no' | 'not-sure'>('not-sure')
 
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState('')
@@ -65,6 +72,8 @@ export function AddVehicle() {
       setDecoded(result.identity)
       setEngine(result.suggestedEngine ?? '')
       setDrivetrain(normalizeDrivetrain(result.suggestedDrivetrain ?? ''))
+      setPower(result.suggestedTraits?.power ?? 'gas')
+      setTrans(result.suggestedTraits?.trans ?? 'none')
     } finally {
       setDecoding(false)
     }
@@ -87,6 +96,12 @@ export function AddVehicle() {
   }
 
   const identity = mode === 'vin' ? decoded : manualIdentity()
+  const traits: VehicleTraits = {
+    power,
+    trans: power === 'hybrid' || power === 'ev' ? 'none' : trans,
+    drive: drivetrain === 'FWD' ? 'fwd' : drivetrain === 'RWD' ? 'rwd' : drivetrain === 'AWD' ? 'awd' : drivetrain === '4WD' ? '4wd' : 'none',
+    belt: belt === 'yes' ? 'yes' : 'no',
+  }
 
   async function submit(e: Event) {
     e.preventDefault()
@@ -103,6 +118,7 @@ export function AddVehicle() {
         identity,
         engine: engine.trim(),
         drivetrain: drivetrain.trim(),
+        traits,
       })
       if (created) {
         try {
@@ -211,7 +227,7 @@ export function AddVehicle() {
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
-          <DrivetrainPicker value={drivetrain} onChange={setDrivetrain} />
+          <ScheduleTraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={setTrans} onBelt={setBelt} onDrive={setDrivetrain} />
           {submitError && (
             <p class="notice notice-error" role="alert">
               {submitError}
@@ -243,7 +259,7 @@ export function AddVehicle() {
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
           </label>
-          <DrivetrainPicker value={drivetrain} onChange={setDrivetrain} />
+          <ScheduleTraitPickers power={power} trans={trans} belt={belt} drivetrain={drivetrain} onPower={setPower} onTrans={setTrans} onBelt={setBelt} onDrive={setDrivetrain} />
           {submitError && (
             <p class="notice notice-error" role="alert">
               {submitError}
@@ -267,23 +283,37 @@ export function AddVehicle() {
   )
 }
 
-function DrivetrainPicker({ value, onChange }: { value: string; onChange: (value: string) => void }) {
+function ScheduleTraitPickers({ power, trans, belt, drivetrain, onPower, onTrans, onBelt, onDrive }: {
+  power: VehicleTraits['power']; trans: VehicleTraits['trans']; belt: 'yes' | 'no' | 'not-sure'; drivetrain: string
+  onPower: (value: VehicleTraits['power']) => void; onTrans: (value: VehicleTraits['trans']) => void
+  onBelt: (value: 'yes' | 'no' | 'not-sure') => void; onDrive: (value: string) => void
+}) {
+  return <>
+    <ChipPicker legend="Engine type" value={power} options={POWER_OPTIONS} onChange={(value) => onPower(value as VehicleTraits['power'])} />
+    {power !== 'hybrid' && power !== 'ev' && <ChipPicker legend="Transmission" value={trans} options={TRANS_OPTIONS} onChange={(value) => onTrans(value as VehicleTraits['trans'])} />}
+    {power !== 'ev' && <ChipPicker legend="Timing belt?" value={belt} options={BELT_OPTIONS} onChange={(value) => onBelt(value as 'yes' | 'no' | 'not-sure')} hint="Not sure? Check your manual. Most newer cars have a chain." />}
+    <ChipPicker legend="Drivetrain — optional" value={drivetrain} options={DRIVETRAINS.map((value) => [value, value] as const)} onChange={(value) => onDrive(value === drivetrain ? '' : value)} />
+  </>
+}
+
+function ChipPicker({ legend, value, options, onChange, hint }: { legend: string; value: string; options: readonly (readonly [string, string])[]; onChange: (value: string) => void; hint?: string }) {
   return (
     <fieldset class="admin-field chip-field">
-      <legend class="muted small">Drivetrain — optional</legend>
+      <legend class="muted small">{legend}</legend>
       <div class="choice-chips">
-        {DRIVETRAINS.map((option) => (
+        {options.map(([option, label]) => (
           <button
             key={option}
             type="button"
             class={`choice-chip${value === option ? ' is-on' : ''}`}
             aria-pressed={value === option}
-            onClick={() => onChange(value === option ? '' : option)}
+            onClick={() => onChange(option)}
           >
-            {option}
+            {label}
           </button>
         ))}
       </div>
+      {hint && <span class="field-hint">{hint}</span>}
     </fieldset>
   )
 }

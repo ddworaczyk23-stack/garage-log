@@ -1,5 +1,6 @@
 import { canonicalVehicleId } from '../domain/vehicleIdentity'
 import type { VehicleIdentity } from '../types'
+import type { VehicleTraits } from '../db/traitTemplates'
 
 // VIN -> vehicle identity, via NHTSA's free vPIC "decodevinvalues" API. Real
 // network call (no key, CORS-enabled). NOTE: this endpoint's `Results` is a
@@ -16,6 +17,9 @@ interface VpicDecodedVehicle {
   EngineCylinders?: string
   FuelTypePrimary?: string
   DriveType?: string
+  Turbo?: string
+  ElectrificationLevel?: string
+  TransmissionStyle?: string
 }
 
 export interface VinDecodeError {
@@ -30,6 +34,7 @@ export interface VinDecodeSuccess {
   // and phrasing, so the Add Car form still shows these as editable, not final.
   suggestedEngine?: string
   suggestedDrivetrain?: string
+  suggestedTraits?: Partial<VehicleTraits>
 }
 
 export type VinDecodeResult = VinDecodeSuccess | VinDecodeError
@@ -82,6 +87,26 @@ export async function decodeVin(vin: string): Promise<VinDecodeResult> {
       .filter(Boolean)
       .join(' ') || undefined
   const suggestedDrivetrain = result?.DriveType?.trim() || undefined
+  const electrification = result?.ElectrificationLevel?.toLowerCase() ?? ''
+  const turbo = result?.Turbo?.toLowerCase() ?? ''
+  const transmission = result?.TransmissionStyle?.toLowerCase() ?? ''
+  const drive = suggestedDrivetrain?.toLowerCase() ?? ''
+  const suggestedTraits: Partial<VehicleTraits> = {}
+  // Hybrid first: vPIC hybrids read "HEV (Strong Hybrid Electric Vehicle)",
+  // which also contains "electric".
+  if (electrification.includes('hybrid')) suggestedTraits.power = 'hybrid'
+  else if (electrification.includes('bev') || fuelType?.toLowerCase() === 'electric') suggestedTraits.power = 'ev'
+  else if (fuelType?.toLowerCase().includes('diesel')) suggestedTraits.power = 'diesel'
+  else if (turbo === 'yes' || turbo === 'true') suggestedTraits.power = 'turbo'
+  else if (fuelType) suggestedTraits.power = 'gas'
+  if (transmission.includes('cvt')) suggestedTraits.trans = 'cvt'
+  else if (transmission.includes('dual') || transmission.includes('dct') || transmission.includes('dsg')) suggestedTraits.trans = 'dct'
+  else if (transmission.includes('manual')) suggestedTraits.trans = 'manual'
+  else if (transmission.includes('automatic')) suggestedTraits.trans = 'auto'
+  if (drive.includes('4wd') || drive.includes('4x4') || drive.includes('4-wheel')) suggestedTraits.drive = '4wd'
+  else if (drive.includes('awd') || drive.includes('all-wheel')) suggestedTraits.drive = 'awd'
+  else if (drive.includes('fwd') || drive.includes('front-wheel')) suggestedTraits.drive = 'fwd'
+  else if (drive.includes('rwd') || drive.includes('rear-wheel')) suggestedTraits.drive = 'rwd'
 
-  return { ok: true, identity, suggestedEngine, suggestedDrivetrain }
+  return { ok: true, identity, suggestedEngine, suggestedDrivetrain, suggestedTraits }
 }
