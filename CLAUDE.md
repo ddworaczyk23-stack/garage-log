@@ -101,8 +101,12 @@ Use the preview MCP tools: `preview_start` with config name **`garage-log`**
   `Vehicle.milestones` (non-indexed, no schema bump, syncs/backs up with the
   vehicle). **Deliberately independent of reminder rules** — never touches them.
 - **`src/db/vehicleOnboarding.ts`** — `addVehicle()` (dedup-checked via
-  `matchesExistingVehicle`; creates the vehicle + its generic maintenance
-  schedule in one transaction).
+  `matchesExistingVehicle`; creates the vehicle + its trait schedule in one
+  transaction, applying the "Add a car" step-2 review edits and an optional
+  current-miles reading). Review edits are pure in `domain/scheduleReview.ts`:
+  off = `not-needed` override, last done = `already-replaced` override,
+  interval = `customInterval*` (only when it differs from suggested). UI:
+  `components/ScheduleReview.tsx`.
 - **`src/domain/`** — PURE logic, all unit-tested:
   - `reminderEngine.ts` — `computeReminder(rule, inputs)` + `computeVehicleReminders`.
   - `reminderStatus.ts` — `resolveInterval(rule)`, `resolveLastDone()`.

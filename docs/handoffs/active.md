@@ -26,9 +26,3 @@ aggressively, every time.
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
   the device, so confirm with the user before building.
 
-- **Onboarding schedule review: built and reviewed, awaiting PR (2026-10-15).**
-  On `feat/onboarding-schedule-review`. Codex built it; Claude's review fixed
-  undefined color tokens (white cards and footer were transparent), the
-  "Add car" bar not staying on screen, the Custom inputs vanishing when
-  cleared, and the step opening scrolled halfway down. Push and open the PR
-  only after David approves. Delete this entry once merged.
