@@ -3530,6 +3530,9 @@ a.list-row:hover {
   color: var(--on-frame-muted);
 }
 .hm-line b { color: var(--on-frame); font-weight: 700; }
+/* The status sits on the title's line, right after "Your Garage". */
+.hm-head .page-header-row { justify-content: flex-start; align-items: baseline; }
+.hm-head .hm-line { margin: 0; }
 .hm-sq {
   display: inline-block;
   width: 11px;
@@ -5021,6 +5024,10 @@ a.list-row:hover {
   .nav-item:hover {
     background: rgba(255, 255, 255, 0.08);
     color: var(--on-frame);
+  }
+  /* The disc is just an icon in the sidebar button; drop the phone ring. */
+  .nav-check-disc {
+    box-shadow: none;
   }
   .nav-item.is-active {
     background: rgba(255, 255, 255, 0.12);

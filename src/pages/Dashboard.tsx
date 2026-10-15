@@ -72,8 +72,11 @@ export function Dashboard() {
 
   return (
     <section class="page gb">
-      <PageHeader title="Your Garage">
-        <GarageLine fixNow={tally.fixNow} bookSoon={tally.bookSoon} hasHistory={hasHistory} />
+      <PageHeader
+        title="Your Garage"
+        class="hm-head"
+        meta={<GarageLine fixNow={tally.fixNow} bookSoon={tally.bookSoon} hasHistory={hasHistory} />}
+      >
         <QuickActions vehicles={summary.vehicles.map((s) => s.vehicle)} />
       </PageHeader>
 
