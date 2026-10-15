@@ -26,8 +26,16 @@ aggressively, every time.
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
   the device, so confirm with the user before building.
 
-- **Trait-based schedules: awaiting PR publication (2026-10-15).** Complete
-  and committed locally on `feat/trait-schedules` at `588b2d5`; tests,
-  typecheck, build, and manual preview checks passed. Push/open the PR against
-  `main` only after David explicitly approves publishing the branch. Claude
-  should review the PR once it exists.
+- **Onboarding schedule review step: ready to build (2026-10-15).** Codex
+  builds it. Plan approved by David: `docs/plans/onboarding-schedule-review.md`
+  (read it in full first; it is the spec). Branch:
+  `feat/onboarding-schedule-review` (already cut off `main`, plan committed).
+  Summary: after the car details, "Add a car" shows the full trait schedule on
+  one screen. The user switches items off, picks Suggested / Maker / Custom
+  intervals, and enters optional "last done" date/miles and current miles.
+  One tap saves the car and all edits in one transaction. No schema change:
+  off = `not-needed` override, last done = `already-replaced` override, interval
+  = `customIntervalMiles/Months`. Fonts Overpass + Overpass Mono only; one
+  accent button per view. Done = tests + typecheck + build pass, the plan's
+  Verification steps pass in the preview at 375x812, committed on the branch.
+  Do not push: David approves publishing. Claude reviews the PR after.
