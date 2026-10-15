@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { db } from '../src/db/db'
 import { addVehicle } from '../src/db/vehicleOnboarding'
 import { GENERIC_TEMPLATE_KEY, SCHEDULE_TEMPLATES } from '../src/db/scheduleTemplates'
+import { traitsKey, type VehicleTraits } from '../src/db/traitTemplates'
 import { seedIfEmpty } from '../src/db/seed'
 import { resolveInterval } from '../src/domain/reminderStatus'
 import { canonicalVehicleId } from '../src/domain/vehicleIdentity'
@@ -38,6 +39,16 @@ describe('addVehicle', () => {
     expect(resolveInterval(oil).miles).toBe(5000)
     // Fresh rules carry no history and no custom overrides.
     expect(rules.every((r) => r.lastDoneDate == null && r.customIntervalMiles == null)).toBe(true)
+  })
+
+  it('creates a trait schedule when traits are supplied', async () => {
+    const traits: VehicleTraits = { power: 'diesel', trans: 'auto', drive: '4wd', belt: 'no' }
+    const result = await addVehicle({ identity, engine: '3.0L diesel', drivetrain: '4WD', traits })
+    const rules = await db.reminderRules.where('vehicleId').equals(result.vehicle.id).toArray()
+    expect(rules.every((rule) => rule.templateKey === traitsKey(traits))).toBe(true)
+    expect(rules.map((rule) => rule.category)).toEqual(expect.arrayContaining(['fuel-filter', 'transfer-case-fluid']))
+    expect(rules.map((rule) => rule.category)).not.toContain('spark-plugs')
+    expect(resolveInterval(rules.find((rule) => rule.category === 'fuel-filter')!).miles).toBe(15000)
   })
 
   it('does not duplicate rules when an existing vehicle is reused', async () => {
@@ -99,5 +110,14 @@ describe('seedIfEmpty backfill', () => {
     const oil = await db.reminderRules.get(oilId)
     expect(oil?.customIntervalMiles).toBe(3000)
     expect(oil?.lastDoneDate).toBe('2026-01-01')
+  })
+
+  it('reconciles a trait vehicle additively without adding or dropping rules', async () => {
+    const traits: VehicleTraits = { power: 'hybrid', trans: 'none', drive: 'awd', belt: 'no' }
+    const added = await addVehicle({ identity, engine: '2.5L hybrid', drivetrain: 'AWD', traits })
+    const before = await db.reminderRules.where('vehicleId').equals(added.vehicle.id).toArray()
+    await seedIfEmpty()
+    const after = await db.reminderRules.where('vehicleId').equals(added.vehicle.id).toArray()
+    expect(after.map((rule) => rule.id).sort()).toEqual(before.map((rule) => rule.id).sort())
   })
 })

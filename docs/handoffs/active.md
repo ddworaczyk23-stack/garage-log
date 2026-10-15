@@ -25,15 +25,3 @@ aggressively, every time.
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
   the device, so confirm with the user before building.
-
-- **Trait-based schedules for new cars: READY TO BUILD (Codex), 2026-10-15.**
-  Branch `feat/trait-schedules`. Plan approved by David:
-  `docs/plans/trait-schedules.md` (follow it exactly; numbers and note text
-  come from the "Decisions" sections in `docs/research/trait-modules/*.md`).
-  Core idea: a trait car's `ReminderRule.templateKey` is
-  `traits:v1:<power>.<trans>.<drive>.<belt>` and the entry list is composed in
-  code from it (new pure `src/db/traitTemplates.ts`; `templateEntries(key)` in
-  `scheduleTemplates.ts`). No schema bump. Timing belt comes from a user
-  question (Yes / No / Not sure), never the VIN. Done when: `npm test` +
-  `npm run typecheck` pass, the plan's Verification steps pass in the preview,
-  and a PR is open against `main` (do not push to main). Claude reviews.
