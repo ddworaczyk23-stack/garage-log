@@ -25,17 +25,3 @@ aggressively, every time.
   push + email reminders need a server (e.g. Cloudflare Worker cron + Web Push
   for home-screen PWAs on iOS 16.4+, Resend for email). Means due dates leave
   the device, so confirm with the user before building.
-
-- **Change a car's traits after adding it: ready to build (2026-10-15).**
-  Codex builds it. Plan approved by David: `docs/plans/change-traits.md`
-  (read it in full; it is the spec). Branch `feat/change-traits` (plan
-  committed, already rebased on `main` after the "Not sure" PR #56). Work in
-  the folder `~/OS/active/garage-log-change-traits` (a git worktree).
-  Summary: a "Maintenance type" row + "Change" link on the car page opens a
-  sheet with the trait pickers and a live diff (added / removed / kept). Save
-  updates all the car's rules in one transaction: kept rules keep their
-  settings, removed rules are deleted (events stay), added rules take last done
-  from matching events. Every rule ends on the same `templateKey`. Hidden for
-  the F-150 and Rogue. Done = tests + typecheck + build pass, the plan's
-  Verification steps pass at 375x812, committed on the branch. Do not push:
-  David approves publishing. Claude reviews the PR after.

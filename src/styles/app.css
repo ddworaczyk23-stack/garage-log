@@ -5347,6 +5347,11 @@ dialog.sheet.is-in::backdrop {
   overscroll-behavior: contain;
   padding: 14px 16px 0;
 }
+.trait-change { display: grid; gap: 18px; }
+.trait-pickers { display: grid; gap: 12px; }
+.trait-pickers label { display: grid; gap: 5px; font: 12px var(--font-mono); color: var(--text-muted); }
+.trait-diff { background: var(--bg-inset); border-radius: 12px; padding: 12px; }
+.trait-diff p { margin: 0 0 8px; }
 .sheet-seg {
   display: flex;
   padding: 3px;
