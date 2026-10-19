@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks'
 import { addVehicle } from '../db/vehicleOnboarding'
 import { db } from '../db/db'
 import { decodeVin } from '../services/vinDecode'
+import { COMMON_MAKES, fetchModels } from '../services/vehicleCatalog'
 import { canonicalVehicleId, matchesExistingVehicle } from '../domain/vehicleIdentity'
 import { Reveal } from '../components/motion/Reveal'
 import { PageHeader } from '../components/ui'
@@ -17,6 +18,9 @@ type Mode = 'vin' | 'manual'
 const CURRENT_YEAR = new Date().getFullYear()
 // Next year's models go on sale in the fall, so the list starts one year ahead.
 const VEHICLE_YEARS = Array.from({ length: 42 }, (_, index) => CURRENT_YEAR + 1 - index)
+// Select value for "my make/model isn't listed": swaps in a text input.
+const OTHER = '__other'
+type ModelList = { status: 'idle' | 'loading' | 'ready' | 'failed'; models: string[] }
 
 function normalizeDrivetrain(value: string): string {
   const upper = value.toUpperCase()
@@ -43,6 +47,42 @@ export function AddVehicle() {
   const [make, setMake] = useState('')
   const [model, setModel] = useState('')
   const [trim, setTrim] = useState('')
+  const [makeOther, setMakeOther] = useState(false)
+  const [modelOther, setModelOther] = useState(false)
+  const [modelList, setModelList] = useState<ModelList>({ status: 'idle', models: [] })
+
+  // Models load per make + year. A typed-in make, or a failed/empty lookup,
+  // falls back to typing the model, so nothing here can block adding a car.
+  useEffect(() => {
+    const y = Number(year)
+    if (!y || !make || makeOther) {
+      setModelList({ status: 'idle', models: [] })
+      return
+    }
+    let cancelled = false
+    setModelList({ status: 'loading', models: [] })
+    fetchModels(make, y).then((result) => {
+      if (cancelled) return
+      const models = result.ok ? result.models : []
+      setModelList({ status: result.ok && models.length ? 'ready' : 'failed', models })
+      // A year change can drop the picked model from the list.
+      if (models.length) setModel((current) => (modelOther || models.includes(current) ? current : ''))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [year, make, makeOther])
+
+  function chooseMake(value: string) {
+    setMakeOther(value === OTHER)
+    setMake(value === OTHER ? '' : value)
+    setModel('')
+    setModelOther(false)
+  }
+  function chooseModel(value: string) {
+    setModelOther(value === OTHER)
+    setModel(value === OTHER ? '' : value)
+  }
 
   const [engine, setEngine] = useState('')
   const [drivetrain, setDrivetrain] = useState('')
@@ -248,11 +288,38 @@ export function AddVehicle() {
           </label>
           <label class="admin-field">
             <span class="muted small">Make</span>
-            <input type="text" value={make} placeholder="e.g. Toyota" onInput={(e) => setMake((e.target as HTMLInputElement).value)} />
+            <select value={makeOther ? OTHER : make} onChange={(e) => chooseMake((e.target as HTMLSelectElement).value)}>
+              <option value="">Choose make</option>
+              {COMMON_MAKES.map((option) => (
+                <option key={option} value={option}>{option}</option>
+              ))}
+              <option value={OTHER}>Other (type it in)</option>
+            </select>
+            {makeOther && (
+              <input type="text" value={make} placeholder="e.g. Toyota" aria-label="Make" onInput={(e) => setMake((e.target as HTMLInputElement).value)} />
+            )}
           </label>
           <label class="admin-field">
             <span class="muted small">Model</span>
-            <input type="text" value={model} placeholder="e.g. Camry" onInput={(e) => setModel((e.target as HTMLInputElement).value)} />
+            {modelList.status === 'ready' ? (
+              <select value={modelOther ? OTHER : model} onChange={(e) => chooseModel((e.target as HTMLSelectElement).value)}>
+                <option value="">Choose model</option>
+                {modelList.models.map((option) => (
+                  <option key={option} value={option}>{option}</option>
+                ))}
+                <option value={OTHER}>Not listed (type it in)</option>
+              </select>
+            ) : modelList.status === 'failed' || makeOther ? null : (
+              <select disabled>
+                <option>{modelList.status === 'loading' ? 'Loading models…' : 'Choose year and make first'}</option>
+              </select>
+            )}
+            {(modelOther || makeOther || modelList.status === 'failed') && (
+              <input type="text" value={model} placeholder="e.g. Camry" aria-label="Model" onInput={(e) => setModel((e.target as HTMLInputElement).value)} />
+            )}
+            {modelList.status === 'failed' && (
+              <span class="field-hint">Couldn't load the model list (offline?). Type the model instead.</span>
+            )}
           </label>
           <label class="admin-field">
             <span class="muted small">Trim — optional</span>

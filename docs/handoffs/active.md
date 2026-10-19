@@ -13,6 +13,14 @@ aggressively, every time.
 
 ## Open
 
+- **Add a car: make/model dropdowns (2026-10-19).** On branch
+  `feat/add-car-make-model-dropdowns`, not merged. Manual entry now picks
+  Make from a bundled list and Model from NHTSA vPIC `GetModelsForMakeYear`
+  (car + truck + mpv, merged), with "type it in" fallbacks. The live vPIC
+  models call was only tested mocked (sandbox can't reach NHTSA): after
+  merge, try 2020 Ford and 2020 Nissan on the deployed site. If confirmed,
+  delete this entry.
+
 - **Calendar feed: confirm Google (2026-10-15).** Everything else shipped
   (PRs #32, #33) and was verified on David's iPhone 2026-10-14: logging a
   brake inspection moved the Apple Calendar event by itself. David added the
