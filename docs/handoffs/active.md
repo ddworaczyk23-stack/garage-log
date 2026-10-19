@@ -15,10 +15,13 @@ aggressively, every time.
 
 - **Add a car: make/model dropdowns (2026-10-19).** On branch
   `feat/add-car-make-model-dropdowns`, not merged. Manual entry now picks
-  Make from a bundled list and Model from NHTSA vPIC `GetModelsForMakeYear`
-  (car + truck + mpv, merged), with "type it in" fallbacks. The live vPIC
-  models call was only tested mocked (sandbox can't reach NHTSA): after
-  merge, try 2020 Ford and 2020 Nissan on the deployed site. If confirmed,
+  Make from a bundled list, Model from NHTSA vPIC `GetModelsForMakeYear`
+  (car + truck + mpv, merged), and Trim from EPA fueleconomy.gov (engine/
+  trans/drive versions; picking one fills the trait pickers). All three have
+  "type it in" fallbacks. Both live APIs were only tested mocked (sandbox
+  can't reach them; EPA's CORS support is unconfirmed): after merge, try
+  2020 Ford F-150 and 2020 Nissan Rogue on the deployed site. If the trim
+  list never loads, EPA is likely blocking browser calls. If confirmed,
   delete this entry.
 
 - **Calendar feed: confirm Google (2026-10-15).** Everything else shipped

@@ -3,6 +3,7 @@ import { addVehicle } from '../db/vehicleOnboarding'
 import { db } from '../db/db'
 import { decodeVin } from '../services/vinDecode'
 import { COMMON_MAKES, fetchModels } from '../services/vehicleCatalog'
+import { fetchTrims, type TrimVersion } from '../services/trimCatalog'
 import { canonicalVehicleId, matchesExistingVehicle } from '../domain/vehicleIdentity'
 import { Reveal } from '../components/motion/Reveal'
 import { PageHeader } from '../components/ui'
@@ -21,6 +22,7 @@ const VEHICLE_YEARS = Array.from({ length: 42 }, (_, index) => CURRENT_YEAR + 1 
 // Select value for "my make/model isn't listed": swaps in a text input.
 const OTHER = '__other'
 type ModelList = { status: 'idle' | 'loading' | 'ready' | 'failed'; models: string[] }
+type TrimList = { status: 'idle' | 'loading' | 'ready' | 'failed'; versions: TrimVersion[] }
 
 function normalizeDrivetrain(value: string): string {
   const upper = value.toUpperCase()
@@ -50,6 +52,9 @@ export function AddVehicle() {
   const [makeOther, setMakeOther] = useState(false)
   const [modelOther, setModelOther] = useState(false)
   const [modelList, setModelList] = useState<ModelList>({ status: 'idle', models: [] })
+  const [trimOther, setTrimOther] = useState(false)
+  const [trimId, setTrimId] = useState('')
+  const [trimList, setTrimList] = useState<TrimList>({ status: 'idle', versions: [] })
 
   // Models load per make + year. A typed-in make, or a failed/empty lookup,
   // falls back to typing the model, so nothing here can block adding a car.
@@ -73,15 +78,55 @@ export function AddVehicle() {
     }
   }, [year, make, makeOther])
 
+  // Trims load once a model is picked from the list (a typed model has no
+  // reliable EPA match). Same fallback: type the trim, or leave it blank.
+  useEffect(() => {
+    const y = Number(year)
+    if (!y || !make || !model || modelOther || modelList.status !== 'ready') {
+      setTrimList({ status: 'idle', versions: [] })
+      return
+    }
+    let cancelled = false
+    setTrimList({ status: 'loading', versions: [] })
+    fetchTrims(make, model, y, modelList.models).then((result) => {
+      if (cancelled) return
+      const versions = result.ok ? result.versions : []
+      setTrimList({ status: versions.length ? 'ready' : 'failed', versions })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [year, make, model, modelOther, modelList])
+
+  function resetTrim() {
+    setTrim('')
+    setTrimId('')
+    setTrimOther(false)
+  }
   function chooseMake(value: string) {
     setMakeOther(value === OTHER)
     setMake(value === OTHER ? '' : value)
     setModel('')
     setModelOther(false)
+    resetTrim()
   }
   function chooseModel(value: string) {
     setModelOther(value === OTHER)
     setModel(value === OTHER ? '' : value)
+    resetTrim()
+  }
+  // A picked version also answers engine, transmission and drivetrain; the
+  // pickers below stay editable.
+  function chooseTrim(value: string) {
+    setTrimOther(value === OTHER)
+    setTrimId(value === OTHER ? '' : value)
+    const version = trimList.versions.find((v) => v.id === value)
+    setTrim(version?.trim ?? '')
+    if (!version) return
+    setEngine(version.engine)
+    if (version.power) setPower(version.power)
+    if (version.trans) changeTrans(version.trans)
+    if (version.drive) setDrivetrain(version.drive)
   }
 
   const [engine, setEngine] = useState('')
@@ -323,12 +368,35 @@ export function AddVehicle() {
           </label>
           <label class="admin-field">
             <span class="muted small">Trim — optional</span>
-            <input
-              type="text"
-              value={trim}
-              placeholder="Not sure? Leave it blank"
-              onInput={(e) => setTrim((e.target as HTMLInputElement).value)}
-            />
+            {trimList.status === 'ready' && (
+              <select value={trimOther ? OTHER : trimId} onChange={(e) => chooseTrim((e.target as HTMLSelectElement).value)}>
+                <option value="">Not sure (skip)</option>
+                {trimList.versions.map((version) => (
+                  <option key={version.id} value={version.id}>{version.label}</option>
+                ))}
+                <option value={OTHER}>Other (type it in)</option>
+              </select>
+            )}
+            {trimList.status === 'loading' && (
+              <select disabled>
+                <option>Loading trims…</option>
+              </select>
+            )}
+            {(trimOther || trimList.status === 'idle' || trimList.status === 'failed') && (
+              <input
+                type="text"
+                value={trim}
+                placeholder="Not sure? Leave it blank"
+                aria-label="Trim"
+                onInput={(e) => setTrim((e.target as HTMLInputElement).value)}
+              />
+            )}
+            {trimList.status === 'ready' && !trimOther && (
+              <span class="field-hint">Engine and drive versions from EPA data. Picking one fills in the questions below.</span>
+            )}
+            {trimList.status === 'failed' && (
+              <span class="field-hint">Couldn't load trims for this model. Type it in or leave it blank.</span>
+            )}
           </label>
           <label class="admin-field">
             <span class="muted small">Engine — optional</span>
