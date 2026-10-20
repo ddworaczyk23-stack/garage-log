@@ -5056,13 +5056,11 @@ a.list-row:hover {
   }
 }
 
-/* Two-column vehicle page: the masthead's navy bleed would paint over the
-   schedule column (clip-path makes the band its own layer). Lift the main
-   column above it so its first card overlaps the band, hero-style. */
+/* Two-column vehicle page: the band spans both columns so the schedule
+   column starts below it; keep the picker + spec line at rail width. */
 @media (min-width: 900px) and (max-width: 1023px), (min-width: 1200px) {
-  .vd-main {
-    position: relative;
-    z-index: 1;
+  .vd-masthead > * {
+    max-width: 340px;
   }
 }
 

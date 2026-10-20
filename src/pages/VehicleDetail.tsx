@@ -268,8 +268,6 @@ export function VehicleDetail({ id }: Props) {
         ‹ Vehicles
       </a>
 
-      <div class="vd-layout">
-      <div class="vd-rail">
       <PageHeader
         title={
           <>
@@ -342,6 +340,9 @@ export function VehicleDetail({ id }: Props) {
           </>
         )}
       </PageHeader>
+
+      <div class="vd-layout">
+      <div class="vd-rail">
 
       <div class="vd-miles">
         <span class="vd-miles-num">{mileage ? `${formatMiles(mileage.miles)}` : 'No mileage yet'}</span>
