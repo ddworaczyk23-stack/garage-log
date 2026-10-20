@@ -5037,10 +5037,10 @@ a.list-row:hover {
   }
 }
 
-/* Two-column vehicle page: the identity line stays at rail width while the
-   masthead row uses the full title band for its car switcher. */
+/* Two-column vehicle page: the nickname form stays at rail width; the name
+   row and spec line use the full title band. */
 @media (min-width: 900px) and (max-width: 1023px), (min-width: 1200px) {
-  .vd-masthead > .vd-spec {
+  .vd-masthead > .nickname-editor {
     max-width: 340px;
   }
 }
