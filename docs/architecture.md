@@ -109,7 +109,9 @@
   runtime cache). Gitignored; absent in local dev unless you run the script.
   The live lookups fill gaps: `vehicleCatalog.ts` (NHTSA models; merges in
   models EPA doesn't rate, e.g. heavy-duty pickups) and `trimCatalog.ts`
-  (EPA menus, used only when a year isn't bundled). The onboarding
+  (EPA menus, used only when a year isn't bundled). EPA has no badge
+  trims (SL, STX) and no free official source does, so the form's Trim is
+  typed; EPA versions fill a separate "Engine & drive" picker. The onboarding
   "reference data" adapters that used to live here
   (`maintenanceProvider.ts`, mock-only) were removed — see git history.
 - **`src/components/`** — `EventForm` (shared maintenance+repair, add+edit via

@@ -14,23 +14,22 @@ aggressively, every time.
 ## Open
 
 - **Home "answer boxes" layout (2026-10-20).** Built by Codex, reviewed and
-  fixed by Claude on `feat/home-answer-boxes` (not merged). Checked live at
-  1440px and 375px with 2 cars. Next: PR + merge on David's go. After that,
-  "B": the same box header / row / contrast polish across the other pages.
-  Mockup: `design/home-answer-boxes.html`.
+  fixed by Claude; merged in PR #72. Next: "B", the same box header / row /
+  contrast polish across the other pages. Mockup:
+  `design/home-answer-boxes.html`.
 
-- **Add a car: instant model/trim pickers (2026-10-20).** Shipped in PRs
-  #63, #67, #68 (all merged, deployed). The deploy bundles EPA data per make
-  (`npm run catalog` -> `public/catalog/`, 145 makes / 2.8 MB in the
-  2026-10-20 deploy log); NHTSA/EPA live calls only fill gaps. David
-  confirmed the Ford model list now loads instantly. Model names switch to
-  NHTSA's spelling ("F150" -> "F-150") a few seconds later when its list
-  lands; a picked model is respelled in place. Still unconfirmed on the live
-  site: (1) picking a Ford "Engine & drive" version fills engine/drive (EPA
-  has no badge trims like SL/STX, so Trim is a typed field since 2026-10-20), (2) 2020 Nissan -> Rogue
-  lists instantly without Rogue Sport mixed in, (3) the live trim fallback
-  (only for years EPA hasn't published) works against the real EPA service.
-  Ask David to try (1) and (2); if both hold, delete this entry.
+- **Add a car: instant pickers (2026-10-20).** Shipped in PRs #63, #67,
+  #68, #71 (all merged, deployed). Model list comes from bundled EPA data
+  (145 makes in the deploy log), with NHTSA names merged in a few seconds
+  later ("F150" becomes "F-150", a picked model is respelled in place). Trim
+  is a typed field; EPA's engine/transmission/drive versions are a separate
+  "Engine & drive" picker that fills the schedule questions. David confirmed
+  on the live site: Ford models load instantly, and 2020 Nissan Rogue loads
+  its versions. Still unconfirmed: (1) picking an Engine & drive version
+  fills Engine and the questions, (2) the Rogue list has no Rogue Sport
+  mixed in. Ask David to try both; if they hold, delete this entry. (The
+  live trim fallback, for years EPA hasn't published yet, can only be
+  exercised next model year.)
 
 - **Calendar feed: confirm Google (2026-10-15).** Everything else shipped
   (PRs #32, #33) and was verified on David's iPhone 2026-10-14: logging a
