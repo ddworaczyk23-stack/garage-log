@@ -20,7 +20,8 @@ aggressively, every time.
   confirmed the Ford model list now loads instantly. Model names switch to
   NHTSA's spelling ("F150" -> "F-150") a few seconds later when its list
   lands; a picked model is respelled in place. Still unconfirmed on the live
-  site: (1) picking a Ford trim fills engine/drive, (2) 2020 Nissan -> Rogue
+  site: (1) picking a Ford "Engine & drive" version fills engine/drive (EPA
+  has no badge trims like SL/STX, so Trim is a typed field since 2026-10-20), (2) 2020 Nissan -> Rogue
   lists instantly without Rogue Sport mixed in, (3) the live trim fallback
   (only for years EPA hasn't published) works against the real EPA service.
   Ask David to try (1) and (2); if both hold, delete this entry.

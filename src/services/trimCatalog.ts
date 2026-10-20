@@ -1,16 +1,15 @@
 import type { VehicleTraits } from '../db/traitTemplates'
 
-// Trim choices for "Add a car" manual entry, from the EPA's free
-// fueleconomy.gov web services (no key). NHTSA vPIC has no trim lists, so this
-// is the only free official source. EPA "trims" are engine/transmission/drive
-// versions (not badge names like "STX"), which is what the maintenance
-// schedule cares about anyway, so picking one also fills the trait pickers.
+// "Engine & drive" choices for "Add a car" manual entry, from the EPA's free
+// fueleconomy.gov web services (no key). EPA lists engine/transmission/drive
+// versions, not badge trims like "SL" or "STX" (no free official source has
+// those), so the form types the trim separately. A version is what the
+// maintenance schedule cares about, so picking one fills the trait pickers.
 const EPA = 'https://www.fueleconomy.gov/ws/rest'
 
 export interface TrimVersion {
   id: string
   label: string // dropdown text: "2.7L 6-cyl Turbo · 10-spd auto · 4WD"
-  trim: string // stored as the vehicle's trim: "2.7L 6-cyl Turbo 4WD"
   engine: string // "2.7L 6-cyl Turbo"
   power?: VehicleTraits['power']
   trans?: VehicleTraits['trans']
@@ -119,7 +118,7 @@ export function toTrimVersion(v: EpaVehicle): TrimVersion | null {
 
   const label = [engine, transText, drive].filter(Boolean).join(' · ')
   if (!label) return null
-  return { id: String(v.id), label, trim: [engine, drive].filter(Boolean).join(' '), engine, power, trans, drive }
+  return { id: String(v.id), label, engine, power, trans, drive }
 }
 
 /** De-dupes identical-looking rows (flex-fuel twins etc.) and sorts by label. */

@@ -22,7 +22,6 @@ describe('toTrimVersion', () => {
   it('reads a turbo 4WD automatic', () => {
     expect(toTrimVersion({ id: 1, displ: '2.7', cylinders: '6', trany: 'Automatic (S10)', drive: '4-Wheel Drive', tCharger: 'T', atvType: '' })).toMatchObject({
       label: '2.7L 6-cyl Turbo · 10-spd auto · 4WD',
-      trim: '2.7L 6-cyl Turbo 4WD',
       engine: '2.7L 6-cyl Turbo',
       power: 'turbo',
       trans: 'auto',

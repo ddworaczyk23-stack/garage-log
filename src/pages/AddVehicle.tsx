@@ -23,7 +23,7 @@ const VEHICLE_YEARS = Array.from({ length: 42 }, (_, index) => CURRENT_YEAR + 1 
 // Select value for "my make/model isn't listed": swaps in a text input.
 const OTHER = '__other'
 type ModelList = { status: 'idle' | 'loading' | 'ready' | 'failed'; models: string[] }
-type TrimList = { status: 'idle' | 'loading' | 'ready' | 'failed'; versions: TrimVersion[] }
+type VersionList = { status: 'idle' | 'loading' | 'ready' | 'failed'; versions: TrimVersion[] }
 
 function normalizeDrivetrain(value: string): string {
   const upper = value.toUpperCase()
@@ -55,9 +55,8 @@ export function AddVehicle() {
   // undefined while the make's bundled catalog loads; null when it has none.
   const [bundle, setBundle] = useState<MakeBundle | null | undefined>(null)
   const [liveModels, setLiveModels] = useState<ModelList>({ status: 'idle', models: [] })
-  const [trimOther, setTrimOther] = useState(false)
-  const [trimId, setTrimId] = useState('')
-  const [liveTrims, setLiveTrims] = useState<TrimList>({ status: 'idle', versions: [] })
+  const [versionId, setVersionId] = useState('')
+  const [liveVersions, setLiveVersions] = useState<VersionList>({ status: 'idle', versions: [] })
 
   // The bundled catalog (catalogBundle.ts) fills the pickers instantly. The
   // live lookups run alongside for what it lacks, and a typed-in make, or a
@@ -119,38 +118,37 @@ export function AddVehicle() {
   // reliable EPA match). Bundled ones are instant; when the year isn't
   // bundled, they load live. Same fallback: type the trim, or leave it blank.
   const pickedModel = Number(year) && make && model && !modelOther && modelList.status === 'ready' ? model : ''
-  const bundledTrims = useMemo(() => (bundle && pickedModel ? bundleTrims(bundle, Number(year), pickedModel) : []), [bundle, year, pickedModel])
-  const trimsLive = pickedModel !== '' && bundle !== undefined && !bundledModels.length
+  const bundledVersions = useMemo(() => (bundle && pickedModel ? bundleTrims(bundle, Number(year), pickedModel) : []), [bundle, year, pickedModel])
+  const versionsLive = pickedModel !== '' && bundle !== undefined && !bundledModels.length
   useEffect(() => {
-    if (!trimsLive) {
-      setLiveTrims({ status: 'idle', versions: [] })
+    if (!versionsLive) {
+      setLiveVersions({ status: 'idle', versions: [] })
       return
     }
     let cancelled = false
-    setLiveTrims({ status: 'loading', versions: [] })
+    setLiveVersions({ status: 'loading', versions: [] })
     fetchTrims(make, pickedModel, Number(year), liveModels.models).then((result) => {
       if (cancelled) return
       const versions = result.ok ? result.versions : []
-      setLiveTrims({ status: versions.length ? 'ready' : 'failed', versions })
+      setLiveVersions({ status: versions.length ? 'ready' : 'failed', versions })
     })
     return () => {
       cancelled = true
     }
-  }, [trimsLive, year, make, pickedModel, liveModels.models])
+  }, [versionsLive, year, make, pickedModel, liveModels.models])
 
-  const trimList: TrimList = !pickedModel
+  const versionList: VersionList = !pickedModel
     ? { status: 'idle', versions: [] }
-    : bundledTrims.length
-      ? { status: 'ready', versions: bundledTrims }
-      : trimsLive
-        ? liveTrims
+    : bundledVersions.length
+      ? { status: 'ready', versions: bundledVersions }
+      : versionsLive
+        ? liveVersions
         : // Bundled year, but EPA doesn't rate this model (e.g. a heavy-duty pickup).
           { status: 'failed', versions: [] }
 
   function resetTrim() {
     setTrim('')
-    setTrimId('')
-    setTrimOther(false)
+    setVersionId('')
   }
   function chooseMake(value: string) {
     setMakeOther(value === OTHER)
@@ -164,13 +162,11 @@ export function AddVehicle() {
     setModel(value === OTHER ? '' : value)
     resetTrim()
   }
-  // A picked version also answers engine, transmission and drivetrain; the
-  // pickers below stay editable.
-  function chooseTrim(value: string) {
-    setTrimOther(value === OTHER)
-    setTrimId(value === OTHER ? '' : value)
-    const version = trimList.versions.find((v) => v.id === value)
-    setTrim(version?.trim ?? '')
+  // A picked engine/drive version answers engine, transmission and
+  // drivetrain; the pickers below stay editable.
+  function chooseVersion(value: string) {
+    setVersionId(value)
+    const version = versionList.versions.find((v) => v.id === value)
     if (!version) return
     setEngine(version.engine)
     if (version.power) setPower(version.power)
@@ -417,36 +413,35 @@ export function AddVehicle() {
           </label>
           <label class="admin-field">
             <span class="muted small">Trim — optional</span>
-            {trimList.status === 'ready' && (
-              <select value={trimOther ? OTHER : trimId} onChange={(e) => chooseTrim((e.target as HTMLSelectElement).value)}>
-                <option value="">Not sure (skip)</option>
-                {trimList.versions.map((version) => (
-                  <option key={version.id} value={version.id}>{version.label}</option>
-                ))}
-                <option value={OTHER}>Other (type it in)</option>
-              </select>
-            )}
-            {trimList.status === 'loading' && (
-              <select disabled>
-                <option>Loading trims…</option>
-              </select>
-            )}
-            {(trimOther || trimList.status === 'idle' || trimList.status === 'failed') && (
-              <input
-                type="text"
-                value={trim}
-                placeholder="Not sure? Leave it blank"
-                aria-label="Trim"
-                onInput={(e) => setTrim((e.target as HTMLInputElement).value)}
-              />
-            )}
-            {trimList.status === 'ready' && !trimOther && (
-              <span class="field-hint">Engine and drive versions from EPA data. Picking one fills in the questions below.</span>
-            )}
-            {trimList.status === 'failed' && (
-              <span class="field-hint">No trim list for this model. Type it in or leave it blank.</span>
-            )}
+            <input
+              type="text"
+              value={trim}
+              placeholder="e.g. SL, XLT. Not sure? Leave it blank"
+              aria-label="Trim"
+              onInput={(e) => setTrim((e.target as HTMLInputElement).value)}
+            />
           </label>
+          {/* EPA lists engine/transmission/drive versions, not badge trims
+              like SL, so this is its own picker. No list: the Engine field and
+              questions below cover it. */}
+          {(versionList.status === 'ready' || versionList.status === 'loading') && (
+            <label class="admin-field">
+              <span class="muted small">Engine &amp; drive — optional</span>
+              {versionList.status === 'ready' ? (
+                <select value={versionId} onChange={(e) => chooseVersion((e.target as HTMLSelectElement).value)}>
+                  <option value="">Not sure (skip)</option>
+                  {versionList.versions.map((version) => (
+                    <option key={version.id} value={version.id}>{version.label}</option>
+                  ))}
+                </select>
+              ) : (
+                <select disabled>
+                  <option>Loading engines…</option>
+                </select>
+              )}
+              <span class="field-hint">From EPA data. Picking one fills in the questions below.</span>
+            </label>
+          )}
           <label class="admin-field">
             <span class="muted small">Engine — optional</span>
             <input type="text" value={engine} onInput={(e) => setEngine((e.target as HTMLInputElement).value)} />
