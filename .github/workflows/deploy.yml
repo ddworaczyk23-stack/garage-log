@@ -29,6 +29,11 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      # Bundled model/trim lists for "Add a car" (instant, offline), built from
+      # the EPA's vehicle data into public/catalog/. If the download fails the
+      # deploy still ships; the form falls back to live lookups.
+      - run: npm run catalog
+        continue-on-error: true
       - run: npm run build
         env:
           # Enables Dexie Cloud sync in the deployed build. Set a repo secret

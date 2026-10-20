@@ -102,7 +102,15 @@
   `https://coast-calendar-feed.calendar-feed.workers.dev`; redeploy from
   `worker/calendar-feed/` with `npx wrangler deploy` (David's Cloudflare login).
 - **`src/services/`** — `vinDecode.ts` (REAL NHTSA vPIC `decodevinvalues` call,
-  no key). The onboarding "reference data" adapters that used to live here
+  no key). "Add a car" manual pickers: `catalogBundle.ts` reads
+  `public/catalog/<make>.json`, built at deploy time by
+  `scripts/build-vehicle-catalog.mjs` (`npm run catalog`) from the EPA's full
+  vehicle CSV, so models and trims fill instantly and offline (service worker
+  runtime cache). Gitignored; absent in local dev unless you run the script.
+  The live lookups fill gaps: `vehicleCatalog.ts` (NHTSA models; merges in
+  models EPA doesn't rate, e.g. heavy-duty pickups) and `trimCatalog.ts`
+  (EPA menus, used only when a year isn't bundled). The onboarding
+  "reference data" adapters that used to live here
   (`maintenanceProvider.ts`, mock-only) were removed — see git history.
 - **`src/components/`** — `EventForm` (shared maintenance+repair, add+edit via
   `kind`/`existing`; owns attachment picker + next-due override), `OdometerForm`,

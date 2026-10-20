@@ -44,6 +44,16 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        // Per-make model/trim files (scripts/build-vehicle-catalog.mjs): cached
+        // on first use so a make's pickers work offline after that, refreshed
+        // in the background on the next deploy's data.
+        runtimeCaching: [
+          {
+            urlPattern: /\/catalog\/[^/]+\.json$/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'vehicle-catalog', expiration: { maxEntries: 30 } },
+          },
+        ],
       },
       // Let the service worker run during `npm run dev` so offline/install
       // behaviour can be tested without a production build.

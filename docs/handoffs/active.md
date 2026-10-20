@@ -13,16 +13,15 @@ aggressively, every time.
 
 ## Open
 
-- **Add a car: make/model dropdowns (2026-10-19).** On branch
-  `feat/add-car-make-model-dropdowns`, not merged. Manual entry now picks
-  Make from a bundled list, Model from NHTSA vPIC `GetModelsForMakeYear`
-  (car + truck + mpv, merged), and Trim from EPA fueleconomy.gov (engine/
-  trans/drive versions; picking one fills the trait pickers). All three have
-  "type it in" fallbacks. Both live APIs were only tested mocked (sandbox
-  can't reach them; EPA's CORS support is unconfirmed): after merge, try
-  2020 Ford F-150 and 2020 Nissan Rogue on the deployed site. If the trim
-  list never loads, EPA is likely blocking browser calls. If confirmed,
-  delete this entry.
+- **Add a car: instant model/trim pickers (2026-10-20).** PR #63 (branch
+  `claude/happy-dirac-c5hsi1`). Live lookups took 10-15s each, so the deploy
+  now bundles EPA data per make (`npm run catalog` -> `public/catalog/`);
+  NHTSA/EPA live calls only fill gaps. Untested against the real services
+  (sandbox can't reach them). After merge: (1) the deploy log's "npm run
+  catalog" step should print ~140 makes and a few MB; if it failed, the app
+  silently falls back to live lookups. (2) On the live site, 2020 Ford ->
+  F150 and 2020 Nissan -> Rogue should list instantly, with trims that fill
+  engine/drive. If both hold, delete this entry.
 
 - **Calendar feed: confirm Google (2026-10-15).** Everything else shipped
   (PRs #32, #33) and was verified on David's iPhone 2026-10-14: logging a
