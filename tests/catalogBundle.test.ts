@@ -30,7 +30,9 @@ describe('bundled catalog', () => {
   })
 
   it('merges in NHTSA-only models, keeping the bundled spelling', () => {
-    expect(mergeModelNames(['F150', 'Ranger'], ['F-150', 'F-250', 'Ranger'])).toEqual(['F-250', 'F150', 'Ranger'])
+    expect(mergeModelNames(['F150', 'Ranger'], ['F-150', 'F-250', 'Ranger'])).toEqual(['F150', 'F-250', 'Ranger'])
+    // Punctuation doesn't move a model out of order; numbers sort as numbers.
+    expect(mergeModelNames(['Explorer', 'F150', 'Ranger'], ['E-350', 'F-450', 'F-250', 'F-1000', 'Edge'])).toEqual(['E-350', 'Edge', 'Explorer', 'F150', 'F-250', 'F-450', 'F-1000', 'Ranger'])
     expect(mergeModelNames(['Rogue'], [])).toEqual(['Rogue'])
   })
 
