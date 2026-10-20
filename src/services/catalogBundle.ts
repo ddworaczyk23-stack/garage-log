@@ -43,7 +43,12 @@ export function loadMakeBundle(make: string): Promise<MakeBundle | null> {
   return load
 }
 
-const byName = (a: string, b: string) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+const squash = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, '')
+
+// Ignores punctuation so EPA's "F150" sorts among NHTSA's "F-250", "F-350"
+// instead of after every hyphenated name.
+const byName = (a: string, b: string) =>
+  squash(a).localeCompare(squash(b), undefined, { numeric: true }) || a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
 
 /** Models EPA rated for this year, sorted; empty when the year isn't bundled. */
 export function bundleModels(bundle: MakeBundle, year: number): string[] {
@@ -58,8 +63,6 @@ export function bundleTrims(bundle: MakeBundle, year: number, model: string): Tr
     ),
   )
 }
-
-const squash = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, '')
 
 /**
  * Adds NHTSA models EPA doesn't rate (F-250, Ram 2500) to the bundled list.
