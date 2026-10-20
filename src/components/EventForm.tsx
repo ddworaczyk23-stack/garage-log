@@ -27,6 +27,8 @@ interface Props {
   existing?: MaintenanceEvent
   /** Pre-selects the category when adding (e.g. "Log" from a schedule row). */
   initialCategory?: MaintenanceCategory
+  /** Pre-ticks "Also done" when adding ("Log as one visit"); ignored when editing. */
+  initialAdditionalCategories?: MaintenanceCategory[]
   /** Prefills odometer with the vehicle's current mileage estimate on a fresh add. */
   defaultOdometer?: number
   existingDocs?: { id: string; filename: string }[]
@@ -52,6 +54,7 @@ export function EventForm({
   kind,
   existing,
   initialCategory,
+  initialAdditionalCategories,
   defaultOdometer,
   existingDocs = [],
   onDone,
@@ -70,7 +73,7 @@ export function EventForm({
   // inspection, battery check, fluid top-off…). Collapsed unless editing an
   // entry that already has some, so single-category logging stays fast.
   const [additionalCategories, setAdditionalCategories] = useState<MaintenanceCategory[]>(
-    existing?.additionalCategories ?? [],
+    existing?.additionalCategories ?? initialAdditionalCategories ?? [],
   )
   const [title, setTitle] = useState(existing?.title ?? '')
   const [cost, setCost] = useState(existing?.cost?.toString() ?? '')
@@ -100,7 +103,8 @@ export function EventForm({
   // fresh add — a routine oil change only needs category/date/odometer/cost/
   // receipt. Editing an existing entry starts expanded so none of its
   // already-filled detail is hidden from view.
-  const [showMore, setShowMore] = useState(!!existing)
+  // Open when editing, or when "Log as one visit" pre-ticked jobs to show.
+  const [showMore, setShowMore] = useState(!!existing || !!initialAdditionalCategories?.length)
 
   const [newFiles, setNewFiles] = useState<File[]>([])
   const [removedDocIds, setRemovedDocIds] = useState<string[]>([])

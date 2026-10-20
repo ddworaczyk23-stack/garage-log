@@ -7,12 +7,14 @@ import {
   comingUp,
   garageTally,
   hasRealData,
+  joinAnd,
   recentWork,
   vehicleVerdict,
   VERDICT_BAND_LABELS,
   type VerdictBand,
 } from '../domain/verdict'
 import { vehicleBody, vehicleLabel } from '../domain/vehicle'
+import { visitBundle } from '../domain/bundles'
 import { PageHeader, Skel } from '../components/ui'
 import { BAND_CLASS } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
@@ -244,6 +246,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
   const v = s.vehicle
   const verdict = vehicleVerdict(s.reminders, s.openConcerns, localDateISO(new Date()))
   const sign = compactSign(verdict)
+  const bundle = visitBundle(s.reminders)
 
   return (
     <Reveal class="cv-card">
@@ -272,6 +275,7 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
             {sign.also.text}
           </p>
         )}
+        {bundle.length >= 2 && <p class="hm-also"><span class="cv-coast-dot" aria-hidden="true" />Save a trip: {joinAnd(bundle.map((r) => r.rule.label))} at one visit</p>}
       </a>
     </Reveal>
   )

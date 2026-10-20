@@ -443,6 +443,13 @@ describe('Home helpers', () => {
     expect(items.map((i) => i.label)).toEqual(['Tire rotation', 'Engine air filter'])
   })
 
+  it('a mileage-bound item names the date the miles arrive, not the far calendar date', () => {
+    // Cabin filter every 20,000 mi or 24 months, done 2025-06-01 at 30,600:
+    // 600 mi left (~18 days at 12k/yr) while the 24-month date is Jun 2027.
+    const cabin = makeRule({ category: 'cabin-air-filter', label: 'Cabin air filter', customIntervalMiles: 20000, customIntervalMonths: 24, lastDoneDate: '2025-06-01', lastDoneMiles: 30600 })
+    expect(compactSign(verdictFor([cabin], at)).also?.text).toBe('Next: Cabin air filter in ~600 mi (around Nov 2026)')
+  })
+
   it('comingUp shows the date when the calendar comes due before the miles', () => {
     // Oil every 5,000 mi or 6 months, done 2026-06-14 at 48,000: 3,000 mi left
     // (~91 days at 12k/yr) but the 6-month date (Dec 14) is ~61 days out.
