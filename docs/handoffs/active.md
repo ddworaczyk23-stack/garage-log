@@ -13,44 +13,6 @@ aggressively, every time.
 
 ## Open
 
-- **Car page: name headline + two-car toggle (2026-10-20) — ready for
-  Codex.** Since PR #64 the navy title band runs full width. The two car
-  chips are the page title, so they sit small in the top-left with empty
-  navy beside them, and the page has no big car name. David picked: the car
-  name is the headline, and a small toggle sits on the right of the band.
-
-  Build on a branch off `main` (`feat/vd-name-toggle`). No push, no merge.
-  Files: `src/pages/VehicleDetail.tsx` (the `<PageHeader>` around line 276)
-  and `src/styles/app.css` (`.vd-picker*` around line 5049). No new
-  component; `PageHeader` already has a `meta` slot on the right of its row.
-
-  1. `title` = `vehicleLabel(vehicle)` + the pencil button, always (drop the
-     picker branches from `title`). The existing `.vd-masthead .page-title`
-     34px / 28px-on-phone size stays.
-  2. `meta` = the picker: the 2-car `<nav class="vd-picker">` or the 3+
-     `<select class="vd-picker-menu">`, same markup and links as today.
-     Nothing in `meta` for a 1-car garage.
-  3. CSS: `.vd-masthead .page-header-row { align-items: center; }`. Restyle
-     the in-band picker as one segmented track, not two loose chips: a
-     single `1px var(--frame-line)` rounded track, `padding: 3px`, segments
-     `padding: 6px 14px`, 14px/600, no gap. Active segment = filled
-     `var(--on-frame)` with `color: var(--text)`; inactive = transparent,
-     `var(--on-frame-muted)`, hover `var(--on-frame)`. Auto width
-     (`flex: none`), `max-width: 340px`, labels ellipsis. Min tap height
-     36px on desktop, 44px under 600px. Delete the now-dead
-     `.page-title .vd-picker*` rules.
-  4. Under 600px: `meta` wraps below the name (the row already has
-     `flex-wrap: wrap`); make the toggle full width there (`flex: 1 1 100%`,
-     segments `flex: 1`). The `.vd-spec` line stays under the row.
-
-  Done when: at 1440px the name is big on the left and the toggle sits on
-  the right, vertically centered on the name; at 375px the toggle is full
-  width under the name with no horizontal scroll; switching cars still
-  works; the pencil still opens the nickname editor; `npm run typecheck`,
-  `npm test`, `npm run build` pass. Verify on the local-only DB (a worktree
-  with no `.env.local`). Claude reviews and checks both widths before
-  David approves.
-
 - **Add a car: instant pickers (2026-10-20).** Shipped in PRs #63, #67,
   #68, #71, #75 (all merged, deployed). Model list comes from bundled EPA data
   (145 makes in the deploy log), with NHTSA names merged in a few seconds

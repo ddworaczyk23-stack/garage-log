@@ -5037,53 +5037,45 @@ a.list-row:hover {
   }
 }
 
-/* Two-column vehicle page: the band spans both columns so the schedule
-   column starts below it; keep the picker + spec line at rail width. */
+/* Two-column vehicle page: the nickname form stays at rail width; the name
+   row and spec line use the full title band. */
 @media (min-width: 900px) and (max-width: 1023px), (min-width: 1200px) {
-  .vd-masthead > * {
+  .vd-masthead > .nickname-editor {
     max-width: 340px;
   }
 }
 
-/* Car page: picker + mileage line on top, next jobs under the verdict. */
+/* Car page: car switcher in the title band; mileage line and next jobs follow. */
+.vd-masthead .page-header-row {
+  align-items: center;
+}
 .vd-picker {
   display: flex;
-  gap: 6px;
-  margin: 8px 0;
+  flex: none;
+  max-width: 340px;
+  padding: 3px;
+  border: 1px solid var(--frame-line);
+  border-radius: var(--radius-control);
+  gap: 0;
 }
 .vd-picker a {
-  flex: 1;
+  min-height: 36px;
   min-width: 0;
-  padding: 8px 6px;
+  padding: 6px 14px;
   text-align: center;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: inherit;
+  border-radius: calc(var(--radius-control) - 3px);
+  color: var(--on-frame-muted);
   text-decoration: none;
   font: 600 14px var(--font-sans);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.vd-picker a.is-on {
-  background: var(--text);
-  border-color: var(--text);
-  color: var(--bg);
-}
-/* Inside the navy title band the picker IS the title. */
-.page-title .vd-picker {
-  flex: 1;
-  margin: 0;
-  font-size: 14px;
-}
-.page-title .vd-picker a {
+.vd-picker a:hover {
   color: var(--on-frame);
-  border-color: var(--frame-line);
-  background: transparent;
 }
-.page-title .vd-picker a.is-on {
+.vd-picker a.is-on {
   background: var(--on-frame);
-  border-color: var(--on-frame);
   color: var(--text);
 }
 .vd-masthead .page-title {
@@ -5111,9 +5103,10 @@ a.list-row:hover {
 }
 
 .vd-picker-menu {
-  flex: 1;
+  flex: none;
   min-width: 0;
-  min-height: 44px;
+  max-width: 340px;
+  min-height: 36px;
   padding: 8px 36px 8px 12px;
   appearance: none;
   -webkit-appearance: none;
@@ -5127,6 +5120,21 @@ a.list-row:hover {
 }
 .vd-picker-menu option {
   color: var(--text);
+}
+@media (max-width: 599px) {
+  .vd-masthead .page-header-meta,
+  .vd-picker,
+  .vd-picker-menu {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+  .vd-picker a {
+    flex: 1;
+    min-height: 44px;
+  }
+  .vd-picker-menu {
+    min-height: 44px;
+  }
 }
 
 /* =========================================================================
