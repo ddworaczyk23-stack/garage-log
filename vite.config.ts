@@ -18,7 +18,7 @@ export default defineConfig({
       // Milestone 1: auto-update the shell in the background. A "tap to refresh"
       // prompt can replace this later if mid-session swaps become annoying.
       registerType: 'autoUpdate',
-      includeAssets: ['icons/apple-touch-icon.png'],
+      includeAssets: ['icons/apple-touch-icon.png', 'icons/favicon.ico', 'icons/favicon-32.png'],
       manifest: {
         // Display identity is "Coast" (Stage 4 cutover); start_url/scope and the
         // repo/deploy path deliberately stay as-is — see design/COAST-PLAN.md.
@@ -44,6 +44,16 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
+        // Per-make model/trim files (scripts/build-vehicle-catalog.mjs): cached
+        // on first use so a make's pickers work offline after that, refreshed
+        // in the background on the next deploy's data.
+        runtimeCaching: [
+          {
+            urlPattern: /\/catalog\/[^/]+\.json$/,
+            handler: 'StaleWhileRevalidate',
+            options: { cacheName: 'vehicle-catalog', expiration: { maxEntries: 30 } },
+          },
+        ],
       },
       // Let the service worker run during `npm run dev` so offline/install
       // behaviour can be tested without a production build.

@@ -6,8 +6,6 @@ import type { VehicleTraits } from '../db/traitTemplates'
 // versions (not badge names like "STX"), which is what the maintenance
 // schedule cares about anyway, so picking one also fills the trait pickers.
 const EPA = 'https://www.fueleconomy.gov/ws/rest'
-// One option per engine/trans combo; a big lineup is a dozen or two.
-const MAX_VERSIONS = 40
 
 export interface TrimVersion {
   id: string
@@ -43,10 +41,14 @@ const squash = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, '')
 
 // EPA menus come back as `{ menuItem: [...] }`, or a bare object when there is
 // only one entry.
-function menuValues(body: unknown): string[] {
+function menuItems(body: unknown): EpaMenuItem[] {
   const raw = (body as { menuItem?: EpaMenuItem | EpaMenuItem[] } | null)?.menuItem
   const items = Array.isArray(raw) ? raw : raw ? [raw] : []
-  return items.map((item) => item.value?.trim() ?? '').filter(Boolean)
+  return items.filter((item) => item.value?.trim())
+}
+
+function menuValues(body: unknown): string[] {
+  return menuItems(body).map((item) => item.value!.trim())
 }
 
 /**
@@ -73,7 +75,7 @@ function transOf(trany: string): { trans?: VehicleTraits['trans']; text: string 
   const spd = speeds ? `${speeds}-spd ` : ''
   if (t.includes('variable') || /\bav\b|\(av/.test(t)) return { trans: 'cvt', text: 'CVT' }
   if (/\(am/.test(t)) return { trans: 'dct', text: `${spd}dual-clutch` }
-  if (t.startsWith('manual')) return { trans: 'manual', text: `${spd}manual` }
+  if (t.startsWith('man')) return { trans: 'manual', text: `${spd}manual` }
   if (t.startsWith('auto')) return { trans: 'auto', text: `${spd}auto` }
   return { text: '' }
 }
@@ -127,6 +129,31 @@ export function uniqueVersions(versions: (TrimVersion | null)[]): TrimVersion[] 
   return [...byLabel.values()].sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }))
 }
 
+/**
+ * One EPA options-menu entry -> a vehicle record, so the live path needs no
+ * per-vehicle calls. The text reads like "Auto (S10), 6 cyl, 2.7 L, Turbo";
+ * drive isn't in it, but EPA's model name carries it ("F150 Pickup 4WD").
+ */
+export function optionToVehicle(id: string, text: string, epaModel: string): EpaVehicle {
+  const parts = text.split(',').map((part) => part.trim())
+  const cylinders = text.match(/(\d+)\s*cyl/i)?.[1] ?? null
+  const displ = text.match(/([\d.]+)\s*L\b/)?.[1] ?? null
+  const m = ` ${epaModel.toUpperCase()} `
+  const drive = /[ -](4WD|4X4)[ -]/.test(m) ? '4-Wheel Drive' : /[ -]AWD[ -]/.test(m) ? 'All-Wheel Drive' : /[ -]FWD[ -]/.test(m) ? 'Front-Wheel Drive' : /[ -](RWD|2WD)[ -]/.test(m) ? 'Rear-Wheel Drive' : ''
+  const hybrid = /hybrid/i.test(text) || /hybrid/i.test(epaModel)
+  const ev = !cylinders && !displ
+  return {
+    id,
+    displ,
+    cylinders,
+    trany: parts[0] ?? '',
+    drive,
+    tCharger: /\bturbo\b/i.test(text),
+    sCharger: /charge(r|d)?\b/i.test(text.replace(/turbo/gi, '')) ? 'S' : null,
+    atvType: ev ? 'EV' : hybrid ? 'Hybrid' : /diesel/i.test(text) ? 'Diesel' : '',
+  }
+}
+
 async function getJson(url: string): Promise<unknown> {
   const res = await fetch(url, { headers: { Accept: 'application/json' } })
   if (!res.ok) throw new Error(`EPA ${res.status}`)
@@ -136,8 +163,9 @@ async function getJson(url: string): Promise<unknown> {
 const cache = new Map<string, TrimVersion[]>()
 
 /**
- * Trims for one NHTSA model. `allModels` is the NHTSA model list for this
- * make/year, used to keep "Rogue Sport" out of "Rogue".
+ * Trims for one NHTSA model, live from EPA: the model menu, then one options
+ * menu per matching EPA model (all in parallel). `allModels` is the NHTSA
+ * model list for this make/year, used to keep "Rogue Sport" out of "Rogue".
  */
 export async function fetchTrims(make: string, model: string, year: number, allModels: string[]): Promise<TrimListResult> {
   const key = `${make}|${model}|${year}`.toUpperCase()
@@ -148,13 +176,14 @@ export async function fetchTrims(make: string, model: string, year: number, allM
     const q = `year=${year}&make=${encodeURIComponent(make)}`
     const epaModels = menuValues(await getJson(`${EPA}/vehicle/menu/model?${q}`))
     const matched = matchEpaModels(model, epaModels, allModels, make)
-    const ids = (
-      await Promise.all(matched.map(async (m) => menuValues(await getJson(`${EPA}/vehicle/menu/options?${q}&model=${encodeURIComponent(m)}`))))
-    ).flat()
-    const details = await Promise.allSettled(
-      [...new Set(ids)].slice(0, MAX_VERSIONS).map(async (id) => (await getJson(`${EPA}/vehicle/${encodeURIComponent(id)}`)) as EpaVehicle),
+    const options = await Promise.all(
+      matched.map(async (m) =>
+        menuItems(await getJson(`${EPA}/vehicle/menu/options?${q}&model=${encodeURIComponent(m)}`)).map((item) =>
+          toTrimVersion(optionToVehicle(item.value!.trim(), item.text ?? '', m)),
+        ),
+      ),
     )
-    const versions = uniqueVersions(details.map((d) => (d.status === 'fulfilled' ? toTrimVersion(d.value) : null)))
+    const versions = uniqueVersions(options.flat())
     if (versions.length) cache.set(key, versions)
     return { ok: true, versions }
   } catch {

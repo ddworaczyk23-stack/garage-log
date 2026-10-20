@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'preact/hooks'
+import { useEffect, useMemo, useState } from 'preact/hooks'
 import { addVehicle } from '../db/vehicleOnboarding'
 import { db } from '../db/db'
 import { decodeVin } from '../services/vinDecode'
 import { COMMON_MAKES, fetchModels } from '../services/vehicleCatalog'
 import { fetchTrims, type TrimVersion } from '../services/trimCatalog'
+import { bundleModels, bundleTrims, loadMakeBundle, mergeModelNames, type MakeBundle } from '../services/catalogBundle'
 import { canonicalVehicleId, matchesExistingVehicle } from '../domain/vehicleIdentity'
 import { Reveal } from '../components/motion/Reveal'
 import { PageHeader } from '../components/ui'
@@ -51,52 +52,97 @@ export function AddVehicle() {
   const [trim, setTrim] = useState('')
   const [makeOther, setMakeOther] = useState(false)
   const [modelOther, setModelOther] = useState(false)
-  const [modelList, setModelList] = useState<ModelList>({ status: 'idle', models: [] })
+  // undefined while the make's bundled catalog loads; null when it has none.
+  const [bundle, setBundle] = useState<MakeBundle | null | undefined>(null)
+  const [liveModels, setLiveModels] = useState<ModelList>({ status: 'idle', models: [] })
   const [trimOther, setTrimOther] = useState(false)
   const [trimId, setTrimId] = useState('')
-  const [trimList, setTrimList] = useState<TrimList>({ status: 'idle', versions: [] })
+  const [liveTrims, setLiveTrims] = useState<TrimList>({ status: 'idle', versions: [] })
 
-  // Models load per make + year. A typed-in make, or a failed/empty lookup,
-  // falls back to typing the model, so nothing here can block adding a car.
+  // The bundled catalog (catalogBundle.ts) fills the pickers instantly. The
+  // live lookups run alongside for what it lacks, and a typed-in make, or a
+  // failed/empty lookup, falls back to typing, so nothing here blocks adding
+  // a car.
   useEffect(() => {
-    const y = Number(year)
-    if (!y || !make || makeOther) {
-      setModelList({ status: 'idle', models: [] })
+    if (!make || makeOther) {
+      setBundle(null)
       return
     }
     let cancelled = false
-    setModelList({ status: 'loading', models: [] })
+    setBundle(undefined)
+    loadMakeBundle(make).then((loaded) => {
+      if (!cancelled) setBundle(loaded)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [make, makeOther])
+
+  // NHTSA models: the whole list when the year isn't bundled, otherwise the
+  // models EPA doesn't rate (heavy-duty pickups), merged in when they arrive.
+  useEffect(() => {
+    const y = Number(year)
+    if (!y || !make || makeOther) {
+      setLiveModels({ status: 'idle', models: [] })
+      return
+    }
+    let cancelled = false
+    setLiveModels({ status: 'loading', models: [] })
     fetchModels(make, y).then((result) => {
       if (cancelled) return
       const models = result.ok ? result.models : []
-      setModelList({ status: result.ok && models.length ? 'ready' : 'failed', models })
-      // A year change can drop the picked model from the list.
-      if (models.length) setModel((current) => (modelOther || models.includes(current) ? current : ''))
+      setLiveModels({ status: result.ok && models.length ? 'ready' : 'failed', models })
     })
     return () => {
       cancelled = true
     }
   }, [year, make, makeOther])
 
-  // Trims load once a model is picked from the list (a typed model has no
-  // reliable EPA match). Same fallback: type the trim, or leave it blank.
+  const bundledModels = useMemo(() => (bundle && Number(year) ? bundleModels(bundle, Number(year)) : []), [bundle, year])
+  const modelList = useMemo<ModelList>(() => {
+    if (bundledModels.length) return { status: 'ready', models: mergeModelNames(bundledModels, liveModels.models) }
+    if (bundle === undefined && liveModels.status !== 'idle') return { status: 'loading', models: [] }
+    return liveModels
+  }, [bundle, bundledModels, liveModels])
+
+  // A year change can drop the picked model from the list. Wait for the live
+  // list, which may still add it back.
   useEffect(() => {
-    const y = Number(year)
-    if (!y || !make || !model || modelOther || modelList.status !== 'ready') {
-      setTrimList({ status: 'idle', versions: [] })
+    if (modelOther || !model || liveModels.status === 'loading' || modelList.status !== 'ready') return
+    if (!modelList.models.includes(model)) setModel('')
+  }, [model, modelOther, modelList, liveModels.status])
+
+  // Trims show once a model is picked from the list (a typed model has no
+  // reliable EPA match). Bundled ones are instant; when the year isn't
+  // bundled, they load live. Same fallback: type the trim, or leave it blank.
+  const pickedModel = Number(year) && make && model && !modelOther && modelList.status === 'ready' ? model : ''
+  const bundledTrims = useMemo(() => (bundle && pickedModel ? bundleTrims(bundle, Number(year), pickedModel) : []), [bundle, year, pickedModel])
+  const trimsLive = pickedModel !== '' && bundle !== undefined && !bundledModels.length
+  useEffect(() => {
+    if (!trimsLive) {
+      setLiveTrims({ status: 'idle', versions: [] })
       return
     }
     let cancelled = false
-    setTrimList({ status: 'loading', versions: [] })
-    fetchTrims(make, model, y, modelList.models).then((result) => {
+    setLiveTrims({ status: 'loading', versions: [] })
+    fetchTrims(make, pickedModel, Number(year), liveModels.models).then((result) => {
       if (cancelled) return
       const versions = result.ok ? result.versions : []
-      setTrimList({ status: versions.length ? 'ready' : 'failed', versions })
+      setLiveTrims({ status: versions.length ? 'ready' : 'failed', versions })
     })
     return () => {
       cancelled = true
     }
-  }, [year, make, model, modelOther, modelList])
+  }, [trimsLive, year, make, pickedModel, liveModels.models])
+
+  const trimList: TrimList = !pickedModel
+    ? { status: 'idle', versions: [] }
+    : bundledTrims.length
+      ? { status: 'ready', versions: bundledTrims }
+      : trimsLive
+        ? liveTrims
+        : // Bundled year, but EPA doesn't rate this model (e.g. a heavy-duty pickup).
+          { status: 'failed', versions: [] }
 
   function resetTrim() {
     setTrim('')
@@ -395,7 +441,7 @@ export function AddVehicle() {
               <span class="field-hint">Engine and drive versions from EPA data. Picking one fills in the questions below.</span>
             )}
             {trimList.status === 'failed' && (
-              <span class="field-hint">Couldn't load trims for this model. Type it in or leave it blank.</span>
+              <span class="field-hint">No trim list for this model. Type it in or leave it blank.</span>
             )}
           </label>
           <label class="admin-field">

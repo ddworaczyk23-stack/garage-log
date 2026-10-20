@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchTrims, matchEpaModels, toTrimVersion, uniqueVersions } from '../src/services/trimCatalog'
+import { fetchTrims, matchEpaModels, optionToVehicle, toTrimVersion, uniqueVersions } from '../src/services/trimCatalog'
 
 describe('matchEpaModels', () => {
   it('matches EPA names that add body/drive words to the NHTSA model', () => {
@@ -41,6 +41,22 @@ describe('toTrimVersion', () => {
   })
 })
 
+describe('optionToVehicle', () => {
+  const version = (text: string, model: string) => toTrimVersion(optionToVehicle('1', text, model))
+
+  it('reads engine and transmission from the text and drive from the model name', () => {
+    expect(version('Auto (S10), 6 cyl, 2.7 L, Turbo', 'F150 Pickup 4WD')).toMatchObject({ label: '2.7L 6-cyl Turbo · 10-spd auto · 4WD', power: 'turbo', trans: 'auto', drive: '4WD' })
+    expect(version('Auto (S10), 6 cyl, 3.3 L, FFV', 'F150 Pickup 2WD')).toMatchObject({ power: 'gas', drive: 'RWD' })
+    expect(version('Man 6-spd, 4 cyl, 2.0 L', 'Civic')).toMatchObject({ label: '2.0L 4-cyl · 6-spd manual', trans: 'manual', drive: undefined })
+  })
+
+  it('spots hybrids, EVs and superchargers', () => {
+    expect(version('Auto (AV), 4 cyl, 2.5 L', 'Camry Hybrid LE')?.power).toBe('hybrid')
+    expect(version('Auto (A1)', 'Model 3 Long Range AWD')).toMatchObject({ label: 'Electric · AWD', power: 'ev' })
+    expect(version('Auto (S8), 8 cyl, 6.2 L, S-Charge', 'Camaro')).toMatchObject({ engine: '6.2L 8-cyl Supercharged', power: 'turbo' })
+  })
+})
+
 it('uniqueVersions drops look-alike rows', () => {
   const a = toTrimVersion({ id: 1, displ: 3.5, cylinders: 6, trany: 'Automatic (S10)', drive: '4-Wheel Drive' })
   const b = toTrimVersion({ id: 2, displ: 3.5, cylinders: 6, trany: 'Automatic (S10)', drive: '4-Wheel Drive', atvType: 'FFV' })
@@ -50,15 +66,21 @@ it('uniqueVersions drops look-alike rows', () => {
 describe('fetchTrims', () => {
   afterEach(() => vi.unstubAllGlobals())
 
-  it('walks models -> options -> vehicles', async () => {
+  it('reads versions from the options menus, with no per-vehicle calls', async () => {
     const json = (body: unknown) => new Response(JSON.stringify(body))
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
-      if (url.includes('/menu/model')) return json({ menuItem: [{ text: 'Rogue', value: 'Rogue' }, { text: 'Rogue Sport', value: 'Rogue Sport' }] })
-      if (url.includes('/menu/options')) return json({ menuItem: { text: 'Auto (AV), 4 cyl, 2.5 L', value: '41001' } })
-      return json({ id: 41001, displ: '2.5', cylinders: '4', trany: 'Automatic (variable gear ratios)', drive: 'Front-Wheel Drive' })
-    }))
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/menu/model')) return json({ menuItem: [{ text: 'Rogue AWD', value: 'Rogue AWD' }, { text: 'Rogue FWD', value: 'Rogue FWD' }, { text: 'Rogue Sport', value: 'Rogue Sport' }] })
+      if (url.includes('/menu/options') && url.includes('AWD')) return json({ menuItem: { text: 'Auto (AV-S7), 4 cyl, 2.5 L', value: '41002' } })
+      if (url.includes('/menu/options')) return json({ menuItem: { text: 'Auto (AV-S7), 4 cyl, 2.5 L', value: '41001' } })
+      throw new Error(`unexpected ${url}`)
+    })
+    vi.stubGlobal('fetch', fetchMock)
     const result = await fetchTrims('Nissan', 'Rogue', 2020, ['Rogue', 'Rogue Sport'])
-    expect(result).toEqual({ ok: true, versions: [expect.objectContaining({ label: '2.5L 4-cyl · CVT · FWD' })] })
+    expect(result).toEqual({
+      ok: true,
+      versions: [expect.objectContaining({ id: '41002', label: '2.5L 4-cyl · CVT · AWD' }), expect.objectContaining({ id: '41001', label: '2.5L 4-cyl · CVT · FWD' })],
+    })
+    expect(fetchMock).toHaveBeenCalledTimes(3)
   })
 
   it('reports failure when the service is unreachable', async () => {
