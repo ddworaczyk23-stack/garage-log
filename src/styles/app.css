@@ -2235,10 +2235,11 @@ iframe.preview-media {
   font-variant-numeric: tabular-nums;
 }
 .kicker {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-muted);
 }
 .eyebrow {
@@ -2305,10 +2306,11 @@ iframe.preview-media {
   letter-spacing: -0.01em;
 }
 .fold-count {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-muted);
 }
 .chev {
@@ -2604,10 +2606,11 @@ iframe.preview-media {
   border-top: 0;
 }
 .vd-spec-row dt {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--text-muted);
   margin: 0;
 }
@@ -3151,22 +3154,6 @@ a.list-row:hover {
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-}
-.gb-tile-eye {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-.gb-tile-eye .dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: currentColor;
 }
 .gb-tile-name {
   font-family: var(--font-sans);
