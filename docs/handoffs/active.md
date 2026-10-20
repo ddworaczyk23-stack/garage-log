@@ -14,7 +14,7 @@ aggressively, every time.
 ## Open
 
 - **Car page: name headline + two-car toggle (2026-10-20) — ready for
-  Codex.** Since PR #64 the navy title band runs full width. The two car
+  Codex — implementation complete, awaiting David's 1440px/375px review.** Since PR #64 the navy title band runs full width. The two car
   chips are the page title, so they sit small in the top-left with empty
   navy beside them, and the page has no big car name. David picked: the car
   name is the headline, and a small toggle sits on the right of the band.
@@ -50,6 +50,16 @@ aggressively, every time.
   `npm test`, `npm run build` pass. Verify on the local-only DB (a worktree
   with no `.env.local`). Claude reviews and checks both widths before
   David approves.
+
+  Codex completed the implementation locally on `feat/vd-name-toggle` (no
+  push): the vehicle label and pencil are now always the headline; the
+  existing two-car links / 3+-car select use `PageHeader`'s `meta` slot;
+  the two-car control is a segmented track and becomes full-width below
+  600px. `npm.cmd run typecheck`, `npm.cmd test` (502 passing), and
+  `npm.cmd run build` passed. This workspace does have an `.env.local`, so
+  the local-only DB check still needs a clean worktree. David should inspect
+  at 1440px and 375px, verify the car switcher and nickname pencil, then
+  approve or return feedback.
 
 - **Add a car: instant pickers (2026-10-20).** Shipped in PRs #63, #67,
   #68, #71, #75 (all merged, deployed). Model list comes from bundled EPA data
