@@ -4,7 +4,7 @@ import { db } from '../db/db'
 import { decodeVin } from '../services/vinDecode'
 import { COMMON_MAKES, fetchModels } from '../services/vehicleCatalog'
 import { fetchTrims, type TrimVersion } from '../services/trimCatalog'
-import { bundleModels, bundleTrims, loadMakeBundle, mergeModelNames, type MakeBundle } from '../services/catalogBundle'
+import { bundleModels, bundleTrims, loadMakeBundle, mergeModelNames, sameModel, type MakeBundle } from '../services/catalogBundle'
 import { canonicalVehicleId, matchesExistingVehicle } from '../domain/vehicleIdentity'
 import { Reveal } from '../components/motion/Reveal'
 import { PageHeader } from '../components/ui'
@@ -105,11 +105,14 @@ export function AddVehicle() {
     return liveModels
   }, [bundle, bundledModels, liveModels])
 
-  // A year change can drop the picked model from the list. Wait for the live
-  // list, which may still add it back.
+  // When NHTSA's list lands, a picked "F150" becomes its "F-150" (same model,
+  // same trims). A year change can drop the picked model from the list; wait
+  // for the live list, which may still add it back.
   useEffect(() => {
-    if (modelOther || !model || liveModels.status === 'loading' || modelList.status !== 'ready') return
-    if (!modelList.models.includes(model)) setModel('')
+    if (modelOther || !model || modelList.status !== 'ready' || modelList.models.includes(model)) return
+    const respelled = modelList.models.find((name) => sameModel(name, model))
+    if (respelled) setModel(respelled)
+    else if (liveModels.status !== 'loading') setModel('')
   }, [model, modelOther, modelList, liveModels.status])
 
   // Trims show once a model is picked from the list (a typed model has no

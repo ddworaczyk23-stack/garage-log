@@ -55,8 +55,16 @@ export function bundleModels(bundle: MakeBundle, year: number): string[] {
   return Object.keys(bundle.years[year] ?? {}).sort(byName)
 }
 
+/** Same model name, ignoring punctuation ("F-150" is EPA's "F150"). */
+export function sameModel(a: string, b: string): boolean {
+  return squash(a) === squash(b)
+}
+
+/** Takes either spelling: the picker shows NHTSA's once its list arrives. */
 export function bundleTrims(bundle: MakeBundle, year: number, model: string): TrimVersion[] {
-  const rows = bundle.years[year]?.[model] ?? []
+  const models = bundle.years[year] ?? {}
+  const key = model in models ? model : Object.keys(models).find((name) => sameModel(name, model))
+  const rows = key ? models[key] : []
   return uniqueVersions(
     rows.map(([id, displ, cylinders, trany, drive, turbo, supercharged, atvType, fuelType]) =>
       toTrimVersion({ id, displ, cylinders, trany, drive, tCharger: turbo === 1, sCharger: supercharged ? 'S' : null, atvType, fuelType }),
@@ -65,13 +73,12 @@ export function bundleTrims(bundle: MakeBundle, year: number, model: string): Tr
 }
 
 /**
- * Adds NHTSA models EPA doesn't rate (F-250, Ram 2500) to the bundled list.
- * A NHTSA name that only differs in punctuation ("F-150" vs EPA's "F150") is
- * the same model, and the bundled spelling stays so a pick doesn't change
- * under the user.
+ * Adds NHTSA models EPA doesn't rate (F-250, Ram 2500) to the bundled list,
+ * and uses NHTSA's spelling for models both have ("F-150" over EPA's "F150"),
+ * so the list reads one way and matches what a VIN decode stores.
  */
 export function mergeModelNames(bundled: string[], live: string[]): string[] {
-  const known = new Set(bundled.map(squash))
-  const extra = live.filter((name) => !known.has(squash(name)))
-  return extra.length ? [...bundled, ...extra].sort(byName) : bundled
+  const names = new Map(bundled.map((name) => [squash(name), name]))
+  for (const name of live) names.set(squash(name), name)
+  return [...names.values()].sort(byName)
 }
