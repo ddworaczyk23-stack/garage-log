@@ -13,15 +13,17 @@ aggressively, every time.
 
 ## Open
 
-- **Add a car: instant model/trim pickers (2026-10-20).** PR #63 (branch
-  `claude/happy-dirac-c5hsi1`). Live lookups took 10-15s each, so the deploy
-  now bundles EPA data per make (`npm run catalog` -> `public/catalog/`);
-  NHTSA/EPA live calls only fill gaps. Untested against the real services
-  (sandbox can't reach them). After merge: (1) the deploy log's "npm run
-  catalog" step should print ~140 makes and a few MB; if it failed, the app
-  silently falls back to live lookups. (2) On the live site, 2020 Ford ->
-  F150 and 2020 Nissan -> Rogue should list instantly, with trims that fill
-  engine/drive. If both hold, delete this entry.
+- **Add a car: instant model/trim pickers (2026-10-20).** Shipped in PRs
+  #63, #67, #68 (all merged, deployed). The deploy bundles EPA data per make
+  (`npm run catalog` -> `public/catalog/`, 145 makes / 2.8 MB in the
+  2026-10-20 deploy log); NHTSA/EPA live calls only fill gaps. David
+  confirmed the Ford model list now loads instantly. Model names switch to
+  NHTSA's spelling ("F150" -> "F-150") a few seconds later when its list
+  lands; a picked model is respelled in place. Still unconfirmed on the live
+  site: (1) picking a Ford trim fills engine/drive, (2) 2020 Nissan -> Rogue
+  lists instantly without Rogue Sport mixed in, (3) the live trim fallback
+  (only for years EPA hasn't published) works against the real EPA service.
+  Ask David to try (1) and (2); if both hold, delete this entry.
 
 - **Calendar feed: confirm Google (2026-10-15).** Everything else shipped
   (PRs #32, #33) and was verified on David's iPhone 2026-10-14: logging a

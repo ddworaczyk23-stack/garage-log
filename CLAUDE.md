@@ -105,7 +105,9 @@ Read that file before changing `src/db/**` or `src/domain/**`. Rules that bite:
 Live at **https://ddworaczyk23-stack.github.io/garage-log/** via
 `.github/workflows/deploy.yml` (GitHub Actions builds Vite + publishes `dist/`
 on every push to `main`; Pages Source = "GitHub Actions"). Hash routing + HTTPS
-so it installs to a phone home screen. **Pushing to main auto-deploys — don't
+so it installs to a phone home screen. The workflow also runs `npm run catalog`
+(EPA vehicle data for Add a car's pickers, `continue-on-error`): its step goes
+green even when it fails, so check the log for the `catalog: N makes` line. **Pushing to main auto-deploys — don't
 push unless asked.**
 
 ## Dexie Cloud (sync) — operations runbook
