@@ -3655,37 +3655,42 @@ a.list-row:hover {
 .cv-coast-dot.is-fix-now { background: var(--sig-red); }
 .cv-coast-dot.is-book-soon { background: var(--sig-amber); }
 .cv-coast-dot.is-not-set-up { background: var(--c-stale); }
-.hm-next { margin-top: 16px; padding-top: 6px; padding-bottom: 6px; }
-.hm-next-title {
-  margin: 8px 0 2px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--text-muted);
-}
-.hm-next-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 11px 0;
-  color: inherit;
-  text-decoration: none;
-}
-.hm-next-row + .hm-next-row { border-top: 1px solid var(--border); }
-.hm-next-row .cv-coast-dot { margin-top: 0; width: 9px; height: 9px; }
-.hm-next-main { flex: 1; min-width: 0; display: grid; }
-.hm-next-main b { font-weight: 600; font-size: 15px; }
-.hm-next-win {
-  flex: none;
-  font-family: var(--font-mono);
-  font-size: 12.5px;
-  color: var(--sig-blue-deep);
-  text-align: right;
-}
+.cv-coast-dot.is-all-clear { background: var(--sig-green); }
+.hm-grid { display: grid; gap: 16px; margin-top: 16px; }
+/* The box rows run edge to edge, so the card drops its own padding. No
+   overflow clip: the Calendar InfoTip popover lives in the footer. */
+.hm-box { padding: 0; margin-bottom: 0; }
+.hm-box-head { display: flex; align-items: baseline; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.hm-box-head h3 { margin: 0; font-size: 18px; font-weight: 700; }
+.hm-box-key { color: var(--text-muted); font-size: 15px; }
+.hm-box-head > a { margin-left: auto; color: var(--accent); font-size: 14px; font-weight: 600; text-decoration: none; }
+.hm-row { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto auto 14px; align-items: center; gap: 12px; padding: 13px 20px; border-top: 1px solid var(--border); color: inherit; text-decoration: none; }
+.hm-box-head + .hm-row { border-top: 0; }
+.hm-row:hover { background: var(--bg-elevated); }
+.hm-row .cv-coast-dot { width: 9px; height: 9px; margin: 0; }
+.hm-row-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; }
+.hm-tag { padding: 3px 9px; border-radius: 999px; background: var(--bg-inset); color: var(--text-muted); font-size: 13px; white-space: nowrap; }
+.hm-row-value { font: 500 14px var(--font-mono); text-align: right; white-space: nowrap; color: var(--sig-blue-deep); }
+.hm-row-value small { display: block; color: var(--text-muted); font: 13px var(--font-sans); }
+.hm-row .chevron-icon { color: var(--text-muted); }
+.hm-box-footer { border-top: 1px solid var(--border); }
+.hm-box-head + .hm-box-footer { border-top: 0; }
+.hm-box-footer .cal-export { margin-top: 0; border-top: 0; padding: 14px 20px; }
+.hm-spend { padding: 16px 20px 18px; }
+.hm-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; border-bottom: 1px solid var(--border); }
+.hm-bar { flex: 1; display: flex; flex-direction: column-reverse; min-width: 0; border-radius: 4px 4px 0 0; overflow: hidden; }
+.hm-bar i { display: block; }
+.hm-months { display: flex; gap: 8px; margin-top: 6px; }
+.hm-months span { flex: 1; color: var(--text-muted); font-size: 12px; text-align: center; }
+.hm-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-size: 14px; }
+.hm-legend i { display: inline-block; width: 10px; height: 10px; margin-right: 6px; border-radius: 2px; }
+.hm-legend b { margin-left: 6px; font: 600 14px var(--font-mono); }
+.hm-empty { margin: 0; padding: 18px 20px; color: var(--text-muted); }
 @media (max-width: 430px) {
   .cv-headline { font-size: 21px; }
+  .hm-box-head { flex-wrap: wrap; row-gap: 2px; }
+  .hm-box-key { flex-basis: 100%; order: 3; }
+  .hm-row { gap: 10px; padding-inline: 16px; }
 }
 
 /* =========================================================================
@@ -4340,6 +4345,12 @@ a.list-row:hover {
      vehicle's card down within its grid cell; here the grid `gap` handles
      spacing, so reset it to keep both cards top-aligned. */
   .gb-today-grid > .cv-card + .cv-card { margin-top: 0; }
+
+  .hm-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hm-recent,
+  .hm-spent:first-child { grid-column: span 2; }
+  /* Boxes side by side share one height (the Reveal wrapper is the grid item). */
+  .hm-grid .hm-box { height: 100%; }
 
   /* Costs: per-vehicle breakdown cards as a board rather than a tall stack. */
   .cost-vehicle-grid {

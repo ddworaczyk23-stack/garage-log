@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import type { ReminderRule } from '../src/types'
+import type { MaintenanceEvent, ReminderRule } from '../src/types'
 import { computeVehicleReminders, type ReminderInputs } from '../src/domain/reminderEngine'
-import { bandFromStatus, knownReminders, vehicleVerdict, BAND_LABELS, compactSign, garageTally, comingUp } from '../src/domain/verdict'
+import { bandFromStatus, knownReminders, vehicleVerdict, BAND_LABELS, compactSign, garageTally, comingUp, recentWork } from '../src/domain/verdict'
 import { localDateISO } from '../src/domain/format'
 
 // Verdicts are built from REAL engine output (computeVehicleReminders) rather
@@ -49,6 +49,31 @@ describe('bandFromStatus', () => {
     for (const band of ['fix-now', 'book-soon', 'coast', 'all-clear'] as const) {
       expect(BAND_LABELS[band]).toBeTruthy()
     }
+  })
+})
+
+function workEvent(id: string, date: string, title: string, cost = 0): MaintenanceEvent {
+  return {
+    id,
+    vehicleId: 'veh',
+    kind: 'maintenance',
+    date,
+    odometerMiles: 100,
+    category: 'oil-change',
+    title,
+    cost,
+    documentIds: [],
+  }
+}
+
+describe('recentWork', () => {
+  it('mixes cars newest-first, retains input order on a date tie, and caps rows', () => {
+    const rows = recentWork([
+      { vehicleId: 'truck', vehicleName: 'Truck', events: [workEvent('a', '2026-03-02', 'Oil change', 50), workEvent('b', '2026-02-01', 'Rotation')] },
+      { vehicleId: 'rogue', vehicleName: 'Rogue', events: [workEvent('c', '2026-03-02', 'Wipers', 20), workEvent('d', '2026-03-03', 'Brakes', 300)] },
+    ], 3)
+    expect(rows.map((row) => `${row.vehicleName}: ${row.title}`)).toEqual(['Rogue: Brakes', 'Truck: Oil change', 'Rogue: Wipers'])
+    expect(rows[1]).toMatchObject({ vehicleId: 'truck', cost: 50, date: '2026-03-02' })
   })
 })
 

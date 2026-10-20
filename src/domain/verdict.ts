@@ -1,5 +1,5 @@
 import type { ComputedReminder } from './reminderEngine'
-import type { MaintenanceStatus } from '../types'
+import type { MaintenanceEvent, MaintenanceStatus } from '../types'
 import { formatMiles, formatShortDate } from './format'
 
 // ---------------------------------------------------------------------------
@@ -627,4 +627,29 @@ export function comingUp(
   )
   rows.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
   return rows.slice(0, max).map(({ key: _key, ...item }) => item)
+}
+
+export interface RecentWorkItem {
+  vehicleId: string
+  vehicleName: string
+  title: string
+  cost: number
+  date: string
+}
+
+/** Recent logged maintenance and repairs across the garage, newest first. */
+export function recentWork(
+  vehicles: { vehicleId: string; vehicleName: string; events: MaintenanceEvent[] }[],
+  max = 3,
+): RecentWorkItem[] {
+  return vehicles
+    .flatMap((vehicle) => vehicle.events.map((event) => ({
+      vehicleId: vehicle.vehicleId,
+      vehicleName: vehicle.vehicleName,
+      title: event.title,
+      cost: event.cost,
+      date: event.date,
+    })))
+    .sort((a, b) => (a.date < b.date ? 1 : a.date > b.date ? -1 : 0))
+    .slice(0, max)
 }

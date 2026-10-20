@@ -1,12 +1,13 @@
 import { useState } from 'preact/hooks'
 import { useQuery } from '../db/useQuery'
 import { getGarageSummary, type VehicleSummary } from '../db/summary'
-import { formatMiles, formatMoney, localDateISO } from '../domain/format'
+import { formatMiles, formatMoney, formatShortDate, localDateISO } from '../domain/format'
 import {
   compactSign,
   comingUp,
   garageTally,
   hasRealData,
+  recentWork,
   vehicleVerdict,
   VERDICT_BAND_LABELS,
   type VerdictBand,
@@ -69,6 +70,11 @@ export function Dashboard() {
   const upcoming = comingUp(
     summary.vehicles.map((s) => ({ vehicleId: s.vehicle.id, vehicleName: vehicleLabel(s.vehicle), reminders: s.reminders })),
   )
+  const recent = recentWork(summary.vehicles.map((s) => ({
+    vehicleId: s.vehicle.id,
+    vehicleName: vehicleLabel(s.vehicle),
+    events: [...s.recentServices, ...s.recentRepairs],
+  })))
 
   return (
     <section class="page gb">
@@ -87,45 +93,90 @@ export function Dashboard() {
         ))}
       </div>
 
-      {upcoming.length > 0 && (
-        <Reveal>
-          <section class="card hm-next" aria-labelledby="hm-next-title">
-            <h3 class="hm-next-title" id="hm-next-title">Coming up</h3>
+      <div class="hm-grid">
+        {/* Also shown with an empty list once history exists: it carries the
+            Calendar button, which used to be its own card. */}
+        {(upcoming.length > 0 || hasHistory) && (
+          <Reveal>
+            <section class="card hm-box" aria-labelledby="hm-coming-title">
+              <div class="hm-box-head">
+                <h3 id="hm-coming-title">Coming up</h3>
+                <span class="hm-box-key">{upcoming.length > 0 ? `${upcoming.length} coming up` : 'Nothing else yet'}</span>
+              </div>
             {upcoming.map((item) => (
-              <a key={`${item.vehicleId}:${item.label}`} class="hm-next-row" href={`#/vehicle/${item.vehicleId}`}>
+              <a key={`${item.vehicleId}:${item.label}`} class="hm-row" href={`#/vehicle/${item.vehicleId}`}>
                 <span class="cv-coast-dot" aria-hidden="true" />
-                <span class="hm-next-main">
-                  <b>{item.label}</b>
-                  <span class="muted small">{item.vehicleName}</span>
-                </span>
-                <span class="hm-next-win">{item.window}</span>
+                <b class="hm-row-title">{item.label}</b>
+                <span class="hm-tag">{item.vehicleName}</span>
+                <span class="hm-row-value">{item.window}</span>
+                <ChevronRightIcon />
               </a>
             ))}
-          </section>
-        </Reveal>
-      )}
+              {hasHistory && <div class="hm-box-footer"><CalendarExport /></div>}
+            </section>
+          </Reveal>
+        )}
 
-      {hasHistory && (
-        <Reveal>
-          <section class="card">
-            <CalendarExport />
-          </section>
+        <Reveal class="hm-spent">
+          <SpentBox summaries={summary.vehicles} year={summary.year} total={yearSpend} />
         </Reveal>
-      )}
 
-      <ul class="list">
-        <li>
-          <a class="list-row" href="#/costs">
-            <span class="list-row-main">
-              <span class="list-row-title">Costs</span>
-              <span class="muted small">
-                {yearSpend > 0 ? `${formatMoney(yearSpend)} in ${summary.year}` : 'No costs logged yet'}
-              </span>
-            </span>
-            <ChevronRightIcon />
-          </a>
-        </li>
-      </ul>
+        {recent.length > 0 && (
+          <Reveal class="hm-recent">
+            <section class="card hm-box" aria-labelledby="hm-recent-title">
+              <div class="hm-box-head">
+                <h3 id="hm-recent-title">Recent service</h3>
+                <span class="hm-box-key">Last: {formatShortDate(recent[0].date)}</span>
+              </div>
+              {recent.map((item) => (
+                <a key={`${item.vehicleId}:${item.date}:${item.title}`} class="hm-row" href={`#/vehicle/${item.vehicleId}`}>
+                  <span class="cv-coast-dot is-all-clear" aria-hidden="true" />
+                  <b class="hm-row-title">{item.title}</b>
+                  <span class="hm-tag">{item.vehicleName}</span>
+                  <span class="hm-row-value">{formatMoney(item.cost)}<small>{formatShortDate(item.date)}</small></span>
+                  <ChevronRightIcon />
+                </a>
+              ))}
+            </section>
+          </Reveal>
+        )}
+      </div>
+    </section>
+  )
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// Guide blue, a lighter blue, then slate: solid enough to read as bars on white.
+const BAR_COLORS = ['var(--accent)', '#8fb3dc', 'var(--c-stale)']
+
+function SpentBox({ summaries, year, total }: { summaries: VehicleSummary[]; year: number; total: number }) {
+  const monthCount = new Date().getMonth() + 1
+  const totals = Array.from({ length: monthCount }, (_, month) => summaries.reduce((sum, s) => sum + s.spendByMonth[month], 0))
+  const high = Math.max(...totals, 0) || 1 // all spend dated after this month
+  return (
+    <section class="card hm-box" aria-labelledby="hm-spent-title">
+      <div class="hm-box-head">
+        <h3 id="hm-spent-title">Spent</h3>
+        <span class="hm-box-key">{formatMoney(total)} in {year}</span>
+        <a href="#/costs">All costs</a>
+      </div>
+      {total === 0 ? <p class="hm-empty">No costs logged in {year} yet.</p> : (
+        <div class="hm-spend">
+          <div class="hm-bars">
+            {totals.map((monthTotal, month) => (
+              <div class="hm-bar" role="img" key={MONTHS[month]} style={`height:${(monthTotal / high) * 100}%`} aria-label={`${MONTHS[month]}: ${formatMoney(monthTotal)}`}>
+                {summaries.map((s, index) => s.spendByMonth[month] > 0 && (
+                  <i key={s.vehicle.id} style={`height:${(s.spendByMonth[month] / monthTotal) * 100}%;background:${BAR_COLORS[index % BAR_COLORS.length]}`} />
+                ))}
+              </div>
+            ))}
+          </div>
+          <div class="hm-months">{MONTHS.slice(0, monthCount).map((month) => <span key={month}>{month[0]}</span>)}</div>
+          <div class="hm-legend">
+            {summaries.map((s, index) => <span key={s.vehicle.id}><i style={`background:${BAR_COLORS[index % BAR_COLORS.length]}`} />{vehicleLabel(s.vehicle)} <b>{formatMoney(s.spendThisYear)}</b></span>)}
+          </div>
+        </div>
+      )}
     </section>
   )
 }

@@ -23,7 +23,7 @@ import {
   type ReminderCounts,
   type VehicleUrgency,
 } from '../domain/vehicleRanking'
-import { buildCostBreakdown, costPerMile, filterByYear, type CostBreakdown } from '../domain/cost'
+import { buildCostBreakdown, costPerMile, filterByYear, spendByMonth, type CostBreakdown } from '../domain/cost'
 import { vehicleHealth, type VehicleHealth } from '../domain/health'
 import { hasHistory, itemBand } from '../domain/verdict'
 import { milesThisYear } from '../domain/mileage'
@@ -150,6 +150,7 @@ export interface VehicleSummary {
   mileage: { miles: number; asOfDate: string; stale: boolean; projected: boolean } | null
   milesThisYear: number | null
   spendThisYear: number
+  spendByMonth: number[]
   spendAllTime: number
   documentCount: number
   lastActivityDate: string | null
@@ -221,6 +222,8 @@ async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): 
     daysSinceLastActivity: lastActivityDate ? daysSince(lastActivityDate, asOf) : null,
   }
 
+  const monthlySpend = spendByMonth(events, year)
+
   return {
     vehicle,
     reminders,
@@ -243,7 +246,8 @@ async function buildVehicleSummary(vehicle: Vehicle, year: number, asOf: Date): 
         }
       : null,
     milesThisYear: milesThisYear(points, year),
-    spendThisYear: events.filter((e) => e.date.startsWith(`${year}-`)).reduce((s, e) => s + (e.cost || 0), 0),
+    spendThisYear: monthlySpend.reduce((sum, cost) => sum + cost, 0),
+    spendByMonth: monthlySpend,
     spendAllTime: events.reduce((s, e) => s + (e.cost || 0), 0),
     documentCount: events.reduce((n, e) => n + e.documentIds.length, 0) + gloveboxDocCount,
     lastActivityDate,
