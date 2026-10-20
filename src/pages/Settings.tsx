@@ -51,8 +51,8 @@ function VehiclesCard() {
     <div class="card box settings-cars">
       <div class="box-head"><h3>Vehicles</h3></div>
       <div class="box-body">{vehicles.map((v) => (
-        <div key={v.id} class="settings-cars-row">
-          <span>{vehicleLabel(v)}</span>
+        <div key={v.id} class="box-row settings-cars-row">
+          <span class="box-row-title">{vehicleLabel(v)}</span>
           <ConfirmButton
             class="btn-link btn-link-danger"
             label="Delete"

@@ -60,6 +60,9 @@ Read that file before changing `src/db/**` or `src/domain/**`. Rules that bite:
   router without a Pages fallback.
 - `ReminderDebug` is read-only. Do not add input forms to it.
 - `src/domain/` is pure logic and unit-tested. Keep it free of DB calls.
+- One card shape app-wide: `.card.box` + `.box-head` (title, one muted
+  `.box-key` fact, optional right link) + `.box-body`, and `.box-row` for
+  list rows (`src/styles/app.css`). Reuse them; don't add per-page heads.
 
 
 ## Engine constants & invariants (don't drift these)

@@ -126,17 +126,12 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
 
 function CategoryRow({ cost }: { cost: CategoryCost }) {
   return (
-    <li class="cost-row">
-      <div class="cost-row-head">
-        <span class="cost-row-label">{cost.label}</span>
-        <span class="cost-row-amount">{formatMoney(cost.total)}</span>
-      </div>
+    <li class="box-row cost-row">
+      <span class="box-row-title">{cost.label}</span>
+      <span class="box-row-value">{formatMoney(cost.total)}<small>{Math.round(cost.share * 100)}% · {cost.count} {cost.count === 1 ? 'entry' : 'entries'}</small></span>
       <div class="cost-bar" aria-hidden="true">
         <div class="cost-bar-fill" style={`width: ${Math.max(2, Math.round(cost.share * 100))}%`} />
       </div>
-      <span class="cost-row-meta muted small">
-        {Math.round(cost.share * 100)}% · {cost.count} {cost.count === 1 ? 'entry' : 'entries'}
-      </span>
     </li>
   )
 }

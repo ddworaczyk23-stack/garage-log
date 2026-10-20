@@ -53,14 +53,14 @@ export function MileageHistory({ vehicleId, embedded = false }: { vehicleId: str
         it.kind === 'reading' ? (
           <OdometerListItem key={`r-${it.reading.id}`} vehicleId={vehicleId} reading={it.reading} />
         ) : (
-          <li key={`e-${it.event.id}`} class="list-row">
-            <span class="list-row-main">
-              <span class="list-row-title">{formatMiles(it.miles)}</span>
+          <li key={`e-${it.event.id}`} class="box-row mileage-event-row">
+            <span class="box-row-main">
+              <span class="box-row-title">{it.event.title || CATEGORY_LABELS[it.event.category]}</span>
               <span class="muted small">
-                {formatShortDate(it.date)} · via {it.event.title || CATEGORY_LABELS[it.event.category]}
+                {formatShortDate(it.date)} · from service log
               </span>
             </span>
-            <span class="muted small mileage-src">service log</span>
+            <span class="box-row-value">{formatMiles(it.miles)}</span>
           </li>
         ),
       )}
