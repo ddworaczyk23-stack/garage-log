@@ -13,6 +13,11 @@ aggressively, every time.
 
 ## Open
 
+- **Home "answer boxes" layout (2026-10-20).** Built by Codex, reviewed and
+  fixed by Claude; merged in PR #72. Next: "B", the same box header / row /
+  contrast polish across the other pages. Mockup:
+  `design/home-answer-boxes.html`.
+
 - **Add a car: instant pickers (2026-10-20).** Shipped in PRs #63, #67,
   #68, #71 (all merged, deployed). Model list comes from bundled EPA data
   (145 makes in the deploy log), with NHTSA names merged in a few seconds

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildCostBreakdown, costLooksOff, costPerMile, filterByYear } from '../src/domain/cost'
+import { buildCostBreakdown, costLooksOff, costPerMile, filterByYear, spendByMonth } from '../src/domain/cost'
 import type { MaintenanceCategory, MaintenanceEvent } from '../src/types'
 
 let seq = 0
@@ -35,6 +35,22 @@ describe('filterByYear', () => {
 
   it('returns all events when year is null (all-time)', () => {
     expect(filterByYear(events, null)).toHaveLength(3)
+  })
+})
+
+describe('spendByMonth', () => {
+  it('filters by year, buckets each month, and sums to the year spend', () => {
+    const events = [
+      evt({ date: '2025-12-31', cost: 999 }),
+      evt({ date: '2026-01-02', cost: 20 }),
+      evt({ date: '2026-03-12', cost: 80 }),
+      evt({ date: '2026-03-31', cost: 15 }),
+    ]
+    const months = spendByMonth(events, 2026)
+    expect(months).toHaveLength(12)
+    expect(months[0]).toBe(20)
+    expect(months[2]).toBe(95)
+    expect(months.reduce((sum, cost) => sum + cost, 0)).toBe(buildCostBreakdown(filterByYear(events, 2026)).total)
   })
 })
 

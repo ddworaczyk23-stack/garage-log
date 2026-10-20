@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Coast · Home answer boxes</title>
+<!-- Mockup: Home as a grid of "answer boxes" (Monarch-style). Static data.
+     Uses the live app's tokens (src/styles/app.css :root). Every box shares one
+     header shape: title + one key fact in muted text + optional control. -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;500;600;700;800&family=Overpass+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #efefea; --frame: #0f2a44; --on-frame: #fff; --on-frame-muted: rgba(255,255,255,.74);
+  --on-frame-accent: #9cc3f0; --card: #fff; --inset: #f0f0eb; --border: rgba(35,39,43,.13);
+  --text: #23272b; --muted: #5a6167; --accent: #1b5faa; --accent-tint: rgba(27,95,170,.11);
+  --red: #b3402e; --red-ink: #a63a29; --red-bg: rgba(179,64,46,.12);
+  --amber: #f5b700; --amber-ink: #8a5800; --amber-bg: rgba(217,138,0,.15);
+  --green: #1e7a44; --green-ink: #1a6a3c; --green-bg: rgba(30,122,68,.12);
+  --shadow: 0 1px 2px rgba(35,39,43,.05), 0 10px 26px -14px rgba(35,39,43,.18);
+  --sans: 'Overpass', system-ui, sans-serif; --mono: 'Overpass Mono', ui-monospace, monospace;
+}
+* { box-sizing: border-box; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.45 var(--sans); }
+a { color: inherit; text-decoration: none; }
+
+/* Shell: sidebar on desktop, bottom bar on phone (same as the app). */
+.shell { display: grid; grid-template-columns: 248px 1fr; min-height: 100vh; }
+.side { background: var(--frame); color: var(--on-frame-muted); padding: 22px 12px; border-right: 1px solid rgba(255,255,255,.12); }
+.brand { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 800; letter-spacing: .28em; padding: 0 8px 26px; }
+.brand i { width: 22px; height: 22px; border: 2px solid #fff; border-radius: 50%; }
+.side a { display: flex; gap: 12px; padding: 10px 12px; border-radius: 10px; font-weight: 600; font-size: 14px; }
+.side a.on { background: rgba(255,255,255,.12); color: #fff; }
+.side .check { margin-top: 10px; background: var(--accent); color: #fff; justify-content: center; }
+main { min-width: 0; }
+
+/* Navy title band, same as every page. */
+.band { background: var(--frame); color: #fff; padding: 26px 32px 22px; }
+.band-row { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; max-width: 1200px; }
+.band h1 { font-size: 30px; font-weight: 800; line-height: 1.1; }
+.band p { color: var(--on-frame-muted); margin-top: 6px; display: flex; gap: 16px; }
+.band p b { color: #fff; }
+.sq { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+.quick { display: flex; gap: 8px; }
+.quick button { font: 600 14px var(--sans); color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.22); border-radius: 10px; padding: 9px 14px; cursor: pointer; }
+
+/* The grid. Two columns of boxes on desktop, one stack on phone. */
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 20px 32px 40px; max-width: 1264px; }
+.span-2 { grid-column: span 2; }
+
+/* One box shape for everything. */
+.box { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); }
+.box-head { display: flex; align-items: baseline; gap: 10px; padding: 16px 20px; border-bottom: 1px solid var(--border); }
+.box-head h2 { font-size: 18px; font-weight: 700; }
+.box-head .key { color: var(--muted); font-size: 15px; }
+.box-head .ctl { margin-left: auto; font-size: 14px; font-weight: 600; color: var(--accent); }
+
+/* One row shape for every list: name left, tag middle, number right, chevron. */
+.row { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto auto 14px; align-items: center; gap: 12px; padding: 13px 20px; border-top: 1px solid var(--border); }
+.row:first-of-type { border-top: 0; }
+.row:hover { background: #fafaf7; }
+.row .name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .tag { font-size: 13px; color: var(--muted); background: var(--inset); padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+.row .num { font: 500 14px var(--mono); text-align: right; white-space: nowrap; }
+.row .num small { display: block; font: 13px var(--sans); color: var(--muted); }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.chev { color: var(--muted); }
+
+/* Car boxes. */
+.cars { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.car-top { display: flex; align-items: baseline; gap: 10px; padding: 16px 20px 12px; }
+.car-top h2 { font-size: 18px; font-weight: 700; }
+.car-top .key { color: var(--muted); }
+.car-top .chev { margin-left: auto; }
+.sign { margin: 0 20px; border-radius: 12px; padding: 4px; }
+.sign > div { border: 2px solid rgba(255,255,255,.85); border-radius: 9px; padding: 12px 14px; color: #fff; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.sign h3 { font-size: 19px; font-weight: 800; line-height: 1.2; }
+.sign span { font: 600 12px var(--sans); letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+.sign.red { background: var(--red); }
+.sign.green { background: var(--green); }
+.ruler { display: flex; gap: 3px; margin: 12px 20px 0; position: relative; }
+.ruler i { flex: 1; height: 6px; border-radius: 3px; }
+.ruler b { position: absolute; top: -4px; width: 3px; height: 14px; background: var(--text); border-radius: 2px; }
+.car-foot { display: flex; gap: 8px; padding: 14px 20px 16px; color: var(--muted); font-size: 14px; }
+.car-foot .dot { margin-top: 5px; flex: none; }
+
+/* Spending box. */
+.spend { padding: 16px 20px 18px; }
+.bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; border-bottom: 1px solid var(--border); }
+.bars div { flex: 1; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; }
+.bars .t { background: var(--accent); }
+.bars .r { background: #8fb3dc; }
+.months { display: flex; gap: 8px; margin-top: 6px; }
+.months span { flex: 1; text-align: center; font-size: 12px; color: var(--muted); }
+.legend { display: flex; gap: 18px; margin-top: 14px; font-size: 14px; }
+.legend b { font: 600 14px var(--mono); margin-left: 6px; }
+
+.note { max-width: 1200px; margin: 0 32px 40px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 860px) {
+  .shell { grid-template-columns: 1fr; }
+  .side { display: none; }
+  .band { padding: 20px 16px 18px; }
+  .band h1 { font-size: 26px; }
+  .grid { grid-template-columns: 1fr; padding: 16px; }
+  .span-2 { grid-column: auto; }
+  .cars { grid-template-columns: 1fr; }
+  .box-head { flex-wrap: wrap; row-gap: 2px; }
+  .box-head .key { order: 3; flex-basis: 100%; }
+  .row { gap: 10px; padding-inline: 16px; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="side">
+    <div class="brand"><i></i>COAST</div>
+    <a class="on" href="#">Home</a><a href="#">Vehicles</a><a href="#">Docs</a><a href="#">Settings</a>
+    <a class="check" href="#">Check</a>
+  </nav>
+  <main>
+    <header class="band">
+      <div class="band-row">
+        <div>
+          <h1>Good afternoon, David</h1>
+          <p><span><i class="sq" style="background:var(--red)"></i><b>1</b> to fix now</span><span><i class="sq" style="background:var(--amber)"></i><b>2</b> to book soon</span></p>
+        </div>
+        <div class="quick"><button>Log service</button><button>Update miles</button></div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Box 1: one verdict per car -->
+      <div class="cars span-2">
+        <a class="box" href="#">
+          <div class="car-top"><h2>David's Truck</h2><span class="key">100,571 mi</span><span class="chev">›</span></div>
+          <div class="sign red"><div><h3>Brake inspection is 392 mi past due</h3><span>Fix now</span></div></div>
+          <div class="ruler"><i style="background:var(--red)"></i><i style="background:var(--amber)"></i><i style="background:var(--accent)"></i><i style="background:var(--green)"></i><b style="left:16%"></b></div>
+          <div class="car-foot"><i class="dot" style="background:var(--amber)"></i>Also: oil change in ~600 mi</div>
+        </a>
+        <a class="box" href="#">
+          <div class="car-top"><h2>Riley's Car</h2><span class="key">~70,240 mi</span><span class="chev">›</span></div>
+          <div class="sign green"><div><h3>Nothing due right now</h3><span>All clear</span></div></div>
+          <div class="ruler"><i style="background:var(--red)"></i><i style="background:var(--amber)"></i><i style="background:var(--accent)"></i><i style="background:var(--green)"></i><b style="left:88%"></b></div>
+          <div class="car-foot"><i class="dot" style="background:var(--accent)"></i>Next: tire rotation, est. Jan 14</div>
+        </a>
+      </div>
+
+      <!-- Box 2: what's next across both cars (Monarch's "Recurring") -->
+      <section class="box">
+        <div class="box-head"><h2>Coming up</h2><span class="key">5 in the next 90 days</span><a class="ctl" href="#">Add to calendar</a></div>
+        <a class="row" href="#"><i class="dot" style="background:var(--red)"></i><span class="name">Brake inspection</span><span class="tag">Truck</span><span class="num">392 mi<small>overdue</small></span><span class="chev">›</span></a>
+        <a class="row" href="#"><i class="dot" style="background:var(--amber)"></i><span class="name">Oil change</span><span class="tag">Truck</span><span class="num">~600 mi<small>est. Nov 3</small></span><span class="chev">›</span></a>
+        <a class="row" href="#"><i class="dot" style="background:var(--amber)"></i><span class="name">Cabin air filter</span><span class="tag">Truck</span><span class="num">Nov 30</span><span class="chev">›</span></a>
+        <a class="row" href="#"><i class="dot" style="background:var(--accent)"></i><span class="name">Tire rotation</span><span class="tag">Rogue</span><span class="num">2,100 mi<small>est. Jan 14</small></span><span class="chev">›</span></a>
+        <a class="row" href="#"><i class="dot" style="background:var(--accent)"></i><span class="name">Multi-point inspection</span><span class="tag">Rogue</span><span class="num">Jan 20</span><span class="chev">›</span></a>
+      </section>
+
+      <!-- Box 3: money (Monarch's "Spending") -->
+      <section class="box">
+        <div class="box-head"><h2>Spent</h2><span class="key">$1,486 in 2026</span><a class="ctl" href="#">All costs</a></div>
+        <div class="spend">
+          <div class="bars">
+            <div style="height:12%"><i class="t" style="height:100%"></i></div>
+            <div style="height:6%"><i class="r" style="height:100%"></i></div>
+            <div style="height:44%"><i class="t" style="height:70%"></i><i class="r" style="height:30%"></i></div>
+            <div style="height:0"></div>
+            <div style="height:18%"><i class="t" style="height:100%"></i></div>
+            <div style="height:9%"><i class="r" style="height:100%"></i></div>
+            <div style="height:72%"><i class="t" style="height:100%"></i></div>
+            <div style="height:0"></div>
+            <div style="height:15%"><i class="t" style="height:50%"></i><i class="r" style="height:50%"></i></div>
+            <div style="height:28%"><i class="r" style="height:100%"></i></div>
+          </div>
+          <div class="months"><span>J</span><span>F</span><span>M</span><span>A</span><span>M</span><span>J</span><span>J</span><span>A</span><span>S</span><span>O</span></div>
+          <div class="legend"><span><i class="sq" style="background:var(--accent)"></i>Truck<b>$1,052</b></span><span><i class="sq" style="background:#8fb3dc"></i>Rogue<b>$434</b></span></div>
+        </div>
+      </section>
+
+      <!-- Box 4: the log (Monarch's "Transactions") -->
+      <section class="box span-2">
+        <div class="box-head"><h2>Recent service</h2><span class="key">Last: 3 weeks ago</span><a class="ctl" href="#">Full log</a></div>
+        <a class="row" href="#"><i class="dot" style="background:var(--green)"></i><span class="name">Oil change + filter</span><span class="tag">Truck</span><span class="num">$89.40<small>Sep 28</small></span><span class="chev">›</span></a>
+        <a class="row" href="#"><i class="dot" style="background:var(--green)"></i><span class="name">Wiper blades</span><span class="tag">Rogue</span><span class="num">$32.18<small>Sep 12</small></span><span class="chev">›</span></a>
+        <a class="row" href="#"><i class="dot" style="background:var(--green)"></i><span class="name">Tire rotation</span><span class="tag">Truck</span><span class="num">$0.00<small>Jul 30</small></span><span class="chev">›</span></a>
+      </section>
+    </div>
+    <p class="note">Mockup only. Sample numbers. The cars, Coming up and costs already exist in the app; Recent service and the month bars are new.</p>
+  </main>
+</div>
+</body>
+</html>
