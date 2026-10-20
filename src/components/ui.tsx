@@ -294,7 +294,12 @@ export function InfoTip({ label = 'More info', children }: { label?: string; chi
           setOpen((o) => !o)
         }}
       >
-        ?
+        {/* Drawn, not a "?" glyph: the font sits it off-centre in the ring. */}
+        <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true">
+          <circle cx="8" cy="8" r="7.15" />
+          <path d="M6.1 5.8a1.9 1.9 0 0 1 3.75.55c0 1.3-1.85 1.55-1.85 2.75" />
+          <circle cx="8" cy="11.3" r="0.8" fill="currentColor" stroke="none" />
+        </svg>
       </button>
       <span id={id} role="tooltip" class="infotip-pop">
         {children}

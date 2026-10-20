@@ -1,7 +1,9 @@
 import { cloudConfigured, login, logout, useCloudUser, useSyncState } from '../db/cloud'
 import { db } from '../db/db'
+import { deleteVehicle } from '../db/vehicles'
 import { useQuery } from '../db/useQuery'
 import { formatShortDate, localDateISO } from '../domain/format'
+import { vehicleLabel } from '../domain/vehicle'
 import { ChevronRightIcon } from '../components/icons'
 import { ConfirmButton, PageHeader } from '../components/ui'
 
@@ -19,6 +21,8 @@ export function Settings() {
 
       {cloudConfigured && <SyncCard />}
 
+      <VehiclesCard />
+
       <ul class="list">
         <li>
           <a class="list-row" href="#/backup">
@@ -35,6 +39,30 @@ export function Settings() {
 
       <p class="muted small settings-build">Coast · build {__COAST_BUILD__}</p>
     </section>
+  )
+}
+
+/** The one place a car can be deleted: rare and destructive, so it stays off
+ * the car page. Deleting removes the car's whole history. */
+function VehiclesCard() {
+  const vehicles = useQuery(() => db.vehicles.toArray())
+  if (!vehicles?.length) return null
+  return (
+    <div class="card settings-cars">
+      <h3 class="list-row-title">Vehicles</h3>
+      {vehicles.map((v) => (
+        <div key={v.id} class="settings-cars-row">
+          <span>{vehicleLabel(v)}</span>
+          <ConfirmButton
+            class="btn-link btn-link-danger"
+            label="Delete"
+            confirmLabel="Yes, delete everything"
+            busyLabel="Deleting…"
+            onConfirm={() => deleteVehicle(v.id)}
+          />
+        </div>
+      ))}
+    </div>
   )
 }
 

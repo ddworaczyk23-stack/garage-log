@@ -9,7 +9,6 @@ import { getOpenConcerns } from '../db/concerns'
 import { hasHistory, unknownReminders, vehicleVerdict } from '../domain/verdict'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
-import { deleteVehicle } from '../db/vehicles'
 import { EventForm, type EventFormSaveResult } from '../components/EventForm'
 import { OdometerForm, type OdometerFormSaveResult } from '../components/OdometerForm'
 import { EventListItem } from '../components/EventListItem'
@@ -22,7 +21,7 @@ import { NicknameEditor } from '../components/NicknameEditor'
 import { VehicleSpecsEditor } from '../components/VehicleSpecsEditor'
 import { AnnualMileageEditor } from '../components/AnnualMileageEditor'
 import { ConcernList } from '../components/ConcernList'
-import { Loading, Skel, ConfirmButton, InfoTip, PageHeader, Sheet, Toast } from '../components/ui'
+import { Loading, Skel, InfoTip, PageHeader, Sheet, Toast } from '../components/ui'
 import { PencilIcon } from '../components/icons'
 import { Reveal } from '../components/motion/Reveal'
 import { Collapsible } from '../components/motion/Collapsible'
@@ -594,21 +593,6 @@ export function VehicleDetail({ id }: Props) {
           </Collapsible>
           <VehicleDocuments vehicleId={id} eventDocuments={documents ?? []} embedded />
         </section>
-      </Reveal>
-
-      <Reveal>
-        <div class="vd-delete">
-          <ConfirmButton
-            class="btn-link btn-link-danger"
-            label="Delete vehicle"
-            confirmLabel="Yes, delete everything"
-            busyLabel="Deleting…"
-            onConfirm={async () => {
-              await deleteVehicle(id)
-              window.location.hash = '#/vehicles'
-            }}
-          />
-        </div>
       </Reveal>
 
       </div>

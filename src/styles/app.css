@@ -185,8 +185,20 @@ body {
 }
 
 /* ---------- Settings page ---------- */
-.settings-sync {
+.settings-sync,
+.settings-cars {
   margin-bottom: 16px;
+}
+.settings-cars-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.settings-cars-row:first-of-type {
+  border-top: 0;
 }
 .settings-sync .list-row-title {
   margin: 0;
@@ -1832,20 +1844,19 @@ iframe.preview-media {
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1.3px solid var(--text-muted);
+  border: 0;
   border-radius: 50%;
   background: transparent;
   color: var(--text-muted);
   position: relative;
-  font-family: var(--font-sans);
-  font-size: 0.58rem;
-  font-weight: 700;
-  line-height: 1;
   cursor: pointer;
+}
+.infotip-btn svg {
+  width: 100%;
+  height: 100%;
 }
 .infotip-btn:hover,
 .infotip-btn:focus-visible {
-  border-color: var(--accent);
   color: var(--accent);
 }
 .infotip-pop {
@@ -2945,9 +2956,6 @@ iframe.preview-media {
   margin: 0;
   font-size: 0.9rem;
   font-weight: 600;
-}
-.vd-delete {
-  padding: 4px 2px;
 }
 
 /* Desktop two-column split: a sticky "cockpit" rail (identity, odometer,
