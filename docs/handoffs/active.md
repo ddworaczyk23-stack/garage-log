@@ -34,6 +34,12 @@ aggressively, every time.
      delete any rule whose class no longer appears in `src/**/*.tsx`. Then
      fix copy that was written for caps: e.g. "Average mileage" kicker is
      already sentence case; check each label reads right in sentence case.
+     **B1 DONE** on `polish/b1-labels` (Codex built, Claude reviewed +
+     checked live at 1440/375). `.gb-tile-eye` was unused and removed.
+     `.chk-sect` / `.chk-brief-lbl` were put BACK to caps: they belong to
+     the out-of-scope Check flow / ShopBrief, and changing only them left
+     the brief card half caps, half sentence case. Start B2 from `main`
+     after B1 merges.
   2. **`polish/b2-box-heads` — one header shape.** Rename Home's
      `.hm-box-head` / `.hm-box-key` / `.hm-box` / `.hm-row` / `.hm-tag` /
      `.hm-row-title` / `.hm-row-value` / `.hm-box-footer` to shared names
