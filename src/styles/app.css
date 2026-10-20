@@ -586,9 +586,6 @@ a.list-row:active {
   vertical-align: -0.28em;
 }
 
-.event-row .list-row-main {
-  gap: 2px;
-}
 .row-actions {
   display: flex;
   align-items: center;
@@ -2078,22 +2075,6 @@ iframe.preview-media {
   flex-direction: column;
   gap: 12px;
 }
-.cost-row-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 10px;
-}
-.cost-row-label {
-  font-weight: 600;
-  font-size: 0.9rem;
-  letter-spacing: -0.008em;
-}
-.cost-row-amount {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  flex-shrink: 0;
-}
 .cost-bar {
   height: 7px;
   background: var(--bg-inset);
@@ -2106,9 +2087,6 @@ iframe.preview-media {
   background: var(--c-cost);
   border-radius: 999px;
   transition: width 0.6s var(--ease-mech);
-}
-.cost-row-meta {
-  display: block;
 }
 .cost-note,
 .cost-empty {
@@ -3643,9 +3621,18 @@ a.list-row:hover {
 .box-row .cv-coast-dot { width: 9px; height: 9px; margin: 0; }
 .box-row-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; font-weight: 600; }
 .box-tag { padding: 3px 9px; border-radius: 999px; background: var(--bg-inset); color: var(--text-muted); font-size: 13px; white-space: nowrap; }
-.box-row-value { font: 500 14px var(--font-mono); text-align: right; white-space: nowrap; color: var(--sig-blue-deep); }
+.box-row-value { font: 500 14px var(--font-mono); text-align: right; white-space: nowrap; color: var(--text); }
 .box-row-value small { display: block; color: var(--text-muted); font: 13px var(--font-sans); }
 .box-row .chevron-icon { color: var(--text-muted); }
+.box-row-main { display: grid; min-width: 0; gap: 2px; }
+.event-row,
+.odometer-row { grid-template-columns: minmax(0, 1fr) auto auto; }
+.mileage-event-row { grid-template-columns: minmax(0, 1fr) auto; }
+.cost-row { grid-template-columns: minmax(0, 1fr) auto; }
+.cost-row .cost-bar { grid-column: 1 / -1; width: 100%; margin: 0; }
+.settings-cars-row { grid-template-columns: minmax(0, 1fr) auto; }
+/* Inside a padded .box-body the body already insets the row. */
+.box-body .box-row { padding-inline: 0; }
 .box-footer { border-top: 1px solid var(--border); }
 .box-head + .box-footer { border-top: 0; }
 .box-footer .cal-export { margin-top: 0; border-top: 0; padding: 14px 20px; }

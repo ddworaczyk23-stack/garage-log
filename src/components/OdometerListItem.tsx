@@ -14,13 +14,14 @@ export function OdometerListItem({ vehicleId, reading }: Props) {
   const [editing, setEditing] = useState(false)
 
   return (
-    <li class="list-row">
-      <span class="list-row-main">
-        <span class="list-row-title">{formatMiles(reading.miles)}</span>
+    <li class="box-row odometer-row">
+      <span class="box-row-main">
+        <span class="box-row-title">Mileage reading</span>
         <span class="muted small">
           {formatShortDate(reading.date)} · {reading.source === 'quick-log' ? 'manual reading' : 'from service log'}
         </span>
       </span>
+      <span class="box-row-value">{formatMiles(reading.miles)}</span>
       <span class="row-actions">
         <button type="button" class="btn-link" onClick={() => setEditing(true)}>
           Edit

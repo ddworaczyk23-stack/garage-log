@@ -24,18 +24,17 @@ export function EventListItem({ vehicleId, event, linkToService = true }: Props)
   const docs = useQuery(() => (editing ? loadEventDocs(event) : Promise.resolve([])), [editing, event.id])
 
   return (
-    <li class="list-row event-row">
-      <span class="list-row-main">
+    <li class="box-row event-row">
+      <span class="box-row-main">
         {linkToService ? (
-          <a class="list-row-title list-row-link" href={serviceHref(vehicleId, event.category)}>
+          <a class="box-row-title list-row-link" href={serviceHref(vehicleId, event.category)}>
             {event.title} <ChevronRightIcon />
           </a>
         ) : (
-          <span class="list-row-title">{event.title}</span>
+          <span class="box-row-title">{event.title}</span>
         )}
         <span class="muted small">
           {formatShortDate(event.date)} · {formatMiles(event.odometerMiles)}
-          {event.cost ? ` · ${formatMoney(event.cost)}` : ''}
           {event.documentIds.length ? ` · 📎 ${event.documentIds.length}` : ''}
         </span>
         {event.notes && <span class="muted small">{event.notes}</span>}
@@ -48,6 +47,7 @@ export function EventListItem({ vehicleId, event, linkToService = true }: Props)
           </span>
         )}
       </span>
+      <span class="box-row-value">{event.cost ? formatMoney(event.cost) : '—'}</span>
       <span class="row-actions">
         <button type="button" class="btn-link" onClick={() => setEditing(true)}>
           Edit
