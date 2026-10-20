@@ -29,11 +29,16 @@ describe('bundled catalog', () => {
     expect(bundleTrims(ford, 2020, 'F-250')).toEqual([])
   })
 
-  it('merges in NHTSA-only models, keeping the bundled spelling', () => {
-    expect(mergeModelNames(['F150', 'Ranger'], ['F-150', 'F-250', 'Ranger'])).toEqual(['F150', 'F-250', 'Ranger'])
-    // Punctuation doesn't move a model out of order; numbers sort as numbers.
+  it('merges in NHTSA-only models and uses NHTSA spelling for shared ones', () => {
+    expect(mergeModelNames(['F150', 'Ranger'], ['F-150', 'F-250', 'Ranger'])).toEqual(['F-150', 'F-250', 'Ranger'])
+    // EPA-only names keep their spelling; punctuation doesn't reorder; numbers sort as numbers.
     expect(mergeModelNames(['Explorer', 'F150', 'Ranger'], ['E-350', 'F-450', 'F-250', 'F-1000', 'Edge'])).toEqual(['E-350', 'Edge', 'Explorer', 'F150', 'F-250', 'F-450', 'F-1000', 'Ranger'])
     expect(mergeModelNames(['Rogue'], [])).toEqual(['Rogue'])
+  })
+
+  it('finds trims under either spelling', () => {
+    expect(bundleTrims(ford, 2020, 'F-150')).toEqual(bundleTrims(ford, 2020, 'F150'))
+    expect(bundleTrims(ford, 2020, 'F-150')).toHaveLength(3)
   })
 
   it('slugs make names for file names', () => {
