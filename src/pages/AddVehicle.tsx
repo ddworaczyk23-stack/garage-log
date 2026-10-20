@@ -416,7 +416,7 @@ export function AddVehicle() {
             <input
               type="text"
               value={trim}
-              placeholder="e.g. SL, XLT. Not sure? Leave it blank"
+              placeholder="As on the badge. Not sure? Leave it blank"
               aria-label="Trim"
               onInput={(e) => setTrim((e.target as HTMLInputElement).value)}
             />
