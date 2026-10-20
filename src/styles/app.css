@@ -5060,14 +5060,14 @@ a.list-row:hover {
   gap: 0;
 }
 .vd-picker a {
-  min-height: 36px;
   min-width: 0;
-  padding: 6px 14px;
+  padding: 0 14px;
   text-align: center;
   border-radius: calc(var(--radius-control) - 3px);
   color: var(--on-frame-muted);
   text-decoration: none;
-  font: 600 14px var(--font-sans);
+  /* Line height = segment height, so the label sits centered. */
+  font: 600 14px/36px var(--font-sans);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -5131,7 +5131,7 @@ a.list-row:hover {
   }
   .vd-picker a {
     flex: 1;
-    min-height: 44px;
+    line-height: 44px;
   }
   .vd-picker-menu {
     min-height: 44px;
