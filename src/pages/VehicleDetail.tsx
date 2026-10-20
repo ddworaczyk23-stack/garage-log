@@ -6,7 +6,8 @@ import { getProjectedMileage, getVehicleReminders } from '../db/summary'
 import { milesThisYear } from '../domain/mileage'
 import { STALE_ODOMETER_DAYS } from '../domain/reminderEngine'
 import { getOpenConcerns } from '../db/concerns'
-import { hasHistory, unknownReminders, vehicleVerdict } from '../domain/verdict'
+import { hasHistory, joinAnd, unknownReminders, vehicleVerdict } from '../domain/verdict'
+import { visitBundle } from '../domain/bundles'
 import { VerdictPanel, UrgencyRuler } from '../components/VerdictPanel'
 import type { ComputedReminder } from '../domain/reminderEngine'
 import { EventForm, type EventFormSaveResult } from '../components/EventForm'
@@ -61,6 +62,7 @@ export function VehicleDetail({ id }: Props) {
   const [editingSpecs, setEditingSpecs] = useState(false)
   const [changingTraits, setChangingTraits] = useState(false)
   const [serviceCategory, setServiceCategory] = useState<MaintenanceCategory | undefined>(undefined)
+  const [serviceAdditionalCategories, setServiceAdditionalCategories] = useState<MaintenanceCategory[]>([])
   const [logSheetOpen, setLogSheetOpen] = useState(false)
   const [toast, setToast] = useState<{ id: number; message: string } | null>(null)
   // One-shot flag set by AddVehicle right before redirecting here on a fresh
@@ -213,14 +215,17 @@ export function VehicleDetail({ id }: Props) {
   const nextJobs = notSetUp ? [] : [...actionable, ...onTrackAll.filter(hasHistory)].slice(0, 3)
   const actionableRest = actionable.filter((r) => !nextJobs.includes(r))
   const onTrack = onTrackAll.filter((r) => !nextJobs.includes(r))
+  const bundle = visitBundle(list)
 
   function closeForm() {
     setActiveForm(null)
     setServiceCategory(undefined)
+    setServiceAdditionalCategories([])
   }
-  function openForm(form: Exclude<ActiveForm, null>, category?: MaintenanceCategory) {
+  function openForm(form: Exclude<ActiveForm, null>, category?: MaintenanceCategory, additionalCategories: MaintenanceCategory[] = []) {
     setLogSheetOpen(false)
     setServiceCategory(category)
+    setServiceAdditionalCategories(additionalCategories)
     setActiveForm(form)
   }
   async function handleEventSaved(result: EventFormSaveResult) {
@@ -407,6 +412,7 @@ export function VehicleDetail({ id }: Props) {
         <section class="card box vd-next">
           <div class="box-head"><h3>Next {nextJobs.length === 1 ? 'job' : `${nextJobs.length} jobs`}</h3></div>
           <div class="box-body"><ul class="vd-ledger">{nextJobs.map(renderRow)}</ul></div>
+          {bundle.length >= 2 && <div class="box-footer vd-bundle"><b>Do these together</b><span class="muted small">One visit: {joinAnd(bundle.map((r) => r.rule.label))}</span><button type="button" class="btn btn-secondary" onClick={() => openForm('service', bundle[0].rule.category, bundle.slice(1).map((r) => r.rule.category))}>Log as one visit</button></div>}
         </section>
       )}
 
@@ -623,10 +629,11 @@ export function VehicleDetail({ id }: Props) {
           </div>
           {activeForm === 'service' && (
             <EventForm
-              key={`service-${serviceCategory ?? 'generic'}`}
+              key={`service-${serviceCategory ?? 'generic'}-${serviceAdditionalCategories.join(',')}`}
               vehicleId={id}
               kind="maintenance"
               initialCategory={serviceCategory}
+              initialAdditionalCategories={serviceAdditionalCategories}
               defaultOdometer={mileage?.lastActual.miles}
               onDone={handleEventSaved}
               onCancel={closeForm}

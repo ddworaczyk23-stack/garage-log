@@ -175,7 +175,9 @@ function daysAsSpeech(days: number): string {
 
 /** "in ~400 mi (around Sep 2026)" / "by Sep 2026" / null when nothing numeric. */
 function windowText(r: ComputedReminder): string | null {
-  const date = monthYear(r.dueAtDate ?? r.projectedDueDate)
+  // The date of whichever axis comes due first: "in ~600 mi" next to a
+  // 2-years-out calendar date read as a contradiction.
+  const date = monthYear(dateBinds(r) ? r.dueAtDate : (r.projectedDueDate ?? r.dueAtDate))
   if (r.milesRemaining != null && r.milesRemaining > 0) {
     return `in ~${formatMiles(r.milesRemaining)}${date ? ` (around ${date})` : ''}`
   }
@@ -581,7 +583,7 @@ export function compactSign(v: VehicleVerdict): CompactSign {
   }
 }
 
-function joinAnd(items: string[]): string {
+export function joinAnd(items: string[]): string {
   if (items.length <= 1) return items[0] ?? ''
   const lower = items.map((t, i) => (i === 0 ? t : t.charAt(0).toLowerCase() + t.slice(1)))
   return `${lower.slice(0, -1).join(', ')} and ${lower[lower.length - 1]}`
