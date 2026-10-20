@@ -1823,7 +1823,8 @@ iframe.preview-media {
 .infotip {
   position: relative;
   display: inline-flex;
-  vertical-align: 0.1em;
+  /* Center the 15px icon on the capitals (cap height ≈ 0.72em). */
+  vertical-align: calc(0.36em - 7.5px);
   margin-left: 6px;
 }
 .infotip-btn {
