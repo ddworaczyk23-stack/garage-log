@@ -34,12 +34,11 @@ aggressively, every time.
      delete any rule whose class no longer appears in `src/**/*.tsx`. Then
      fix copy that was written for caps: e.g. "Average mileage" kicker is
      already sentence case; check each label reads right in sentence case.
-     **B1 DONE** on `polish/b1-labels` (Codex built, Claude reviewed +
-     checked live at 1440/375). `.gb-tile-eye` was unused and removed.
+     **B1 MERGED** (PR #76; Codex built, Claude reviewed + checked live at
+     1440/375). `.gb-tile-eye` was unused and removed.
      `.chk-sect` / `.chk-brief-lbl` were put BACK to caps: they belong to
      the out-of-scope Check flow / ShopBrief, and changing only them left
-     the brief card half caps, half sentence case. Start B2 from `main`
-     after B1 merges.
+     the brief card half caps, half sentence case. B2 is next, from `main`.
   2. **`polish/b2-box-heads` — one header shape.** Rename Home's
      `.hm-box-head` / `.hm-box-key` / `.hm-box` / `.hm-row` / `.hm-tag` /
      `.hm-row-title` / `.hm-row-value` / `.hm-box-footer` to shared names
@@ -75,10 +74,10 @@ aggressively, every time.
   Mockup for the look: `design/home-answer-boxes.html`.
 
 - **Add a car: instant pickers (2026-10-20).** Shipped in PRs #63, #67,
-  #68, #71 (all merged, deployed). Model list comes from bundled EPA data
+  #68, #71, #75 (all merged, deployed). Model list comes from bundled EPA data
   (145 makes in the deploy log), with NHTSA names merged in a few seconds
   later ("F150" becomes "F-150", a picked model is respelled in place). Trim
-  is a typed field; EPA's engine/transmission/drive versions are a separate
+  is a typed field (hint "As on the badge", no make-specific examples); EPA's engine/transmission/drive versions are a separate
   "Engine & drive" picker that fills the schedule questions. David confirmed
   on the live site: Ford models load instantly, and 2020 Nissan Rogue loads
   its versions. Still unconfirmed: (1) picking an Engine & drive version
