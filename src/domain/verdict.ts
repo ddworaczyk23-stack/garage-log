@@ -1,4 +1,4 @@
-import type { ComputedReminder } from './reminderEngine'
+import { urgencyValue, DEFAULT_ANNUAL_MILEAGE, type ComputedReminder } from './reminderEngine'
 import type { MaintenanceEvent, MaintenanceStatus } from '../types'
 import { formatMiles, formatShortDate } from './format'
 
@@ -141,6 +141,10 @@ export interface VehicleVerdict {
   /** e.g. "Safe window: about 3 weeks of normal driving." null when n/a. */
   safeWindow: string | null
   coastItems: CoastItem[]
+  /** The watch-next item carrying a coast sentence. Kept out of coastItems so
+   *  the full panel doesn't list it twice; the compact Home card, which has no
+   *  sentence, shows it as "Next". Null otherwise. */
+  lead: CoastItem | null
   /** The fix-now / book-soon items behind the headline, worst first (max 3). */
   actionItems: ActionItem[]
   /** Tracked items with no logged history — "Unknown", never counted above. */
@@ -388,6 +392,7 @@ export function vehicleVerdict(
       rulerPin: null,
       safeWindow: null,
       coastItems: [],
+      lead: null,
       actionItems: [],
       unknownCount: 0,
       confidenceNote: null,
@@ -465,6 +470,10 @@ export function vehicleVerdict(
         : null
       : safeWindow(band, top),
     coastItems,
+    lead:
+      band === 'coast' && !concernDriven && top
+        ? { label: top.rule.label, window: windowText(top) ?? 'a while out' }
+        : null,
     actionItems: [...fixNow, ...bookSoon]
       .slice(0, 3)
       .map((r) => ({
@@ -565,7 +574,7 @@ export function compactSign(v: VehicleVerdict): CompactSign {
       also: labels.length ? { text: joinAnd(labels), band: v.band } : null,
     }
   }
-  const next = v.coastItems[0]
+  const next = v.lead ?? v.coastItems[0]
   return {
     headline: dropPeriod(v.headline),
     also: next ? { text: `Next: ${next.label} ${next.window}`, band: 'coast' } : null,
@@ -594,7 +603,16 @@ export function garageTally(
 }
 
 /** windowText's short form for a narrow list column: one axis only. */
+/** True when the calendar comes due before the miles do (same mileage
+ * assumption the engine ranks with), e.g. oil at 6 months on a low-mileage car. */
+function dateBinds(r: ComputedReminder): boolean {
+  if (r.daysRemaining == null || !r.dueAtDate) return false
+  if (r.milesRemaining == null) return true
+  return r.daysRemaining < (r.milesRemaining / DEFAULT_ANNUAL_MILEAGE) * 365
+}
+
 function shortWindow(r: ComputedReminder): string {
+  if (dateBinds(r)) return `by ${monthYear(r.dueAtDate)}`
   if (r.milesRemaining != null && r.milesRemaining > 0) return `in ~${formatMiles(r.milesRemaining)}`
   const date = monthYear(r.dueAtDate ?? r.projectedDueDate)
   return date ? `~${date}` : 'coming up'
@@ -608,7 +626,8 @@ export interface ComingUpItem {
 }
 
 /** The "Coming up" list on Home: every known can-coast (watch-next) reminder
- * across all vehicles, soonest first. Overdue / due-soon items are left out —
+ * across all vehicles, in the engine's urgency order (urgencyValue), so it
+ * never disagrees with a car card's "Next". Overdue / due-soon items are left out —
  * the car cards already show those. */
 export function comingUp(
   vehicles: { vehicleId: string; vehicleName: string; reminders: ComputedReminder[] }[],
@@ -622,10 +641,10 @@ export function comingUp(
         vehicleName: v.vehicleName,
         label: r.rule.label,
         window: shortWindow(r),
-        key: r.dueAtDate ?? r.projectedDueDate ?? '9999-12-31',
+        key: urgencyValue(r),
       })),
   )
-  rows.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0))
+  rows.sort((a, b) => a.key - b.key)
   return rows.slice(0, max).map(({ key: _key, ...item }) => item)
 }
 

@@ -427,4 +427,27 @@ describe('Home helpers', () => {
     ])
     expect(items.map((i) => `${i.vehicleName}: ${i.label}`)).toEqual(['F-150: Tire rotation'])
   })
+
+  // Air filter every 15,000 from 36,400 -> 1,400 mi out: watch-next, after rotation.
+  const airFilter = () => makeRule({ category: 'engine-air-filter', label: 'Engine air filter', customIntervalMiles: 15000, lastDoneMiles: 36400 })
+
+  it('compactSign on a coast car names the most urgent item as Next', () => {
+    const sign = compactSign(verdictFor([airFilter(), rotation()], at))
+    expect(sign.also?.text).toMatch(/^Next: Tire rotation/)
+  })
+
+  it('comingUp ranks like the engine, so its first item matches the car card', () => {
+    const items = comingUp([
+      { vehicleId: 'a', vehicleName: 'F-150', reminders: computeVehicleReminders([airFilter(), rotation()], [], at) },
+    ])
+    expect(items.map((i) => i.label)).toEqual(['Tire rotation', 'Engine air filter'])
+  })
+
+  it('comingUp shows the date when the calendar comes due before the miles', () => {
+    // Oil every 5,000 mi or 6 months, done 2026-06-14 at 48,000: 3,000 mi left
+    // (~91 days at 12k/yr) but the 6-month date (Dec 14) is ~61 days out.
+    const oilByDate = makeRule({ label: 'Engine oil & filter', customIntervalMonths: 6, lastDoneDate: '2026-06-14', lastDoneMiles: 48000 })
+    const items = comingUp([{ vehicleId: 'a', vehicleName: 'F-150', reminders: computeVehicleReminders([oilByDate], [], at) }])
+    expect(items[0]?.window).toBe('by Dec 2026')
+  })
 })

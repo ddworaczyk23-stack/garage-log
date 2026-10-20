@@ -352,8 +352,9 @@ export function computeReminder(rule: ReminderRule, inputs: ReminderInputs): Com
   }
 }
 
-/** Smaller = more urgent within the same status tier. See DEFAULT_ANNUAL_MILEAGE. */
-function urgencyValue(r: ComputedReminder): number {
+/** Smaller = more urgent within the same status tier. See DEFAULT_ANNUAL_MILEAGE.
+ * Exported so cross-vehicle lists (Home's Coming up) rank exactly like the engine. */
+export function urgencyValue(r: ComputedReminder): number {
   const milesAsDays =
     r.milesRemaining != null ? (r.milesRemaining / DEFAULT_ANNUAL_MILEAGE) * 365 : null
   const candidates = [r.daysRemaining, milesAsDays].filter((v): v is number => v != null)
