@@ -13,6 +13,12 @@ aggressively, every time.
 
 ## Open
 
+- **Home "answer boxes" layout (2026-10-20).** Built by Codex, reviewed and
+  fixed by Claude on `feat/home-answer-boxes` (not merged). Checked live at
+  1440px and 375px with 2 cars. Next: PR + merge on David's go. After that,
+  "B": the same box header / row / contrast polish across the other pages.
+  Mockup: `design/home-answer-boxes.html`.
+
 - **Add a car: instant model/trim pickers (2026-10-20).** Shipped in PRs
   #63, #67, #68 (all merged, deployed). The deploy bundles EPA data per make
   (`npm run catalog` -> `public/catalog/`, 145 makes / 2.8 MB in the

@@ -49,6 +49,18 @@ export function filterByYear(events: MaintenanceEvent[], year: number | null): M
   return events.filter((e) => e.date.startsWith(prefix))
 }
 
+/** Spend in each calendar month of a year, Jan through Dec. */
+export function spendByMonth(events: MaintenanceEvent[], year: number): number[] {
+  const months = Array.from({ length: 12 }, () => 0)
+  const prefix = `${year}-`
+  for (const event of events) {
+    if (!event.date.startsWith(prefix)) continue
+    const month = Number(event.date.slice(5, 7)) - 1
+    if (month >= 0 && month < 12) months[month] += event.cost || 0
+  }
+  return months
+}
+
 /** Aggregate events into a spend breakdown: grand total, maintenance vs repair
  * split, and per-category totals sorted by spend. */
 export function buildCostBreakdown(events: MaintenanceEvent[]): CostBreakdown {
