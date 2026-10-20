@@ -206,6 +206,7 @@ export function VehicleDetail({ id }: Props) {
   const unknownItems = notSetUp ? [] : unknownReminders(list)
   const isActionable = (r: ComputedReminder) => r.status === 'overdue' || r.status === 'due-next'
   const actionable = list.filter((r) => isActionable(r) && (notSetUp || hasHistory(r)))
+  const dueCount = list.filter(isActionable).length
   const onTrackAll = list.filter((r) => !actionable.includes(r) && !unknownItems.includes(r))
   // The 3 most urgent known jobs sit under the verdict so they show on the
   // first screen. The schedule below skips them, so no job is listed twice.
@@ -403,9 +404,9 @@ export function VehicleDetail({ id }: Props) {
       )}
 
       {nextJobs.length > 0 && (
-        <section class="card vd-next">
-          <h3 class="card-title">Next {nextJobs.length === 1 ? 'job' : `${nextJobs.length} jobs`}</h3>
-          <ul class="vd-ledger">{nextJobs.map(renderRow)}</ul>
+        <section class="card box vd-next">
+          <div class="box-head"><h3>Next {nextJobs.length === 1 ? 'job' : `${nextJobs.length} jobs`}</h3></div>
+          <div class="box-body"><ul class="vd-ledger">{nextJobs.map(renderRow)}</ul></div>
         </section>
       )}
 
@@ -495,20 +496,21 @@ export function VehicleDetail({ id }: Props) {
       {/* service schedule: bullet ledger, actionable items expanded, the rest
           folded behind a Collapsible so the common case (most items on
           track) doesn't force a long scroll to reach history below it */}
-      <section class="card vd-schedule">
-        <div class="card-title-row">
-          <h3 class="card-title">
+      <section class="card box vd-schedule">
+        <div class="box-head">
+          <h3>
             Service schedule
             <InfoTip label="About this schedule">
               Based on the factory schedule, adjusted when you set your own interval or log a service. Ranked
               most urgent first. Dates below are estimated from your average mileage.
             </InfoTip>
           </h3>
+          {dueCount > 0 && <span class="box-key">{dueCount} due</span>}
           <a class="btn-link" href={`#/import/${id}`}>
             Import history →
           </a>
         </div>
-
+        <div class="box-body">
         <AnnualMileageEditor vehicleId={id} />
 
         {notSetUp && (
@@ -555,6 +557,7 @@ export function VehicleDetail({ id }: Props) {
         )}
 
         {hasCalendarDates && <CalendarExport vehicleId={id} />}
+        </div>
       </section>
 
       <Reveal>
@@ -562,8 +565,9 @@ export function VehicleDetail({ id }: Props) {
       </Reveal>
 
       <Reveal>
-        <section class="card vd-history">
-          <h3 class="card-title">History &amp; documents</h3>
+        <section class="card box vd-history">
+          <div class="box-head"><h3>History &amp; documents</h3><span class="box-key">{events?.length ?? 0} {(events?.length ?? 0) === 1 ? 'entry' : 'entries'}</span></div>
+          <div class="box-body">
           <Collapsible title="Maintenance log" count={`${maintenanceEvents.length} ${maintenanceEvents.length === 1 ? 'entry' : 'entries'}`}>
             {!events ? (
               <Loading />
@@ -592,6 +596,7 @@ export function VehicleDetail({ id }: Props) {
             )}
           </Collapsible>
           <VehicleDocuments vehicleId={id} eventDocuments={documents ?? []} embedded />
+          </div>
         </section>
       </Reveal>
 

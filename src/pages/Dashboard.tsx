@@ -98,21 +98,21 @@ export function Dashboard() {
             Calendar button, which used to be its own card. */}
         {(upcoming.length > 0 || hasHistory) && (
           <Reveal>
-            <section class="card hm-box" aria-labelledby="hm-coming-title">
-              <div class="hm-box-head">
+            <section class="card box" aria-labelledby="hm-coming-title">
+              <div class="box-head">
                 <h3 id="hm-coming-title">Coming up</h3>
-                <span class="hm-box-key">{upcoming.length > 0 ? `${upcoming.length} coming up` : 'Nothing else yet'}</span>
+                <span class="box-key">{upcoming.length > 0 ? `${upcoming.length} coming up` : 'Nothing else yet'}</span>
               </div>
             {upcoming.map((item) => (
-              <a key={`${item.vehicleId}:${item.label}`} class="hm-row" href={`#/vehicle/${item.vehicleId}`}>
+              <a key={`${item.vehicleId}:${item.label}`} class="box-row" href={`#/vehicle/${item.vehicleId}`}>
                 <span class="cv-coast-dot" aria-hidden="true" />
-                <b class="hm-row-title">{item.label}</b>
-                <span class="hm-tag">{item.vehicleName}</span>
-                <span class="hm-row-value">{item.window}</span>
+                <b class="box-row-title">{item.label}</b>
+                <span class="box-tag">{item.vehicleName}</span>
+                <span class="box-row-value">{item.window}</span>
                 <ChevronRightIcon />
               </a>
             ))}
-              {hasHistory && <div class="hm-box-footer"><CalendarExport /></div>}
+              {hasHistory && <div class="box-footer"><CalendarExport /></div>}
             </section>
           </Reveal>
         )}
@@ -123,17 +123,17 @@ export function Dashboard() {
 
         {recent.length > 0 && (
           <Reveal class="hm-recent">
-            <section class="card hm-box" aria-labelledby="hm-recent-title">
-              <div class="hm-box-head">
+            <section class="card box" aria-labelledby="hm-recent-title">
+              <div class="box-head">
                 <h3 id="hm-recent-title">Recent service</h3>
-                <span class="hm-box-key">Last: {formatShortDate(recent[0].date)}</span>
+                <span class="box-key">Last: {formatShortDate(recent[0].date)}</span>
               </div>
               {recent.map((item) => (
-                <a key={`${item.vehicleId}:${item.date}:${item.title}`} class="hm-row" href={`#/vehicle/${item.vehicleId}`}>
+                <a key={`${item.vehicleId}:${item.date}:${item.title}`} class="box-row" href={`#/vehicle/${item.vehicleId}`}>
                   <span class="cv-coast-dot is-all-clear" aria-hidden="true" />
-                  <b class="hm-row-title">{item.title}</b>
-                  <span class="hm-tag">{item.vehicleName}</span>
-                  <span class="hm-row-value">{formatMoney(item.cost)}<small>{formatShortDate(item.date)}</small></span>
+                  <b class="box-row-title">{item.title}</b>
+                  <span class="box-tag">{item.vehicleName}</span>
+                  <span class="box-row-value">{formatMoney(item.cost)}<small>{formatShortDate(item.date)}</small></span>
                   <ChevronRightIcon />
                 </a>
               ))}
@@ -154,10 +154,10 @@ function SpentBox({ summaries, year, total }: { summaries: VehicleSummary[]; yea
   const totals = Array.from({ length: monthCount }, (_, month) => summaries.reduce((sum, s) => sum + s.spendByMonth[month], 0))
   const high = Math.max(...totals, 0) || 1 // all spend dated after this month
   return (
-    <section class="card hm-box" aria-labelledby="hm-spent-title">
-      <div class="hm-box-head">
+    <section class="card box" aria-labelledby="hm-spent-title">
+      <div class="box-head">
         <h3 id="hm-spent-title">Spent</h3>
-        <span class="hm-box-key">{formatMoney(total)} in {year}</span>
+        <span class="box-key">{formatMoney(total)} in {year}</span>
         <a href="#/costs">All costs</a>
       </div>
       {total === 0 ? <p class="hm-empty">No costs logged in {year} yet.</p> : (

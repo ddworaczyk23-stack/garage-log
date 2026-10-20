@@ -45,9 +45,9 @@ export function MilestoneCard({ vehicleId }: { vehicleId: string }) {
       : null
 
   return (
-    <section class="card ms-card">
-      <div class="card-title-row">
-        <h3 class="card-title">
+    <section class="card box ms-card">
+      <div class="box-head">
+        <h3>
           Milestone checkups
           <InfoTip label="About milestone checkups">
             Whole-vehicle checklists at 30k, 60k, 90k, 100k, 120k and 150k miles, tailored to this
@@ -55,9 +55,10 @@ export function MilestoneCard({ vehicleId }: { vehicleId: string }) {
             the service schedule: checking items here doesn't change it.
           </InfoTip>
         </h3>
+        {next && <span class="box-key">Next: {next.name}</span>}
       </div>
-
-      {next ? (
+      <div class="box-body">
+        {next ? (
         <a class="ms-next" href={milestoneHref(vehicleId, next.miles)}>
           <span class="ms-next-main">
             <span class="ms-next-name">{next.name}</span>
@@ -80,7 +81,7 @@ export function MilestoneCard({ vehicleId }: { vehicleId: string }) {
         <p class="muted small">Every milestone so far is recorded.</p>
       )}
 
-      <Collapsible title="All milestones" count={`${all.length} ${all.length === 1 ? 'checkup' : 'checkups'}`}>
+        <Collapsible title="All milestones" count={`${all.length} ${all.length === 1 ? 'checkup' : 'checkups'}`}>
         <ul class="ms-list">
           {all.map((m) => (
             <li key={m.miles}>
@@ -96,7 +97,8 @@ export function MilestoneCard({ vehicleId }: { vehicleId: string }) {
             </li>
           ))}
         </ul>
-      </Collapsible>
+        </Collapsible>
+      </div>
     </section>
   )
 }

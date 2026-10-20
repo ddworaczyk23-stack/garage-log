@@ -87,17 +87,18 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
   const rangeLabel = range === 'all' ? 'all time' : 'this year'
 
   return (
-    <section class="card">
-      <div class="vehicle-card-head">
+    <section class="card box">
+      <div class="box-head">
         <span class="vehicle-emoji" aria-hidden="true">
           <VehicleIcon body={vehicleBody(vehicle)} />
         </span>
         <div>
-          <h3 class="list-row-title">{vehicleLabel(vehicle)}</h3>
+          <h3>{vehicleLabel(vehicle)}</h3>
         </div>
+        <span class="box-key">{formatMoney(breakdown.total)}</span>
       </div>
-
-      {breakdown.byCategory.length === 0 ? (
+      <div class="box-body">
+        {breakdown.byCategory.length === 0 ? (
         <p class="muted small cost-empty">No costs logged {rangeLabel}.</p>
       ) : (
         <>
@@ -113,11 +114,12 @@ function VehicleCostCard({ summary, range }: { summary: VehicleCostSummary; rang
         </>
       )}
 
-      {summary.costPerMile != null && summary.milesTracked != null && summary.costPerMile >= 0.1 && (
+        {summary.costPerMile != null && summary.milesTracked != null && summary.costPerMile >= 0.1 && (
         <p class="muted small cost-note">
           <span class="cost-per-mile">{formatMoney(summary.costPerMile)}/mi</span>
         </p>
-      )}
+        )}
+      </div>
     </section>
   )
 }

@@ -48,9 +48,9 @@ function VehiclesCard() {
   const vehicles = useQuery(() => db.vehicles.toArray())
   if (!vehicles?.length) return null
   return (
-    <div class="card settings-cars">
-      <h3 class="list-row-title">Vehicles</h3>
-      {vehicles.map((v) => (
+    <div class="card box settings-cars">
+      <div class="box-head"><h3>Vehicles</h3></div>
+      <div class="box-body">{vehicles.map((v) => (
         <div key={v.id} class="settings-cars-row">
           <span>{vehicleLabel(v)}</span>
           <ConfirmButton
@@ -61,7 +61,7 @@ function VehiclesCard() {
             onConfirm={() => deleteVehicle(v.id)}
           />
         </div>
-      ))}
+      ))}</div>
     </div>
   )
 }
@@ -72,8 +72,9 @@ function SyncCard() {
   if (user === undefined) return null // still resolving initial auth state
 
   return (
-    <div class="card settings-sync">
-      <h3 class="list-row-title">Sync</h3>
+    <div class="card box settings-sync">
+      <div class="box-head"><h3>Sync</h3></div>
+      <div class="box-body">
       <p class="muted small">
         {user.isLoggedIn
           ? `Synced as ${user.email ?? user.name ?? user.userId}`
@@ -91,6 +92,7 @@ function SyncCard() {
       ) : (
         <button type="button" class="btn-link" onClick={login}>Sign in to sync</button>
       )}
+      </div>
     </div>
   )
 }
