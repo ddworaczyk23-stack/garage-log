@@ -24,21 +24,8 @@ aggressively, every time.
   Check flow, ShopBrief, AddVehicle, forms/sheets, the schedule ledger rows
   (`.vd-row`), the verdict sign + ruler, and the debug pages
   (Debug/ReminderDebug/TemplateAdmin).
-  1. **`polish/b1-labels` — contrast (CSS only, `src/styles/app.css`).**
-     Small grey all-caps labels on white/concrete become readable:
-     `.fold-count` (the "5 ITEMS" / "34 ENTRIES" next to every Collapsible
-     title), `.kicker`, `.vd-spec-row dt`, `.chk-sect`, `.chk-brief-lbl`,
-     `.gb-tile-eye`. New look for all of them: `font-family: var(--font-sans)`,
-     14px (13px for `.vd-spec-row dt`), weight 500, `text-transform: none`,
-     `letter-spacing: 0`, `color: var(--text-muted)`. Grep each class first;
-     delete any rule whose class no longer appears in `src/**/*.tsx`. Then
-     fix copy that was written for caps: e.g. "Average mileage" kicker is
-     already sentence case; check each label reads right in sentence case.
-     **B1 MERGED** (PR #76; Codex built, Claude reviewed + checked live at
-     1440/375). `.gb-tile-eye` was unused and removed.
-     `.chk-sect` / `.chk-brief-lbl` were put BACK to caps: they belong to
-     the out-of-scope Check flow / ShopBrief, and changing only them left
-     the brief card half caps, half sentence case. B2 is next, from `main`.
+  1. **`polish/b1-labels`: DONE, merged (PR #76).** Check flow and
+     ShopBrief labels stayed caps on purpose (out of scope).
   2. **`polish/b2-box-heads` — one header shape.** Rename Home's
      `.hm-box-head` / `.hm-box-key` / `.hm-box` / `.hm-row` / `.hm-tag` /
      `.hm-row-title` / `.hm-row-value` / `.hm-box-footer` to shared names
@@ -62,6 +49,11 @@ aggressively, every time.
      Body content inside each card keeps its own padding: wrap the old body in
      a `<div class="box-body">` with `padding: 16px 20px` rather than
      restyling the content. Collapsibles inside a box keep working as now.
+     **B2 built** on `polish/b2-box-heads` (Codex), reviewed + checked live
+     at 1440/375 by Claude. Review fixes: `.card.box` (plain `.box` lost to
+     the desktop `.card` padding, which also hit Home since PR #72); Backup
+     date goes through `localDateISO` (it read the UTC day). Start B3 from
+     `main` after B2 merges.
   3. **`polish/b3-rows` — one row shape.** Where a list shows logged items,
      use `.box-row` (dot or icon, title, optional `.box-tag`, right-aligned
      `.box-row-value` with a small muted line under it, chevron when the row

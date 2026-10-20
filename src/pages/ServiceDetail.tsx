@@ -191,8 +191,9 @@ export function ServiceDetail({ id }: { id: string }) {
         </Sheet>
       )}
 
-      <section class="card">
-        <h3 class="card-title">History</h3>
+      <section class="card box">
+        <div class="box-head"><h3>History</h3><span class="box-key">{history.count} {history.count === 1 ? 'time' : 'times'} logged</span></div>
+        <div class="box-body">
         {/* One data line instead of a tile grid (PRODUCT.md anti-reference). */}
         {history.count > 0 && (
           <p class="sd-stats-line">
@@ -224,6 +225,7 @@ export function ServiceDetail({ id }: { id: string }) {
             that other service, not this one.
           </p>
         )}
+        </div>
       </section>
     </section>
   )

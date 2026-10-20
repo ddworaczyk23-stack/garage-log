@@ -8,6 +8,8 @@ import {
   serializeBackupToJson,
 } from '../db/backup'
 import { backupFilename, summarizeBackup, validateBackup, type BackupFile } from '../domain/backup'
+import { formatShortDate, localDateISO } from '../domain/format'
+import { useQuery } from '../db/useQuery'
 import { ConfirmButton, PageHeader } from '../components/ui'
 import { Reveal } from '../components/motion/Reveal'
 
@@ -19,6 +21,8 @@ type Notice = { kind: 'success' | 'error'; text: string } | null
 //               explicit confirm REPLACE the whole local database with it.
 // Nothing here touches reminder math, templates, or ranking.
 export function Backup() {
+  const lastBackup = useQuery(() => db.appMeta.get('lastBackupAt'))
+  const lastBackupAt = typeof lastBackup?.value === 'string' ? lastBackup.value : null
   const [exporting, setExporting] = useState(false)
   const [exportNotice, setExportNotice] = useState<Notice>(null)
 
@@ -100,8 +104,9 @@ export function Backup() {
       </PageHeader>
 
       <Reveal>
-        <section class="card">
-          <h3 class="card-title">Export</h3>
+        <section class="card box">
+          <div class="box-head"><h3>Export</h3><span class="box-key">{lastBackupAt ? `Last backup: ${formatShortDate(localDateISO(new Date(lastBackupAt)))}` : 'No backup yet'}</span></div>
+          <div class="box-body">
           <p class="muted small">One file with everything, photos included.</p>
           <button class="btn full" onClick={onExport} disabled={exporting}>
             {exporting ? 'Preparing…' : 'Download backup'}
@@ -114,12 +119,14 @@ export function Backup() {
               {exportNotice.text}
             </p>
           )}
+          </div>
         </section>
       </Reveal>
 
       <Reveal>
-        <section class="card">
-          <h3 class="card-title">Restore</h3>
+        <section class="card box">
+          <div class="box-head"><h3>Restore</h3></div>
+          <div class="box-body">
           <p class="muted small">Replaces <strong>all data on this device</strong>.</p>
 
           <div class="admin-field">
@@ -176,6 +183,7 @@ export function Backup() {
               {restoreNotice.text}
             </p>
           )}
+          </div>
         </section>
       </Reveal>
     </section>
