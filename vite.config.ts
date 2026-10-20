@@ -18,7 +18,7 @@ export default defineConfig({
       // Milestone 1: auto-update the shell in the background. A "tap to refresh"
       // prompt can replace this later if mid-session swaps become annoying.
       registerType: 'autoUpdate',
-      includeAssets: ['icons/apple-touch-icon.png', 'icons/favicon.ico', 'icons/favicon-32.png'],
+      includeAssets: ['icons/apple-touch-icon.png', 'icons/favicon.ico', 'icons/favicon.svg'],
       manifest: {
         // Display identity is "Coast" (Stage 4 cutover); start_url/scope and the
         // repo/deploy path deliberately stay as-is — see design/COAST-PLAN.md.
