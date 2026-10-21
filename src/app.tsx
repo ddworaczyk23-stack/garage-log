@@ -96,7 +96,9 @@ export function App() {
       <main
         class={`app-main${route === '/' || route.startsWith('/vehicle/') ? ' app-main-wide' : ''}`}
       >
-        <ErrorBoundary key={route}>{page}</ErrorBoundary>
+        {/* One key for every car page, so switching cars doesn't remount it
+            (VehicleDetail keeps the old car up until the new one loads). */}
+        <ErrorBoundary key={route.startsWith('/vehicle/') ? '/vehicle/' : route}>{page}</ErrorBoundary>
       </main>
       <Nav route={route} />
     </div>
