@@ -2638,6 +2638,12 @@ iframe.preview-media {
   margin: 14px 0 0;
   padding: 0;
 }
+/* Next jobs: the box-body padding is the only gap under the head. */
+.vd-next .vd-ledger { margin-top: 0; }
+.vd-next .vd-row:first-child { padding-top: 0; }
+/* The schedule card is wide on desktop: keep each fold's chevron beside its
+   title instead of stranded at the far edge. */
+.vd-schedule .fold-head { justify-content: flex-start; }
 .vd-row {
   position: relative;
   display: grid;
@@ -3379,10 +3385,10 @@ a.list-row:hover {
 /* --- Urgency ruler --- */
 .cv-ruler { margin: 14px 2px 2px; }
 .cv-ruler-wrap { position: relative; }
-/* Same look as Home's mini ruler: four rounded pieces, thin pin. */
+/* Same look as Home's mini ruler: three rounded pieces, thin pin. */
 .cv-ruler-track {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 3px;
   height: 5px;
 }
