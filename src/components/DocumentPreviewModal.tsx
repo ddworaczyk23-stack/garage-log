@@ -10,6 +10,7 @@ import { formatBytes } from '../domain/documents'
 import { CATEGORY_LABELS, type VehicleDocument } from '../types'
 import type { DocumentIndexEntry } from '../domain/documents'
 import { ConfirmButton, Tooltip } from './ui'
+import { openInApp } from './saveFile'
 
 interface Props {
   entry: DocumentIndexEntry
@@ -121,7 +122,14 @@ export function DocumentPreviewModal({ entry, onClose }: Props) {
           </div>
         </dl>
 
-        <a class="btn full" href={url} target="_blank" rel="noreferrer" download={doc.filename}>
+        <a
+          class="btn full"
+          href={url}
+          target="_blank"
+          rel="noreferrer"
+          download={doc.filename}
+          onClick={openInApp(doc.blob, doc.filename)}
+        >
           Open / download
         </a>
 

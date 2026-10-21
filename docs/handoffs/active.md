@@ -13,44 +13,41 @@ aggressively, every time.
 
 ## Open
 
-- **App Store + Google Play launch, free (decided 2026-10-20, not started).**
+- **App Store + Google Play launch, free (decided 2026-10-20).**
   David picked "ship free on both stores" over a paid product. Paid is parked
-  until free users show demand (multi-car sharing or small-fleet asks). Start
-  Steps 1-2 are done on branch `feat/capacitor-wrap` (Capacitor 8.5.3,
-  `android/` + `ios/` added, `capacitor.config.json`). `npm run build:app` =
-  `vite build --mode capacitor && cap sync`. That mode drops VitePWA (no
-  service worker: iOS WKWebView won't run one on `capacitor://`) and forces
-  `VITE_DEXIE_CLOUD_URL` undefined, so the store build is local-only. This
-  avoids Apple's account-deletion rule and Dexie Cloud's 3-user cap; the web
-  build is unchanged and keeps sync. Not yet run on a device: this Windows
-  machine has no Android SDK (install Android Studio), and iOS needs the Mac
-  (Xcode, Swift Package Manager). Run `npm run catalog` before `build:app`,
-  or Add a car falls back to the live NHTSA lookup.
-  Open decision: `appId` is `com.ddworaczyk.coast`. It is permanent once
-  uploaded to a store, so confirm it before step 6.
-  Step 3 (local reminders) is done on branch `feat/local-reminders`:
-  `src/db/localReminders.ts` turns the calendar feed's items
-  (`collectCalendarItems`) into 9am phone alerts via
-  `@capacitor/local-notifications` (`localAlerts()` in `domain/calendar.ts`,
-  capped at 60 for iOS's 64-pending limit). It reschedules on any data change
-  (liveQuery) and on return to the foreground. It loads only in `--mode
-  capacitor`; the web bundle has none of it. Not yet seen firing on a real
-  phone: test that the alert shows and that tapping it opens the right page.
-  Remaining, in order:
-  4. **Fix web-only APIs inside the webview:** backup export (file download
-     doesn't work in a webview; use `@capacitor/share` or filesystem), the
-     calendar feed button, and document/photo attachments. Test each. The
-     calendar feed sends due dates to the Worker, which conflicts with the
-     "no data leaves the device" privacy claim. Hide it in `--mode capacitor`
-     or name it in the privacy policy.
+  until free users show demand (multi-car sharing or small-fleet asks).
+  Steps 1-4 are built (PRs #90, #91, and `feat/native-files`):
+  - `npm run build:app` = `vite build --mode capacitor && cap sync` (Capacitor
+    8, `android/` + `ios/`, `capacitor.config.json`). That mode drops the
+    service worker (iOS WKWebView won't run one on `capacitor://`) and forces
+    `VITE_DEXIE_CLOUD_URL` and `VITE_CALENDAR_FEED_URL` undefined: the store
+    build keeps all data on the phone (no Apple account-deletion rule, no
+    Dexie Cloud user cap). The web build is unchanged and keeps both.
+  - Phone reminders: `src/db/localReminders.ts` turns `collectCalendarItems`
+    into 9am alerts (`localAlerts()` in `domain/calendar.ts`, max 60 for
+    iOS's 64-pending limit), rescheduled on data change and on foreground.
+  - Files: `src/components/saveFile.ts` writes to the app cache and opens
+    the native share sheet (backup, .ics export, document open/thumbnails via
+    `openInApp`). The shop brief's Print button is hidden in the app.
+  - All of it loads only under `--mode capacitor`; the web bundle has none.
+  Not yet run on a real phone. This PC has no Android SDK (install Android
+  Studio); iOS needs the Mac (Xcode). On first device run, check: alerts fire
+  and a tap opens the right page; backup saves via the share sheet and
+  restores; .ics export; opening a photo and a PDF (Android WebView can't
+  show the PDF iframe preview, so Open is the path there); file pickers for
+  attachments. Run `npm run catalog` before `build:app`, or Add a car falls
+  back to the live NHTSA lookup.
+  Open decision: `appId` is `com.ddworaczyk.coast`, permanent once uploaded.
+  Confirm before step 6.
+  Remaining:
   5. **Store paperwork:** privacy policy page on GitHub Pages ("no data
-     leaves the device"), Play data-safety form = no data collected, icons and
-     screenshots, Apple Developer ($99/yr, build on the Mac with Xcode) and
+     leaves the device"), Play data-safety form = no data collected, app icon
+     and splash for both platforms, screenshots, Apple Developer ($99/yr) and
      Play Console ($25 once).
   6. **Release:** cut `release/1.0.0` off `main`, build both stores from it,
      tag `v1.0.0`. Android internal test track and iOS TestFlight first.
   Done = both apps live in the stores, reminders fire on a real phone,
-  backup round-trips. Building is Codex work per the role split.
+  backup round-trips.
 
 - **Add a car: instant pickers (2026-10-20).** Shipped in PRs #63, #67,
   #68, #71, #75 (all merged, deployed). Model list comes from bundled EPA data

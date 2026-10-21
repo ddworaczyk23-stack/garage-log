@@ -3,6 +3,7 @@ import { formatBytes } from '../domain/documents'
 import { Tooltip } from './ui'
 import type { VehicleDocument } from '../types'
 import { DocumentIcon } from './icons'
+import { openInApp } from './saveFile'
 
 interface Props {
   documents: VehicleDocument[]
@@ -53,7 +54,14 @@ export function DocumentGrid({ documents, onRemove }: Props) {
         const isImage = doc.mimeType.startsWith('image/')
         return (
           <div key={doc.id} class="doc-cell">
-            <a class="doc-thumb" href={url} target="_blank" rel="noreferrer" title={doc.filename}>
+            <a
+              class="doc-thumb"
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              title={doc.filename}
+              onClick={openInApp(doc.blob, doc.filename)}
+            >
               {isImage && url ? (
                 <img src={url} alt={doc.filename} />
               ) : (

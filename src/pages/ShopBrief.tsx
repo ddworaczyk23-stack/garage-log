@@ -41,6 +41,7 @@ export function ShopBriefPage({ id }: { id: string }) {
       <p class="page-header-prose">Or read it out over the phone.</p>
     </PageHeader>
     <ShopBriefView brief={brief} />
-    <div class="chk-actions sb-chrome"><button type="button" class="btn btn-secondary" onClick={() => window.print()}>Print it</button></div>
+    {/* A webview can't print: the store app shares the brief instead. */}
+    {import.meta.env.MODE !== 'capacitor' && <div class="chk-actions sb-chrome"><button type="button" class="btn btn-secondary" onClick={() => window.print()}>Print it</button></div>}
   </section>
 }

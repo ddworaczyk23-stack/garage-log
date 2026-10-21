@@ -39,6 +39,20 @@
         "--strictPort"
       ],
       "port": 4180
+    },
+    {
+      "name": "garage-log-blip",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "node_modules/vite/bin/vite.js",
+        "C:/Users/ddwor/AppData/Local/Temp/claude/C--Users-ddwor--claude-spares-spare-MhUY4S/4c2feff7-de38-4080-9422-bc079ec4e352/scratchpad/blip",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "5198",
+        "--strictPort"
+      ],
+      "port": 5198
     }
   ]
 }
