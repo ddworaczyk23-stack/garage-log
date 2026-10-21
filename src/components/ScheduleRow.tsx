@@ -13,7 +13,7 @@ const PILL_STATUS: Record<SignalBand, string> = {
   'fix-now': 'overdue',
   'book-soon': 'due-next',
   coast: 'watch-next',
-  'all-clear': 'completed',
+  'all-clear': 'watch-next', // shown as "Can coast" (domain/verdict.ts)
 }
 
 interface Props {

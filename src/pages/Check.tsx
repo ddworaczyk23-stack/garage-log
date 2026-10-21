@@ -20,7 +20,7 @@ import {
 } from '../domain/playbooks'
 import { composeBrief } from '../domain/shopBrief'
 import { formatMoneyRange } from '../domain/format'
-import { knownReminders, type SignalBand } from '../domain/verdict'
+import { CONCERN_PIN, knownReminders, type SignalBand } from '../domain/verdict'
 import { vehicleLabel } from '../domain/vehicle'
 import { Loading, SkeletonPage, EmptyState, PageHeader } from '../components/ui'
 import type { Vehicle, Concern, MaintenanceCategory } from '../types'
@@ -45,10 +45,11 @@ import { ShopBriefView } from '../components/ShopBriefView'
 // ---------------------------------------------------------------------------
 
 const BAND_TONE: Record<SignalBand, { cls: string; tag: string; pin: number; label: string }> = {
-  'fix-now': { cls: 'cv-red', tag: 'Verdict · Fix now', pin: 12, label: 'Fix now' },
-  'book-soon': { cls: 'cv-amber', tag: 'Verdict · Book soon', pin: 36, label: 'Book soon' },
-  coast: { cls: 'cv-blue', tag: 'Verdict · You can coast', pin: 62, label: 'Can coast' },
-  'all-clear': { cls: 'cv-green', tag: 'Verdict · All clear', pin: 88, label: 'All clear' },
+  'fix-now': { cls: 'cv-red', tag: 'Verdict · Fix now', pin: CONCERN_PIN['fix-now'], label: 'Fix now' },
+  'book-soon': { cls: 'cv-amber', tag: 'Verdict · Book soon', pin: CONCERN_PIN['book-soon'], label: 'Book soon' },
+  coast: { cls: 'cv-blue', tag: 'Verdict · You can coast', pin: CONCERN_PIN.coast, label: 'Can coast' },
+  // Merged into "Can coast" on screen; the pin still sits furthest right.
+  'all-clear': { cls: 'cv-blue', tag: 'Verdict · You can coast', pin: CONCERN_PIN['all-clear'], label: 'Can coast' },
 }
 
 // The drive-vs-tow call (Stage 5A). 'tow' is the safety call, so it carries the
@@ -326,15 +327,14 @@ function CheckVehicle({ vehicleId }: { vehicleId: string }) {
       <div class="cv-ruler" role="img" aria-label={`Urgency: ${tone.label}`}>
         <div class="cv-ruler-wrap">
           <div class="cv-ruler-track">
-            <i class="cv-red" /><i class="cv-amber" /><i class="cv-blue" /><i class="cv-green" />
+            <i class="cv-red" /><i class="cv-amber" /><i class="cv-blue" />
           </div>
           <div class="cv-ruler-pin" style={`left:${tone.pin}%`} />
         </div>
         <div class="cv-ruler-labels">
           <span class={outcome.band === 'fix-now' ? 'on' : ''}>Fix now</span>
           <span class={outcome.band === 'book-soon' ? 'on' : ''}>Book soon</span>
-          <span class={outcome.band === 'coast' ? 'on' : ''}>Can coast</span>
-          <span class={outcome.band === 'all-clear' ? 'on' : ''}>All clear</span>
+          <span class={outcome.band === 'coast' || outcome.band === 'all-clear' ? 'on' : ''}>Can coast</span>
         </div>
       </div>
 

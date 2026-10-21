@@ -32,7 +32,7 @@ Calm, straight-talking, on-your-side. The voice of the interface is US road sign
 
 ## Design Principles
 
-1. **Never narrate ignorance as reassurance.** "We don't know this car yet" must never render as "All clear." Absence of data gets its own honest state; green is earned by real history.
+1. **Never narrate ignorance as reassurance.** "We don't know this car yet" must never render as "Can coast." Absence of data gets its own honest state; "Can coast" is earned by real history.
 2. **One verdict first, depth on demand.** Every screen leads with the single plain-English answer (the sign); causes, costs, and history are one tap below (the explanation). Two instruments saying the same thing is one too many.
 3. **Speak driver, translate to mechanic.** Input is always the driver's own words ("a grind or scrape"); output at the counter is mechanic language the shop respects. The app owns the translation in both directions.
 4. **Err urgent on safety, calm on money.** Brakes, oil pressure, and fuel escalate conservatively — drive-vs-tow is a first-class verdict. Costs and schedules stay matter-of-fact; money is data, not a warning.

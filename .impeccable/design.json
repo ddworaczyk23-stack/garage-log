@@ -86,7 +86,7 @@
     "overview": "Coast's interface is built on the visual grammar of US highway signage: one message per sign, instantly legible at a glance, calm authority with zero decoration. Verdict panels are literal signs — saturated signal-color slabs carrying one declarative headline in the signage face and one humane serif sentence beneath it. Everything else is the roadside: a daylight-concrete canvas, white sign-face cards, asphalt-ink text, and mono data set like mile markers.",
     "keyCharacteristics": [
       "One verdict per surface, set as signage; depth lives one tap below.",
-      "Four-signal band vocabulary (fix-now red / book-soon amber / can-coast blue / all-clear green) is universal and never remapped.",
+      "Three-signal band vocabulary (fix-now red / book-soon amber / can-coast blue) is universal and never remapped. All-clear is shown as can-coast (user decision 2026-10-20).",
       "Paper-on-concrete materiality: white cards, soft ambient shadows, hairline borders.",
       "Three-voice typography: signage (Overpass), human explanation (Newsreader), data (Overpass Mono).",
       "Matter-of-fact, sturdy controls — dependable over expressive."
@@ -108,7 +108,7 @@
       "Don't build \"the generic SaaS dashboard\" — no stat-tile grids, no gradients, no density for its own sake.",
       "Don't add \"parts-store / service-lane upsell energy\" — no banners, badges, or urgency theater that monetizes uncertainty.",
       "Don't be \"the fear-mongering car app\" — Signal Red only for genuinely-stop-now; never dramatize a book-soon into red.",
-      "Don't show all-clear green for a vehicle without real logged history (The Earned Green Rule).",
+      "Don't show \"Can coast\" for a vehicle without real logged history (The Earned Coast Rule).",
       "Don't stack two solid-fill buttons of equal weight; one primary per group.",
       "Don't warm the neutrals — the canvas is cool daylight concrete, not cream or parchment.",
       "Don't use side-stripe borders, gradient text, or nested cards, ever."

@@ -109,8 +109,8 @@ describe('vehicleVerdict — band selection', () => {
     expect(v.headline).toBe('One thing to book soon.')
     expect(v.sentence).toContain('1,200 mi past due')
     expect(v.sentence).toContain('routine')
-    expect(v.rulerPin).toBeGreaterThanOrEqual(25)
-    expect(v.rulerPin).toBeLessThan(50)
+    expect(v.rulerPin).toBeGreaterThanOrEqual(33)
+    expect(v.rulerPin).toBeLessThan(67)
     expect(v.actionItems[0].window).toBe('1,200 mi past due')
   })
 
@@ -130,7 +130,7 @@ describe('vehicleVerdict — band selection', () => {
 
     const clear = verdictFor([makeRule()], inputsAt('2026-07-01', 41000))
     expect(clear.band).toBe('all-clear')
-    expect(clear.headline).toBe('All clear. Just drive.')
+    expect(clear.headline).toBe('Nothing due. You can coast.')
     // Even all-clear names what's next so the screen answers "what's coming".
     expect(clear.sentence).toContain('engine oil & filter')
     expect(clear.sentence).toContain('in ~4,000 mi')
@@ -241,18 +241,18 @@ describe('vehicleVerdict — ruler, coast list, confidence', () => {
     const mild = verdictFor([makeRule({ label: 'Brake inspection', category: 'brake-inspection' })], inputsAt('2026-07-01', 45200))
     const deep = verdictFor([makeRule({ label: 'Brake inspection', category: 'brake-inspection' })], inputsAt('2026-07-01', 48500))
     expect(mild.rulerPin).toBeGreaterThan(deep.rulerPin)
-    expect(deep.rulerPin).toBeLessThan(25)
+    expect(deep.rulerPin).toBeLessThan(33)
 
     const soon = verdictFor([makeRule()], inputsAt('2026-07-01', 44600))
-    expect(soon.rulerPin).toBeGreaterThanOrEqual(25)
-    expect(soon.rulerPin).toBeLessThan(50)
+    expect(soon.rulerPin).toBeGreaterThanOrEqual(33)
+    expect(soon.rulerPin).toBeLessThan(67)
 
+    // All-clear shares the coast zone, but sits right of any watch-next item.
     const coast = verdictFor([makeRule()], inputsAt('2026-07-01', 44000))
-    expect(coast.rulerPin).toBeGreaterThanOrEqual(50)
-    expect(coast.rulerPin).toBeLessThan(75)
+    expect(coast.rulerPin).toBeGreaterThanOrEqual(67)
 
     const clear = verdictFor([makeRule()], inputsAt('2026-07-01', 41000))
-    expect(clear.rulerPin).toBeGreaterThanOrEqual(75)
+    expect(clear.rulerPin).toBeGreaterThan(coast.rulerPin)
   })
 
   it('extra watch-next items become coast items; the sentence-carrier is not duplicated', () => {
@@ -287,7 +287,7 @@ describe('vehicleVerdict — ruler, coast list, confidence', () => {
     expect(v.band).toBe('fix-now')
     expect(v.headline).toBe('One thing needs attention now.')
     expect(v.sentence).toContain('You flagged “Front brakes — worn to the metal” on Jul 15, 2026')
-    expect(v.rulerPin).toBe(12)
+    expect(v.rulerPin).toBe(16)
     expect(v.safeWindow).toContain('this week')
   })
 
@@ -365,7 +365,7 @@ describe('vehicleVerdict — never-logged items are Unknown, not urgent', () => 
     expect(v.band).toBe('all-clear')
     expect(v.actionItems).toEqual([])
     expect(v.unknownCount).toBe(1)
-    expect(v.headline).toBe('All clear on what’s logged.')
+    expect(v.headline).toBe('You can coast on what’s logged.')
     expect(v.sentence).toMatch(/^Nothing you’ve logged is due\./)
   })
 

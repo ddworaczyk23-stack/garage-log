@@ -89,7 +89,7 @@ The system explicitly rejects the generic SaaS dashboard (stat-tile grids, densi
 
 **Key Characteristics:**
 - One verdict per surface, set as signage; depth lives one tap below.
-- Four-signal band vocabulary (fix-now red / book-soon amber / can-coast blue / all-clear green) is universal and never remapped.
+- Three-signal band vocabulary (fix-now red / book-soon amber / can-coast blue) is universal and never remapped. All-clear is shown as can-coast (user decision 2026-10-20).
 - Paper-on-concrete materiality: white cards, soft ambient shadows, hairline borders.
 - Two-font typography: every word in Overpass (weight and size carry hierarchy), every number in Overpass Mono.
 - Matter-of-fact, sturdy controls — dependable over expressive.
@@ -120,7 +120,7 @@ A restrained daylight palette under four saturated signal colors that carry all 
 ### Named Rules
 **The Signal Budget Rule.** The four signal colors carry status meaning only. They are never decoration, never charts-for-charts'-sake, and never appear at full saturation on an inactive element. If a screen shows red, something is genuinely urgent.
 
-**The Earned Green Rule.** All-clear green renders only when real logged history justifies it. Absence of data is never green.
+**The Earned Coast Rule.** "Can coast" renders only when real logged history justifies it. Absence of data is never "Can coast" (it is slate "Not set up").
 
 ## 3. Typography
 
@@ -225,7 +225,7 @@ Progress and health meters (`.health-fill`, `.vh-fill`) animate via `transition:
 - **Don't** build "the generic SaaS dashboard" — no stat-tile grids, no density for its own sake (PRODUCT.md anti-reference, verbatim). A restrained gradient is allowed as a deliberate emphasis device (e.g. overdue rows) — the ban is on decoration-for-its-own-sake, not the technique itself.
 - **Don't** add "parts-store / service-lane upsell energy" — no banners, badges, or urgency theater that monetizes uncertainty (PRODUCT.md anti-reference).
 - **Don't** be "the fear-mongering car app" — Signal Red only for genuinely-stop-now; never dramatize a book-soon into red (PRODUCT.md anti-reference).
-- **Don't** show all-clear green for a vehicle without real logged history (The Earned Green Rule).
+- **Don't** show "Can coast" for a vehicle without real logged history (The Earned Coast Rule).
 - **Don't** stack two solid-fill buttons of equal weight; one primary per group.
 - **Don't** warm the neutrals — the canvas is cool daylight concrete, not cream or parchment.
 - **Don't** use side-stripe borders, gradient text, or nested cards, ever.
