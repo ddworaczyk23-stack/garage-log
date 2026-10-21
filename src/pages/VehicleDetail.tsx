@@ -29,7 +29,7 @@ import { Collapsible } from '../components/motion/Collapsible'
 import { Instrument } from '../components/motion/Instrument'
 import { useIntroGate, useReducedMotion } from '../motion/hooks'
 import { vehicleLabel } from '../domain/vehicle'
-import { CATEGORY_LABELS, type MaintenanceCategory, type VehicleDocument } from '../types'
+import { CATEGORY_LABELS, type MaintenanceCategory, type Vehicle, type VehicleDocument } from '../types'
 import { TraitChangeSheet } from '../components/TraitChangeSheet'
 import { answersFromRules, canChangeTraits, traitSummary } from '../domain/traitChange'
 import { parseTraitsKey } from '../db/traitTemplates'
@@ -48,6 +48,40 @@ async function loadVehicleDocuments(eventIds: string[]): Promise<VehicleDocument
 }
 
 type ActiveForm = 'service' | 'repair' | 'odometer' | null
+
+// Set on tap. Switching cars shows the loading skeleton, so the toggle
+// remounts; the new one slides its pill over from the side that was tapped.
+let toggleFrom: number | null = null
+
+function CarToggle({ garage, id }: { garage: Vehicle[]; id: string }) {
+  const on = garage.findIndex((v) => v.id === id)
+  const [from] = useState(() => {
+    const f = toggleFrom
+    toggleFrom = null
+    return f
+  })
+  return (
+    <nav
+      class={`vd-picker${from != null && from !== on ? ' is-sliding' : ''}`}
+      aria-label="Switch car"
+      style={`--on:${on};--from:${from ?? on}`}
+    >
+      {garage.map((v) => (
+        <a
+          key={v.id}
+          href={`#/vehicle/${v.id}`}
+          class={v.id === id ? 'is-on' : undefined}
+          aria-current={v.id === id ? 'page' : undefined}
+          onClick={() => {
+            toggleFrom = on
+          }}
+        >
+          {vehicleLabel(v)}
+        </a>
+      ))}
+    </nav>
+  )
+}
 
 // Vehicle detail: identity + verdict, quiet odometer row, personalized service
 // schedule, one log menu, consolidated history/documents, and delete. The
@@ -308,18 +342,7 @@ export function VehicleDetail({ id }: Props) {
               ))}
             </select>
           ) : garage && garage.length === 2 ? (
-            <nav class="vd-picker" aria-label="Switch car">
-              {garage.map((v) => (
-                <a
-                  key={v.id}
-                  href={`#/vehicle/${v.id}`}
-                  class={v.id === id ? 'is-on' : undefined}
-                  aria-current={v.id === id ? 'page' : undefined}
-                >
-                  {vehicleLabel(v)}
-                </a>
-              ))}
-            </nav>
+            <CarToggle garage={garage} id={id} />
           ) : undefined
         }
         class="vd-masthead"

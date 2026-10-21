@@ -18,6 +18,7 @@ import { visitBundle } from '../domain/bundles'
 import { PageHeader, Skel } from '../components/ui'
 import { BAND_CLASS } from '../components/VerdictPanel'
 import { Reveal } from '../components/motion/Reveal'
+import { useIntroGate, useReducedMotion, useReveal } from '../motion/hooks'
 import { CalendarExport } from '../components/CalendarExport'
 import { ChevronRightIcon, VehicleIcon } from '../components/icons'
 import type { Vehicle } from '../types'
@@ -147,6 +148,24 @@ export function Dashboard() {
   )
 }
 
+/** Own component so the in-view watcher starts when the bars first mount. */
+function SpendBars({ summaries, totals, high }: { summaries: VehicleSummary[]; totals: number[]; high: number }) {
+  const reduced = useReducedMotion()
+  const intro = useIntroGate('gl_intro_home_spent') && !reduced
+  const { ref, inView } = useReveal<HTMLDivElement>()
+  return (
+    <div ref={ref} class={`hm-bars${intro ? ' is-intro' : ''}${inView ? ' in-view' : ''}`}>
+      {totals.map((monthTotal, month) => (
+        <div class="hm-bar" role="img" key={MONTHS[month]} style={`height:${(monthTotal / high) * 100}%;--i:${month}`} aria-label={`${MONTHS[month]}: ${formatMoney(monthTotal)}`}>
+          {summaries.map((s, index) => s.spendByMonth[month] > 0 && (
+            <i key={s.vehicle.id} style={`height:${(s.spendByMonth[month] / monthTotal) * 100}%;background:${BAR_COLORS[index % BAR_COLORS.length]}`} />
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 // Guide blue, a lighter blue, then slate: solid enough to read as bars on white.
 const BAR_COLORS = ['var(--accent)', '#8fb3dc', 'var(--c-stale)']
@@ -164,15 +183,7 @@ function SpentBox({ summaries, year, total }: { summaries: VehicleSummary[]; yea
       </div>
       {total === 0 ? <p class="hm-empty">No costs logged in {year} yet.</p> : (
         <div class="hm-spend">
-          <div class="hm-bars">
-            {totals.map((monthTotal, month) => (
-              <div class="hm-bar" role="img" key={MONTHS[month]} style={`height:${(monthTotal / high) * 100}%`} aria-label={`${MONTHS[month]}: ${formatMoney(monthTotal)}`}>
-                {summaries.map((s, index) => s.spendByMonth[month] > 0 && (
-                  <i key={s.vehicle.id} style={`height:${(s.spendByMonth[month] / monthTotal) * 100}%;background:${BAR_COLORS[index % BAR_COLORS.length]}`} />
-                ))}
-              </div>
-            ))}
-          </div>
+          <SpendBars summaries={summaries} totals={totals} high={high} />
           <div class="hm-months">{MONTHS.slice(0, monthCount).map((month) => <span key={month}>{month[0]}</span>)}</div>
           <div class="hm-legend">
             {summaries.map((s, index) => <span key={s.vehicle.id}><i style={`background:${BAR_COLORS[index % BAR_COLORS.length]}`} />{vehicleLabel(s.vehicle)} <b>{formatMoney(s.spendThisYear)}</b></span>)}

@@ -3383,27 +3383,26 @@ a.list-row:hover {
 /* --- Urgency ruler --- */
 .cv-ruler { margin: 14px 2px 2px; }
 .cv-ruler-wrap { position: relative; }
+/* Same look as Home's mini ruler: four rounded pieces, thin pin. */
 .cv-ruler-track {
-  display: flex;
-  height: 9px;
-  border-radius: 5px;
-  overflow: hidden;
-  border: 1px solid var(--border-strong, rgba(35, 39, 43, 0.28));
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  height: 5px;
 }
-.cv-ruler-track i { flex: 1; }
+.cv-ruler-track i { border-radius: 3px; }
 .cv-ruler-track i.cv-red { background: var(--sig-red); }
 .cv-ruler-track i.cv-amber { background: var(--sig-amber); }
 .cv-ruler-track i.cv-blue { background: var(--sig-blue); }
 .cv-ruler-track i.cv-green { background: var(--sig-green); }
 .cv-ruler-pin {
   position: absolute;
-  top: -6px;
+  top: -4px;
   width: 3px;
-  height: 21px;
+  height: 13px;
   background: var(--text);
   border-radius: 2px;
   transform: translateX(-50%);
-  box-shadow: 0 0 0 2.5px var(--bg-card);
   transition: left 0.3s var(--ease-snap);
 }
 .cv-ruler-pin.is-fix-now {
@@ -3414,10 +3413,10 @@ a.list-row:hover {
 @keyframes ruler-pin-pulse {
   0%,
   100% {
-    box-shadow: 0 0 0 2.5px var(--bg-card);
+    box-shadow: none;
   }
   50% {
-    box-shadow: 0 0 0 2.5px var(--bg-card), 0 0 7px 2px var(--sig-red);
+    box-shadow: 0 0 7px 2px var(--sig-red);
   }
 }
 .cv-ruler-labels { display: flex; margin-top: 5px; }
@@ -3643,6 +3642,15 @@ a.list-row:hover {
 .hm-bars { display: flex; align-items: flex-end; gap: 8px; height: 120px; border-bottom: 1px solid var(--border); }
 .hm-bar { flex: 1; display: flex; flex-direction: column-reverse; min-width: 0; border-radius: 4px 4px 0 0; overflow: hidden; }
 .hm-bar i { display: block; }
+/* First visit per session: bars grow up from the axis, left to right, once in view. */
+.hm-bars.is-intro .hm-bar {
+  transform-origin: bottom;
+  animation: hm-bar-grow 0.55s var(--ease-paper) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+.hm-bars.is-intro:not(.in-view) .hm-bar { animation-play-state: paused; }
+@keyframes hm-bar-grow { from { transform: scaleY(0); } }
+@media (prefers-reduced-motion: reduce) { .hm-bars.is-intro .hm-bar { animation: none; } }
 .hm-months { display: flex; gap: 8px; margin-top: 6px; }
 .hm-months span { flex: 1; color: var(--text-muted); font-size: 12px; text-align: center; }
 .hm-legend { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-size: 14px; }
@@ -5051,15 +5059,43 @@ a.list-row:hover {
   align-items: center;
 }
 .vd-picker {
-  display: flex;
+  /* Equal halves, so the pill moves by exactly one segment width. */
+  position: relative;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
   flex: none;
   max-width: 340px;
   padding: 3px;
   border: 1px solid var(--frame-line);
   border-radius: var(--radius-control);
-  gap: 0;
+}
+.vd-picker::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 2);
+  border-radius: calc(var(--radius-control) - 3px);
+  background: var(--on-frame);
+  transform: translateX(calc(var(--on, 0) * 100%));
+}
+.vd-picker.is-sliding::before {
+  animation: vd-pick-slide 0.26s var(--ease-snap);
+}
+@keyframes vd-pick-slide {
+  from {
+    transform: translateX(calc(var(--from) * 100%));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .vd-picker.is-sliding::before {
+    animation: none;
+  }
 }
 .vd-picker a {
+  position: relative;
   min-width: 0;
   padding: 0 14px;
   text-align: center;
@@ -5076,7 +5112,6 @@ a.list-row:hover {
   color: var(--on-frame);
 }
 .vd-picker a.is-on {
-  background: var(--on-frame);
   color: var(--text);
 }
 .vd-masthead .page-title {
