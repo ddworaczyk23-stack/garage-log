@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import {
   buildCalendar,
+  localAlerts,
+  MAX_LOCAL_ALERTS,
   calendarText,
   milestoneCalendarItem,
   reminderCalendarItems,
@@ -127,5 +129,27 @@ describe('calendarText', () => {
     ]
     calendarText(items)
     expect(items.map((item) => item.uid)).toEqual(['later', 'first'])
+  })
+})
+
+describe('localAlerts', () => {
+  const item = (date: string, title = date, url?: string) => ({ uid: date, date, title, description: 'd', url })
+
+  it('alerts at 9am local on the due day, earliest first, with the in-app route', () => {
+    const alerts = localAlerts(
+      [item('2026-12-01', 'later'), item('2026-11-01', 'sooner', 'capacitor://localhost/#/service/veh-1:oil-change')],
+      asOf,
+    )
+    expect(alerts.map((a) => a.title)).toEqual(['sooner', 'later'])
+    expect(alerts[0]).toMatchObject({ id: 1, hash: '#/service/veh-1:oil-change' })
+    expect(alerts[0].at.getHours()).toBe(9)
+    expect(alerts[1].hash).toBeUndefined()
+  })
+
+  it("drops alerts whose 9am has passed, and caps the set for iOS's 64-pending limit", () => {
+    // asOf is noon on 2026-10-13: today's 9am alert is gone, tomorrow's stays.
+    expect(localAlerts([item('2026-10-13'), item('2026-10-14')], asOf).map((a) => a.title)).toEqual(['2026-10-14'])
+    const many = Array.from({ length: 80 }, (_, i) => item(`2027-01-${String((i % 28) + 1).padStart(2, '0')}`))
+    expect(localAlerts(many, asOf)).toHaveLength(MAX_LOCAL_ALERTS)
   })
 })

@@ -28,12 +28,15 @@ aggressively, every time.
   or Add a car falls back to the live NHTSA lookup.
   Open decision: `appId` is `com.ddworaczyk.coast`. It is permanent once
   uploaded to a store, so confirm it before step 6.
+  Step 3 (local reminders) is done on branch `feat/local-reminders`:
+  `src/db/localReminders.ts` turns the calendar feed's items
+  (`collectCalendarItems`) into 9am phone alerts via
+  `@capacitor/local-notifications` (`localAlerts()` in `domain/calendar.ts`,
+  capped at 60 for iOS's 64-pending limit). It reschedules on any data change
+  (liveQuery) and on return to the foreground. It loads only in `--mode
+  capacitor`; the web bundle has none of it. Not yet seen firing on a real
+  phone: test that the alert shows and that tapping it opens the right page.
   Remaining, in order:
-  3. **Local reminders** via `@capacitor/local-notifications`, scheduled from
-     `getVehicleReminders()` (`src/db/summary.ts`) for date-based items only;
-     reschedule after every event write. This is the "real phone feature"
-     that keeps Apple guideline 4.2 (web-wrapper rejection) away. Replaces the
-     server push idea below for native users.
   4. **Fix web-only APIs inside the webview:** backup export (file download
      doesn't work in a webview; use `@capacitor/share` or filesystem), the
      calendar feed button, and document/photo attachments. Test each. The

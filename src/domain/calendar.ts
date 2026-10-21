@@ -141,6 +141,41 @@ export function milestoneCalendarItem(
   }
 }
 
+// --- Phone alerts (store app) -----------------------------------------------
+
+export interface LocalAlert {
+  id: number
+  title: string
+  body: string
+  at: Date
+  /** In-app route to open on tap, e.g. `#/service/veh-1:oil-change`. */
+  hash?: string
+}
+
+/** iOS keeps at most 64 pending local notifications; leave headroom. */
+export const MAX_LOCAL_ALERTS = 60
+
+/**
+ * The same items as the calendar, as on-device alerts at 9am on the due day
+ * (matching the .ics VALARM). Drops alerts whose 9am has already passed and
+ * keeps the earliest MAX_LOCAL_ALERTS. Ids are positional: the caller cancels
+ * every pending alert before scheduling this set.
+ */
+export function localAlerts(items: CalendarItem[], asOf: Date): LocalAlert[] {
+  return items
+    .map((it) => ({ it, at: new Date(`${it.date}T09:00:00`) }))
+    .filter(({ at }) => at > asOf)
+    .sort((a, b) => a.at.getTime() - b.at.getTime())
+    .slice(0, MAX_LOCAL_ALERTS)
+    .map(({ it, at }, i) => ({
+      id: i + 1,
+      title: it.title,
+      body: it.description,
+      at,
+      hash: it.url?.includes('#') ? it.url.slice(it.url.indexOf('#')) : undefined,
+    }))
+}
+
 // --- iCalendar serialization ------------------------------------------------
 
 function escapeText(s: string): string {
