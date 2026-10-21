@@ -12,7 +12,7 @@ import { formatMiles, formatShortDate } from './format'
 //   overdue    -> 'fix-now'    (red)
 //   due-next   -> 'book-soon'  (amber)
 //   watch-next -> 'coast'      (blue — the brand signal: "you can coast")
-//   completed  -> 'all-clear'  (green)
+//   completed  -> 'all-clear'  (shown as "Can coast" too — see BAND_LABELS)
 //   not-applicable is excluded entirely.
 // No DOM, no Dexie, no I/O — unit-tested in tests/verdict.test.ts.
 // ---------------------------------------------------------------------------
@@ -33,8 +33,14 @@ export const BAND_LABELS: Record<SignalBand, string> = {
   'fix-now': 'Fix now',
   'book-soon': 'Book soon',
   coast: 'Can coast',
-  'all-clear': 'All clear',
+  // Merged into "Can coast" on screen (user decision 2026-10-20): to a driver
+  // both mean "nothing to do today". The band stays separate in code so saved
+  // concerns, backups and the health score keep their nuance.
+  'all-clear': 'Can coast',
 }
+
+/** The zones the urgency rulers draw: all-clear shares the coast zone. */
+export const RULER_ZONES: SignalBand[] = ['fix-now', 'book-soon', 'coast']
 
 export const VERDICT_BAND_LABELS: Record<VerdictBand, string> = {
   ...BAND_LABELS,
@@ -202,12 +208,12 @@ function clamp(n: number, lo: number, hi: number): number {
 }
 
 /**
- * Ruler zones (left = urgent): fix-now 0-25, book-soon 25-50, coast 50-75,
- * all-clear 75-100. Within a band the pin slides with how deep into the band
+ * Ruler zones (left = urgent): fix-now 0-33, book-soon 33-67, coast 67-100
+ * (watch-next items 69-88, all-clear sits at 94). Within a band the pin slides with how deep into the band
  * the driving item is, so two "book soon" vehicles can still read differently.
  */
 function rulerPin(band: SignalBand, top: ComputedReminder | null): number {
-  if (band === 'all-clear' || !top) return 88
+  if (band === 'all-clear' || !top) return 94
   if (band === 'fix-now') {
     // Deeper overdue -> further left. Scale by miles or days past due.
     const overBy =
@@ -216,10 +222,10 @@ function rulerPin(band: SignalBand, top: ComputedReminder | null): number {
         : top.daysRemaining != null && top.daysRemaining <= 0
           ? Math.abs(top.daysRemaining) / 120
           : 0.5
-    return clamp(21 - overBy * 17, 4, 21)
+    return clamp(28 - overBy * 23, 5, 28)
   }
   // An overdue routine item sits at the urgent edge of the amber zone.
-  if (band === 'book-soon' && top.status === 'overdue') return 27
+  if (band === 'book-soon' && top.status === 'overdue') return 36
   // Upcoming bands: fraction of the lead window still remaining (1 = just
   // entered the band, 0 = about to cross into the next-worse band).
   const frac =
@@ -232,8 +238,9 @@ function rulerPin(band: SignalBand, top: ComputedReminder | null): number {
           ? top.daysRemaining / 30
           : (top.daysRemaining - 30) / 60
         : 0.5
-  const base = band === 'book-soon' ? 27 : 52
-  return clamp(base + frac * 21, base, base + 21)
+  const base = band === 'book-soon' ? 36 : 69
+  const span = band === 'book-soon' ? 28 : 19
+  return clamp(base + frac * span, base, base + span)
 }
 
 function headline(band: SignalBand, count: number): string {
@@ -245,7 +252,7 @@ function headline(band: SignalBand, count: number): string {
     case 'coast':
       return 'Nothing urgent. You can coast.'
     case 'all-clear':
-      return 'All clear. Just drive.'
+      return 'Nothing due. You can coast.'
   }
 }
 
@@ -358,7 +365,7 @@ function concernSentence(band: SignalBand, c: ConcernInput, today: string): stri
 
 // Concern verdicts have no mileage/date depth, so the pin sits mid-zone
 // (same anchors the Check flow uses for a fresh triage verdict).
-const CONCERN_PIN: Record<SignalBand, number> = { 'fix-now': 12, 'book-soon': 36, coast: 62, 'all-clear': 88 }
+export const CONCERN_PIN: Record<SignalBand, number> = { 'fix-now': 16, 'book-soon': 50, coast: 80, 'all-clear': 94 }
 
 /**
  * The one-sentence verdict for a vehicle. `reminders` must be the engine's
@@ -455,10 +462,10 @@ export function vehicleVerdict(
 
   return {
     band,
-    // "Just drive" would narrate the untracked items as fine (principle 1).
+    // A plain "Nothing due" would narrate the untracked items as fine (principle 1).
     headline:
       band === 'all-clear' && untracked
-        ? 'All clear on what’s logged.'
+        ? 'You can coast on what’s logged.'
         : headline(band, count),
     sentence: sentenceConcern
       ? concernSentence(band, sentenceConcern, today)
@@ -529,8 +536,8 @@ export function serviceVerdict(r: ComputedReminder): VerdictSign {
         band: 'all-clear',
         headline:
           r.milesRemaining != null && r.milesRemaining > 0
-            ? `All clear for ~${formatMiles(r.milesRemaining)}.`
-            : 'All clear.',
+            ? `You can coast for ~${formatMiles(r.milesRemaining)}.`
+            : 'You can coast.',
         sentence,
       }
   }

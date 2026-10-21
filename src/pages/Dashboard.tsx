@@ -11,6 +11,7 @@ import {
   recentWork,
   vehicleVerdict,
   VERDICT_BAND_LABELS,
+  RULER_ZONES,
   type VerdictBand,
 } from '../domain/verdict'
 import { vehicleBody, vehicleLabel } from '../domain/vehicle'
@@ -281,13 +282,11 @@ function TodayCard({ summary: s, year }: { summary: VehicleSummary; year: number
   )
 }
 
-const ZONES = ['fix-now', 'book-soon', 'coast', 'all-clear'] as const
-
 /** The urgency ruler without its labels — the sign right above names the band. */
 function MiniRuler({ pin, band }: { pin: number; band: VerdictBand }) {
   return (
     <div class="hm-ruler" role="img" aria-label={`Urgency: ${VERDICT_BAND_LABELS[band]}`}>
-      {ZONES.map((z) => <i key={z} class={BAND_CLASS[z]} />)}
+      {RULER_ZONES.map((z) => <i key={z} class={BAND_CLASS[z]} />)}
       <span class="hm-ruler-pin" style={`left:${pin}%`} />
     </div>
   )

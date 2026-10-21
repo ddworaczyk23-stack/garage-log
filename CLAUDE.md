@@ -100,8 +100,11 @@ Read that file before changing `src/db/**` or `src/domain/**`. Rules that bite:
   their engine status is a factory projection, so they never count toward the
   verdict, health, counts, ranking or attention feed, and the UI shows a gray
   "Unknown" pill with no date. A car with no history at all is "Not set up"
-  (rows show "Estimated"). All-clear with untracked items reads "All clear on
-  what's logged", never "Just drive".
+  (rows show "Estimated"). All-clear with untracked items reads "You can coast
+  on what's logged", never a plain "Nothing due".
+- **All-clear shows as "Can coast"** (user decision 2026-10-20): same blue,
+  same label, one ruler zone. The `all-clear` band still exists in code (saved
+  concerns, backups, health score); only the screen merges it.
 
 ## Deployment
 

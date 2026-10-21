@@ -1,8 +1,8 @@
-import type { SignalBand, VehicleVerdict, VerdictBand, VerdictSign } from '../domain/verdict'
-import { BAND_LABELS, VERDICT_BAND_LABELS } from '../domain/verdict'
+import type { VehicleVerdict, VerdictBand, VerdictSign } from '../domain/verdict'
+import { BAND_LABELS, RULER_ZONES, VERDICT_BAND_LABELS } from '../domain/verdict'
 
 // Coast verdict instruments (Stage 1, design/COAST-PLAN.md): the road-sign
-// VerdictPanel and the four-zone UrgencyRuler. Pure presentation over a
+// VerdictPanel and the three-zone UrgencyRuler. Pure presentation over a
 // VehicleVerdict — no queries, no state; every number was decided in
 // domain/verdict.ts so this stays a dumb signage renderer.
 
@@ -10,7 +10,7 @@ export const BAND_CLASS: Record<VerdictBand, string> = {
   'fix-now': 'cv-red',
   'book-soon': 'cv-amber',
   coast: 'cv-blue',
-  'all-clear': 'cv-green',
+  'all-clear': 'cv-blue', // merged into "Can coast" (domain/verdict.ts)
   // The honest unknown state — slate, deliberately outside the signal scale.
   'not-set-up': 'cv-slate',
 }
@@ -35,8 +35,6 @@ export function VerdictPanel({
   )
 }
 
-const ZONES: SignalBand[] = ['fix-now', 'book-soon', 'coast', 'all-clear']
-
 export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
   // An unknown vehicle has no position on the urgency scale — no ruler at all
   // beats a pin that implies a judgment (domain/verdict.ts, 'not-set-up').
@@ -50,7 +48,7 @@ export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
     >
       <div class="cv-ruler-wrap">
         <div class="cv-ruler-track">
-          {ZONES.map((z) => (
+          {RULER_ZONES.map((z) => (
             <i key={z} class={BAND_CLASS[z]} />
           ))}
         </div>
@@ -60,8 +58,8 @@ export function UrgencyRuler({ verdict }: { verdict: VehicleVerdict }) {
         />
       </div>
       <div class="cv-ruler-labels">
-        {ZONES.map((z) => (
-          <span key={z} class={z === verdict.band ? 'on' : ''}>
+        {RULER_ZONES.map((z) => (
+          <span key={z} class={z === verdict.band || (z === 'coast' && verdict.band === 'all-clear') ? 'on' : ''}>
             {BAND_LABELS[z]}
           </span>
         ))}

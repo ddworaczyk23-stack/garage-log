@@ -10,7 +10,7 @@ const TONE: Record<SignalBand, { cls: string; label: string }> = {
   'fix-now': { cls: 'cv-red', label: 'Fix now' },
   'book-soon': { cls: 'cv-amber', label: 'Book soon' },
   coast: { cls: 'cv-blue', label: 'Can coast' },
-  'all-clear': { cls: 'cv-green', label: 'All clear' },
+  'all-clear': { cls: 'cv-blue', label: 'Can coast' },
 }
 
 export function ConcernList({ vehicle, concerns }: { vehicle: Vehicle; concerns: Concern[] }) {

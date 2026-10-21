@@ -2,8 +2,8 @@
  *
  * Single light theme — "daylight road signage": concrete canvas, white cards
  * with cool hairline borders, asphalt ink, and interstate guide-sign blue as
- * the one interactive accent. Status colors ARE the four-signal verdict scale
- * (fix-now red / book-soon amber / can-coast blue / all-clear green), so a
+ * the one interactive accent. Status colors ARE the three-signal verdict scale
+ * (fix-now red / book-soon amber / can-coast blue; all-clear shows as can-coast), so a
  * status pill anywhere in the app and a verdict panel on Today speak the same
  * language. All class names predate this pass — only presentation changed. */
 
@@ -42,8 +42,8 @@
 
   /* Status hues = the four-signal scale (+ neutrals for stale/cost).
    * overdue → fix-now red · due → book-soon amber · watch → can-coast blue
-   * (watch-next literally means "you can coast for now") · ok → all-clear
-   * green. Text tones are deepened for contrast on their tints. */
+   * (watch-next literally means "you can coast for now"). ok green is no longer
+   * a verdict color (all-clear shows as can-coast); it marks done work. Text tones are deepened for contrast on their tints. */
   --c-overdue: #a63a29;
   --c-overdue-bg: rgba(179, 64, 46, 0.12);
   --c-due: #8a5800; /* amber ink, readable on tint */
@@ -1114,13 +1114,10 @@ input::placeholder {
   background: var(--c-due-bg);
   color: var(--c-due);
 }
-.status-pill-coast {
+.status-pill-coast,
+.status-pill-all-clear {
   background: var(--c-watch-bg);
   color: var(--c-watch);
-}
-.status-pill-all-clear {
-  background: var(--c-ok-bg);
-  color: var(--c-ok);
 }
 .status-pill-not-set-up {
   background: var(--c-stale-bg);
@@ -3298,7 +3295,6 @@ a.list-row:hover {
 .cv-panel.cv-amber { background: var(--sig-amber); color: var(--text); }
 .cv-panel.cv-amber .cv-inner { border-color: rgba(35, 39, 43, 0.45); }
 .cv-panel.cv-blue { background: var(--sig-blue); }
-.cv-panel.cv-green { background: var(--sig-green); }
 /* The honest unknown state — slate, deliberately outside the signal scale
    (white on #5c636b ≈ 5.9:1, AA at all sizes used on the panel). */
 .cv-panel.cv-slate { background: var(--c-stale); }
@@ -3394,7 +3390,6 @@ a.list-row:hover {
 .cv-ruler-track i.cv-red { background: var(--sig-red); }
 .cv-ruler-track i.cv-amber { background: var(--sig-amber); }
 .cv-ruler-track i.cv-blue { background: var(--sig-blue); }
-.cv-ruler-track i.cv-green { background: var(--sig-green); }
 .cv-ruler-pin {
   position: absolute;
   top: -6px;
@@ -3580,7 +3575,7 @@ a.list-row:hover {
 .hm-ruler {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 3px;
   height: 5px;
   margin-top: 10px;
@@ -3589,7 +3584,6 @@ a.list-row:hover {
 .hm-ruler i.cv-red { background: var(--sig-red); }
 .hm-ruler i.cv-amber { background: var(--sig-amber); }
 .hm-ruler i.cv-blue { background: var(--sig-blue); }
-.hm-ruler i.cv-green { background: var(--sig-green); }
 .hm-ruler-pin {
   position: absolute;
   top: -4px;
@@ -4046,7 +4040,6 @@ a.list-row:hover {
 .chk-dot.cv-red { background: var(--sig-red); }
 .chk-dot.cv-amber { background: var(--sig-amber); }
 .chk-dot.cv-blue { background: var(--sig-blue); }
-.chk-dot.cv-green { background: var(--sig-green); }
 .chk-onlist-main { flex: 1; min-width: 0; }
 .chk-onlist-main b {
   font-family: var(--font-signal);
