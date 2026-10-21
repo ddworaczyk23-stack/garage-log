@@ -26,6 +26,7 @@ npm run build     # production bundle -> dist/
 npm run preview   # serve the built dist/ locally
 npm test          # vitest run (pure engine + DB-layer CRUD via fake-indexeddb)
 npm run typecheck # tsc --noEmit — same check build does, without emitting
+npm run build:app # store build (no SW, no sync) -> dist/, then cap sync to android/ + ios/
 ```
 
 ## Verifying changes
@@ -156,5 +157,9 @@ it when you finish instead of leaving progress only in chat.
 Design work is paused (decided 2026-10-14). The mobile redesign is done
 (PRs #38-#47). David uses the app with real data for a few weeks; the next
 round of fixes should come from that use, not from more design review.
+
+After that: free App Store + Google Play launch via Capacitor (decided
+2026-10-20; plan in `docs/handoffs/active.md`). Paid subscription is parked
+until free users show demand.
 
 Do NOT invent new feature milestones unless asked.

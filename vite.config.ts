@@ -7,14 +7,19 @@ const buildSha = (globalThis as { process?: { env?: Record<string, string | unde
 // NOTE: `base` is relative so the built app works both at a domain root
 // (custom domain) and under a GitHub Pages project subpath (e.g. /garage-log/)
 // without any extra config. Hash-based routing keeps deep links working there too.
-export default defineConfig({
+// `--mode capacitor` (npm run build:app) is the App Store / Play build: no
+// service worker (the app bundle is already offline, and iOS WKWebView won't
+// run one on the capacitor:// scheme) and no Dexie Cloud, even if .env.local
+// sets it — the store build is local-only.
+export default defineConfig(({ mode }) => ({
   base: './',
   define: {
     __COAST_BUILD__: JSON.stringify(buildSha?.slice(0, 7) ?? 'dev'),
+    ...(mode === 'capacitor' && { 'import.meta.env.VITE_DEXIE_CLOUD_URL': 'undefined' }),
   },
   plugins: [
     preact(),
-    VitePWA({
+    mode !== 'capacitor' && VitePWA({
       // Milestone 1: auto-update the shell in the background. A "tap to refresh"
       // prompt can replace this later if mid-session swaps become annoying.
       registerType: 'autoUpdate',
@@ -60,4 +65,4 @@ export default defineConfig({
       devOptions: { enabled: true },
     }),
   ],
-})
+}))
