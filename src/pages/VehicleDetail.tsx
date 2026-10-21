@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'preact/hooks'
+import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
 import { db } from '../db/db'
 import { useQuery } from '../db/useQuery'
 import { formatMiles, formatShortDate, localDateISO } from '../domain/format'
@@ -49,8 +49,9 @@ async function loadVehicleDocuments(eventIds: string[]): Promise<VehicleDocument
 
 type ActiveForm = 'service' | 'repair' | 'odometer' | null
 
-// Set on tap. Switching cars shows the loading skeleton, so the toggle
-// remounts; the new one slides its pill over from the side that was tapped.
+// Set on tap. Each car gets its own page instance (see VehicleDetail below),
+// so the toggle remounts; the new one slides its pill over from the side that
+// was tapped. The slide plays when the new page is first shown.
 let toggleFrom: number | null = null
 
 function CarToggle({ garage, id }: { garage: Vehicle[]; id: string }) {
@@ -83,11 +84,46 @@ function CarToggle({ garage, id }: { garage: Vehicle[]; id: string }) {
   )
 }
 
+// Switching cars keeps the current car on screen until the next one has fully
+// loaded: the next page mounts hidden beside it and swaps in once its data is
+// in. Without this the toggle flashed the loading skeleton for a moment.
+export function VehicleDetail({ id }: Props) {
+  const [shown, setShown] = useState(id)
+  const target = useRef(id)
+  target.current = id
+  const hidden = useRef<HTMLDivElement>(null)
+  // Child cards load their own data a beat after the page; wait for their
+  // loaders to clear (capped at 300ms) so the swap lands complete.
+  const swap = (v: string) => {
+    const t0 = performance.now()
+    const tick = () => {
+      if (target.current !== v) return // switched again meanwhile
+      if (!hidden.current?.querySelector('.loading, .skel') || performance.now() - t0 > 300) setShown(v)
+      else setTimeout(tick, 16)
+    }
+    tick()
+  }
+  const ids = id === shown ? [shown] : [shown, id]
+  return (
+    <>
+      {ids.map((v) => (
+        <div
+          key={v}
+          ref={v === shown ? undefined : hidden}
+          style={v === shown ? 'display:contents' : 'display:none'}
+        >
+          <VehiclePage id={v} onReady={v === shown ? undefined : () => swap(v)} />
+        </div>
+      ))}
+    </>
+  )
+}
+
 // Vehicle detail: identity + verdict, quiet odometer row, personalized service
 // schedule, one log menu, consolidated history/documents, and delete. The
 // reminders engine is untouched — it's only fed by what gets logged, and
 // logging updates the page live via Dexie liveQuery.
-export function VehicleDetail({ id }: Props) {
+function VehiclePage({ id, onReady }: Props & { onReady?: () => void }) {
   const reduced = useReducedMotion()
   const intro = useIntroGate(`gl_intro_vehicle_${id}`) && !reduced
 
@@ -140,6 +176,18 @@ export function VehicleDetail({ id }: Props) {
     () => loadVehicleDocuments((events ?? []).map((e) => e.id)),
     [id, events?.map((e) => e.id).join(',')],
   )
+  const ready =
+    vehicle !== undefined &&
+    garage !== undefined &&
+    reminders !== undefined &&
+    openConcerns !== undefined &&
+    mileage !== undefined &&
+    events !== undefined &&
+    odometerReadings !== undefined
+  useEffect(() => {
+    if (ready) onReady?.()
+  }, [ready])
+
   // Miles driven this calendar year — the same helper the dashboard uses, so
   // the two screens can never disagree.
   const ytdMiles = useMemo(() => {
