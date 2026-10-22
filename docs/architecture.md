@@ -53,10 +53,14 @@
   this query shape), `getGarageSummary()` (per-vehicle `VehicleSummary` + capped
   `AttentionItem[]` feed), `getGarageCostSummary()`. Reads every table inside the
   caller's liveQuery so the dashboard recomputes on any write.
-- **`src/db/milestones.ts`** — milestone checkup writes (check item, notes,
-  complete, skip, reopen) + `getMilestoneContext()`. Progress lives on
+- **`src/db/milestones.ts`** — milestone checkup writes (Checked OK, Serviced,
+  notes, complete, skip, reopen) + `getMilestoneContext()`. Progress lives on
   `Vehicle.milestones` (non-indexed, no schema bump, syncs/backs up with the
-  vehicle). **Deliberately independent of reminder rules** — never touches them.
+  vehicle). Never writes rules directly. Two links to the schedule, both via
+  `events.ts`: "Checked, OK" on brakes/tires/battery (`INSPECTION_ITEMS`) logs
+  that inspection and undo deletes the same event (`inspectionEvents`); "Log
+  service" opens `EventForm` prefilled (`MILESTONE_ITEM_CATEGORY`, else
+  `other` + the item label) and then marks the item `serviced`.
 - **`src/db/vehicleOnboarding.ts`** — `addVehicle()` (dedup-checked via
   `matchesExistingVehicle`; creates the vehicle + its trait schedule in one
   transaction, applying the "Add a car" step-2 review edits and an optional
@@ -78,6 +82,8 @@
   - `milestones.ts` — 30k/60k/90k/100k/120k/150k (+every 30k) checklists,
     tailored by `componentProfile()` (turbo/4WD/CVT/etc. inferred from engine,
     drivetrain and the vehicle's schedule categories). General guidance only.
+    `MILESTONE_ITEM_LEVEL` tags Safety/Important items (listed first, word
+    labels only, no red/amber: those colors mean status).
   - `serviceHistory.ts` — per-service history/stats for `#/service/<id>`.
   - `calendar.ts` — .ics export for "Add reminders to Calendar"
     (`components/CalendarExport.tsx`, on Dashboard + schedule card). No server:

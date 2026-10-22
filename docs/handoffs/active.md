@@ -13,6 +13,13 @@ aggressively, every time.
 
 ## Open
 
+- **Checkup redesign: confirm on real data (2026-10-22).** Branch
+  `feat/checkup-log-to-schedule`: each checkup item has "Checked, OK" and
+  "Log service", with Safety/Important labels listed first. "Checked, OK" on
+  brakes/tires/battery logs that inspection. Old ticks show as "Checked, OK".
+  David should open his truck's 100k checkup and tap "Log service" on the
+  work that was really done. If the schedule updates, delete this entry.
+
 - **App Store + Google Play launch, free (decided 2026-10-20, not started).**
   David picked "ship free on both stores" over a paid product. Paid is parked
   until free users show demand (multi-car sharing or small-fleet asks). Start

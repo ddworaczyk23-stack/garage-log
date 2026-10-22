@@ -31,6 +31,10 @@ interface Props {
   initialAdditionalCategories?: MaintenanceCategory[]
   /** Prefills odometer with the vehicle's current mileage estimate on a fresh add. */
   defaultOdometer?: number
+  /** Prefills the date on a fresh add (e.g. a checkup's done date); defaults to today. */
+  defaultDate?: string
+  /** Prefills the label on a fresh add (e.g. a checkup item with no schedule category). */
+  defaultTitle?: string
   existingDocs?: { id: string; filename: string }[]
   onDone: (result: EventFormSaveResult) => void
   onCancel: () => void
@@ -56,11 +60,13 @@ export function EventForm({
   initialCategory,
   initialAdditionalCategories,
   defaultOdometer,
+  defaultDate,
+  defaultTitle,
   existingDocs = [],
   onDone,
   onCancel,
 }: Props) {
-  const [date, setDate] = useState(existing?.date ?? todayISO())
+  const [date, setDate] = useState(existing?.date ?? defaultDate ?? todayISO())
   const [odometerMiles, setOdometerMiles] = useState(
     existing?.odometerMiles?.toString() ?? (defaultOdometer != null ? String(defaultOdometer) : ''),
   )
@@ -75,7 +81,7 @@ export function EventForm({
   const [additionalCategories, setAdditionalCategories] = useState<MaintenanceCategory[]>(
     existing?.additionalCategories ?? initialAdditionalCategories ?? [],
   )
-  const [title, setTitle] = useState(existing?.title ?? '')
+  const [title, setTitle] = useState(existing?.title ?? defaultTitle ?? '')
   const [cost, setCost] = useState(existing?.cost?.toString() ?? '')
   const [vendor, setVendor] = useState(existing?.vendor ?? '')
   const [notes, setNotes] = useState(existing?.notes ?? '')

@@ -71,6 +71,15 @@ export function WarningIcon({ class: className = '' }: IconProps) {
   )
 }
 
+/** Safety-critical checkup item (shield). */
+export function ShieldIcon({ class: className = '' }: IconProps) {
+  return (
+    <svg class={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+      <path d="M12 3 5 6v5.5c0 4.2 2.9 7.9 7 9.5 4.1-1.6 7-5.3 7-9.5V6z" stroke-linejoin="round" />
+    </svg>
+  )
+}
+
 /** Edit affordance (pencil), e.g. next to the vehicle name. */
 export function PencilIcon({ class: className = '' }: IconProps) {
   return (

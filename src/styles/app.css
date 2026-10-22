@@ -4830,23 +4830,54 @@ a.list-row:hover {
   margin: 8px 0 0;
   padding: 0;
 }
-.ms-check {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 10px 0;
+.ms-item {
+  padding: 12px 0;
   border-bottom: 0.5px solid var(--border);
-  cursor: pointer;
 }
-.ms-checklist li:last-child .ms-check {
+.ms-checklist li:last-child {
   border-bottom: none;
 }
-.ms-check input[type='checkbox'] {
-  flex: none;
-  width: 22px;
-  height: 22px;
-  margin: 1px 0 0;
-  accent-color: var(--accent);
+.ms-level {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 3px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+.ms-level-important {
+  color: var(--text-muted);
+}
+.ms-level-icon {
+  width: 13px;
+  height: 13px;
+}
+.ms-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.ms-chip {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ms-chip.is-on {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+span.ms-chip {
+  cursor: default;
 }
 .ms-check-label {
   display: block;

@@ -70,7 +70,7 @@ export function MilestoneCard({ vehicleId }: { vehicleId: string }) {
                 : next.milesAway != null
                   ? `In ~${formatMiles(next.milesAway)}${eta ? ` · est. ${formatShortDate(eta)}` : ''}`
                   : 'Log your mileage to see when'}
-              {` · ${next.checkedCount}/${next.totalCount} checked`}
+              {` · ${next.checkedCount}/${next.totalCount} done`}
             </span>
           </span>
           <span class={`status-pill ${MILESTONE_STATE_PILL[next.state]}`}>
