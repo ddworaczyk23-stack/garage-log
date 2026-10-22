@@ -5257,6 +5257,24 @@ a.list-row:hover {
   .nav-check .nav-label {
     display: none;
   }
+  /* Icons only on the phone bar; the label stays for screen readers. */
+  .nav-item .nav-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+  }
+  .nav-icon svg {
+    width: 27px;
+    height: 27px;
+  }
+  .nav-check-disc svg {
+    width: 29px;
+    height: 29px;
+  }
   .nav-check {
     justify-content: center;
   }
