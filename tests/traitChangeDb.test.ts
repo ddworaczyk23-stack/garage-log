@@ -60,4 +60,16 @@ describe('changeVehicleTraits', () => {
     expect(after.length).toBe(before)
     expect(after.find((rule) => rule.category === 'cvt-fluid')).toBeUndefined()
   })
+
+  it('boot reconcile renames old rule labels, keeping settings', async () => {
+    const key = traitsKey({ power: 'ev', trans: 'none', drive: 'fwd', belt: 'no' })
+    await db.vehicles.add({ id: 'veh-ev', name: 'EV', year: 2022, make: 'Tesla', model: 'Model 3', trim: '', engine: '', drivetrain: '', createdAt: new Date().toISOString() })
+    await db.reminderRules.bulkAdd(
+      rulesForVehicle('veh-ev', key).map((rule) =>
+        rule.category === 'coolant' ? { ...rule, label: 'Coolant', customIntervalMonths: 36 } : rule,
+      ),
+    )
+    await seedIfEmpty()
+    expect((await db.reminderRules.get('veh-ev:coolant'))).toMatchObject({ label: 'Battery coolant check', customIntervalMonths: 36 })
+  })
 })
