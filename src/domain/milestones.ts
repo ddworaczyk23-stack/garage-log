@@ -4,10 +4,11 @@ import type { MaintenanceCategory, MilestoneRecord, Vehicle } from '../types'
 // vehicle-wide inspect / replace / fluid / test checklists, tailored to the
 // car's components. Pure: no DOM, no Dexie. Unit-tested in tests/milestones.test.ts.
 //
-// These are GENERAL industry guidance, not a manufacturer schedule, and they
-// are deliberately INDEPENDENT of the reminder engine: checking an item here
-// never updates a ReminderRule's lastDone. The UI says so and points to the
-// owner's manual. Components are inferred only from data the app already
+// These are GENERAL industry guidance, not a manufacturer schedule. Checking
+// an item here never updates a ReminderRule's lastDone by itself; items that
+// match a schedule category (MILESTONE_ITEM_CATEGORY) get a "Log to schedule"
+// button that logs a real service through the normal event path. The UI
+// points to the owner's manual. Components are inferred only from data the app already
 // holds (engine/drivetrain text + which schedule categories the vehicle has),
 // never guessed from the model name.
 
@@ -68,6 +69,66 @@ export function componentProfile(
     automatic: cats.has('transmission-fluid'),
   }
 }
+
+/**
+ * Checklist items that match a schedule category, so the checkup page can
+ * offer "Log to schedule". Only items whose work resets that schedule item:
+ * an inspect-only item maps to an inspection category, never to a
+ * replacement (the timing check is not a timing-belt job).
+ */
+export const MILESTONE_ITEM_CATEGORY: Partial<Record<string, MaintenanceCategory>> = {
+  brakes: 'brake-inspection',
+  'tires-suspension': 'tire-inspection',
+  'oil-filter': 'oil-change',
+  'engine-air-filter': 'engine-air-filter',
+  'cabin-air-filter': 'cabin-air-filter',
+  battery: 'battery-check',
+  'tire-rotation': 'tire-rotation',
+  'brake-fluid': 'brake-fluid',
+  'cvt-fluid': 'cvt-fluid',
+  'transmission-fluid': 'transmission-fluid',
+  'transfer-case': 'transfer-case-fluid',
+  differentials: 'differential-fluid',
+  'spark-plugs-turbo': 'spark-plugs',
+  'spark-plugs': 'spark-plugs',
+  alignment: 'wheel-alignment',
+  'serpentine-belt': 'serpentine-belt',
+}
+
+/**
+ * How much an item matters, so people who do the minimum still do these.
+ * Shown as a word label only: red/amber stay reserved for status.
+ */
+export type MilestoneLevel = 'safety' | 'important'
+
+export const MILESTONE_ITEM_LEVEL: Partial<Record<string, MilestoneLevel>> = {
+  brakes: 'safety',
+  'tires-suspension': 'safety',
+  'brake-fluid': 'safety',
+  timing: 'safety',
+  'lights-wipers': 'safety',
+  'oil-filter': 'important',
+  coolant: 'important',
+  'transmission-fluid': 'important',
+  'cvt-fluid': 'important',
+  battery: 'important',
+  'serpentine-belt': 'important',
+  'tire-rotation': 'important',
+}
+
+const LEVEL_RANK: Record<MilestoneLevel | 'none', number> = { safety: 0, important: 1, none: 2 }
+
+/** Safety items first, then important, then the rest; stable within a level. */
+export function sortByLevel(items: MilestoneItem[]): MilestoneItem[] {
+  const rank = (i: MilestoneItem) => LEVEL_RANK[MILESTONE_ITEM_LEVEL[i.id] ?? 'none']
+  return [...items].sort((a, b) => rank(a) - rank(b))
+}
+
+/**
+ * Items whose "Checked, OK" is itself the scheduled job: the schedule item
+ * is an inspection, so a shop looking and finding it good resets it.
+ */
+export const INSPECTION_ITEMS = new Set(['brakes', 'tires-suspension', 'battery'])
 
 /** The milestone mileages up to `upTo`: 30k steps, plus the 100k major service. */
 export function milestoneMileages(upTo: number): number[] {
@@ -214,7 +275,7 @@ export function milestoneOverview(
       name: milestoneName(miles),
       state: milestoneState(miles, currentMiles, record),
       milesAway: currentMiles == null ? null : miles - currentMiles,
-      checkedCount: (record?.checked ?? []).filter((id) => ids.has(id)).length,
+      checkedCount: new Set([...(record?.checked ?? []), ...(record?.serviced ?? [])].filter((id) => ids.has(id))).size,
       totalCount: items.length,
     }
   })

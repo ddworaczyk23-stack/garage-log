@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { db } from '../src/db/db'
 import {
+  MILESTONE_ITEM_CATEGORY,
   buildMilestoneChecklist,
   componentProfile,
   milestoneMileages,
@@ -12,8 +13,11 @@ import {
   completeMilestone,
   reopenMilestone,
   setMilestoneItem,
+  setMilestoneItemOk,
+  setMilestoneItemServiced,
   skipMilestone,
 } from '../src/db/milestones'
+import { rulesForVehicle } from '../src/db/scheduleTemplates'
 import type { Vehicle } from '../src/types'
 
 const F150 = componentProfile({ engine: '2.7L EcoBoost V6', drivetrain: '4WD' }, [
@@ -100,6 +104,26 @@ describe('buildMilestoneChecklist', () => {
   })
 })
 
+describe('MILESTONE_ITEM_CATEGORY', () => {
+  it('maps only ids that a checklist can produce', () => {
+    const all: ComponentProfile = { turbo: true, fourWheel: true, cvAxles: true, driveshaft: true, cvt: false, automatic: true }
+    const ids = new Set(
+      [100_000, 120_000, 300_000]
+        .flatMap((m) => [
+          ...buildMilestoneChecklist(m, all),
+          ...buildMilestoneChecklist(m, { ...all, turbo: false, cvt: true }),
+        ])
+        .map((i) => i.id),
+    )
+    for (const id of Object.keys(MILESTONE_ITEM_CATEGORY)) expect(ids).toContain(id)
+  })
+
+  it('never maps an inspection to a replacement', () => {
+    expect(MILESTONE_ITEM_CATEGORY.timing).toBeUndefined()
+    expect(MILESTONE_ITEM_CATEGORY.brakes).toBe('brake-inspection')
+  })
+})
+
 describe('milestoneState / milestoneOverview', () => {
   it('derives state from mileage and the record', () => {
     expect(milestoneState(60_000, 50_000, undefined)).toBe('upcoming')
@@ -162,5 +186,48 @@ describe('db/milestones', () => {
     await db.reminderRules.clear()
     await completeMilestone('veh-m', 60_000, '2026-10-01', 60_000)
     expect(await db.reminderRules.count()).toBe(0)
+  })
+
+  describe('Checked, OK and Serviced', () => {
+    const when = { date: '2026-10-10', miles: 100_400 }
+    const record = async () => (await db.vehicles.get('veh-m'))?.milestones?.['100000']
+
+    beforeEach(async () => {
+      await db.events.clear()
+      await db.reminderRules.clear()
+      await db.reminderRules.bulkPut(rulesForVehicle('veh-m', 'f150-2020'))
+    })
+
+    it('logs a brake inspection on OK and deletes it on undo', async () => {
+      await setMilestoneItemOk('veh-m', 100_000, 'brakes', true, when)
+      const events = await db.events.toArray()
+      expect(events).toHaveLength(1)
+      expect(events[0]).toMatchObject({ category: 'brake-inspection', date: '2026-10-10', odometerMiles: 100_400 })
+      expect(await db.reminderRules.get('veh-m:brake-inspection')).toMatchObject({ lastDoneDate: '2026-10-10' })
+      expect((await record())?.inspectionEvents).toEqual({ brakes: events[0].id })
+
+      await setMilestoneItemOk('veh-m', 100_000, 'brakes', true, when) // no second event
+      expect(await db.events.count()).toBe(1)
+
+      await setMilestoneItemOk('veh-m', 100_000, 'brakes', false, when)
+      expect(await db.events.count()).toBe(0)
+      expect((await db.reminderRules.get('veh-m:brake-inspection'))?.lastDoneDate ?? null).toBeNull()
+      expect(await record()).toMatchObject({ checked: [] })
+      expect((await record())?.inspectionEvents).toBeUndefined()
+    })
+
+    it('only marks non-inspection items, and needs a date to log', async () => {
+      await setMilestoneItemOk('veh-m', 100_000, 'exhaust', true, when)
+      await setMilestoneItemOk('veh-m', 100_000, 'oil-filter', true, when)
+      await setMilestoneItemOk('veh-m', 100_000, 'battery', true, null)
+      expect(await db.events.count()).toBe(0)
+      expect((await record())?.checked).toEqual(['exhaust', 'oil-filter', 'battery'])
+    })
+
+    it('records serviced items', async () => {
+      await setMilestoneItemServiced('veh-m', 100_000, 'oil-filter')
+      await setMilestoneItemServiced('veh-m', 100_000, 'oil-filter')
+      expect((await record())?.serviced).toEqual(['oil-filter'])
+    })
   })
 })

@@ -37,7 +37,12 @@ export interface Vehicle {
 // completedDate set = done; skipped = the user chose not to track it (e.g. it
 // happened before they owned the car).
 export interface MilestoneRecord {
+  /** Item ids marked "Checked, OK" (looked at, found good). */
   checked: string[]
+  /** Item ids logged as a service or repair from the checkup. */
+  serviced?: string[]
+  /** "Checked, OK" inspection events this checkup logged, by item id (undo deletes them). */
+  inspectionEvents?: Record<string, string>
   completedDate?: string
   completedMiles?: number
   skipped?: boolean

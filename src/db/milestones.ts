@@ -1,11 +1,18 @@
 import { db } from './db'
+import { deleteEvent, recordCompletedEvent } from './events'
 import { getProjectedMileage } from './summary'
-import { componentProfile } from '../domain/milestones'
-import type { MilestoneRecord } from '../types'
+import {
+  INSPECTION_ITEMS,
+  MILESTONE_ITEM_CATEGORY,
+  componentProfile,
+  milestoneName,
+} from '../domain/milestones'
+import { CATEGORY_LABELS, type MilestoneRecord } from '../types'
 
 // Writes for milestone checkup progress (domain/milestones.ts). Stored on the
-// vehicle record (Vehicle.milestones), never on reminder rules: milestones are
-// deliberately independent of the regular maintenance schedule.
+// vehicle record (Vehicle.milestones), never on reminder rules. Logging an
+// item to the schedule goes through the normal event path (EventForm ->
+// events.ts), not through here.
 
 async function patchMilestone(
   vehicleId: string,
@@ -29,6 +36,57 @@ export function setMilestoneItem(vehicleId: string, miles: number, itemId: strin
     checked: checked
       ? [...new Set([...r.checked, itemId])]
       : r.checked.filter((id) => id !== itemId),
+  }))
+}
+
+/**
+ * "Checked, OK". For an inspection item (brakes, tires, battery) the car has
+ * on its schedule, also logs that inspection at `when`, and undoing deletes
+ * that same event. Other items only get the mark.
+ */
+export async function setMilestoneItemOk(
+  vehicleId: string,
+  miles: number,
+  itemId: string,
+  ok: boolean,
+  when: { date: string; miles: number } | null,
+): Promise<void> {
+  const vehicle = await db.vehicles.get(vehicleId)
+  const existing = vehicle?.milestones?.[String(miles)]?.inspectionEvents?.[itemId]
+  let eventId: string | undefined
+  if (ok && !existing && when && INSPECTION_ITEMS.has(itemId)) {
+    const category = MILESTONE_ITEM_CATEGORY[itemId]
+    const rule = category && (await db.reminderRules.get(`${vehicleId}:${category}`))
+    if (category && rule) {
+      eventId = await recordCompletedEvent({
+        vehicleId,
+        kind: 'maintenance',
+        date: when.date,
+        odometerMiles: when.miles,
+        category,
+        title: CATEGORY_LABELS[category],
+        notes: `Checked OK at the ${milestoneName(miles)}`,
+      })
+    }
+  }
+  if (!ok && existing) await deleteEvent(existing)
+  await patchMilestone(vehicleId, miles, (r) => {
+    const events = { ...r.inspectionEvents }
+    if (eventId) events[itemId] = eventId
+    if (!ok) delete events[itemId]
+    return {
+      ...r,
+      checked: ok ? [...new Set([...r.checked, itemId])] : r.checked.filter((id) => id !== itemId),
+      inspectionEvents: Object.keys(events).length ? events : undefined,
+    }
+  })
+}
+
+/** Marks an item as logged to the schedule (the event itself is written by EventForm). */
+export function setMilestoneItemServiced(vehicleId: string, miles: number, itemId: string) {
+  return patchMilestone(vehicleId, miles, (r) => ({
+    ...r,
+    serviced: [...new Set([...(r.serviced ?? []), itemId])],
   }))
 }
 
