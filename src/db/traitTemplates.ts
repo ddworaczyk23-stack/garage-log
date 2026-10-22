@@ -128,9 +128,10 @@ export function composeTraitTemplate(traits: VehicleTraits): ScheduleTemplateEnt
   }
   if (traits.power === 'ev') {
     remove(entries, 'oil-change', 'engine-air-filter', 'spark-plugs', 'fuel-filter', 'serpentine-belt')
-    replace(entries, { ...entries.find((entry) => entry.category === 'battery-check')!, label: '12V battery check' })
+    replace(entries, { ...entries.find((entry) => entry.category === 'battery-check')!, label: '12V battery check', consensusNote: 'Many newer EVs use a long-life lithium 12V battery. The car warns you when it needs service. Older lead-acid ones last 3–5 years. Check your manual.' })
     replace(entries, { ...entries.find((entry) => entry.category === 'brake-inspection')!, note: 'Regen braking means the pads wear slowly, but rotors rust and calipers stick. Check yearly. Check your manual.' })
-    replace(entries, { category: 'coolant', factoryInterval: { miles: 120000, months: 60 }, mechanicConsensusInterval: { miles: 120000, months: 60 }, note: 'Dealer job. Never open the high-voltage cooling system yourself. Check your manual.' })
+    // A check, not a replacement: many EVs (e.g. Tesla Model 3/Y) never need the battery coolant changed.
+    replace(entries, { category: 'coolant', label: 'Battery coolant check', factoryInterval: { miles: null, months: 48 }, mechanicConsensusInterval: { miles: null, months: 48 }, note: 'Cools the big battery and motors. Tesla Model 3/Y: usually no change for the life of the car. Dealer job. Never open the high-voltage cooling system yourself. Check your manual.' })
   }
 
   const trans = isElectrified ? 'none' : traits.trans

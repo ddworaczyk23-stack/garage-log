@@ -16,7 +16,9 @@ describe('trait templates', () => {
     const list = entries.map((entry) => entry.category)
     expect(list).not.toEqual(expect.arrayContaining(['oil-change', 'spark-plugs', 'engine-air-filter', 'transmission-fluid', 'differential-fluid', 'timing-belt']))
     expect(entries.find((entry) => entry.category === 'battery-check')?.label).toBe('12V battery check')
-    expect(entries.find((entry) => entry.category === 'coolant')?.factoryInterval).toEqual({ miles: 120000, months: 60 })
+    const coolant = entries.find((entry) => entry.category === 'coolant')
+    expect(coolant?.label).toBe('Battery coolant check')
+    expect(coolant?.factoryInterval).toEqual({ miles: null, months: 48 })
   })
 
   it('selects exactly one transmission block', () => {

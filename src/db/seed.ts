@@ -95,6 +95,12 @@ export async function seedIfEmpty(): Promise<void> {
   const missing = expected.filter((r) => !existingIds.has(r.id))
   if (missing.length) await db.reminderRules.bulkAdd(missing)
 
+  // Labels are code-derived (users can't edit them), so a renamed template
+  // item (e.g. EV "Battery coolant check") reaches existing rules too.
+  const labelById = new Map(expected.map((r) => [r.id, r.label]))
+  const stale = existingRules.filter((r) => labelById.has(r.id) && r.label !== labelById.get(r.id))
+  for (const r of stale) await db.reminderRules.update(r.id, { label: labelById.get(r.id)! })
+
   // Backfill: any vehicle with NO rules at all gets the generic schedule.
   // Covers vehicles added via "Add Car" before that flow created rules (it does
   // now — db/vehicleOnboarding.ts), so existing installs pick up a real
