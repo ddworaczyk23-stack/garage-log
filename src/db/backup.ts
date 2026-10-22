@@ -184,18 +184,11 @@ export async function importGarage(backup: BackupFile): Promise<void> {
 
 // --- browser file I/O (no-ops in the pure test env, exercised in the browser) --
 
-/** Trigger a download of the JSON as a file. */
-export function downloadBackup(json: string, filename: string): void {
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.rel = 'noopener'
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  setTimeout(() => URL.revokeObjectURL(url), 0)
+import { saveFile } from '../components/saveFile'
+
+/** Save the JSON as a file. False when the user cancels the share sheet. */
+export function downloadBackup(json: string, filename: string): Promise<boolean> {
+  return saveFile(new Blob([json], { type: 'application/json' }), filename)
 }
 
 /** Read a picked file and JSON.parse it. Throws on unreadable/invalid JSON —

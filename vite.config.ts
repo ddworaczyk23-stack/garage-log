@@ -9,13 +9,16 @@ const buildSha = (globalThis as { process?: { env?: Record<string, string | unde
 // without any extra config. Hash-based routing keeps deep links working there too.
 // `--mode capacitor` (npm run build:app) is the App Store / Play build: no
 // service worker (the app bundle is already offline, and iOS WKWebView won't
-// run one on the capacitor:// scheme) and no Dexie Cloud, even if .env.local
-// sets it — the store build is local-only.
+// run one on the capacitor:// scheme), no Dexie Cloud and no calendar feed,
+// even if .env.local sets them — the store build keeps all data on the phone.
 export default defineConfig(({ mode }) => ({
   base: './',
   define: {
     __COAST_BUILD__: JSON.stringify(buildSha?.slice(0, 7) ?? 'dev'),
-    ...(mode === 'capacitor' && { 'import.meta.env.VITE_DEXIE_CLOUD_URL': 'undefined' }),
+    ...(mode === 'capacitor' && {
+      'import.meta.env.VITE_DEXIE_CLOUD_URL': 'undefined',
+      'import.meta.env.VITE_CALENDAR_FEED_URL': 'undefined',
+    }),
   },
   plugins: [
     preact(),

@@ -16,8 +16,10 @@
   "dependencies": {
     "@capacitor/android": "^8.5.3",
     "@capacitor/core": "^8.5.3",
+    "@capacitor/filesystem": "^8.1.5",
     "@capacitor/ios": "^8.5.3",
     "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3",
     "@fontsource/overpass": "^5.2.8",
     "@fontsource/overpass-mono": "^5.2.8",
     "dexie": "^4.0.8",

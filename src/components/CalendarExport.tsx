@@ -6,6 +6,7 @@ import { useQuery } from '../db/useQuery'
 import { buildCalendar, calendarText, type CalendarItem } from '../domain/calendar'
 import { formatShortDate, localDateISO } from '../domain/format'
 import { ConfirmButton, InfoTip } from './ui'
+import { saveFile } from './saveFile'
 
 // "Add to Calendar": exports upcoming due dates (from the projected mileage)
 // as an .ics file so the phone's Calendar app delivers the reminders, with no
@@ -96,16 +97,15 @@ export function CalendarExport({ vehicleId }: { vehicleId?: string }) {
     }
   }
 
-  function exportCalendar(l: Loaded) {
+  async function exportCalendar(l: Loaded) {
     const blob = new Blob([buildCalendar(l.items, l.asOf)], { type: 'text/calendar;charset=utf-8' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'car-maintenance.ics'
-    document.body.appendChild(a)
-    a.click()
-    a.remove()
-    setTimeout(() => URL.revokeObjectURL(url), 60_000)
+    try {
+      if (!(await saveFile(blob, 'car-maintenance.ics'))) return
+    } catch {
+      setStatus("Couldn't export the reminders. Try again.")
+      close()
+      return
+    }
     const today = localDateISO(l.asOf)
     try {
       localStorage.setItem(LAST_EXPORT_KEY, today)
