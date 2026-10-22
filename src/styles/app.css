@@ -5261,7 +5261,7 @@ a.list-row:hover {
     justify-content: center;
   }
   .nav-check-disc {
-    margin-top: -16px;
+    margin-top: 0;
   }
   /* Ring that separates the Check disc from the glass (was navy). */
   .nav-check-disc {
