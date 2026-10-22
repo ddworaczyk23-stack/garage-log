@@ -156,7 +156,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: 9px;
-  padding: calc(env(safe-area-inset-top) + 12px) 16px 12px;
+  padding: calc(env(safe-area-inset-top) + 12px) calc(16px + env(safe-area-inset-right)) 12px calc(16px + env(safe-area-inset-left));
   background: color-mix(in srgb, var(--bg-elevated) 82%, transparent);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   backdrop-filter: blur(20px) saturate(160%);
@@ -214,7 +214,7 @@ body {
   width: 100%;
   max-width: 700px;
   margin: 0 auto;
-  padding: 20px 16px;
+  padding: 20px calc(16px + env(safe-area-inset-right)) 20px calc(16px + env(safe-area-inset-left));
   /* leave room for the fixed bottom nav + iOS home indicator */
   padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom) + 28px);
 }
@@ -1349,6 +1349,7 @@ code {
   width: 100%;
   height: 100%;
   padding-bottom: env(safe-area-inset-bottom);
+  padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
   /* At 200% text zoom, 5 nav items' min-content floor (~293px) exceeds a
      375px viewport and used to overflow the whole page horizontally
      (WCAG 1.4.4). Contain the overflow to the nav bar itself instead — it
@@ -2847,7 +2848,7 @@ iframe.preview-media {
 /* One "+ Log" control, docked away from the raised centre Check disc. */
 .vd-sticky {
   position: fixed;
-  right: 16px;
+  right: calc(16px + env(safe-area-inset-right));
   bottom: calc(var(--nav-height) + 14px + env(safe-area-inset-bottom));
   background: var(--accent);
   color: var(--accent-text);
@@ -2885,7 +2886,7 @@ iframe.preview-media {
 
 .vd-log-sheet {
   position: fixed;
-  right: 16px;
+  right: calc(16px + env(safe-area-inset-right));
   bottom: calc(var(--nav-height) + 72px + env(safe-area-inset-bottom));
   z-index: 39;
   width: min(210px, calc(100vw - 32px));
@@ -5306,7 +5307,7 @@ dialog.sheet {
   height: auto;
   max-height: 90dvh;
   margin: 0;
-  padding: 0;
+  padding: 0 env(safe-area-inset-right) 0 env(safe-area-inset-left);
   border: 0;
   border-radius: var(--radius) var(--radius) 0 0;
   background: var(--bg-card);
