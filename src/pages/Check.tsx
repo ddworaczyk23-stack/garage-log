@@ -68,7 +68,7 @@ export function Check({ vehicleId }: { vehicleId?: string }) {
 // --- vehicle picker --------------------------------------------------------
 
 function CheckPicker() {
-  const vehicles = useQuery(() => db.vehicles.orderBy('name').toArray(), [])
+  const vehicles = useQuery(() => db.vehicles.orderBy('name').toArray(), [], 'check-vehicles')
   if (!vehicles) return <SkeletonPage rows={2} />
 
   // With a single vehicle there's nothing to choose — go straight in.

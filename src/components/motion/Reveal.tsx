@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact'
+import { useLayoutEffect, useState } from 'preact/hooks'
 import { useReveal, useReducedMotion } from '../../motion/hooks'
 
 /**
@@ -17,9 +18,21 @@ export function Reveal({
 }) {
   const reduced = useReducedMotion()
   const { ref, inView } = useReveal<HTMLDivElement>()
-  const shown = reduced || inView
+  // Content already on screen when it mounts (every tab switch) shows at once.
+  // Fading it up from invisible reads as a blank flash; only content that
+  // scrolls into view later gets the rise.
+  const [instant, setInstant] = useState(false)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (el && el.getBoundingClientRect().top < window.innerHeight * 0.94) setInstant(true)
+  }, [])
+  const shown = reduced || inView || instant
   return (
-    <div ref={ref} class={`reveal${shown ? ' is-in' : ''}${cls ? ' ' + cls : ''}`} style={style}>
+    <div
+      ref={ref}
+      class={`reveal${shown ? ' is-in' : ''}${instant ? ' is-instant' : ''}${cls ? ' ' + cls : ''}`}
+      style={style}
+    >
       {children}
     </div>
   )
