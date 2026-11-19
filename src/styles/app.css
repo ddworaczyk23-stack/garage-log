@@ -5555,15 +5555,12 @@ dialog.sheet.is-in::backdrop {
   }
 }
 
-/* Notification switches in Settings. */
-.check-row {
+/* Notification switches in Settings: label left, the app's on/off switch right. */
+.switch-row {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  justify-content: space-between;
+  gap: 0.75rem;
   min-height: 44px;
 }
-.check-row input {
-  width: 1.2rem;
-  height: 1.2rem;
-  flex: none;
-}
+.switch-row .schedule-switch:disabled { opacity: 0.6; cursor: default; }
