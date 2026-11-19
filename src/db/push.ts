@@ -159,7 +159,8 @@ async function pushAlertsNow(force: boolean): Promise<void> {
   const alerts = buildUploadAlerts({
     items: await collectCalendarItems(undefined, asOf),
     vehicles: await db.vehicles.toArray(),
-    readings: await db.odometerReadings.toArray(),
+    // Mileage logged with a service counts as a reading too (as in the reminder engine).
+    readings: [...(await db.odometerReadings.toArray()), ...(await db.events.toArray())],
     lastBackupAt: typeof backup === 'string' ? backup : null,
     prefs: alertPrefs(state),
     asOf,

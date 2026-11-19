@@ -72,11 +72,17 @@ export function addDaysISO(iso: string, days: number): string {
   return d.toISOString().slice(0, 10)
 }
 
-/** First of anchor + first + step*k that is today or later: a nudge that repeats until acted on. */
-function nextRepeat(anchor: string, first: number, step: number, today: string): string {
+/** How many upcoming occurrences of a repeating nudge are uploaded. The Worker
+ * sends them without the app, so an ignored nudge still repeats while Coast stays closed. */
+export const REPEAT_COUNT = 3
+
+/** The next REPEAT_COUNT dates on anchor + first + step*k that are today or later. */
+function nextRepeats(anchor: string, first: number, step: number, today: string): string[] {
   let date = addDaysISO(anchor, first)
   while (date < today) date = addDaysISO(date, step)
-  return date
+  const out = [date]
+  while (out.length < REPEAT_COUNT) out.push(addDaysISO(out[out.length - 1], step))
+  return out
 }
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -84,6 +90,7 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 export interface AlertInputs {
   items: CalendarItem[]
   vehicles: Pick<Vehicle, 'id' | 'name' | 'nickname' | 'createdAt'>[]
+  /** Dated odometer readings: standalone ones AND mileage logged with a service. */
   readings: { vehicleId: string; date: string }[]
   /** ISO timestamp of the last backup, or null. */
   lastBackupAt: string | null
@@ -123,14 +130,15 @@ export function buildUploadAlerts({ items, vehicles, readings, lastBackupAt, pre
       const lastDate = last.get(v.id)
       if (!lastDate) continue // never logged: nothing to go stale yet
       // Stale means MORE than STALE_ODOMETER_DAYS old, so the first nudge is the day after.
-      const date = nextRepeat(lastDate, STALE_ODOMETER_DAYS + 1, STALE_ODOMETER_DAYS, today)
-      add({
-        key: `mileage:${v.id}:${date}`,
-        date,
-        title: `Confirm mileage: ${vehicleLabel(v)}`,
-        body: 'It has been a while since the last odometer reading. Tap to update it.',
-        hash: `#/vehicle/${v.id}`,
-      })
+      for (const date of nextRepeats(lastDate, STALE_ODOMETER_DAYS + 1, STALE_ODOMETER_DAYS, today)) {
+        add({
+          key: `mileage:${v.id}:${date}`,
+          date,
+          title: `Confirm mileage: ${vehicleLabel(v)}`,
+          body: 'It has been a while since the last odometer reading. Tap to update it.',
+          hash: `#/vehicle/${v.id}`,
+        })
+      }
     }
   }
 
@@ -139,16 +147,17 @@ export function buildUploadAlerts({ items, vehicles, readings, lastBackupAt, pre
     const anchor = lastBackupAt
       ? localDateISO(new Date(lastBackupAt))
       : vehicles.map((v) => localDateISO(new Date(v.createdAt))).sort()[0]
-    const date = nextRepeat(anchor, BACKUP_NUDGE_DAYS, BACKUP_NUDGE_DAYS, today)
-    add({
-      key: `backup:${date}`,
-      date,
-      title: 'Back up Coast',
-      body: lastBackupAt
-        ? 'It has been a month since your last backup. Tap to save one.'
-        : 'You have not backed up your garage yet. Tap to save a copy.',
-      hash: '#/backup',
-    })
+    for (const date of nextRepeats(anchor, BACKUP_NUDGE_DAYS, BACKUP_NUDGE_DAYS, today)) {
+      add({
+        key: `backup:${date}`,
+        date,
+        title: 'Back up Coast',
+        body: lastBackupAt
+          ? 'It has been a month since your last backup. Tap to save one.'
+          : 'You have not backed up your garage yet. Tap to save a copy.',
+        hash: '#/backup',
+      })
+    }
   }
 
   if (prefs.summary) {
@@ -159,7 +168,8 @@ export function buildUploadAlerts({ items, vehicles, readings, lastBackupAt, pre
       const year = y + Math.floor((m - 1 + k) / 12)
       const date = `${year}-${String(month0 + 1).padStart(2, '0')}-01`
       if (date < today) continue
-      const end = addDaysISO(date, 31)
+      // First day of the next calendar month (not +31 days: short months would spill over).
+      const end = `${month0 === 11 ? year + 1 : year}-${String(((month0 + 1) % 12) + 1).padStart(2, '0')}-01`
       const coming = items.filter((it) => it.date >= date && it.date < end)
       add({
         key: `summary:${date}`,

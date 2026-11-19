@@ -16,7 +16,7 @@
 // Only sha256(key) is stored. Writes and sends are capped per client IP per
 // hour with an exact D1 counter (same approach as worker/calendar-feed).
 
-import { isAllowedEndpoint, sendPush, type PushMessage, type PushSubscriptionRecord, type VapidKeys } from './webpush'
+import { b64urlDecode, isAllowedEndpoint, sendPush, type PushMessage, type PushSubscriptionRecord, type VapidKeys } from './webpush'
 
 export interface SubRecord extends PushSubscriptionRecord {
   keyHash: string
@@ -211,6 +211,16 @@ export const TEST_MESSAGE: PushMessage = {
   url: './',
 }
 
+/** A browser's p256dh is an uncompressed P-256 point (65 bytes, 0x04...) and auth is 16 bytes. */
+function validKeys(p256dh: string, auth: string): boolean {
+  try {
+    const p = b64urlDecode(p256dh)
+    return p.length === 65 && p[0] === 4 && b64urlDecode(auth).length === 16
+  } catch {
+    return false
+  }
+}
+
 const DATE = /^\d{4}-\d{2}-\d{2}$/
 
 /** Validate an uploaded alert list; null if it isn't one. Text is trimmed to a safe length. */
@@ -282,7 +292,15 @@ export async function sendDueAlerts(store: SubStore, send: Sender, now = Date.no
     const n = perSub.get(a.subId) ?? 0
     if (n >= MAX_PER_RUN) continue
     perSub.set(a.subId, n + 1)
-    const status = await send(a.sub, { title: a.title, body: a.body, url: `./${a.hash}` })
+    let status: number
+    try {
+      status = await send(a.sub, { title: a.title, body: a.body, url: `./${a.hash}` })
+    } catch (err) {
+      // One device's failure (bad key, network) must not stop the others; the
+      // alert stays unsent and is retried on the next hourly run in the window.
+      console.error('push send failed', a.subId, err)
+      continue
+    }
     if (status === 404 || status === 410) {
       gone.add(a.subId)
       await store.delete(a.subId)
@@ -371,7 +389,8 @@ export async function handle(req: Request, store: SubStore, send: Sender, now = 
     typeof p256dh !== 'string' ||
     !B64.test(p256dh) ||
     typeof auth !== 'string' ||
-    !B64.test(auth)
+    !B64.test(auth) ||
+    !validKeys(p256dh, auth)
   ) {
     return reply('Not a push subscription', 400)
   }

@@ -52,14 +52,14 @@ describe('buildUploadAlerts', () => {
 
   it('mileage: the day after 90 days, repeating every 90 until a new reading', () => {
     const fresh = buildUploadAlerts({ ...base, readings: [{ vehicleId: 'veh-1', date: '2026-11-10' }], prefs: all({ mileage: true }) })
-    expect(fresh[0].date).toBe('2027-02-09') // Nov 10 + 91
+    expect(fresh.map((a) => a.date)).toEqual(['2027-02-09', '2027-05-10', '2027-08-08']) // Nov 10 + 91, then every 90
     const stale = buildUploadAlerts({ ...base, readings: [{ vehicleId: 'veh-1', date: '2026-06-01' }], prefs: all({ mileage: true }) })
     expect(stale[0].date >= '2026-11-19').toBe(true)
     expect(buildUploadAlerts({ ...base, prefs: all({ mileage: true }) })).toEqual([]) // never logged
   })
 
   it('backup: a month after the last one, or after the first car was added', () => {
-    expect(buildUploadAlerts({ ...base, lastBackupAt: '2026-11-10T12:00:00', prefs: all({ backup: true }) })[0].date).toBe('2026-12-10')
+    expect(buildUploadAlerts({ ...base, lastBackupAt: '2026-11-10T12:00:00', prefs: all({ backup: true }) }).map((a) => a.date)).toEqual(['2026-12-10', '2027-01-09', '2027-02-08'])
     const never = buildUploadAlerts({ ...base, prefs: all({ backup: true }) })[0]
     expect(never.date >= '2026-11-19').toBe(true)
     expect(never.body).toContain('not backed up')
@@ -72,6 +72,14 @@ describe('buildUploadAlerts', () => {
     expect(out[0].title).toBe('December in your garage')
     expect(out[0].body).toContain('2 things coming up')
     expect(out[2].body).toContain('Nothing due')
+  })
+
+  it('summary: a month never counts the next month\'s first days', () => {
+    const items = [item('feb', '2027-02-20'), item('mar', '2027-03-02')]
+    const out = buildUploadAlerts({ ...base, items, prefs: all({ summary: true }) })
+    const feb = out.find((a) => a.date === '2027-02-01')!
+    expect(feb.body).toContain('1 thing coming up')
+    expect(feb.body).not.toContain('Do mar')
   })
 
   it('everything off uploads nothing', () => {

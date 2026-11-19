@@ -71,6 +71,13 @@ describe('push worker', () => {
     expect((await handle(req('POST', `/sub/${ID}/test`, { key: KEY }), store, send)).status).toBe(404)
   })
 
+  it('refuses keys that are not a P-256 point and a 16-byte secret', async () => {
+    const store = pushStore()
+    const { send } = fakeSender()
+    const short = { ...SUB, keys: { p256dh: 'A'.repeat(20), auth: SUB.keys.auth } }
+    expect((await handle(req('POST', `/sub/${ID}`, { key: KEY, body: short }), store, send)).status).toBe(400)
+  })
+
   it('refuses a subscription that points anywhere but a real push service', async () => {
     const store = pushStore()
     const { send } = fakeSender()
@@ -177,6 +184,26 @@ describe('due-date alerts', () => {
     const many = Array.from({ length: 8 }, (_, i) => alert(`m${i}`, '2026-11-19'))
     await put(store, send, many)
     expect(await sendDueAlerts(store, send, MORNING)).toBe(MAX_PER_RUN)
+  })
+
+  it('one device failing to send does not stop the others', async () => {
+    const store = pushStore()
+    const ok = fakeSender()
+    await handle(req('POST', `/sub/${ID}`, { key: KEY, body: SUB }), store, ok.send)
+    const ID2 = 'c'.repeat(43)
+    await handle(req('POST', `/sub/${ID2}`, { key: KEY, body: { ...SUB, endpoint: 'https://web.push.apple.com/two' } }), store, ok.send)
+    await handle(req('PUT', `/sub/${ID}/alerts`, { key: KEY, body: { alerts: [alert('a', '2026-11-19')] } }), store, ok.send)
+    await handle(req('PUT', `/sub/${ID2}/alerts`, { key: KEY, body: { alerts: [alert('b', '2026-11-19')] } }), store, ok.send)
+    const calls: string[] = []
+    const flaky: Sender = async (sub, m) => {
+      if (sub.endpoint.endsWith('QAbc123')) throw new Error('bad key')
+      calls.push(m.title)
+      return 201
+    }
+    expect(await sendDueAlerts(store, flaky, MORNING)).toBe(1)
+    expect(calls).toEqual(['T b'])
+    // The failed alert is still unsent, so the next run retries it.
+    expect(await sendDueAlerts(store, ok.send, MORNING + 3_600_000)).toBe(1)
   })
 
   it('forgets a phone that dropped its subscription', async () => {
