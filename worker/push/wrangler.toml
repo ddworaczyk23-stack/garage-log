@@ -10,6 +10,10 @@ name = "coast-push"
 main = "src/index.ts"
 compatibility_date = "2026-09-01"
 
+# Hourly; the Worker itself only sends between 9am and noon Eastern.
+[triggers]
+crons = ["0 * * * *"]
+
 [vars]
 # Not secret: the browser subscribes with this same key. Replace after generating.
 VAPID_PUBLIC_KEY = "BBo0Vrel3lg0PetEJOuWtvmhD03vJZJWW19HjYw9Y6ACkbsqhvoqxJ5cEXBy_GEAO7Mtw4ALOIYGnoknJcyotEw"

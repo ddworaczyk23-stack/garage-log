@@ -2,6 +2,7 @@ import { render } from 'preact'
 import { App } from './app'
 import { seedIfEmpty } from './db/seed'
 import { startFeedSync } from './db/calendarFeed'
+import { startPushSync } from './db/push'
 import './styles/fonts'
 import './styles/app.css'
 
@@ -41,6 +42,7 @@ async function boot() {
 
   render(<App />, root)
   startFeedSync()
+  startPushSync()
   // Constant-folded: the web build never includes the Capacitor plugin.
   if (import.meta.env.MODE === 'capacitor') {
     import('./db/localReminders').then((m) => m.startLocalReminders()).catch(() => {})
