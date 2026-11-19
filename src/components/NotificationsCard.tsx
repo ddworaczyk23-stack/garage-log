@@ -62,17 +62,25 @@ export function NotificationsCard() {
         {support === 'ready' && state && (
           <>
             <p class="muted small">On for this phone. Sent at 9am Eastern.</p>
-            {ALERT_SWITCHES.map(([kind, label]) => (
-              <label key={kind} class="check-row">
-                <input
-                  type="checkbox"
-                  checked={alertPrefs(state)[kind]}
-                  disabled={busy}
-                  onChange={(e) => run(async () => { await setAlertPref(kind, e.currentTarget.checked); return '' })}
-                />
-                <span>{label}</span>
-              </label>
-            ))}
+            {ALERT_SWITCHES.map(([kind, label]) => {
+              const on = alertPrefs(state)[kind]
+              return (
+                <div key={kind} class="switch-row">
+                  <span>{label}</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={on}
+                    aria-label={label}
+                    class="schedule-switch"
+                    disabled={busy}
+                    onClick={() => run(async () => { await setAlertPref(kind, !on); return '' })}
+                  >
+                    <i />
+                  </button>
+                </div>
+              )
+            })}
             <button
               type="button"
               class="btn btn-secondary"
