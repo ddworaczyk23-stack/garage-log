@@ -18,6 +18,8 @@ export default defineConfig(({ mode }) => ({
     ...(mode === 'capacitor' && {
       'import.meta.env.VITE_DEXIE_CLOUD_URL': 'undefined',
       'import.meta.env.VITE_CALENDAR_FEED_URL': 'undefined',
+      'import.meta.env.VITE_PUSH_URL': 'undefined',
+      'import.meta.env.VITE_VAPID_PUBLIC_KEY': 'undefined',
     }),
   },
   plugins: [
@@ -51,6 +53,9 @@ export default defineConfig(({ mode }) => ({
         ],
       },
       workbox: {
+        // Push + notification-tap handlers (public/push-sw.js) run inside the
+        // generated service worker.
+        importScripts: ['push-sw.js'],
         globPatterns: ['**/*.{js,css,html,png,svg,woff2}'],
         // Per-make model/trim files (scripts/build-vehicle-catalog.mjs): cached
         // on first use so a make's pickers work offline after that, refreshed

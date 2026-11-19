@@ -9,10 +9,11 @@ import {
 } from '../domain/backup'
 import type { VehicleDocument } from '../types'
 import { CALENDAR_FEED_KEY } from './calendarFeed'
+import { PUSH_KEY } from './push'
 
 /** appMeta records that belong to THIS device: never exported, and a restore
  * keeps the device's current copy instead of wiping or replacing it. */
-const DEVICE_ONLY_META_KEYS = [CALENDAR_FEED_KEY]
+const DEVICE_ONLY_META_KEYS = [CALENDAR_FEED_KEY, PUSH_KEY]
 
 // The impure half of Milestone 8: reads every table, turns document blobs into
 // base64 for a single portable JSON file, and restores that file by wiping the

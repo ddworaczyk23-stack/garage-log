@@ -13,6 +13,15 @@ aggressively, every time.
 
 ## Open
 
+- **Web push notifications, test path (2026-11-19).** Branch
+  `claude/project-thread-ad7bt1`. Built: `worker/push/`, Settings card, SW
+  handlers. Not live until David does the setup in `worker/push/wrangler.toml`
+  (D1 create, VAPID keys, secret, deploy) and adds repo secrets
+  `VITE_PUSH_URL` + `VITE_VAPID_PUBLIC_KEY`, then installs Coast to the iPhone
+  Home Screen and taps "Send a test notification". Next, once the test lands:
+  ask David which events should notify (due-soon items?) and wire them.
+  Delete this entry when the test arrives on his phone and events are decided.
+
 - **Checkup redesign: confirm on real data (2026-10-22).** Branch
   `feat/checkup-log-to-schedule`: each checkup item has "Checked, OK" and
   "Log service", with Safety/Important labels listed first. "Checked, OK" on
