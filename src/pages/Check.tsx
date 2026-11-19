@@ -68,9 +68,10 @@ export function Check({ vehicleId }: { vehicleId?: string }) {
 // --- vehicle picker --------------------------------------------------------
 
 function CheckPicker() {
-  const vehicles = useQuery(() => db.vehicles.orderBy('name').toArray(), [])
+  const vehicles = useQuery(() => db.vehicles.orderBy('name').toArray(), [], 'check-vehicles', (v) => v.length > 1)
   if (!vehicles) return <SkeletonPage rows={2} />
 
+  // (Only lists of 2+ are cached, so this redirect always acts on fresh data.)
   // With a single vehicle there's nothing to choose — go straight in.
   if (vehicles.length === 1) {
     window.location.hash = `#/check/${vehicles[0].id}`

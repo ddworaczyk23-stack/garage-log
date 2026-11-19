@@ -16,6 +16,9 @@ export function useQuery<T>(
   querier: () => T | Promise<T>,
   deps: unknown[] = [],
   cacheKey?: string,
+  // Only remember results this says yes to (default: all). Lets a screen keep
+  // display data cached while never replaying a result it would ACT on.
+  shouldCache: (v: T) => boolean = () => true,
 ): T | undefined {
   const [value, setValue] = useState<T | undefined>(() =>
     cacheKey ? (lastResult.get(cacheKey) as T | undefined) : undefined,
@@ -38,7 +41,10 @@ export function useQuery<T>(
     setValue(cacheKey ? (lastResult.get(cacheKey) as T | undefined) : undefined)
     const sub = liveQuery(querier).subscribe({
       next: (v) => {
-        if (cacheKey) lastResult.set(cacheKey, v)
+        if (cacheKey) {
+          if (shouldCache(v)) lastResult.set(cacheKey, v)
+          else lastResult.delete(cacheKey)
+        }
         setValue(v)
       },
       error: (err) => {

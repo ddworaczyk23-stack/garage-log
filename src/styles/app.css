@@ -2242,6 +2242,9 @@ iframe.preview-media {
   opacity: 1;
   transform: none;
 }
+.reveal.is-instant {
+  transition: none;
+}
 
 /* --- collapsible fold (Collapsible.tsx) --- */
 .fold {
