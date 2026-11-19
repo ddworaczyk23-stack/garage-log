@@ -31,7 +31,7 @@ import type { Vehicle } from '../types'
 // Vehicles stay ranked most-urgent-first by compareVehicleUrgency
 // (db/summary); this page only re-narrates the engine, it never re-decides.
 export function Dashboard() {
-  const summary = useQuery(getGarageSummary)
+  const summary = useQuery(getGarageSummary, [], 'garage-summary')
 
   if (!summary) {
     return (

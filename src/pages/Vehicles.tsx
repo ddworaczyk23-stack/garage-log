@@ -22,7 +22,7 @@ async function loadVehiclesWithStatus() {
 // Vehicle list. Each row links to detail and shows its most urgent reminder
 // status as a quick at-a-glance badge.
 export function Vehicles() {
-  const rows = useQuery(loadVehiclesWithStatus)
+  const rows = useQuery(loadVehiclesWithStatus, [], 'vehicles-list')
 
   if (!rows) {
     return (
