@@ -6,6 +6,8 @@ import { formatShortDate, localDateISO } from '../domain/format'
 import { vehicleLabel } from '../domain/vehicle'
 import { ChevronRightIcon } from '../components/icons'
 import { ConfirmButton, PageHeader } from '../components/ui'
+import { NotificationsCard } from '../components/NotificationsCard'
+import { pushConfigured } from '../db/push'
 
 declare const __COAST_BUILD__: string
 
@@ -20,6 +22,8 @@ export function Settings() {
       <PageHeader title="Settings" />
 
       {cloudConfigured && <SyncCard />}
+
+      {pushConfigured() && <NotificationsCard />}
 
       <VehiclesCard />
 

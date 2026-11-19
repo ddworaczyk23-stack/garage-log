@@ -46,6 +46,10 @@ jobs:
           # Live calendar feed Worker URL (worker/calendar-feed). Unset = the
           # Apple/Google subscribe options are hidden.
           VITE_CALENDAR_FEED_URL: ${{ secrets.VITE_CALENDAR_FEED_URL }}
+          # Push Worker URL (worker/push) and its VAPID public key. Either
+          # unset = the notifications card is hidden.
+          VITE_PUSH_URL: ${{ secrets.VITE_PUSH_URL }}
+          VITE_VAPID_PUBLIC_KEY: ${{ secrets.VITE_VAPID_PUBLIC_KEY }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

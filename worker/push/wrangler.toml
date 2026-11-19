@@ -1,0 +1,23 @@
+# Coast push Worker. One-time setup and deploy, from this folder:
+#   npx wrangler login
+#   npx wrangler d1 create coast-push          (paste the database_id below)
+#   npx wrangler d1 migrations apply coast-push --remote
+#   node ../../scripts/generate-vapid-keys.mjs  (prints both keys)
+#   npx wrangler secret put VAPID_PRIVATE_KEY   (paste the private key)
+#   (paste the public key into VAPID_PUBLIC_KEY below)
+#   npx wrangler deploy
+name = "coast-push"
+main = "src/index.ts"
+compatibility_date = "2026-09-01"
+
+[vars]
+# Not secret: the browser subscribes with this same key. Replace after generating.
+VAPID_PUBLIC_KEY = "REPLACE_WITH_PUBLIC_KEY"
+# Contact the push service can reach if this server misbehaves.
+VAPID_SUBJECT = "https://ddworaczyk23-stack.github.io/garage-log/"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "coast-push"
+database_id = "REPLACE_WITH_DATABASE_ID"
+migrations_dir = "migrations"

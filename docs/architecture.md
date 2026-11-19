@@ -107,6 +107,17 @@
   the download, the text copy and the feed. Worker live at
   `https://coast-calendar-feed.calendar-feed.workers.dev`; redeploy from
   `worker/calendar-feed/` with `npx wrangler deploy` (David's Cloudflare login).
+- **`src/db/push.ts`** (+ pure `domain/push.ts`, `components/NotificationsCard.tsx`,
+  `public/push-sw.js`) — web push, TEST PATH ONLY so far. Settings card turns
+  notifications on (permission, `pushManager.subscribe` with the VAPID public
+  key), registers the subscription with `worker/push/` (Cloudflare Worker + D1,
+  VAPID + RFC 8291 encryption via WebCrypto in `worker/push/src/webpush.ts`,
+  checked against the RFC's test vector), and can send one test notification.
+  Off unless `VITE_PUSH_URL` and `VITE_VAPID_PUBLIC_KEY` are set at build time.
+  Device record in `appMeta['pushSub']` (device-only, kept out of backups).
+  `push-sw.js` is pulled into the generated service worker with
+  `workbox.importScripts`. iPhone needs Coast on the Home Screen (iOS 16.4+).
+  Setup steps are in `worker/push/wrangler.toml`. No real events are wired yet.
 - **`src/services/`** — `vinDecode.ts` (REAL NHTSA vPIC `decodevinvalues` call,
   no key). "Add a car" manual pickers: `catalogBundle.ts` reads
   `public/catalog/<make>.json`, built at deploy time by
