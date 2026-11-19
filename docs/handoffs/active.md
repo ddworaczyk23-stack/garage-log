@@ -13,14 +13,12 @@ aggressively, every time.
 
 ## Open
 
-- **Web push notifications, test path (2026-11-19).** Branch
-  `claude/project-thread-ad7bt1`. Built: `worker/push/`, Settings card, SW
-  handlers. Not live until David does the setup in `worker/push/wrangler.toml`
-  (D1 create, VAPID keys, secret, deploy) and adds repo secrets
-  `VITE_PUSH_URL` + `VITE_VAPID_PUBLIC_KEY`, then installs Coast to the iPhone
-  Home Screen and taps "Send a test notification". Next, once the test lands:
-  ask David which events should notify (due-soon items?) and wire them.
-  Delete this entry when the test arrives on his phone and events are decided.
+- **Web push alerts (2026-11-19).** Test notification works on David's
+  iPhone (PR #99 merged, Worker live at coast-push.calendar-feed.workers.dev).
+  Branch `feat/push-due-alerts` adds the five alert switches + hourly cron
+  (see docs/architecture.md). Before merging, the Worker needs migration 0002
+  applied and a redeploy (cron trigger). Then David should switch on one or two
+  alerts and confirm one arrives at 9am Eastern. Delete this entry when it does.
 
 - **Checkup redesign: confirm on real data (2026-10-22).** Branch
   `feat/checkup-log-to-schedule`: each checkup item has "Checked, OK" and

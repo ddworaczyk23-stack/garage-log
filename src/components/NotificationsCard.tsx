@@ -1,7 +1,16 @@
 import { useState } from 'preact/hooks'
-import { disablePush, currentPushSupport, enablePush, getPushState, sendTestPush } from '../db/push'
+import { alertPrefs, disablePush, currentPushSupport, enablePush, getPushState, sendTestPush, setAlertPref } from '../db/push'
+import type { AlertPrefs } from '../domain/push'
 import { useQuery } from '../db/useQuery'
 import { ConfirmButton } from './ui'
+
+const ALERT_SWITCHES: [keyof AlertPrefs, string][] = [
+  ['due', 'Service due dates'],
+  ['safety', 'Safety items only (brakes, tires, timing belt)'],
+  ['mileage', 'Confirm your mileage'],
+  ['backup', 'Back up reminder (monthly)'],
+  ['summary', 'Monthly summary (the 1st)'],
+]
 
 /** Settings card: turn on notifications for this phone and send a test.
  * Rendered only when the build has the push Worker configured. */
@@ -52,7 +61,18 @@ export function NotificationsCard() {
         )}
         {support === 'ready' && state && (
           <>
-            <p class="muted small">On for this phone.</p>
+            <p class="muted small">On for this phone. Sent at 9am Eastern.</p>
+            {ALERT_SWITCHES.map(([kind, label]) => (
+              <label key={kind} class="check-row">
+                <input
+                  type="checkbox"
+                  checked={alertPrefs(state)[kind]}
+                  disabled={busy}
+                  onChange={(e) => run(async () => { await setAlertPref(kind, e.currentTarget.checked); return '' })}
+                />
+                <span>{label}</span>
+              </label>
+            ))}
             <button
               type="button"
               class="btn btn-secondary"

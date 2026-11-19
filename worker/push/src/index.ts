@@ -7,6 +7,10 @@
 //                           First POST claims the id; later ones refresh the subscription.
 //   DELETE /sub/<id>        Bearer <key>   ("Turn off")
 //   POST   /sub/<id>/test   Bearer <key>   sends one test notification to that device
+//   PUT    /sub/<id>/alerts Bearer <key>   replaces that device's due-date alerts
+//
+// A cron trigger runs hourly; at 9am Eastern (DST-aware) it sends every alert
+// whose date has arrived and hasn't been sent. See `sendDueAlerts`.
 //
 // id and key are 32 random bytes, base64url (43 chars), made on the device.
 // Only sha256(key) is stored. Writes and sends are capped per client IP per
@@ -19,8 +23,30 @@ export interface SubRecord extends PushSubscriptionRecord {
   updated: string
 }
 
+/** One due-date alert as the app uploads it. `key` is the app's stable uid. */
+export interface AlertInput {
+  key: string
+  date: string // YYYY-MM-DD, the device's local date
+  title: string
+  body: string
+  /** In-app route to open on tap, like "#/vehicle/veh-1". May be empty. */
+  hash: string
+}
+
+export interface DueAlert extends AlertInput {
+  subId: string
+  sub: SubRecord
+}
+
 /** Storage seam: D1 in production, SQLite in tests. */
 export interface SubStore {
+  /** Replace a device's alerts, keeping `sent` for alerts whose key and date are unchanged. */
+  replaceAlerts(subId: string, alerts: AlertInput[]): Promise<void>
+  /** Unsent alerts dated in [from, to], oldest first, with their subscriptions. */
+  dueAlerts(from: string, to: string): Promise<DueAlert[]>
+  markSent(subId: string, key: string): Promise<void>
+  /** Drop alerts dated before `date`. */
+  pruneAlerts(date: string): Promise<void>
   get(id: string): Promise<SubRecord | null>
   put(id: string, rec: SubRecord): Promise<void>
   delete(id: string): Promise<void>
@@ -33,6 +59,7 @@ export interface SubStore {
 interface D1Statement {
   bind(...values: unknown[]): D1Statement
   first<T>(): Promise<T | null>
+  all<T>(): Promise<{ results: T[] }>
   run(): Promise<unknown>
 }
 export interface D1Like {
@@ -52,7 +79,12 @@ export type Sender = (sub: PushSubscriptionRecord, message: PushMessage) => Prom
 const ID = /^[A-Za-z0-9_-]{43}$/
 const B64 = /^[A-Za-z0-9_-]{16,128}$/
 /** Subscribing happens rarely, and tests are a human tapping a button. */
-export const WRITES_PER_HOUR = 30
+export const WRITES_PER_HOUR = 60
+/** Most alerts one device may hold, and the length caps for their text. */
+export const MAX_ALERTS = 60
+const MAX_TEXT = 200
+/** Notifications one device gets in a single morning run. */
+export const MAX_PER_RUN = 5
 
 export function d1Store(db: D1Like): SubStore {
   return {
@@ -77,6 +109,49 @@ export function d1Store(db: D1Like): SubStore {
     },
     async delete(id) {
       await db.prepare('DELETE FROM subs WHERE id = ?').bind(id).run()
+      await db.prepare('DELETE FROM alerts WHERE sub_id = ?').bind(id).run()
+    },
+    async replaceAlerts(subId, alerts) {
+      const prior = await db
+        .prepare('SELECT key, date FROM alerts WHERE sub_id = ? AND sent = 1')
+        .bind(subId)
+        .all<{ key: string; date: string }>()
+      const sent = new Set(prior.results.map((r) => `${r.key}|${r.date}`))
+      await db.prepare('DELETE FROM alerts WHERE sub_id = ?').bind(subId).run()
+      for (const a of alerts) {
+        await db
+          .prepare('INSERT INTO alerts (sub_id, key, date, title, body, hash, sent) VALUES (?, ?, ?, ?, ?, ?, ?)')
+          .bind(subId, a.key, a.date, a.title, a.body, a.hash, sent.has(`${a.key}|${a.date}`) ? 1 : 0)
+          .run()
+      }
+    },
+    async dueAlerts(from, to) {
+      const rows = await db
+        .prepare(
+          'SELECT a.sub_id, a.key, a.date, a.title, a.body, a.hash, s.key_hash, s.endpoint, s.p256dh, s.auth, s.updated ' +
+            'FROM alerts a JOIN subs s ON s.id = a.sub_id ' +
+            'WHERE a.sent = 0 AND a.date >= ? AND a.date <= ? ORDER BY a.date, a.key',
+        )
+        .bind(from, to)
+        .all<{
+          sub_id: string; key: string; date: string; title: string; body: string; hash: string
+          key_hash: string; endpoint: string; p256dh: string; auth: string; updated: string
+        }>()
+      return rows.results.map((r) => ({
+        subId: r.sub_id,
+        key: r.key,
+        date: r.date,
+        title: r.title,
+        body: r.body,
+        hash: r.hash,
+        sub: { keyHash: r.key_hash, endpoint: r.endpoint, p256dh: r.p256dh, auth: r.auth, updated: r.updated },
+      }))
+    },
+    async markSent(subId, key) {
+      await db.prepare('UPDATE alerts SET sent = 1 WHERE sub_id = ? AND key = ?').bind(subId, key).run()
+    },
+    async pruneAlerts(date) {
+      await db.prepare('DELETE FROM alerts WHERE date < ?').bind(date).run()
     },
     async hits(ip, hour) {
       const row = await db
@@ -112,7 +187,7 @@ function cors(origin: string | null): Record<string, string> {
   return ok
     ? {
         'Access-Control-Allow-Origin': ok,
-        'Access-Control-Allow-Methods': 'POST, DELETE',
+        'Access-Control-Allow-Methods': 'POST, PUT, DELETE',
         'Access-Control-Allow-Headers': 'Authorization, Content-Type',
         Vary: 'Origin',
       }
@@ -136,20 +211,106 @@ export const TEST_MESSAGE: PushMessage = {
   url: './',
 }
 
+const DATE = /^\d{4}-\d{2}-\d{2}$/
+
+/** Validate an uploaded alert list; null if it isn't one. Text is trimmed to a safe length. */
+export function cleanAlerts(raw: unknown): AlertInput[] | null {
+  if (!Array.isArray(raw) || raw.length > MAX_ALERTS) return null
+  const out: AlertInput[] = []
+  for (const a of raw) {
+    if (!a || typeof a !== 'object') return null
+    const { key, date, title, body, hash } = a as Record<string, unknown>
+    if (typeof key !== 'string' || !key || key.length > 200) return null
+    if (typeof date !== 'string' || !DATE.test(date)) return null
+    if (typeof title !== 'string' || typeof body !== 'string') return null
+    if (hash !== undefined && typeof hash !== 'string') return null
+    out.push({
+      key,
+      date,
+      title: title.slice(0, MAX_TEXT),
+      body: body.slice(0, MAX_TEXT),
+      hash: typeof hash === 'string' && /^#\/[\w\-/%.:]*$/.test(hash) ? hash : '',
+    })
+  }
+  return out
+}
+
+/** The calendar date and hour right now in New York (handles daylight saving). */
+export function newYorkNow(now: number): { date: string; hour: number } {
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/New_York',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(new Date(now))
+      .map((p) => [p.type, p.value]),
+  )
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, hour: Number(parts.hour) }
+}
+
+function addDays(date: string, days: number): string {
+  const d = new Date(`${date}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
+/** Alerts older than this many days are dropped unsent instead of arriving late. */
+const CATCH_UP_DAYS = 2
+/** Mornings are 9:00 to 11:59 Eastern: the cron runs hourly, so a missed run catches up. */
+const SEND_HOURS = [9, 10, 11]
+
+/**
+ * The hourly cron body. Between 9am and noon Eastern, send each device its alerts
+ * dated today (or up to two days back, if a run was missed), at most
+ * MAX_PER_RUN per device, then mark them sent. A 404/410 from the push
+ * service means the phone dropped the subscription, so it is forgotten.
+ */
+export async function sendDueAlerts(store: SubStore, send: Sender, now = Date.now()): Promise<number> {
+  const { date, hour } = newYorkNow(now)
+  if (!SEND_HOURS.includes(hour)) return 0
+  await store.pruneAlerts(addDays(date, -7))
+  const due = await store.dueAlerts(addDays(date, -CATCH_UP_DAYS), date)
+  const perSub = new Map<string, number>()
+  const gone = new Set<string>()
+  let sent = 0
+  for (const a of due) {
+    if (gone.has(a.subId)) continue
+    const n = perSub.get(a.subId) ?? 0
+    if (n >= MAX_PER_RUN) continue
+    perSub.set(a.subId, n + 1)
+    const status = await send(a.sub, { title: a.title, body: a.body, url: `./${a.hash}` })
+    if (status === 404 || status === 410) {
+      gone.add(a.subId)
+      await store.delete(a.subId)
+    } else if (status >= 200 && status < 300) {
+      await store.markSent(a.subId, a.key)
+      sent++
+    }
+  }
+  return sent
+}
+
 export async function handle(req: Request, store: SubStore, send: Sender, now = Date.now()): Promise<Response> {
   const url = new URL(req.url)
   const origin = req.headers.get('Origin')
-  const m = /^\/sub\/([A-Za-z0-9_-]+?)(\/test)?$/.exec(url.pathname)
+  const m = /^\/sub\/([A-Za-z0-9_-]+?)(\/test|\/alerts)?$/.exec(url.pathname)
   if (!m || !ID.test(m[1])) return new Response('Not found', { status: 404 })
-  const [, id, test] = m
+  const [, id, suffix] = m
+  const test = suffix === '/test'
+  const alerts = suffix === '/alerts'
   const h = cors(origin)
   const reply = (body: string | null, status: number) => new Response(body, { status, headers: h })
 
   if (req.method === 'OPTIONS') return reply(null, allowedOrigin(origin) ? 204 : 403)
 
   const isTest = !!test && req.method === 'POST'
-  const isSub = !test && (req.method === 'POST' || req.method === 'DELETE')
-  if (!isTest && !isSub) return reply('Method not allowed', 405)
+  const isAlerts = alerts && req.method === 'PUT'
+  const isSub = !suffix && (req.method === 'POST' || req.method === 'DELETE')
+  if (!isTest && !isSub && !isAlerts) return reply('Method not allowed', 405)
 
   // Rate limit before anything else costs a write or a send.
   const ip = req.headers.get('CF-Connecting-IP') ?? 'unknown'
@@ -173,6 +334,20 @@ export async function handle(req: Request, store: SubStore, send: Sender, now = 
       return reply('Subscription expired', 410)
     }
     return status >= 200 && status < 300 ? reply(null, 204) : reply('Push service refused', 502)
+  }
+
+  if (isAlerts) {
+    if (!existing) return reply('Not found', 404)
+    let parsed: { alerts?: unknown }
+    try {
+      parsed = JSON.parse(await req.text())
+    } catch {
+      return reply('Bad JSON', 400)
+    }
+    const clean = cleanAlerts(parsed.alerts)
+    if (!clean) return reply('Not a list of alerts', 400)
+    await store.replaceAlerts(id, clean)
+    return reply(null, 204)
   }
 
   if (req.method === 'DELETE') {
@@ -204,9 +379,16 @@ export async function handle(req: Request, store: SubStore, send: Sender, now = 
   return reply(null, 204)
 }
 
+function liveSender(env: Env): Sender {
+  const vapid: VapidKeys = { publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY, subject: env.VAPID_SUBJECT }
+  return (sub, message) => sendPush(sub, message, vapid)
+}
+
 export default {
   fetch(req: Request, env: Env): Promise<Response> {
-    const vapid: VapidKeys = { publicKey: env.VAPID_PUBLIC_KEY, privateKey: env.VAPID_PRIVATE_KEY, subject: env.VAPID_SUBJECT }
-    return handle(req, d1Store(env.DB), (sub, message) => sendPush(sub, message, vapid))
+    return handle(req, d1Store(env.DB), liveSender(env))
+  },
+  async scheduled(_event: unknown, env: Env): Promise<void> {
+    await sendDueAlerts(d1Store(env.DB), liveSender(env))
   },
 }

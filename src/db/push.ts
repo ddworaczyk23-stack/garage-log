@@ -1,10 +1,22 @@
 import { db } from './db'
-import { pushSupport, randomToken, urlBase64ToBytes, type PushSupport } from '../domain/push'
+import { liveQuery } from 'dexie'
+import { collectCalendarItems } from './calendarExport'
+import {
+  buildUploadAlerts,
+  DEFAULT_ALERT_PREFS,
+  pushSupport,
+  randomToken,
+  urlBase64ToBytes,
+  type AlertPrefs,
+  type PushSupport,
+} from '../domain/push'
 
 // Web push notifications. The app asks the browser for permission, subscribes
 // with the server's public (VAPID) key, and hands the subscription to a tiny
 // Worker (worker/push) that can then send this device a notification. So far
-// the only thing it sends is a test; real reminders come later.
+// it sends a test, plus due-date alerts: the app uploads a short list of future
+// alerts and the Worker sends each at 9am Eastern on its date. Each kind of
+// alert has its own switch (AlertPrefs).
 //
 // Off unless VITE_PUSH_URL and VITE_VAPID_PUBLIC_KEY are set at build time.
 // Like the calendar feed, the device's record lives in appMeta (local, never
@@ -17,7 +29,17 @@ export const PUSH_KEY = 'pushSub'
 export interface PushState {
   id: string
   key: string
+  /** Which alert kinds are on. Missing = all on (DEFAULT_ALERT_PREFS). */
+  prefs?: AlertPrefs
+  /** Hash of the last uploaded alert list, to skip identical uploads. */
+  lastHash?: string
 }
+
+export function alertPrefs(state: PushState | null): AlertPrefs {
+  return { ...DEFAULT_ALERT_PREFS, ...state?.prefs }
+}
+
+const PUSH_DEBOUNCE_MS = 5000
 
 function baseUrl(): string | null {
   const url = import.meta.env.VITE_PUSH_URL as string | undefined
@@ -83,7 +105,9 @@ export async function enablePush(): Promise<PushState> {
     throw new Error(`Could not register this phone (${res.status}).`)
   }
   await db.appMeta.put({ key: PUSH_KEY, value: state })
-  return state
+  // Best effort: the alerts catch up on the next change or app open if this fails.
+  await pushAlerts(true).catch(() => {})
+  return (await getPushState()) ?? state
 }
 
 /** Ask the Worker to send this device one test notification. */
@@ -111,4 +135,91 @@ export async function disablePush(): Promise<void> {
     if (!res.ok && res.status !== 404) throw new Error(`Could not turn off (${res.status}).`)
   }
   await db.appMeta.delete(PUSH_KEY)
+}
+
+// Alert uploads run one at a time so a slow upload can't overwrite a newer one
+// or re-save state after "Turn off".
+let queue: Promise<unknown> = Promise.resolve()
+function serial<T>(fn: () => Promise<T>): Promise<T> {
+  const next = queue.catch(() => {}).then(fn)
+  queue = next
+  return next
+}
+
+async function hash(s: string): Promise<string> {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s))
+  return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+async function pushAlertsNow(force: boolean): Promise<void> {
+  const state = await getPushState()
+  if (!state || !baseUrl()) return
+  const asOf = new Date()
+  const backup = (await db.appMeta.get('lastBackupAt'))?.value
+  const alerts = buildUploadAlerts({
+    items: await collectCalendarItems(undefined, asOf),
+    vehicles: await db.vehicles.toArray(),
+    readings: await db.odometerReadings.toArray(),
+    lastBackupAt: typeof backup === 'string' ? backup : null,
+    prefs: alertPrefs(state),
+    asOf,
+  })
+  const h = await hash(JSON.stringify(alerts))
+  if (!force && h === state.lastHash) return
+  const res = await call('PUT', '/alerts', state, { alerts })
+  if (res.status === 404 || res.status === 410) return // subscription is gone; the next test or enable repairs it
+  if (!res.ok) throw new Error(`Alert upload failed (${res.status})`)
+  // Re-read: the state may have changed (prefs) while the upload was in flight.
+  const latest = await getPushState()
+  if (latest) await db.appMeta.put({ key: PUSH_KEY, value: { ...latest, lastHash: h } })
+}
+
+/** Upload the alert list if it changed. No-op while notifications are off. */
+export function pushAlerts(force = false): Promise<void> {
+  return serial(() => pushAlertsNow(force))
+}
+
+/** Switch one kind of alert on or off, and update the server right away. */
+export async function setAlertPref(kind: keyof AlertPrefs, on: boolean): Promise<void> {
+  const state = await getPushState()
+  if (!state) return
+  await db.appMeta.put({ key: PUSH_KEY, value: { ...state, prefs: { ...alertPrefs(state), [kind]: on } } })
+  await pushAlerts(true)
+}
+
+/**
+ * Keep the server's alert list current: upload on start, after data changes
+ * (debounced) and when the app returns to the foreground (projected dates move
+ * daily). While notifications are off the watch reads only the push record.
+ */
+export function startPushSync(): void {
+  if (!pushConfigured()) return
+  const quiet = () => pushAlerts().catch(() => {})
+  let timer: ReturnType<typeof setTimeout> | undefined
+  let first = true
+  liveQuery(async () => {
+    if (!(await getPushState())) return null
+    return Promise.all([
+      db.vehicles.toArray(),
+      db.events.toArray(),
+      db.odometerReadings.toArray(),
+      db.reminderRules.toArray(),
+      db.appMeta.get('lastBackupAt'),
+    ])
+  }).subscribe({
+    next: (watched) => {
+      if (!watched) return
+      if (first) {
+        first = false
+        quiet()
+        return
+      }
+      clearTimeout(timer)
+      timer = setTimeout(quiet, PUSH_DEBOUNCE_MS)
+    },
+    error: () => {},
+  })
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') quiet()
+  })
 }

@@ -1,6 +1,7 @@
 import type { ComputedReminder } from './reminderEngine'
 import { localDateISO } from './format'
 import { projectDueDate } from './mileage'
+import { SAFETY_CATEGORIES } from './verdict'
 import type { MilestoneView } from './milestones'
 
 // Builds an iCalendar (.ics) file of upcoming maintenance so the phone's own
@@ -18,6 +19,8 @@ export interface CalendarItem {
   title: string
   description: string
   url?: string
+  /** True when any service on this date is a safety item (brakes, tires, timing belt). */
+  safety?: boolean
 }
 
 /** How far ahead to export. */
@@ -91,6 +94,7 @@ export function reminderCalendarItems(
     const label =
       group.length === 1 ? first.rule.label : `${first.rule.label} + ${group.length - 1} more`
     items.push({
+      safety: group.some((r) => SAFETY_CATEGORIES.has(r.rule.category)),
       uid: `${first.rule.vehicleId}:${date}@garage-log`,
       date,
       title: `${vehicleName}: ${label}${estimated ? ' (est.)' : ''}`,

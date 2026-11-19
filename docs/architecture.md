@@ -108,16 +108,29 @@
   `https://coast-calendar-feed.calendar-feed.workers.dev`; redeploy from
   `worker/calendar-feed/` with `npx wrangler deploy` (David's Cloudflare login).
 - **`src/db/push.ts`** (+ pure `domain/push.ts`, `components/NotificationsCard.tsx`,
-  `public/push-sw.js`) — web push, TEST PATH ONLY so far. Settings card turns
-  notifications on (permission, `pushManager.subscribe` with the VAPID public
-  key), registers the subscription with `worker/push/` (Cloudflare Worker + D1,
-  VAPID + RFC 8291 encryption via WebCrypto in `worker/push/src/webpush.ts`,
-  checked against the RFC's test vector), and can send one test notification.
-  Off unless `VITE_PUSH_URL` and `VITE_VAPID_PUBLIC_KEY` are set at build time.
-  Device record in `appMeta['pushSub']` (device-only, kept out of backups).
-  `push-sw.js` is pulled into the generated service worker with
+  `public/push-sw.js`) — web push. Settings card turns notifications on
+  (permission, `pushManager.subscribe` with the VAPID public key), registers
+  the subscription with `worker/push/` (Cloudflare Worker + D1, VAPID + RFC 8291
+  encryption via WebCrypto in `worker/push/src/webpush.ts`, checked against the
+  RFC's test vector), and can send a test. Off unless `VITE_PUSH_URL` and
+  `VITE_VAPID_PUBLIC_KEY` are set at build time. Device record (id, key, switch
+  prefs, last upload hash) in `appMeta['pushSub']` (device-only, kept out of
+  backups). `push-sw.js` is pulled into the generated service worker with
   `workbox.importScripts`. iPhone needs Coast on the Home Screen (iOS 16.4+).
-  Setup steps are in `worker/push/wrangler.toml`. No real events are wired yet.
+  Setup steps are in `worker/push/wrangler.toml`.
+  **Alerts:** `buildUploadAlerts()` (pure) turns calendar items, odometer
+  readings, last backup and prefs into a short dated list; `startPushSync()`
+  uploads it (PUT /sub/<id>/alerts, debounced, skipped if unchanged) on start,
+  on data change and on foreground. An hourly cron in the Worker
+  (`sendDueAlerts`) sends alerts dated today (or up to 2 days back) between 9
+  and noon America/New_York, at most 5 per device per run, once each (`sent`
+  survives re-uploads of the same key+date). Five switches in Settings: service
+  due dates, safety only, confirm mileage, monthly backup nudge, monthly
+  summary (due and mileage on by default). Repeating nudges (mileage, backup)
+  use `nextRepeat`: the next date on their cycle that is today or later.
+  The Worker holds car and service names with dates, keyed by the device's
+  private id; "Turn off" deletes them. Deploy: `npx wrangler d1 migrations
+  apply coast-push --remote` then `npx wrangler deploy` from `worker/push/`.
 - **`src/services/`** — `vinDecode.ts` (REAL NHTSA vPIC `decodevinvalues` call,
   no key). "Add a car" manual pickers: `catalogBundle.ts` reads
   `public/catalog/<make>.json`, built at deploy time by

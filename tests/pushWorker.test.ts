@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest'
-import { handle, TEST_MESSAGE, WRITES_PER_HOUR, type Sender } from '../worker/push/src/index'
+import {
+  cleanAlerts,
+  handle,
+  MAX_ALERTS,
+  MAX_PER_RUN,
+  newYorkNow,
+  sendDueAlerts,
+  TEST_MESSAGE,
+  WRITES_PER_HOUR,
+  type Sender,
+} from '../worker/push/src/index'
 import { pushStore } from './pushWorkerDb'
 
 const BASE = 'https://push.example'
@@ -111,5 +121,84 @@ describe('push worker', () => {
     expect((await handle(req('POST', `/sub/${ID}/test`, { key: KEY }), store, send, now)).status).toBe(429)
     // The next hour starts a fresh count.
     expect((await handle(req('POST', `/sub/${ID}/test`, { key: KEY }), store, send, now + 3_600_000)).status).toBe(204)
+  })
+})
+
+describe('due-date alerts', () => {
+  const alert = (key: string, date: string, extra = {}) => ({ key, date, title: `T ${key}`, body: 'B', hash: '#/vehicle/veh-1', ...extra })
+  const put = (store: ReturnType<typeof pushStore>, send: Sender, alerts: unknown) =>
+    handle(req('PUT', `/sub/${ID}/alerts`, { key: KEY, body: { alerts } }), store, send)
+  // 2026-11-19 14:30Z = 9:30am Eastern (EST).
+  const MORNING = Date.UTC(2026, 10, 19, 14, 30)
+
+  async function setup() {
+    const store = pushStore()
+    const { send, calls } = fakeSender()
+    await handle(req('POST', `/sub/${ID}`, { key: KEY, body: SUB }), store, send)
+    return { store, send, calls }
+  }
+
+  it('sends today\'s alert once, at 9am Eastern, then never again', async () => {
+    const { store, send, calls } = await setup()
+    expect((await put(store, send, [alert('a', '2026-11-19'), alert('b', '2026-11-25')])).status).toBe(204)
+    expect(await sendDueAlerts(store, send, MORNING)).toBe(1)
+    expect(await sendDueAlerts(store, send, MORNING + 3_600_000)).toBe(0)
+    expect(calls.map((c) => c.title)).toEqual(['T a'])
+    // A re-upload of the same alert must not re-arm it.
+    await put(store, send, [alert('a', '2026-11-19'), alert('b', '2026-11-25')])
+    expect(await sendDueAlerts(store, send, MORNING + 7_200_000)).toBe(0)
+  })
+
+  it('a moved date is a new alert; a removed one never sends', async () => {
+    const { store, send, calls } = await setup()
+    await put(store, send, [alert('a', '2026-11-19'), alert('gone', '2026-11-19')])
+    await put(store, send, [alert('a', '2026-11-19')])
+    await sendDueAlerts(store, send, MORNING)
+    expect(calls.map((c) => c.title)).toEqual(['T a'])
+    await put(store, send, [alert('a', '2026-11-20')])
+    expect(await sendDueAlerts(store, send, Date.UTC(2026, 10, 20, 14, 30))).toBe(1)
+  })
+
+  it('stays quiet outside 9 to noon Eastern, and handles daylight saving', async () => {
+    const { store, send } = await setup()
+    await put(store, send, [alert('a', '2026-11-19'), alert('s', '2026-07-01')])
+    expect(await sendDueAlerts(store, send, Date.UTC(2026, 10, 19, 12, 0))).toBe(0) // 7am EST
+    expect(await sendDueAlerts(store, send, Date.UTC(2026, 10, 19, 18, 0))).toBe(0) // 1pm EST
+    expect(newYorkNow(Date.UTC(2026, 10, 19, 14, 0))).toEqual({ date: '2026-11-19', hour: 9 }) // EST, UTC-5
+    expect(newYorkNow(Date.UTC(2026, 6, 1, 13, 0))).toEqual({ date: '2026-07-01', hour: 9 }) // EDT, UTC-4
+    expect(newYorkNow(Date.UTC(2026, 6, 1, 3, 0))).toEqual({ date: '2026-06-30', hour: 23 }) // still yesterday
+  })
+
+  it('catches up a missed morning but not an old one, and caps a device per run', async () => {
+    const { store, send, calls } = await setup()
+    await put(store, send, [alert('late', '2026-11-18'), alert('stale', '2026-11-10')])
+    await sendDueAlerts(store, send, MORNING)
+    expect(calls.map((c) => c.title)).toEqual(['T late'])
+    const many = Array.from({ length: 8 }, (_, i) => alert(`m${i}`, '2026-11-19'))
+    await put(store, send, many)
+    expect(await sendDueAlerts(store, send, MORNING)).toBe(MAX_PER_RUN)
+  })
+
+  it('forgets a phone that dropped its subscription', async () => {
+    const { store, send } = await setup()
+    await put(store, send, [alert('a', '2026-11-19')])
+    await sendDueAlerts(store, fakeSender(410).send, MORNING)
+    expect((await handle(req('POST', `/sub/${ID}/test`, { key: KEY }), store, send)).status).toBe(404)
+  })
+
+  it('rejects malformed uploads and other devices\' keys', async () => {
+    const { store, send } = await setup()
+    expect((await put(store, send, 'nope')).status).toBe(400)
+    expect((await put(store, send, [{ ...alert('a', 'tomorrow') }])).status).toBe(400)
+    expect((await put(store, send, Array.from({ length: MAX_ALERTS + 1 }, (_, i) => alert(`k${i}`, '2026-11-19')))).status).toBe(400)
+    expect((await handle(req('PUT', `/sub/${ID}/alerts`, { key: OTHER, body: { alerts: [] } }), store, send)).status).toBe(403)
+    expect((await handle(req('PUT', `/sub/${'b'.repeat(43)}/alerts`, { key: KEY, body: { alerts: [] } }), store, send)).status).toBe(404)
+  })
+
+  it('drops an unsafe route hash and trims long text', () => {
+    const [a] = cleanAlerts([{ ...alert('a', '2026-11-19', { hash: 'javascript:alert(1)', title: 'x'.repeat(500) }) }])!
+    expect(a.hash).toBe('')
+    expect(a.title).toHaveLength(200)
+    expect(cleanAlerts([alert('a', '2026-11-19', { hash: '#/service/veh-1%3Abrake-fluid' })])![0].hash).toBe('#/service/veh-1%3Abrake-fluid')
   })
 })
