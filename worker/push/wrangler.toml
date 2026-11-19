@@ -12,12 +12,12 @@ compatibility_date = "2026-09-01"
 
 [vars]
 # Not secret: the browser subscribes with this same key. Replace after generating.
-VAPID_PUBLIC_KEY = "REPLACE_WITH_PUBLIC_KEY"
+VAPID_PUBLIC_KEY = "BBo0Vrel3lg0PetEJOuWtvmhD03vJZJWW19HjYw9Y6ACkbsqhvoqxJ5cEXBy_GEAO7Mtw4ALOIYGnoknJcyotEw"
 # Contact the push service can reach if this server misbehaves.
 VAPID_SUBJECT = "https://ddworaczyk23-stack.github.io/garage-log/"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "coast-push"
-database_id = "REPLACE_WITH_DATABASE_ID"
+database_id = "8e24977f-c208-4c47-baa4-e37b2111f0c8"
 migrations_dir = "migrations"
